@@ -55,7 +55,7 @@ LOGO_Y = -0.500
 FINE_CUCITURA = LOGO_Y + KY * LOGO_LARG * (119.3 / 207.8) / 2 + 7 * MM      # la cucitura dritta finisce poco sopra il logo
 
 # zona del tessuto modellata fitta (quella che si vede da vicino)
-FITTO = (-0.118, 0.118, -0.66, 0.085)       # x0, x1, y0, y1
+FITTO = (-0.118, 0.118, -0.66, 0.160)       # x0, x1, y0, y1
 
 
 # ------------------------------------------------------------------ rilievo del tessuto
@@ -72,28 +72,34 @@ def _pieghe(seme=11):
 
 
 PIEGHE = _pieghe()
-RILIEVO = None      # rilievo attorno ai ricami: si imposta in `costruisci`
+RILIEVO = None          # rilievo attorno ai ricami: si imposta in `scena_base`
+CUCITO_FINO_A = None    # y dell'ultimo punto cucito: le grinze esistono solo fin lì (None = tutta la cucitura)
 
 
 class RilievoRicami:
     """Il ricamo tira il tessuto: sotto i fili il tessuto si abbassa, appena fuori dal bordo si alza in un piccolo cordolo."""
 
-    def __init__(self, forme, passo=0.25 * MM, affondo=0.20 * MM, cordolo=0.30 * MM):
+    def __init__(self, gruppi, passo=0.25 * MM, affondo=0.20 * MM, cordolo=0.30 * MM):
+        """`gruppi` è una lista di (forme, peso): il peso scala il rilievo di quel gruppo, da 0 a 1."""
         from PIL import Image, ImageDraw, ImageFilter
         x0, x1, y0, y1 = FITTO
         self.x0, self.y0, self.passo = x0, y0, passo
         nx, ny = int((x1 - x0) / passo), int((y1 - y0) / passo)
-        img = Image.new("L", (nx, ny), 0)
-        dr = ImageDraw.Draw(img)
         px = lambda c: [((x - x0) / passo, (y - y0) / passo) for x, y in c]
-        for forma in forme:
-            for poli in G.parti(forma):
-                dr.polygon(px(poli.exterior.coords), fill=255)
-                for buco in poli.interiors:
-                    dr.polygon(px(buco.coords), fill=0)
-        stretta = np.asarray(img.filter(ImageFilter.GaussianBlur(0.45 * MM / passo)), np.float32) / 255.0
-        larga = np.asarray(img.filter(ImageFilter.GaussianBlur(1.5 * MM / passo)), np.float32) / 255.0
-        self.mappa = -affondo * stretta + cordolo * np.clip(larga - stretta, 0, 1) * 1.8
+        self.mappa = np.zeros((ny, nx), np.float32)
+        for forme, peso in gruppi:
+            if peso <= 0:
+                continue
+            img = Image.new("L", (nx, ny), 0)
+            dr = ImageDraw.Draw(img)
+            for forma in forme:
+                for poli in G.parti(forma):
+                    dr.polygon(px(poli.exterior.coords), fill=255)
+                    for buco in poli.interiors:
+                        dr.polygon(px(buco.coords), fill=0)
+            stretta = np.asarray(img.filter(ImageFilter.GaussianBlur(0.45 * MM / passo)), np.float32) / 255.0
+            larga = np.asarray(img.filter(ImageFilter.GaussianBlur(1.5 * MM / passo)), np.float32) / 255.0
+            self.mappa += peso * (-affondo * stretta + cordolo * np.clip(larga - stretta, 0, 1) * 1.8)
 
     def valuta(self, x, y):
         fx = (np.asarray(x, float) - self.x0) / self.passo
@@ -122,7 +128,8 @@ def quota(x, y):
         z = z + alt * np.exp(-0.5 * (trasv / larg) ** 2) * np.exp(-0.5 * (longit / lung) ** 2)
     z = z * largo
     # il filo tira: piccole grinze di traverso alla cucitura, che si spengono in pochi millimetri
-    cucito = (y <= 0.002) & (y >= FINE_CUCITURA - 0.002)
+    limite = FINE_CUCITURA if CUCITO_FINO_A is None else CUCITO_FINO_A
+    cucito = (y <= 0.002) & (y >= limite - 0.002)
     z = z + np.where(cucito, 0.20 * MM * np.exp(-ax / (4.5 * MM)) * np.cos(2 * np.pi * y / (2 * PASSO)) * np.clip(ax / (0.8 * MM), 0, 1), 0.0)
     if RILIEVO is not None:
         z = z + RILIEVO.valuta(x, y)
@@ -539,16 +546,14 @@ def crea_tessuto(mat):
         return vert, facce
 
     fitto = griglia(np.arange(x0, x1 + 1e-9, 0.6 * MM), np.arange(y0, y1 + 1e-9, 0.6 * MM))
-    oggetto("tessuto", mesh_da_array("tessuto", *fitto), mat)
+    ob_fitto = oggetto("tessuto", mesh_da_array("tessuto", *fitto), mat)
 
-    def sotto(X, Y):        # il bordo rado passa appena sotto la zona fitta, per non sovrapporsi
-        m = 0.012
-        fx = np.clip(np.minimum(X - (x0 + m), (x1 - m) - X) / m, 0, 1)
-        fy = np.clip(np.minimum(Y - (y0 + m), (y1 - m) - Y) / m, 0, 1)
-        return 0.6 * MM * fx * fy
+    def sotto(X, Y):        # il bordo rado passa sotto tutta la zona fitta e risale solo fuori: due superfici alla stessa quota darebbero macchie nere
+        fuori = np.maximum(np.maximum(x0 - 0.002 - X, X - (x1 + 0.002)), np.maximum(y0 - 0.002 - Y, Y - (y1 + 0.002)))
+        return 0.6 * MM * np.clip(1 - np.maximum(fuori, 0) / 0.008, 0, 1)
 
     rado = griglia(np.arange(-0.60, 0.60 + 1e-9, 4 * MM), np.arange(-1.05, 0.65 + 1e-9, 4 * MM), sotto)
-    oggetto("tessuto_bordo", mesh_da_array("tessuto_bordo", *rado), mat)
+    return [ob_fitto, oggetto("tessuto_bordo", mesh_da_array("tessuto_bordo", *rado), mat)]
 
 
 def crea_fili(nome, punti, raggio, mat, lati=6, seme=2, gonfiore=0.10 * MM):
@@ -732,6 +737,21 @@ def poligoni_logo(svg):
     return allunga(G.logo_da_svg(svg, LOGO_LARG, centro=(0.0, LOGO_Y)), LOGO_Y)
 
 
+def punti_logo(logo):
+    """Punti di ricamo del logo nell'ordine in cui la macchina li cuce: prima il simbolo in alto,
+    dove arriva la cucitura, poi la scritta; ogni parte da sinistra a destra."""
+    from shapely.geometry import MultiPolygon
+    parti = G.parti(logo)
+    gruppi = [[q for q in parti if q.centroid.y > LOGO_Y], [q for q in parti if q.centroid.y <= LOGO_Y]]
+    out = []
+    for k, gruppo in enumerate(gruppi):
+        if not gruppo:
+            continue
+        pt = G.riempi_tatami(MultiPolygon(gruppo), 62.0, PASSO_RIC, 6.5 * MM, seme=40 + k)
+        out.append(pt[np.argsort(pt[:, :, 0].mean(axis=1), kind="stable")])
+    return np.concatenate(out)
+
+
 # ------------------------------------------------------------------ camera, luci, resa
 def guarda(cam, pos, verso, su):
     """Orienta la camera: guarda `verso`, con `su` come alto dell'immagine."""
@@ -852,14 +872,8 @@ def camera_alto(sc, y_ago, larghezza=VISTA_LARG, elev=ELEV, dist=2.0, ago_a=AGO_
 
 
 # ------------------------------------------------------------------ montaggio
-def costruisci(vista, s, larg, alt, campioni, ttf, logo_svg, quota_logo=1.0, y_centro=None, diaframma=13.0, esposizione=0.0):
-    global RILIEVO
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-    sc = prepara_scena(larg, alt, campioni)
-    sc.view_settings.exposure = esposizione
-    crea_mondo(sc)
-    crea_sole(sc)
-    mat = {
+def materiali():
+    return {
         "tessuto": mat_tessuto(),
         "filo": mat_filo("filo_capi", ritorto=0.0, capi=0.0, ruvidezza=0.6),
         "ricamo": mat_filo("filo_ricamo", colore=(0.80, 0.79, 0.76), ritorto=0.9, capi=2.0, ruvidezza=0.22, lucido=0.9),
@@ -870,29 +884,50 @@ def costruisci(vista, s, larg, alt, campioni, ttf, logo_svg, quota_logo=1.0, y_c
         "scuro": mat_acciaio("scuro", 0.5, colore=(0.02, 0.02, 0.025)),
     }
 
+
+def scena_base(larg, alt, campioni, ttf, logo_svg, punti_cuciti=None, quota_logo=1.0, bordo_logo=None,
+               trasparente=False, cattura_ombre=False, con_fili=True):
+    """Tessuto, luci e ricami comuni a tutte le viste. Macchina e camera si aggiungono dopo.
+
+    punti_cuciti: quanti punti della cucitura dritta sono già fatti (None = tutti).
+    quota_logo:   quanta parte del logo è già ricamata, da 0 a 1.
+    cattura_ombre: il tessuto diventa invisibile e trattiene solo le ombre (per la macchina in sovrimpressione).
+    """
+    global RILIEVO, CUCITO_FINO_A
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    sc = prepara_scena(larg, alt, campioni, trasparente)
+    crea_mondo(sc)
+    crea_sole(sc)
+    mat = materiali()
     capitoli = poligoni_capitoli(ttf)
     logo = poligoni_logo(logo_svg)
-    RILIEVO = None
-    RILIEVO = RilievoRicami(capitoli + [logo])
-    crea_tessuto(mat["tessuto"])
-
-    # cucitura dritta: solo i punti già chiusi, ognuno con i tre capi del filo modellati
     tutti = G.impuntura(0.0, FINE_CUCITURA, PASSO)
-    n = len(tutti) if vista == "logo" else min(punti_fatti(s), len(tutti))
-    crea_fili_ritorti("cucitura", tutti[:n], R_CUC, mat["filo"])
+    n = len(tutti) if punti_cuciti is None else max(0, min(int(punti_cuciti), len(tutti)))
+    quota_logo = max(0.0, min(1.0, quota_logo))
+    RILIEVO = None
+    CUCITO_FINO_A = None
+    RILIEVO = RilievoRicami([(capitoli, 1.0), ([logo], quota_logo)])
+    CUCITO_FINO_A = float(tutti[n - 1][1][1]) if n > 0 else 1.0
+    for ob in crea_tessuto(mat["tessuto"]):
+        ob.is_shadow_catcher = cattura_ombre
+    pl = punti_logo(logo)
+    nl = int(round(len(pl) * quota_logo))
+    if con_fili:
+        crea_fili_ritorti("cucitura", tutti[:n], R_CUC, mat["filo"])       # ogni punto ha i tre capi del filo modellati
+        for k, forma in enumerate(capitoli):                               # scritte a punto raso: file lunghe e lucide
+            crea_fili("scritta_%d" % k, G.riempi_tatami(forma, 48.0, PASSO_RIC, 7.0 * MM, seme=10 + k), R_RIC, mat["ricamo"], seme=20 + k)
+            crea_fili("scritta_bordo_%d" % k, G.contorno_a_punti(forma, passo=1.3 * MM), R_RIC * 0.9, mat["ricamo"], seme=30 + k, gonfiore=0.03 * MM)
+        crea_fili("logo", pl[:nl], R_RIC, mat["ricamo"], seme=41)
+        if (quota_logo >= 1.0) if bordo_logo is None else bordo_logo:
+            crea_fili("logo_bordo", G.contorno_a_punti(logo, passo=1.3 * MM), R_RIC * 0.9, mat["ricamo"], seme=42, gonfiore=0.03 * MM)
+    return sc, mat, {"punti_logo": pl, "fatti_logo": nl, "cucitura": tutti, "punti_cuciti": n}
 
-    # scritte: già ricamate nel tessuto, a punto raso (file lunghe e lucide)
-    for k, forma in enumerate(capitoli):
-        crea_fili("scritta_%d" % k, G.riempi_tatami(forma, 48.0, PASSO_RIC, 7.0 * MM, seme=10 + k), R_RIC, mat["ricamo"], seme=20 + k)
-        crea_fili("scritta_bordo_%d" % k, G.contorno_a_punti(forma, passo=1.3 * MM), R_RIC * 0.9, mat["ricamo"], seme=30 + k, gonfiore=0.03 * MM)
 
-    # logo: ricamato fino alla quota richiesta
-    pl = G.riempi_tatami(logo, 62.0, PASSO_RIC, 6.5 * MM, seme=40)
-    nl = int(round(len(pl) * max(0.0, min(1.0, quota_logo))))
-    crea_fili("logo", pl[:nl], R_RIC, mat["ricamo"], seme=41)
-    if quota_logo >= 1.0:
-        crea_fili("logo_bordo", G.contorno_a_punti(logo, passo=1.3 * MM), R_RIC * 0.9, mat["ricamo"], seme=42, gonfiore=0.03 * MM)
-
+def costruisci(vista, s, larg, alt, campioni, ttf, logo_svg, quota_logo=1.0, y_centro=None, diaframma=13.0, esposizione=0.0):
+    """Fermi immagine di prova: primo piano, vista dall'alto, ricamo del logo."""
+    sc, mat, info = scena_base(larg, alt, campioni, ttf, logo_svg, punti_cuciti=None if vista == "logo" else punti_fatti(s), quota_logo=quota_logo)
+    sc.view_settings.exposure = esposizione
+    pl, nl = info["punti_logo"], info["fatti_logo"]
     if vista == "logo":
         ultimo = pl[max(0, nl - 1)][1] if nl > 0 else pl[0][0]
         base, zt = crea_macchina(s, mat, posizione=(float(ultimo[0]), float(ultimo[1])))
