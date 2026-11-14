@@ -9,7 +9,7 @@
 const VELOCITA_TESSUTO = 1.25;     // di quanto corre il tessuto rispetto allo scorrimento
 const DURATA_APERTURA = 1.15;      // lunghezza della fase A, in altezze di schermo
 const DURATA_RICAMO = 0.95;        // fase C
-const DURATA_PAUSA = 0.4;          // logo finito, prima di lasciare la sezione
+const DURATA_PAUSA = 0.5;          // logo finito: la macchina si ritira, poi si lascia la sezione
 const AGO_Y_LARGO = 0.64;          // altezza dell'ago sugli schermi orizzontali
 const MORBIDEZZA = 0.085;          // secondi: quanto in fretta l'immagine raggiunge lo scorrimento
 
@@ -243,7 +243,7 @@ export async function avviaApertura(radice) {
     }
 
     // fasi B e C: `riga` è la riga del tessuto che sta all'altezza `ay` dello schermo
-    let riga = riga0 + passo * (s - 0.5), ay = ny, agoX = centroX, agoY = riga, fase = s - Math.floor(s), opMac = 1, passoRicamo = 0;
+    let riga = riga0 + passo * (s - 0.5), ay = ny, agoX = centroX, agoY = riga, fase = s - Math.floor(s), passoRicamo = 0;
     let pan = spostamento(riga);
     if (p > 0) {
       const arrivo = liscio(p / 0.22);
@@ -263,9 +263,6 @@ export async function avviaApertura(radice) {
         agoY = misto(dati.ricamo.ago[k0][1], dati.ricamo.ago[k1][1], kf - k0);
         fase = q < 1 ? (kf * 2.5) % 1 : 0;
       }
-      const via = liscio((p - 0.93) / 0.07);                         // a logo finito la macchina si solleva e sparisce
-      opMac = 1 - via;
-      agoY -= via * 220;
     }
 
     const tx = nx + pan * kk - centroX * kk, ty = ay - riga * kk;
@@ -293,9 +290,12 @@ export async function avviaApertura(radice) {
         ultimo.fase = j;
       }
     }
-    const mx = nx + pan * kk + (agoX - centroX) * kk, my = ay + (agoY - riga) * kk;
+    // a logo finito la macchina si ritira verso chi cuce ed esce dal basso dello schermo
+    const fuga = limita((y - (LA + LB + LC * 0.95)) / (LC * 0.05 + LD * 0.8), 0, 1);
+    const mx = nx + pan * kk + (agoX - centroX) * kk, myFermo = ay + (agoY - riga) * kk;
+    const my = myFermo + fuga * fuga * (vh - myFermo + dati.macchina.ago[1] * kk + 40);
     telaMacchina.style.transform = `translate3d(${(mx - dati.macchina.ago[0] * kk).toFixed(2)}px, ${(my - dati.macchina.ago[1] * kk).toFixed(2)}px, 0) scale(${kk.toFixed(5)})`;
-    telaMacchina.style.opacity = opMac.toFixed(3);
+    telaMacchina.style.opacity = fuga < 1 ? '1' : '0';
     // ogni frase compare quando la sua scritta ricamata arriva all'ago e si spegne quando è passata
     for (const voce of voci) {
       const dist = voce.riga - riga;                    // > 0: la frase è ancora sotto l'ago
