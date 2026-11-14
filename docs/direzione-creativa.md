@@ -131,6 +131,7 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 - Struttura pronta per `/en/` con `hreflang`: testi in file separati dal codice.
 - Product senza offerta finché non c'è il carrello; il prezzo si mostra in pagina.
 - Il configuratore, quando si riapre, vive in `/camicie-su-misura/configuratore/`.
+- "Diventa rivenditore" (chi compra da Endero per rivendere): sezione chiesta dal proprietario il 14 novembre 2026, ancora da definire con lui. Indirizzo previsto `/diventa-rivenditore/`; il menu e il piè di pagina devono lasciarle il posto. Finché non è definita non si costruisce e non compare nel sito.
 
 ## 6. Contatti, modulo ed email
 

@@ -1,6 +1,6 @@
 # Endero · sito web
 
-Sito nuovo, da zero, per Endero: manifattura campana di camicie e abbigliamento uomo, attiva dal 1996. Tre parti: storia del brand, vetrina di prodotti, configuratore per camicie su misura. Deve essere moderno, interattivo, d'impatto, e posizionarsi bene su Google.
+Sito nuovo, da zero, per Endero: manifattura campana di camicie e abbigliamento uomo, attiva dal 1996. Quattro parti: storia del brand, vetrina di prodotti, configuratore per camicie su misura, sezione "Diventa rivenditore". Deve essere moderno, interattivo, d'impatto, e posizionarsi bene su Google.
 
 Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
@@ -11,7 +11,8 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
 ## Ambito
 
-- Dentro: solo il brand Endero (B2C, camicie e abbigliamento uomo).
+- Dentro: solo il brand Endero (camicie e abbigliamento uomo): vendita ai privati e sezione "Diventa rivenditore".
+- Da costruire più avanti: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Il proprietario l'ha chiesta e ha detto di non ragionarci ora (2026-11-14): va prevista nella struttura del sito e nel menu, ma contenuti e funzioni si definiscono con lui quando la riapre. Non c'entra con il brand workwear, che resta fuori.
 - In sospeso: il configuratore. Il proprietario ha chiesto di metterlo da parte e pensarci dopo (2026-11-14). Non fare domande né lavoro sul configuratore finché non lo riapre lui. Le decisioni già prese restano valide. Si lavora prima su pagina iniziale, storia e vetrina.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
 - Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it.
@@ -116,4 +117,5 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
 - Nome utente Instagram e altri profili. Serve per: link nel piè di pagina.
+- (Da aprire con il proprietario quando lo dice lui) "Diventa rivenditore": cosa offre la sezione, chi può fare richiesta, che dati si chiedono, a chi arrivano le richieste. Serve per: progettare la sezione.
 - (In sospeso con il configuratore) Opzioni del su misura, tempi di consegna, email che riceve gli ordini.
