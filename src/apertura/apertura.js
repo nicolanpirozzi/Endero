@@ -138,7 +138,7 @@ export async function avviaApertura(radice) {
     // sugli schermi stretti il tessuto si sposta di lato per mostrare intera la scritta del capitolo
     const mezza = vw / (2 * k);
     panMax = limita(830 + 36 - mezza, 0, Math.max(0, mezza - 44));
-    sosta = [[riga0, 0]];
+    sosta = [[riga0 + passo * (S1 - 0.3), 0]];             // lo spostamento parte solo dopo la dissolvenza: i fotogrammi dell'apertura sono centrati
     for (const cap of dati.capitoli) {
       const centro = (cap.riga_base - cap.altezza_prima + cap.riga_sotto) / 2;
       const verso = cap.lato === 'dx' ? -panMax : panMax;
@@ -217,7 +217,9 @@ export async function avviaApertura(radice) {
     else { s = SF; p = limita((y - LA - LB) / LC, 0, 1); }
 
     // fase A: i fotogrammi interi, che si dissolvono sul tessuto quando la camera è arrivata in alto
-    const opFilm = 1 - liscio((s - (S1 - 0.7)) / 0.7);
+    // La dissolvenza cade sugli ultimi due fotogrammi, quando la camera è ormai ferma sulla vista dall'alto:
+    // prima le due immagini non coincidono e la macchina si vedrebbe doppia.
+    const opFilm = 1 - liscio((s - (S1 - 0.17)) / 0.3);
     tela.style.opacity = opFilm.toFixed(3);
     tela.style.visibility = opFilm > 0.001 ? 'visible' : 'hidden';
     if (opFilm > 0.001) {
@@ -237,8 +239,9 @@ export async function avviaApertura(radice) {
     radice.style.setProperty('--apertura-invito', (1 - liscio(y / (0.3 * vh))).toFixed(3));
     radice.style.setProperty('--apertura-salta', y >= L - 2 ? '0' : '1');
     if (!sotto) {
+      // la pozza di luce scende verso l'ago mentre la camera sale: all'arrivo è già al suo posto
       luce.style.setProperty('--luce-x', '50%');
-      luce.style.setProperty('--luce-y', '56%');
+      luce.style.setProperty('--luce-y', misto(0.56 * vh, ny, liscio((s - (S1 - 4.5)) / 3.6)).toFixed(0) + 'px');
       return;
     }
 
