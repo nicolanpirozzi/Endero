@@ -4,8 +4,8 @@ Sito nuovo, da zero, per Endero: manifattura campana di camicie e abbigliamento 
 
 Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
-- Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì. Attenzione: il punto 4 descrive l'apertura in SVG, superata dal film 3D in `film/`.
-- Film 3D dell'apertura: `film/scena.py` (scena Blender), `film/geometria.py` (ricamo), `film/finitura.py` (grana e luce). Fotogrammi di prova in `docs/img/film/`.
+- Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì.
+- Film 3D dell'apertura: scena e calcolo in `film/`, lettore in `src/apertura/`, pagina di prova `anteprima/apertura.html` (si apre con un server locale dalla radice del progetto). Dettagli al punto 4 della direzione creativa.
 - Fatti sul brand e fonti: `docs/ricerca-endero.md`.
 - Logo vettoriale: `brand/logo/`.
 

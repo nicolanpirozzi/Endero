@@ -71,56 +71,46 @@ Il blu del logo prende il posto del nero. Tutto il resto resta come il riferimen
 
 ## 4. Apertura "La cucitura"
 
-Tavola di riferimento: `docs/img/apertura-cucitura.jpg`.
+Un film 3D realistico, calcolato in anticipo con Blender, che avanza con lo scorrimento. Il proprietario ha bocciato la prima versione disegnata in SVG: non va riproposta. Fotogrammi di riferimento in `docs/img/film/`.
 
-**Idea.** Scorrere è cucire. In una macchina vera l'ago sta fermo ed è il tessuto a muoversi: la pagina è il tessuto blu, l'ago resta a metà schermo, la cucitura bianca avanza con lo scorrimento e racconta la storia fino a ricamare il logo. Poi il telo si solleva e sotto c'è il sito.
+**Idea.** Scorrere è cucire. La pagina è il tessuto blu: scorrendo, la macchina cuce, la cucitura sale e porta con sé la storia di Endero, fino a ricamare il logo.
 
-**Scelte del proprietario.** Questa variante; si rivede completa a ogni visita; sempre presente il link per saltarla; nessun video generato.
+**Regia, in tre tempi.**
 
-**Sequenza.**
+1. *Primo piano.* L'ago e il piedino in acciaio visti da vicino, con la profondità di campo di un obiettivo macro. L'ago fa i primi punti.
+2. *Vista dall'alto.* La camera sale e si ferma sopra il tessuto, dal lato di chi cuce: la macchina resta in piedi al centro, il tessuto scorre verso l'alto. A destra e a sinistra della cucitura passano le scritte ricamate (1996, 1,3 MILIONI, 2.500, ITALIA), ognuna con sotto la sua frase in testo vero.
+3. *Logo.* Finita la cucitura, la macchina si sposta sul logo e lo ricama: prima il simbolo, poi la scritta da sinistra a destra. A logo finito la macchina si solleva e sparisce.
 
-1. *Avvio.* Tessuto blu a tutto schermo con il titolo della pagina. L'ago scende e fa i primi punti da solo in poco più di un secondo. Compare "Scorri per cucire".
-2. *Storia.* Sezione alta circa 450 % dello schermo su desktop, 380 % su mobile, a scorrimento normale. La cucitura è un unico tracciato SVG che scende serpeggiando. Capitoli, solo fatti confermati: "1996 · Inizia la storia di Endero", "1,3 milioni · Capi prodotti in trent'anni", "2.500 · Negozi serviti", "Fatto in Italia". I numeri grandi sono testo SVG con contorno tratteggiato, come ricamati.
-3. *Logo.* Ultimo tratto con il palco fermo (`position: sticky`) per circa 120 % dello schermo. Il logo ha due strati: un contorno tratteggiato tenue che fa da guida e il riempimento a punto raso, scoperto da sinistra a destra mentre si scorre. L'ago segue il bordo del ricamo.
-4. *Uscita.* Il logo rimpicciolisce verso la sua posizione in testata, il telo blu sale con un orlo ondulato e cucito, sotto appare il video della sezione successiva.
+Poi la sezione finisce e la pagina prosegue sul sito.
 
-**Come si costruisce.**
+**Come è fatto.** Per dare la massima fluidità senza pesare, il film è composto da pezzi diversi:
 
-- L'ago è fisso in verticale a metà schermo e si sposta solo in orizzontale per seguire la cucitura. Tessuto e testi scorrono normalmente: così il testo non si muove di lato e resta leggibile.
-- La cucitura si scopre con un ritaglio dall'alto fino all'altezza dell'ago: una sola variabile aggiornata allo scorrimento. Niente calcoli sulla lunghezza del tracciato a ogni fotogramma.
-- La posizione orizzontale dell'ago viene da una tabella altezza → ascissa, calcolata una volta all'avvio e a ogni ridimensionamento campionando il tracciato.
-- Il su e giù dell'ago è legato alla distanza scorsa, un punto ogni 16 px circa: l'ago scende esattamente dove nasce il punto. Da fermi, l'ago sta fermo.
-- Il tracciato si genera dalle posizioni reali dei capitoli, così si adatta a ogni schermo. Su mobile serpeggia poco, al massimo il 22 % della larghezza.
-- Si animano solo `transform`, `opacity` e `clip-path`.
+| Pezzo | Cos'è | Come si usa nel sito |
+| --- | --- | --- |
+| Apertura | 55 fotogrammi interi, dal primo piano alla vista dall'alto | Disegnati uno alla volta su una tela, secondo lo scorrimento |
+| Striscia | Una sola immagine lunga del tessuto visto dall'alto, con cucitura e scritte, divisa in 8 fasce | Scorre con una trasformazione CSS: movimento continuo, nessuno scatto |
+| Colonna | La fascia centrale dello stesso tessuto, senza cucitura | Copre la cucitura dove l'ago non è ancora passato |
+| Macchina | La testa in acciaio da sola, con ombra e trasparenza, nelle 6 fasi del ciclo dell'ago | Sta ferma sopra il tessuto; cambia fase con lo scorrimento |
+| Ricamo | 25 immagini della zona del logo, da tessuto nudo a logo finito | Si alternano mentre la macchina si sposta sul logo |
 
-**Resa del filo e del tessuto** (ricette già provate nella tavola):
+La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scorrere come una semplice immagine. La luce principale è infinitamente lontana, quindi ogni punto del tessuto è illuminato allo stesso modo; la pozza di luce al centro è una sfumatura CSS ferma sullo schermo.
 
-```html
-<!-- trama del tessuto: righe diagonali tenui + grana -->
-<pattern id="twill" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
-  <line x1="0" y1="0" x2="0" y2="5" stroke="#fff" stroke-opacity="0.045" stroke-width="2"/>
-</pattern>
-<filter id="trama"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
-  <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.10 0"/></filter>
-<!-- cucitura: tratteggio a estremi tondi, con ombra corta che la solleva dal tessuto -->
-<path stroke="#fbf9f4" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="9 6.5" fill="none" filter="url(#rilievo)"/>
-<filter id="rilievo"><feDropShadow dx="0" dy="1.2" stdDeviation="0.7" flood-color="#030a1f" flood-opacity="0.75"/></filter>
-<!-- punto raso del logo: righe fitte inclinate, ritagliate sulla forma del marchio -->
-<pattern id="raso" width="2.2" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-58)">
-  <rect width="2.2" height="6" fill="#f6f3ec"/><line x1="0.4" y1="0" x2="0.4" y2="6" stroke="#c9c3b6" stroke-width="0.55"/>
-</pattern>
-```
+**File.**
 
-Su mobile i filtri SVG costano: sostituire l'ombra con un secondo tratto scuro sfalsato e la grana con un'immagine piccola ripetuta. L'ago della tavola è provvisorio: va ridisegnato con più cura (barra, morsetto, ago con cruna, piedino).
+- `film/scena.py`: la scena (tessuto con pieghe e grinze, fili modellati capo per capo, ricami a punto raso, acciaio, luci).
+- `film/geometria.py`: da logo e testi ai punti di ricamo.
+- `film/produci.py`: calcola i pezzi. `film/impacchetta.py`: li trasforma in WebP e scrive `film.json` con le misure.
+- `src/apertura/apertura.js` e `apertura.css`: il lettore. `anteprima/apertura.html`: pagina di prova.
+- `public/film/`: i pezzi pronti per il sito.
 
 **Vincoli che non si trattano.**
 
-- *Senza JavaScript*: la sezione mostra tessuto blu, cucitura completa, capitoli come testo in colonna e logo già ricamato. È lo stato di base del CSS; lo script aggiunge una classe e solo allora attiva lo scorrimento animato.
-- *Movimento ridotto*: lo stesso stato fermo, con sole dissolvenze.
-- *Google*: il titolo H1 della pagina sta qui dentro, in testo vero, e i capitoli sono un elenco ordinato. Grafica e ago hanno `aria-hidden`.
-- *Velocità*: SVG in pagina, nessuna immagine. Il primo contenuto visibile è il titolo su fondo blu. GSAP e ScrollTrigger si caricano dopo il primo disegno. Il video della sezione dopo ha `preload="none"` e un'immagine di copertina, e parte a caricarsi a metà apertura.
-- *Uscita rapida*: "Salta l'introduzione" è un link vero a un'ancora, primo elemento raggiungibile con la tastiera.
-- *Mobile*: altezze in `svh`, `position: sticky` invece dei blocchi di ScrollTrigger, per evitare i salti della barra degli indirizzi. Provare su un telefono vero.
+- *Senza JavaScript o con movimento ridotto*: resta un'immagine ferma del logo ricamato con la storia come testo. Lo script aggiunge `.apertura--viva` e solo allora parte il film.
+- *Google*: le frasi della storia sono testo vero dentro la pagina; le cifre ricamate sono ripetute nel testo per i lettori di schermo.
+- *Caricamento*: un caricatore con il logo e una cucitura che avanza. Parte appena sono pronti i primi 20 fotogrammi, la macchina e le prime due fasce; il resto arriva mentre si guarda.
+- *Uscita rapida*: "Salta l'introduzione" è un link vero a un'ancora, in basso a sinistra.
+- *Telefono*: su schermi verticali il fotogramma si adatta all'altezza, il tessuto si sposta di lato per mostrare intera la scritta del capitolo e il logo finale si guarda da più lontano. L'altezza si misura una volta sola: la barra degli indirizzi che compare e scompare non deve far saltare l'immagine.
+- *Titolo H1*: non sta nell'apertura ma nella sezione che segue, come nel riferimento.
 
 ## 5. Pagine e Google
 
@@ -155,7 +145,7 @@ Sito statico a più pagine, generato da un piccolo script Node: pagine e parti c
 1. Impalcatura: script di generazione, esbuild, Wrangler, schema D1.
 2. Colori, carattere, testata, pillole, piè di pagina.
 3. Pagina iniziale ferma, senza animazioni, con riquadri segnaposto. Anteprima desktop e mobile al proprietario.
-4. Apertura "La cucitura": prima lo stato fermo, poi lo scorrimento.
+4. Apertura "La cucitura": il film e il lettore sono già fatti (vedi punto 4): va solo inserita nella pagina iniziale e collegata alla testata.
 5. Movimento del resto della pagina con la skill `animate`; poi `make-interfaces-feel-better`, `mobile-native`, `break-ui`.
 6. Altre pagine, modulo con Worker, D1 e Turnstile, banner dei consensi, file per Google.
 7. Revisione indipendente con più agenti. Solo dopo l'ok del proprietario, pubblicazione sul link Cloudflare.

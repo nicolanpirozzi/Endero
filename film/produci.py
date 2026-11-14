@@ -38,7 +38,7 @@ STR_LARG = int(S.VISTA_LARG * PXM)  # 1920 px: i 16 cm inquadrati
 FASCIA = 1000                       # altezza di una fascia della striscia
 MARGINE = 20                        # righe in più sopra e sotto ogni fascia, tolte dopo: evitano le giunte
 Y_ALTO = 0.075                      # y del tessuto alla prima riga della striscia
-N_FASCE = 7
+N_FASCE = 8
 COLONNA = 0.10                      # mezza larghezza della colonna senza cucitura, in frazione della larghezza
 
 FPC = 6                             # fotogrammi per ogni punto di cucitura

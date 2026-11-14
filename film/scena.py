@@ -42,20 +42,21 @@ ELEV = 58.0
 KY = 1.0 / math.sin(math.radians(ELEV))
 VISTA_LARG = 0.16           # larghezza inquadrata
 AGO_A = 0.64                # l'ago sta al 64 % dell'altezza dello schermo: sopra si vede la cucitura finita
-MARGINE_TESTI = 13 * MM     # distanza tra la cucitura e le scritte ricamate
+MARGINE_TESTI = 10 * MM     # distanza tra la cucitura e le scritte ricamate
 INTERLINEA = 3.6 * MM
 CAPITOLI = [                # scritte ricamate: lato, y della prima linea di base, righe (testo, altezza delle maiuscole)
-    {"lato": "sx", "y": -0.090, "righe": [("1996", 13 * MM)]},
-    {"lato": "dx", "y": -0.185, "righe": [("1,3", 13 * MM), ("MILIONI", 6.2 * MM)]},
-    {"lato": "sx", "y": -0.280, "righe": [("2.500", 12.5 * MM)]},
-    {"lato": "dx", "y": -0.375, "righe": [("ITALIA", 10 * MM)]},
+    # le misure sono scelte perché ogni scritta, margine compreso, stia in 6,9 cm: la larghezza utile sui telefoni
+    {"lato": "sx", "y": -0.090, "righe": [("1996", 12.5 * MM)]},
+    {"lato": "dx", "y": -0.185, "righe": [("1,3", 12.5 * MM), ("MILIONI", 6.2 * MM)]},
+    {"lato": "sx", "y": -0.280, "righe": [("2.500", 11.5 * MM)]},
+    {"lato": "dx", "y": -0.375, "righe": [("ITALIA", 9.3 * MM)]},
 ]
 LOGO_LARG = 0.092           # larghezza del logo
 LOGO_Y = -0.500
 FINE_CUCITURA = LOGO_Y + KY * LOGO_LARG * (119.3 / 207.8) / 2 + 7 * MM      # la cucitura dritta finisce poco sopra il logo
 
 # zona del tessuto modellata fitta (quella che si vede da vicino)
-FITTO = (-0.118, 0.118, -0.66, 0.160)       # x0, x1, y0, y1
+FITTO = (-0.118, 0.118, -0.744, 0.160)      # x0, x1, y0, y1
 
 
 # ------------------------------------------------------------------ rilievo del tessuto

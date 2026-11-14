@@ -8,3 +8,4 @@ dist/
 .DS_Store
 film/.cache/
 __pycache__/
+public/film/

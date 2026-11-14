@@ -1,0 +1,310 @@
+/* Apertura "La cucitura".
+   Stato di base (senza JavaScript o con movimento ridotto): un'immagine ferma e la storia come testo.
+   Lo script aggiunge .apertura--viva e solo allora parte il film che avanza con lo scorrimento. */
+
+.apertura {
+  --blu-notte: #0a1b45;
+  --filo: #fbf9f4;
+  position: relative;
+  background: var(--blu-notte);
+  color: var(--filo);
+  font-family: "Archivo", system-ui, sans-serif;
+  font-stretch: 118%;
+}
+
+.apertura__manifesto {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.apertura__storia {
+  list-style: none;
+  margin: 0;
+  padding: 2.5rem 1.25rem 3.5rem;
+  display: grid;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.apertura__cifra {
+  display: block;
+  font-weight: 700;
+  font-stretch: 125%;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.apertura__frase {
+  display: block;
+  margin-top: 0.4rem;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.apertura__palco,
+.apertura__carica {
+  display: none;
+}
+
+.apertura__salta {
+  position: absolute;
+  z-index: 6;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--filo);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apertura__salta:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .apertura__salta {
+    transition: background-color 160ms ease-out;
+  }
+  .apertura__salta:hover {
+    background: rgba(255, 255, 255, 0.24);
+  }
+}
+
+/* ------------------------------------------------------------------ film */
+
+.apertura--viva {
+  height: var(--apertura-lunghezza, 600vh);
+}
+
+.apertura--viva .apertura__manifesto {
+  display: none;
+}
+
+.apertura--viva .apertura__salta {
+  position: fixed;
+  opacity: var(--apertura-salta, 1);
+  transition: opacity 240ms ease-out;
+}
+
+.apertura--viva .apertura__palco {
+  display: block;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100lvh;
+  overflow: hidden;
+  background: var(--blu-notte);
+  contain: layout paint;
+}
+
+/* Il tessuto: tutto ciò che sta qui dentro è misurato in pixel della striscia (120 per centimetro)
+   e viene spostato e scalato con una sola trasformazione. */
+.apertura__tessuto {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 7000px;
+  transform-origin: 0 0;
+  will-change: transform;
+  visibility: hidden;
+}
+
+.apertura__tessuto[data-visibile] {
+  visibility: visible;
+}
+
+.apertura__fasce img,
+.apertura__colonna img {
+  position: absolute;
+  left: 0;
+  display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* finché una fascia non è arrivata non si vede nulla, nemmeno il riquadro vuoto */
+.apertura__fasce img:not([src]),
+.apertura__colonna img:not([src]) {
+  visibility: hidden;
+}
+
+.apertura__colonna {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  clip-path: inset(var(--taglio, 0px) 0 0 0);
+}
+
+.apertura__ricamo {
+  position: absolute;
+  display: block;
+}
+
+.apertura--viva .apertura__storia {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  display: block;
+  text-align: left;
+}
+
+.apertura--viva .apertura__storia li {
+  position: absolute;
+  width: 640px;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.apertura--viva .apertura__storia li[data-lato="sx"] {
+  text-align: right;
+}
+
+/* la cifra è già ricamata nel film: resta nel testo per chi usa un lettore di schermo */
+.apertura--viva .apertura__cifra {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.apertura--viva .apertura__frase {
+  margin: 0;
+  font-size: var(--apertura-testo, 34px);
+  line-height: 1.18;
+  letter-spacing: 0.035em;
+  text-shadow: 0 2px 14px rgba(3, 8, 26, 0.55);
+}
+
+.apertura__macchina {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.apertura__macchina[data-visibile] {
+  visibility: visible;
+}
+
+.apertura__film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  will-change: opacity;
+}
+
+/* pozza di luce: ferma sullo schermo, sopra il tessuto che scorre */
+.apertura__luce {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--luce-x, 50%) var(--luce-y, 60%),
+    rgba(3, 8, 26, 0) 0,
+    rgba(3, 8, 26, 0) 24%,
+    rgba(3, 8, 26, 0.34) 52%,
+    rgba(3, 8, 26, 0.68) 86%
+  );
+}
+
+.apertura__invito {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(4.2rem, calc(env(safe-area-inset-bottom) + 3.4rem));
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: var(--apertura-invito, 0);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ caricatore */
+
+.apertura--viva .apertura__carica {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.6rem;
+  background: var(--blu-notte);
+  transition: opacity 500ms ease-out, visibility 0s linear 500ms;
+}
+
+.apertura__carica[data-fatto] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.apertura__carica svg {
+  width: min(46vw, 220px);
+  height: auto;
+  color: var(--filo);
+}
+
+/* una cucitura che avanza: tratteggio rivelato da sinistra a destra */
+.apertura__avanzamento {
+  position: relative;
+  width: min(60vw, 260px);
+  height: 3px;
+}
+
+.apertura__avanzamento::before,
+.apertura__avanzamento::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, currentColor 0 9px, transparent 9px 15px);
+}
+
+.apertura__avanzamento::before {
+  opacity: 0.22;
+}
+
+.apertura__avanzamento::after {
+  clip-path: inset(0 calc(100% - var(--avanzamento, 0) * 100%) 0 0);
+  transition: clip-path 200ms ease-out;
+}
+
+.apertura__percento {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apertura__carica,
+  .apertura__avanzamento::after,
+  .apertura__salta {
+    transition: none;
+  }
+}
