@@ -6,6 +6,19 @@ Ogni dato ha uno stato: **confermato** (visto direttamente sul sito ufficiale), 
 
 Regola: nei testi del sito entrano solo dati confermati dal proprietario. Niente di questo dossier va pubblicato senza conferma.
 
+## Confermato dal proprietario il 14 novembre 2026
+
+- Endero è attiva dal 1996.
+- Oltre 1,3 milioni di capi prodotti.
+- Oltre 2.500 negozi serviti.
+- Il nome Endero viene da Ennio De Rosa.
+- Unica sede aperta al pubblico: Giugliano in Campania, Viale del Toro 22. Gli altri indirizzi elencati sotto non vanno pubblicati.
+- Della produzione si dice solo "fatto in Italia": il passato produttivo all'estero non si cita.
+- Solo abbigliamento uomo.
+- Esistono foto e video professionali, non ancora ricevuti.
+
+Tutto il resto di questo dossier resta da confermare.
+
 ## Identità
 
 | Dato | Valore | Stato |
