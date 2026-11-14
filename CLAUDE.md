@@ -4,7 +4,8 @@ Sito nuovo, da zero, per Endero: manifattura campana di camicie e abbigliamento 
 
 Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
-- Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì.
+- Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì. Attenzione: il punto 4 descrive l'apertura in SVG, superata dal film 3D in `film/`.
+- Film 3D dell'apertura: `film/scena.py` (scena Blender), `film/geometria.py` (ricamo), `film/finitura.py` (grana e luce). Fotogrammi di prova in `docs/img/film/`.
 - Fatti sul brand e fonti: `docs/ricerca-endero.md`.
 - Logo vettoriale: `brand/logo/`.
 
@@ -58,7 +59,11 @@ In `.claude/skills/`, versioni fissate in `skills-lock.json`.
 
 Sito e aspetto
 
-- 2026-11-14 · Apertura "La cucitura": scorrere è cucire. Ago fermo a metà schermo, tessuto blu che scorre, la cucitura racconta la storia e ricama il logo, poi il telo si solleva sul sito. Si rivede completa a ogni visita, con link per saltarla. Scartate: versione breve automatica e video con logo in sovrimpressione.
+- 2026-11-14 · Apertura "La cucitura": scorrere è cucire. La cucitura racconta la storia e ricama il logo, poi il telo si solleva sul sito. Si rivede completa a ogni visita, con link per saltarla. Scartate: versione breve automatica e video con logo in sovrimpressione.
+- 2026-11-14 · L'apertura è un film 3D realistico calcolato in anticipo con Blender, che avanza con lo scorrimento, preceduto da un caricatore. Il proprietario ha bocciato la versione disegnata in SVG ("non deve essere una cosa fatta in vettoriale e schifosa in 2D"): non riproporla. Scartati anche il 3D calcolato in diretta nel browser e le riprese vere.
+- 2026-11-14 · Regia del film: si apre in primo piano sull'ago, poi la camera sale alla vista dall'alto dal lato di chi cuce, con la macchina in piedi al centro e le scritte ricamate a destra e a sinistra della cucitura; alla fine la macchina ricama il logo. Macchina essenziale, solo parti in acciaio.
+- 2026-11-14 · Scritte ricamate nel tessuto: "1996", "1,3" con "MILIONI" sotto (il proprietario non vuole "M" né "MLN": potrebbero non essere capiti), "2.500", "ITALIA". Sotto ognuna una frase in testo vero, che scorre insieme al tessuto.
+- 2026-11-14 · Blu del tessuto nel film: scelto da noi su mandato del proprietario ("un blu scuro che funziona con la trama e le ombre"). Luce calda in controluce con ombre profonde, ricamo lucido, tessuto con pieghe e grinze.
 - 2026-11-14 · Il blu del logo `#0f285e` prende il posto del nero del riferimento: testi, pillole, piè di pagina. Fondo chiaro caldo.
 - 2026-11-14 · Carattere: alternativa gratuita a Field Gothic Wide, cioè Archivo variabile con asse della larghezza, ospitato sul sito. Scartato l'acquisto dell'originale.
 - 2026-11-14 · Logo: resta quello attuale. Vettoriale ricostruito da noi dall'immagine a 320 px e approvato così; se arriva un originale migliore si sostituisce.
@@ -93,6 +98,10 @@ Strumenti
 - 2026-11-14 · `web.archive.org` e `endero.wheree.com` non si leggono dall'ambiente. Soluzione: usare la ricerca web o chiedere il contenuto al proprietario.
 - 2026-11-14 · Instagram non è leggibile senza accesso. Soluzione: farsi dare nome utente e contenuti dal proprietario.
 - 2026-11-14 · Il riferimento è un sito Framer che disegna i contenuti allo scorrimento: una schermata unica a pagina intera esce vuota. Soluzione: `tools/cattura.js`, che scorre e fotografa una schermata alla volta.
+- 2026-11-14 · Blender si usa come modulo Python, senza interfaccia: `uv venv --python 3.13` e poi `uv pip install bpy numpy pillow shapely fonttools brotli` (1,1 GB). Solo processore, 4 core: circa 2 minuti per un fotogramma 1440×900. In `film/` va importato `bpy` prima di `bmesh`.
+- 2026-11-14 · In Blender 5 il nodo Mix ha più prese con lo stesso nome ("A", "B", "Result"): sceglierle per tipo, non per nome (vedi `mescola` in `film/scena.py`). Le immagini generate vanno salvate su disco in EXR e ricaricate, altrimenti restano nere.
+- 2026-11-14 · Acciaio che sembra vetro scuro e tessuto velato di grigio. Causa: un solo ambiente per luce e riflessi, e troppa "peluria" (sheen) in controluce. Soluzione già in `film/scena.py`: due ambienti scelti con il nodo percorso della luce, sheen basso.
+- 2026-11-14 · La resa dei toni "AgX" ingrigisce i fili bianchi. Soluzione: resa "Standard".
 - 2026-11-14 · Nell'ambiente non c'è `potrace`. Soluzione per vettorializzare: pacchetto npm `potrace` dopo aver ingrandito 12 volte e sfocato l'immagine con Pillow.
 
 ## Domande aperte
