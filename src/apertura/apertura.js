@@ -37,6 +37,7 @@ function crea(tag, classe, genitore, attributi = {}) {
 
 export async function avviaApertura(radice) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (navigator.connection && navigator.connection.saveData) return;      // chi risparmia dati vede la versione ferma
   const base = radice.dataset.apertura.replace(/\/?$/, '/');
   let dati;
   try {
@@ -67,6 +68,8 @@ export async function avviaApertura(radice) {
   const PASSI = dati.ricamo.passi - 1;
 
   // ---------------------------------------------------------------- struttura
+  tessuto.style.width = STR.larghezza + 'px';
+  tessuto.style.height = STR.altezza + 'px';
   const fasce = crea('div', 'apertura__fasce', tessuto, { 'aria-hidden': 'true' });
   const colonna = crea('div', 'apertura__colonna', tessuto, { 'aria-hidden': 'true' });
   colonna.style.left = STR.colonna_x + 'px';
@@ -338,18 +341,26 @@ export async function avviaApertura(radice) {
   window.addEventListener('resize', ridimensiona, { passive: true });
 
   // ---------------------------------------------------------------- caricamento: prima l'indispensabile, poi il resto
+  // Subito: un fotogramma dell'apertura ogni quattro (quelli che mancano li sostituisce il più vicino),
+  // una fase della macchina e il primo tratto di tessuto. Così l'attesa è breve e si può già scorrere tutto.
   const elenco = (chiave, n) => (pronti[chiave] || Array.from({ length: n }, (_, i) => i));
   const filmPronti = elenco('apertura', fotogrammi.length);
+  const radi = filmPronti.filter((_, n) => n % 4 === 0 || n === filmPronti.length - 1);
+  const fitti = filmPronti.filter((i) => !radi.includes(i));
+  const leFasi = elenco('macchina', fasi.length);
+  const leFasce = elenco('striscia', STR.fasce);
+  const leColonne = elenco('colonna', STR.fasce);
   const subito = [
-    ...filmPronti.filter((i) => i < 20).map((i) => () => prendi.film(i)),
-    ...elenco('macchina', fasi.length).map((j) => () => prendi.macchina(j)),
-    ...elenco('striscia', STR.fasce).slice(0, 2).map((i) => () => prendi.fascia(i)),
-    ...elenco('colonna', STR.fasce).slice(0, 2).map((i) => () => prendi.colonna(i)),
+    ...radi.map((i) => () => prendi.film(i)),
+    ...leFasi.slice(0, 1).map((j) => () => prendi.macchina(j)),
+    ...leFasce.slice(0, 2).map((i) => () => prendi.fascia(i)),
+    ...leColonne.slice(0, 2).map((i) => () => prendi.colonna(i)),
   ];
   const poi = [
-    ...filmPronti.filter((i) => i >= 20).map((i) => () => prendi.film(i)),
-    ...elenco('striscia', STR.fasce).slice(2).map((i) => () => prendi.fascia(i)),
-    ...elenco('colonna', STR.fasce).slice(2).map((i) => () => prendi.colonna(i)),
+    ...fitti.map((i) => () => prendi.film(i)),
+    ...leFasi.slice(1).map((j) => () => prendi.macchina(j)),
+    ...leFasce.slice(2).map((i) => () => prendi.fascia(i)),
+    ...leColonne.slice(2).map((i) => () => prendi.colonna(i)),
     ...elenco('ricamo', ricami.length).map((i) => () => prendi.ricamo(i)),
   ];
   const inizio = performance.now();

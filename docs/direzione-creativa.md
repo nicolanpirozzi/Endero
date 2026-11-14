@@ -100,14 +100,16 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 - `film/scena.py`: la scena (tessuto con pieghe e grinze, fili modellati capo per capo, ricami a punto raso, acciaio, luci).
 - `film/geometria.py`: da logo e testi ai punti di ricamo.
 - `film/produci.py`: calcola i pezzi. `film/impacchetta.py`: li trasforma in WebP e scrive `film.json` con le misure.
+- `film/manifesto.py`: compone l'immagine ferma del logo ricamato (orizzontale e verticale) dagli stessi pezzi.
 - `src/apertura/apertura.js` e `apertura.css`: il lettore. `anteprima/apertura.html`: pagina di prova.
+- `tools/filma.js`: registra un video della pagina mentre scorre, su computer o telefono, per farla approvare.
 - `public/film/`: i pezzi pronti per il sito.
 
 **Vincoli che non si trattano.**
 
 - *Senza JavaScript o con movimento ridotto*: resta un'immagine ferma del logo ricamato con la storia come testo. Lo script aggiunge `.apertura--viva` e solo allora parte il film.
 - *Google*: le frasi della storia sono testo vero dentro la pagina; le cifre ricamate sono ripetute nel testo per i lettori di schermo.
-- *Caricamento*: un caricatore con il logo e una cucitura che avanza. Parte appena sono pronti i primi 20 fotogrammi, la macchina e le prime due fasce; il resto arriva mentre si guarda.
+- *Caricamento*: un caricatore con il logo e una cucitura che avanza. Parte appena sono pronti un fotogramma dell'apertura ogni quattro, una fase della macchina e le prime due fasce (circa 2 MB); il resto arriva mentre si guarda e, finché manca un fotogramma, si mostra il più vicino. Chi ha attivato il risparmio dati vede la versione ferma.
 - *Uscita rapida*: "Salta l'introduzione" è un link vero a un'ancora, in basso a sinistra.
 - *Telefono*: su schermi verticali il fotogramma si adatta all'altezza, il tessuto si sposta di lato per mostrare intera la scritta del capitolo e il logo finale si guarda da più lontano. L'altezza si misura una volta sola: la barra degli indirizzi che compare e scompare non deve far saltare l'immagine.
 - *Titolo H1*: non sta nell'apertura ma nella sezione che segue, come nel riferimento.

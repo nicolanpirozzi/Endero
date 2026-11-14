@@ -81,15 +81,19 @@ class RilievoRicami:
     """Il ricamo tira il tessuto: sotto i fili il tessuto si abbassa, appena fuori dal bordo si alza in un piccolo cordolo."""
 
     def __init__(self, gruppi, passo=0.25 * MM, affondo=0.20 * MM, cordolo=0.30 * MM):
-        """`gruppi` è una lista di (forme, peso): il peso scala il rilievo di quel gruppo, da 0 a 1."""
-        from PIL import Image, ImageDraw, ImageFilter
+        """`gruppi` è una lista di (forme, peso) o (forme, peso, punti): il peso scala il rilievo di quel gruppo,
+        da 0 a 1. Con i `punti` di ricamo già fatti il rilievo esiste solo dove il filo c'è davvero:
+        senza, il disegno ancora da ricamare si vedrebbe in anticipo come un'impronta nel tessuto."""
+        from PIL import Image, ImageChops, ImageDraw, ImageFilter
         x0, x1, y0, y1 = FITTO
         self.x0, self.y0, self.passo = x0, y0, passo
         nx, ny = int((x1 - x0) / passo), int((y1 - y0) / passo)
         px = lambda c: [((x - x0) / passo, (y - y0) / passo) for x, y in c]
         self.mappa = np.zeros((ny, nx), np.float32)
-        for forme, peso in gruppi:
-            if peso <= 0:
+        for gruppo in gruppi:
+            forme, peso = gruppo[0], gruppo[1]
+            fatti = gruppo[2] if len(gruppo) > 2 else None
+            if peso <= 0 or (fatti is not None and len(fatti) == 0):
                 continue
             img = Image.new("L", (nx, ny), 0)
             dr = ImageDraw.Draw(img)
@@ -98,6 +102,13 @@ class RilievoRicami:
                     dr.polygon(px(poli.exterior.coords), fill=255)
                     for buco in poli.interiors:
                         dr.polygon(px(buco.coords), fill=0)
+            if fatti is not None:
+                maschera = Image.new("L", (nx, ny), 0)
+                dm = ImageDraw.Draw(maschera)
+                spessore = max(3, int(round(3.0 * PASSO_RIC / passo)))
+                for capo, coda in np.asarray(fatti, float):
+                    dm.line(px([capo, coda]), fill=255, width=spessore)
+                img = ImageChops.darker(img, maschera)
             stretta = np.asarray(img.filter(ImageFilter.GaussianBlur(0.45 * MM / passo)), np.float32) / 255.0
             larga = np.asarray(img.filter(ImageFilter.GaussianBlur(1.5 * MM / passo)), np.float32) / 255.0
             self.mappa += peso * (-affondo * stretta + cordolo * np.clip(larga - stretta, 0, 1) * 1.8)
@@ -905,14 +916,13 @@ def scena_base(larg, alt, campioni, ttf, logo_svg, punti_cuciti=None, quota_logo
     tutti = G.impuntura(0.0, FINE_CUCITURA, PASSO)
     n = len(tutti) if punti_cuciti is None else max(0, min(int(punti_cuciti), len(tutti)))
     quota_logo = max(0.0, min(1.0, quota_logo))
-    RILIEVO = None
+    pl = punti_logo(logo)
+    nl = int(round(len(pl) * quota_logo))
     CUCITO_FINO_A = None
-    RILIEVO = RilievoRicami([(capitoli, 1.0), ([logo], quota_logo)])
+    RILIEVO = RilievoRicami([(capitoli, 1.0), ([logo], 1.0) if quota_logo >= 1.0 else ([logo], 1.0, pl[:nl])])
     CUCITO_FINO_A = float(tutti[n - 1][1][1]) if n > 0 else 1.0
     for ob in crea_tessuto(mat["tessuto"]):
         ob.is_shadow_catcher = cattura_ombre
-    pl = punti_logo(logo)
-    nl = int(round(len(pl) * quota_logo))
     if con_fili:
         crea_fili_ritorti("cucitura", tutti[:n], R_CUC, mat["filo"])       # ogni punto ha i tre capi del filo modellati
         for k, forma in enumerate(capitoli):                               # scritte a punto raso: file lunghe e lucide

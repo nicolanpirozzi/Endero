@@ -21,7 +21,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 - GSAP per le animazioni (tutti i plugin sono gratuiti dal 2025), Lenis per lo scorrimento morbido (rotella e dito).
 - esbuild per compilare gli script.
 - Cloudflare Workers con Wrangler per pubblicare, D1 per i dati del modulo, Turnstile come antispam.
-- Playwright con Chromium per anteprime e controlli. È già installato nell'ambiente: non reinstallarlo. `tools/cattura.js` fotografa una pagina a schermate, desktop o mobile.
+- Playwright con Chromium per anteprime e controlli. È già installato nell'ambiente: non reinstallarlo. `tools/cattura.js` fotografa una pagina a schermate, desktop o mobile; `tools/filma.js` ne registra un video mentre scorre, da mandare al proprietario per l'approvazione.
 
 ## Metodo di lavoro
 
@@ -98,7 +98,7 @@ Strumenti
 - 2026-11-14 · `web.archive.org` e `endero.wheree.com` non si leggono dall'ambiente. Soluzione: usare la ricerca web o chiedere il contenuto al proprietario.
 - 2026-11-14 · Instagram non è leggibile senza accesso. Soluzione: farsi dare nome utente e contenuti dal proprietario.
 - 2026-11-14 · Il riferimento è un sito Framer che disegna i contenuti allo scorrimento: una schermata unica a pagina intera esce vuota. Soluzione: `tools/cattura.js`, che scorre e fotografa una schermata alla volta.
-- 2026-11-14 · Blender si usa come modulo Python, senza interfaccia: `uv venv --python 3.13` e poi `uv pip install bpy numpy pillow shapely fonttools brotli` (1,1 GB). Solo processore, 4 core: circa 2 minuti per un fotogramma 1440×900. In `film/` va importato `bpy` prima di `bmesh`.
+- 2026-11-14 · Blender si usa come modulo Python, senza interfaccia: `uv venv --python 3.13` e poi `uv pip install bpy numpy pillow shapely fonttools brotli` (1,1 GB). Solo processore, 4 core: circa 2 minuti per un fotogramma 1440×900. In `film/` va importato `bpy` prima di `bmesh`. Due calcoli insieme si rallentano a vicenda e un comando in background dura al massimo 2 ore: i lotti di `film/produci.py` si rilanciano senza perdere nulla, saltano i file già fatti.
 - 2026-11-14 · In Blender 5 il nodo Mix ha più prese con lo stesso nome ("A", "B", "Result"): sceglierle per tipo, non per nome (vedi `mescola` in `film/scena.py`). Le immagini generate vanno salvate su disco in EXR e ricaricate, altrimenti restano nere.
 - 2026-11-14 · Acciaio che sembra vetro scuro e tessuto velato di grigio. Causa: un solo ambiente per luce e riflessi, e troppa "peluria" (sheen) in controluce. Soluzione già in `film/scena.py`: due ambienti scelti con il nodo percorso della luce, sheen basso.
 - 2026-11-14 · La resa dei toni "AgX" ingrigisce i fili bianchi. Soluzione: resa "Standard".
