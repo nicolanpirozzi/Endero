@@ -1,0 +1,15 @@
+{
+  "_nota": "Testi della pagina /dove-siamo/, da costruire. Le parti tra [[ ]] sono segnaposto.",
+  "sede": {
+    "titolo": "Dove siamo",
+    "testo": "La sede Endero è a Giugliano in Campania, in provincia di Napoli. La presa misure è su appuntamento.",
+    "foto": "La sede di Viale del Toro, foto orizzontale",
+    "pannello": {
+      "titolo": "Sede Endero",
+      "orari_titolo": "Orari",
+      "orari": "[[Orari da confermare]]",
+      "contatti_titolo": "Contatti",
+      "indicazioni": "Indicazioni"
+    }
+  }
+}

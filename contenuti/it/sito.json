@@ -28,23 +28,55 @@
       {
         "titolo": "Sito",
         "voci": [
-          { "testo": "Su misura", "link": "/camicie-su-misura/" },
-          { "testo": "Collezione", "link": "/collezione/" },
-          { "testo": "Storia", "link": "/storia/" },
-          { "testo": "Dove siamo", "link": "/dove-siamo/" }
+          {
+            "testo": "Su misura",
+            "link": "/camicie-su-misura/"
+          },
+          {
+            "testo": "Collezione",
+            "link": "/collezione/"
+          },
+          {
+            "testo": "Storia",
+            "link": "/storia/"
+          },
+          {
+            "testo": "Dove siamo",
+            "link": "/dove-siamo/"
+          }
         ]
       },
       {
         "titolo": "Contatti",
         "voci": [
-          { "testo": "WhatsApp 333 854 8712", "link": "https://wa.me/393338548712" },
-          { "testo": "info@endero.it", "link": "mailto:info@endero.it" },
-          { "testo": "Privacy", "link": "/privacy/" },
-          { "testo": "Cookie", "link": "/cookie/" }
+          {
+            "testo": "WhatsApp 333 854 8712",
+            "link": "https://wa.me/393338548712"
+          },
+          {
+            "testo": "info@endero.it",
+            "link": "mailto:info@endero.it"
+          },
+          {
+            "testo": "Privacy",
+            "link": "/privacy/"
+          },
+          {
+            "testo": "Cookie",
+            "link": "/cookie/"
+          }
         ]
       }
     ],
-    "indirizzo": "Viale del Toro 22, 80014 Giugliano in Campania (NA)",
-    "legale": "© 2026 Endero · [[Ragione sociale e partita IVA da confermare]]"
+    "legale": "© 2026 Endero · [[Ragione sociale e partita IVA da confermare]]",
+    "sede": {
+      "titolo": "Dove siamo",
+      "righe": [
+        "Viale del Toro 22",
+        "80014 Giugliano in Campania (NA)"
+      ],
+      "orari": "Orari: [[da confermare]]",
+      "indicazioni": "Indicazioni"
+    }
   }
 }

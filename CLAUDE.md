@@ -73,7 +73,9 @@ Sito e aspetto
 - 2026-11-14 · Sito statico a più pagine generato da uno script Node, senza framework. Perché: HTML completo senza JavaScript, controllo del codice per Google, peso minimo.
 - 2026-11-14 · Solo uomo. Italiano, con struttura pronta per l'inglese: testi separati dal codice, `hreflang` predisposto.
 - 2026-11-14 · Una sola sede, quindi una sola pagina "dove siamo" con dati di attività locale.
-- 2026-11-15 · Pagina iniziale costruita come il riferimento, sezione per sezione. "Dove siamo" occupa il posto della seconda foto grande con pannello a destra, dopo la storia: scelta nostra, da far confermare. Testi in `contenuti/it/`, segnaposto `[[ ]]` evidenziati in giallo in anteprima. Ogni anteprima esce con noindex e robots chiuso; solo `--pubblico` apre a Google.
+- 2026-11-15 · Pagina iniziale approvata dal proprietario sui video ("Approvata, avanti"): struttura come il riferimento, sezione per sezione. Testi in `contenuti/it/`, segnaposto `[[ ]]` evidenziati in giallo in anteprima. Ogni anteprima esce con noindex e robots chiuso; solo `--pubblico` apre a Google.
+- 2026-11-15 · Nella pagina iniziale niente sezione "Dove siamo" con foto: l'indirizzo sta solo nel piè di pagina e nella pagina `/dove-siamo/` (proprietario). La voce "Dove siamo" del selettore porta al piè di pagina. Il pezzo con foto e pannello della sede resta in `src/parti/sede.mjs` per quella pagina. Scartato: sezione dopo la storia (proposta nostra).
+- 2026-11-15 · I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti: fino ad allora "Camicie", "Camicioni", "Su misura" restano segnaposto.
 - 2026-11-14 · La collezione parte come vetrina, il carrello arriva dopo. Prodotti come dati (prezzo, varianti, taglie) così la vendita si aggiunge senza rifare le schede.
 
 Contatti, legale, tracciamento
@@ -113,11 +115,11 @@ Strumenti
 
 Da chiudere con il proprietario, sempre a risposta multipla.
 
-- Foto, video, nomi, descrizioni e prezzi dei prodotti: li carica il proprietario. Elenco di cosa serve in `docs/direzione-creativa.md`, punto 8.
+- Foto, video, nomi, descrizioni e prezzi dei prodotti, e i nomi dei tre ingressi alla collezione: li carica il proprietario. Elenco di cosa serve in `docs/direzione-creativa.md`, punto 8.
 - Chi gestisce il dominio endero.it e i suoi DNS. Serve per: messa online ed email, non per l'anteprima.
 - Orari della sede di Viale del Toro. Serve per: pagina dove siamo, dati di attività locale.
 - Prezzo "a partire da" e testi delle domande frequenti. Serve per: pagina iniziale e pagina su misura.
-- Bozze della pagina iniziale da approvare: testi in `contenuti/it/home.json`, nomi dei tre ingressi alla collezione (Camicie, Camicioni, Su misura), posizione di "Dove siamo". Serve per: messa online.
+- Testi della pagina iniziale, bozze nostre in `contenuti/it/home.json`, da approvare prima della messa online. Serve per: messa online.
 - Racconto della storia oltre ai quattro fatti confermati: come è nata, tappe, persone. Serve per: pagina storia.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.

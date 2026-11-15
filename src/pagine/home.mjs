@@ -157,7 +157,7 @@ function collezione(c, sito) {
     <ul class="riquadri">
       ${c.riquadri.map((r) => `<li><a class="riquadro" href="${esc(r.href)}">
         ${attesa({ nota: r.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
-        <span class="titolo riquadro__titolo">${esc(r.titolo)}</span>
+        <span class="titolo riquadro__titolo">${t(r.titolo)}</span>
       </a></li>`).join('\n      ')}
     </ul>
   </section>`;
@@ -183,38 +183,9 @@ function storia(s, sito) {
   </section>`;
 }
 
-// Foto grande con pannello a destra: la sede.
-function doveSiamo(d, sito) {
-  const c = sito.contatti;
-  const p = d.pannello;
-  return `<section class="sezione" id="dove-siamo" data-gruppo="dove-siamo">
-    ${intesta(d)}
-    <div class="grande grande--pannello">
-      ${attesa({ nota: d.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
-      <div class="vetro pannello-sede">
-        <div class="vetro__testa">
-          <h3 class="vetro__titolo">${esc(p.titolo)}</h3>
-          <a class="chip chip--chiaro" href="${esc(c.mappa)}" target="_blank" rel="noopener">${esc(p.indicazioni)}${icona.freccia}</a>
-        </div>
-        <address class="pannello-sede__indirizzo">
-          <span class="pannello-sede__via">${esc(c.via)}</span>
-          <span>${esc(`${c.cap} ${c.citta} (${c.provincia})`)}</span>
-        </address>
-        <div class="pannello-sede__righe">
-          <div><h4 class="vetro__sezione">${esc(p.orari_titolo)}</h4><p>${t(p.orari)}</p></div>
-          <div><h4 class="vetro__sezione">${esc(p.contatti_titolo)}</h4>
-            <p><a href="${esc(c.whatsapp_link)}" target="_blank" rel="noopener">WhatsApp ${esc(c.whatsapp)}</a></p>
-            <p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>`;
-}
-
 // 11 · Domande frequenti: si aprono anche senza JavaScript.
 function domande(d) {
-  return `<section class="sezione domande" data-gruppo="dove-siamo">
+  return `<section class="sezione domande" data-gruppo="su-misura">
     <h2 class="titolo">${t(d.titolo)}</h2>
     <div class="domande__elenco">
       ${d.voci.map((v) => `<details class="domanda">
@@ -227,7 +198,7 @@ function domande(d) {
 
 // 12 · Prezzo: foto a sinistra, cifra e invito a destra.
 function prezzo(p, sito) {
-  return `<section class="prezzo" data-gruppo="dove-siamo">
+  return `<section class="prezzo" data-gruppo="su-misura">
     <div class="prezzo__foto">${attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
     <div class="prezzo__testo">
       <div>
@@ -277,7 +248,6 @@ export default function home({ sito, testi: h, risorse, anteprima }) {
     ${comeFunziona(h.come_funziona, risorse.turnstile)}
     ${collezione(h.collezione, sito)}
     ${storia(h.storia, sito)}
-    ${doveSiamo(h.dove_siamo, sito)}
     ${domande(h.domande)}
     ${prezzo(h.prezzo, sito)}
   </div>

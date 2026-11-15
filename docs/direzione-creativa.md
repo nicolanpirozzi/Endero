@@ -69,7 +69,7 @@ Il blu del logo prende il posto del nero. Tutto il resto resta come il riferimen
 | 12 | Prezzo | Foto a sinistra, "A partire da € __" a destra. Cifra da confermare. |
 | 13 | Piè di pagina | Fondo blu, logo completo grande, link, dati legali, contatti. |
 
-Nel riferimento c'è anche una seconda foto grande con un pannello in vetro a destra ("Create custom reports"). Nella pagina di Endero quello spazio è **Dove siamo**: foto della sede con l'indirizzo nel pannello. Sta dopo la storia, prima di domande e prezzo, così il selettore segue l'ordine della pagina (Su misura · Collezione · Storia · Dove siamo). Scelta nostra, da confermare con il proprietario.
+Nel riferimento c'è anche una seconda foto grande con un pannello in vetro a destra ("Create custom reports"). Nella pagina di Endero non c'è: il proprietario ha voluto l'indirizzo solo nel piè di pagina (15 novembre 2026). La voce "Dove siamo" del selettore porta lì; il pezzo con foto e pannello della sede è pronto in `src/parti/sede.mjs` per la pagina `/dove-siamo/`. Domande e prezzo contano come "Su misura" nel selettore.
 
 **Costruita il 15 novembre 2026** (passi 1–4 del punto 7). Testi in `contenuti/it/home.json`, modello in `src/pagine/home.mjs`, stile in `src/stili/sito.css`, comportamenti in `src/sito.js`. Nei file di testo le parti tra `[[ ]]` sono segnaposto: in anteprima si vedono evidenziate in giallo, così il proprietario sa cosa manca. Le foto in arrivo sono riquadri con una trama di tessuto e la descrizione della foto vera che ci andrà.
 
@@ -161,7 +161,7 @@ Comandi: `npm run anteprima` (sito in locale su http://127.0.0.1:8766, modulo sp
 
 1. Impalcatura: script di generazione, esbuild, Wrangler, schema D1. *Fatto.*
 2. Colori, carattere, testata, pillole, piè di pagina. *Fatto.*
-3. Pagina iniziale ferma, senza animazioni, con riquadri segnaposto. Anteprima desktop e mobile al proprietario. *Fatto, in attesa dell'ok.*
+3. Pagina iniziale ferma, senza animazioni, con riquadri segnaposto. Anteprima desktop e mobile al proprietario. *Fatto, approvato dal proprietario il 15 novembre 2026.*
 4. Apertura "La cucitura": il film e il lettore sono già fatti (vedi punto 4): va solo inserita nella pagina iniziale e collegata alla testata. *Fatto: a fine film il telo si solleva e scopre il video con il titolo, che resta fermo sotto.*
 5. Movimento del resto della pagina con la skill `animate`; poi `make-interfaces-feel-better`, `mobile-native`, `break-ui`.
 6. Altre pagine, modulo con Worker, D1 e Turnstile, banner dei consensi, file per Google.

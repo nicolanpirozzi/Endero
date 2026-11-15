@@ -1530,13 +1530,40 @@ body[data-barra] .selettore {
   height: auto;
 }
 
+.piede__colonne,
+.piede__link {
+  display: flex;
+  column-gap: 64px;
+}
+
 .piede__colonne {
   grid-area: colonne;
-  display: grid;
-  grid-template-columns: auto auto;
-  column-gap: 64px;
   padding-top: 4px;
   padding-right: 60px;
+}
+
+.piede__sede {
+  font-size: 12px;
+  font-weight: 400;
+  font-stretch: 118%;
+  line-height: 25px;
+  text-transform: uppercase;
+}
+
+.piede__sede address {
+  display: grid;
+  font-style: normal;
+}
+
+.piede__colonne .piede__sede a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.piede__sede .icona {
+  width: 12px;
+  height: 12px;
 }
 
 .piede__colonne a {
@@ -2003,9 +2030,13 @@ body[data-barra] .selettore {
   }
 
   .piede__colonne {
-    justify-content: start;
-    column-gap: 40px;
+    flex-direction: column;
+    row-gap: 28px;
     padding: 0;
+  }
+
+  .piede__link {
+    column-gap: 40px;
   }
 
   .piede__fondo {

@@ -1,5 +1,5 @@
 // Il telaio di ogni pagina: intestazione HTML, testata, piè di pagina, pillola fissa.
-import { esc, t, piano, logo, foglioSimboli } from './base.mjs';
+import { esc, t, piano, logo, foglioSimboli, icona } from './base.mjs';
 
 export function testata(sito) {
   const s = sito.testata;
@@ -25,13 +25,21 @@ export function piede(sito) {
         return `<li><a href="${esc(v.link)}"${fuori}>${esc(v.testo)}</a></li>`;
       }).join('')}</ul>
     </div>`).join('\n    ');
-  return `<footer class="piede">
+  const s = p.sede;
+  return `<footer class="piede" id="dove-siamo" data-gruppo="dove-siamo">
   <a class="piede__marchio" href="/" aria-label="${esc(sito.testata.home)}">${logo('completo')}</a>
-  <nav class="piede__colonne" aria-label="Collegamenti del sito">
+  <div class="piede__colonne">
+    <nav class="piede__link" aria-label="Collegamenti del sito">
     ${colonne}
-  </nav>
+    </nav>
+    <div class="piede__colonna piede__sede">
+      <h2 class="nascosto">${esc(s.titolo)}</h2>
+      <address>${s.righe.map((r) => `<span>${esc(r)}</span>`).join('')}</address>
+      <p>${t(s.orari)}</p>
+      <a href="${esc(sito.contatti.mappa)}" target="_blank" rel="noopener">${esc(s.indicazioni)}${icona.freccia}</a>
+    </div>
+  </div>
   <div class="piede__fondo">
-    <p>${esc(p.indirizzo)}</p>
     <p>${t(p.legale)}</p>
   </div>
 </footer>`;
