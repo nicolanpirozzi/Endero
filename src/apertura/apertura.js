@@ -240,7 +240,6 @@ export async function avviaApertura(radice) {
     tessuto.toggleAttribute('data-visibile', sotto);
     telaMacchina.toggleAttribute('data-visibile', sotto);
     radice.style.setProperty('--apertura-invito', (1 - liscio(y / (0.3 * vh))).toFixed(3));
-    radice.style.setProperty('--apertura-salta', y >= L - 2 ? '0' : '1');
     if (!sotto) {
       // la pozza di luce scende verso l'ago mentre la camera sale: all'arrivo è già al suo posto
       luce.style.setProperty('--luce-x', '50%');
@@ -318,6 +317,7 @@ export async function avviaApertura(radice) {
   function passoCiclo(ora) {
     richiesta = 0;
     const y = limita(-radice.getBoundingClientRect().top, 0, L);
+    salta(y);
     const dt = Math.min(0.1, (ora - prima) / 1000 || 0.016);
     prima = ora;
     if (yMorbida < 0 || Math.abs(y - yMorbida) < 0.4) yMorbida = y;
@@ -326,8 +326,21 @@ export async function avviaApertura(radice) {
     if (attivo) richiesta = requestAnimationFrame(passoCiclo);
   }
 
+  // "Salta l'introduzione" è fisso sullo schermo: si spegne con lo scorrimento vero, non con quello ammorbidito,
+  // così non resta acceso sul resto della pagina quando si salta di colpo oltre l'apertura.
+  let saltaVisibile = null;
+  function salta(y) {
+    const v = y < L - 2;
+    if (v === saltaVisibile) return;
+    saltaVisibile = v;
+    radice.style.setProperty('--apertura-salta', v ? '1' : '0');
+    const link = radice.querySelector('.apertura__salta');
+    if (link) { link.tabIndex = v ? 0 : -1; link.toggleAttribute('data-spento', !v); }
+  }
+
   const osserva = new IntersectionObserver((voci) => {
     attivo = voci[0].isIntersecting;
+    if (!attivo) salta(limita(-radice.getBoundingClientRect().top, 0, L));
     if (attivo && !richiesta) richiesta = requestAnimationFrame(passoCiclo);
   }, { rootMargin: '50% 0px' });
 

@@ -99,6 +99,10 @@
   transition: opacity 240ms ease-out;
 }
 
+.apertura__salta[data-spento] {
+  pointer-events: none;
+}
+
 .apertura--viva .apertura__palco {
   display: block;
   position: sticky;
