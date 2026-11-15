@@ -136,7 +136,7 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 - Product senza offerta finché non c'è il carrello; il prezzo si mostra in pagina.
 - Il configuratore, quando si riapre, vive in `/camicie-su-misura/configuratore/`.
 - Tutte le pagine della tabella esistono dal 15 novembre 2026, con segnaposto dove mancano foto e testi. Le pagine dei capi nascono da `contenuti/it/prodotti.json` (campi e esempio nel file stesso). I vecchi indirizzi PrestaShop portano alle pagine nuove con `dist/_redirects`.
-- "Diventa rivenditore" (chi compra da Endero per rivendere): sezione chiesta dal proprietario il 14 novembre 2026, ancora da definire con lui. Indirizzo previsto `/diventa-rivenditore/`; il menu e il piè di pagina devono lasciarle il posto. Finché non è definita non si costruisce e non compare nel sito.
+- "Diventa rivenditore" (`/diventa-rivenditore/`): progettata il 15 novembre 2026, da costruire. Tutto al punto 9.
 
 ## 6. Contatti, modulo ed email
 
@@ -174,3 +174,72 @@ Comandi: `npm run anteprima` (sito in locale su http://127.0.0.1:8766, modulo sp
 - Dodici foto verticali di dettagli e capi per la griglia, una foto orizzontale grande, tre foto per gli ingressi alla collezione, foto per la storia.
 - Foto, nomi, descrizioni e prezzi dei prodotti della collezione.
 - Orari della sede, prezzo "a partire da", testi delle domande frequenti.
+
+## 9. Diventa rivenditore
+
+Progetto del 15 novembre 2026, sulle scelte del proprietario (in `CLAUDE.md`, "Diventa rivenditore"). Da costruire con Opus 5.5. Testi in bozza già scritti in `contenuti/it/diventa-rivenditore.json`: la pagina si monta con quelli.
+
+**A chi parla.** Tre persone diverse sotto lo stesso nome: il negoziante che vuole vendere la collezione, il negozio o marchio che vuole camicie con la propria etichetta, il negozio che vuole offrire il su misura senza avere un laboratorio. Può scrivere chiunque; Endero valuta caso per caso. Qui "oltre 2.500 negozi serviti" e "dal 1996" sono l'argomento principale.
+
+**Cosa non c'è, per scelta.** Niente listino, niente ordine minimo, niente condizioni, niente area riservata: Endero manda tutto per email dopo la richiesta. La pagina presenta e raccoglie la richiesta.
+
+**Indirizzo e Google.** Una sola pagina, `/diventa-rivenditore/`, con tre sezioni ancorate. Si dividerà in tre pagine quando ci saranno foto e contenuti veri per ognuna: oggi sarebbero pagine vuote. Solo italiano; l'inglese arriverà con la versione inglese di tutto il sito (proprietario).
+
+| Elemento | Valore |
+| --- | --- |
+| H1 | Diventa rivenditore Endero |
+| H2 | Camicie uomo all'ingrosso · Camicie con il tuo marchio · Su misura per i tuoi clienti · Come funziona · Domande frequenti |
+| Ricerche | camicie uomo ingrosso, fornitore camicie per negozi, camicie con il proprio marchio, produzione camicie conto terzi, camicie su misura per negozi |
+| Dati strutturati | quelli di base, più tre `Service` con `audience` di tipo `BusinessAudience` e `provider` la sede, più `FAQPage` |
+
+**La pagina, dall'alto in basso.** Tutti pezzi già approvati in `src/parti/sezioni.mjs` e `src/pagine/storia.mjs`: nessun disegno nuovo.
+
+| # | Pezzo | Contenuto |
+| --- | --- | --- |
+| 1 | `eroePagina` | Titolo della pagina su foto. |
+| 2 | `nastro` | I fatti confermati, come in pagina iniziale. Quando arrivano i loghi dei negozi clienti (`loghi.voci`), il nastro mostra quelli, come nel riferimento: stessa fascia, loghi a un colore alti 20 px. |
+| 3 | Tre riquadri (`collezione`) | "Tre modi di lavorare con Endero": ogni riquadro porta alla sua sezione nella pagina. |
+| 4 | Tre capitoli (come in `/storia/`) | Foto e testo alternati, con `id` `ingrosso`, `marchio`, `su-misura`. La parola grande è l'etichetta, il titolo è l'H2. Sotto ogni testo il link "Fai richiesta" verso il modulo. |
+| 5 | Testo e pannello (`funziona`) | "Come funziona" in tre passi a sinistra, modulo a destra, `id="richiesta"`. |
+| 6 | `domande` | Sette domande, tutte con risposte già confermate dalle scelte del proprietario. |
+| 7 | Chiusura (come in `/storia/`) | "Parliamone": pillola verso il modulo e pillola WhatsApp. |
+
+Niente sezione prezzo e niente selettore.
+
+**Il modulo.** Tipo `rivenditore`, stesso indirizzo `POST /api/contatto`, stesso aspetto dei moduli esistenti.
+
+| Campo | Nome | Obbligatorio |
+| --- | --- | --- |
+| Nome e cognome | `nome` | sì |
+| Negozio o marchio | `attivita` | no |
+| Telefono o WhatsApp | `telefono` | sì |
+| Email | `email` | sì: il listino parte per email |
+| Città | `citta` | sì |
+| Paese | `nazione` | sì, già scritto "Italia" |
+| Cosa ti interessa | `interesse` | sì, almeno una: tre caselle |
+| Tipo di attività | `tipo_attivita` | no: una scelta tra cinque |
+| Partita IVA | `partita_iva` | no |
+| Sito o Instagram | `profilo` | no |
+| Messaggio | `messaggio` | no |
+| Consenso privacy | `privacy` | sì |
+
+- I campi sono descritti nei contenuti (`modulo.campi`): il componente `modulo` va reso capace di disegnare un elenco di campi, così i prossimi moduli non chiedono codice nuovo. I due moduli esistenti non devono cambiare aspetto.
+- "Almeno una casella" non si può imporre con il solo HTML: lo controlla lo script prima dell'invio e lo ricontrolla sempre il Worker, che senza JavaScript risponde con la pagina di errore.
+- Non chiamare nessun campo `sito_web`: è il nome dell'esca antispam.
+- Salvataggio: nuova colonna `dettagli` (testo JSON) nella tabella `richieste`, con i campi propri dei rivenditori; `tipo` vale `rivenditore`. Il Worker accetta solo i nomi previsti, con i limiti di lunghezza della tabella qui sopra, e per questo tipo pretende email, città e almeno un interesse. Nessun database è ancora online: basta aggiornare `db/schema.sql` e ricreare quello locale.
+- Conferma: "Ti rispondiamo per email con listino e condizioni". Nessuna promessa sui tempi.
+- Quando ci sarà Resend: avviso a `info@endero.it` con oggetto "Nuova richiesta rivenditore".
+- Privacy: in `contenuti/it/legale.json`, alla voce "Quali dati raccogliamo", aggiungere: "Se chiedi di diventare rivenditore: nome del negozio o marchio, città, Paese, tipo di attività, partita IVA e sito se li indichi."
+
+**Come ci si arriva** (testi in `richiami`).
+
+- Testata: terzo pulsante "Rivenditori", in vetro come "Collezione", solo su computer (da 810 px in su). Nella pagina dei rivenditori il pulsante chiaro dice "Fai richiesta" e porta al modulo, al posto di "Prenota la presa misure".
+- Piè di pagina: "Diventa rivenditore" nella colonna dei link, dopo "Dove siamo". Sul telefono è l'ingresso principale insieme alla fascia.
+- Pagina iniziale: una fascia su fondo chiaro caldo tra il prezzo e il piè di pagina, con titolo, una riga e il link. Stesso aspetto del blocco della collezione, senza riquadri. Non entra nel selettore.
+- `/storia/`: link "Diventa rivenditore" sotto il capitolo "2.500 negozi serviti".
+- `/dove-siamo/`: quarta voce "Rivenditori" nell'elenco dei contatti.
+- `sitemap.xml`.
+
+**Controlli prima di mostrarla al proprietario.** Un solo H1; invio del modulo con e senza JavaScript, compreso l'errore "nessun interesse scelto"; riga salvata con `tipo` e `dettagli` giusti; terzo pulsante assente sotto 810 px e testata che non va a capo a 1024 px; nomi di negozio lunghissimi nel modulo; movimento ridotto; larghezza 390 senza scorrimento di lato. Poi video o schermate su computer e telefono, e pubblicazione solo dopo il suo ok.
+
+**Da ricevere.** Loghi dei negozi clienti che danno il permesso (a un colore, SVG o PNG); foto per la testa della pagina, i tre riquadri e i tre capitoli; conferma dei testi.

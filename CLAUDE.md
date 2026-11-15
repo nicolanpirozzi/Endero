@@ -12,7 +12,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 ## Ambito
 
 - Dentro: solo il brand Endero (camicie e abbigliamento uomo): vendita ai privati e sezione "Diventa rivenditore".
-- In progettazione: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Le scelte del proprietario sono in Decisioni; il progetto (struttura, testi, campi del modulo) lo fa Fable 5.2 prima di scrivere codice, poi Opus 5.5 lo realizza (proprietario, 2026-11-15). Non c'entra con il brand workwear, che resta fuori.
+- Da costruire: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Progetto fatto con Fable 5.2 il 2026-11-15: punto 9 della direzione creativa, testi in `contenuti/it/diventa-rivenditore.json`. La realizza Opus 5.5 (proprietario). Non c'entra con il brand workwear, che resta fuori.
 - In sospeso: il configuratore. Il proprietario ha chiesto di metterlo da parte e pensarci dopo (2026-11-14). Non fare domande né lavoro sul configuratore finché non lo riapre lui. Le decisioni già prese restano valide. Si lavora prima su pagina iniziale, storia e vetrina.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
 - Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it.
@@ -94,6 +94,11 @@ Diventa rivenditore
 - 2026-11-15 · Può fare richiesta chiunque: Endero valuta caso per caso. Scartati: solo negozi con partita IVA, negozi e agenti. (proprietario)
 - 2026-11-15 · Sul sito solo presentazione e modulo di richiesta; listino e condizioni Endero li manda in privato dopo il contatto. Scartati: area riservata con listino, catalogo PDF dopo l'approvazione. (proprietario)
 - 2026-11-15 · Le richieste arrivano come gli altri messaggi del sito: modulo salvato su D1, segnato come rivenditore, e più avanti anche per email a `info@endero.it`. (proprietario)
+- 2026-11-15 · Visibilità: terzo pulsante "Rivenditori" in testata su computer, link nel piè di pagina, fascia in pagina iniziale prima del piè di pagina, richiamo nella storia. Scartati: solo piè di pagina, senza pulsante in testata. (proprietario)
+- 2026-11-15 · Modulo "completo ma leggero": obbligatori nome, telefono, email, città, Paese e cosa interessa; facoltativi negozio o marchio, tipo di attività, partita IVA, sito o Instagram, messaggio. L'email è obbligatoria perché listino e condizioni partono per email. (proprietario)
+- 2026-11-15 · Endero serve rivenditori in Italia e all'estero; i capi si vedono in sede su appuntamento, con foto e catalogo in privato o con un campionario spedito. La pagina resta solo in italiano per ora. (proprietario)
+- 2026-11-15 · Nella pagina vanno i loghi dei negozi clienti, che manda il proprietario; finché non arrivano resta il nastro con i fatti. Scartato: solo i numeri. (proprietario)
+- 2026-11-15 · Una pagina sola con tre sezioni, non tre pagine: oggi mancano foto e contenuti per riempirle. Scelta nostra; si dividono quando arriva il materiale.
 
 Configuratore (in sospeso)
 
@@ -133,5 +138,5 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
 - Nome utente Instagram e altri profili. Serve per: link nel piè di pagina.
-- "Diventa rivenditore": progetto della pagina con Fable 5.2 (struttura come il riferimento, testi, dati da chiedere nel modulo, posto nel menu e nel piè di pagina). Serve per: costruire la sezione.
+- "Diventa rivenditore": loghi dei negozi clienti che danno il permesso, foto per la pagina, conferma dei testi in bozza. Serve per: completare la pagina dopo la costruzione.
 - (In sospeso con il configuratore) Opzioni del su misura, tempi di consegna, email che riceve gli ordini.
