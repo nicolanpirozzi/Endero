@@ -18,7 +18,7 @@ export default {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 
-async function contatto(request, env) {
+export async function contatto(request, env) {
   const vuoleJson = (request.headers.get('Accept') || '').includes('application/json');
   const rispondi = (ok, stato, errore) => {
     if (vuoleJson) return Response.json(ok ? { ok: true } : { ok: false, errore }, { status: stato });

@@ -1,0 +1,48 @@
+// Worker dell'anteprima: stesse pagine e stesso modulo del sito, ma i file arrivano dall'archivio KV
+// (vedi wrangler.toml, [env.anteprima]). Serve solo a mostrare il sito prima della messa online:
+// ogni risposta dice ai motori di ricerca di non indicizzare.
+import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
+import manifestJSON from '__STATIC_CONTENT_MANIFEST';
+import { contatto } from './index.js';
+
+const manifest = JSON.parse(manifestJSON);
+
+function durata(percorso) {
+  if (percorso.startsWith('/risorse/') || percorso.startsWith('/font/')) return 'public, max-age=31536000, immutable';
+  if (percorso.startsWith('/film/')) return 'public, max-age=604800';
+  return 'no-cache';
+}
+
+function conIntestazioni(risposta, percorso, stato) {
+  const r = new Response(risposta.body, { status: stato || risposta.status, headers: risposta.headers });
+  r.headers.set('Cache-Control', durata(percorso));
+  r.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  r.headers.set('X-Content-Type-Options', 'nosniff');
+  r.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  r.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  return r;
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/contatto') {
+      if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
+      return contatto(request, env);
+    }
+    const evento = { request, waitUntil: ctx.waitUntil.bind(ctx) };
+    const opzioni = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: manifest, cacheControl: { bypassCache: false, edgeTTL: 3600, browserTTL: null } };
+    try {
+      return conIntestazioni(await getAssetFromKV(evento, opzioni), url.pathname);
+    } catch (errore) {
+      if (errore instanceof MethodNotAllowedError) return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      if (!(errore instanceof NotFoundError)) return new Response('Errore del server', { status: 500 });
+      try {
+        const nonTrovata = await getAssetFromKV(evento, { ...opzioni, mapRequestToAsset: (req) => new Request(new URL('/404.html', req.url).toString(), req) });
+        return conIntestazioni(nonTrovata, '/404.html', 404);
+      } catch {
+        return new Response('Pagina non trovata', { status: 404 });
+      }
+    }
+  },
+};

@@ -1,0 +1,12 @@
+# Anteprima da mostrare prima della messa online. Si pubblica solo con l'ok del proprietario:
+#   node build/costruisci.mjs && npx wrangler deploy --config wrangler.anteprima.toml
+# Worker separato (endero-anteprima), senza database: lì i moduli avvisano che non salvano.
+# I file stanno nell'archivio KV (Workers Sites) e non negli "assets": l'ambiente di lavoro inietta la chiave
+# di Cloudflare in ogni richiesta, e il caricamento degli assets, che usa un'autorizzazione temporanea, viene rifiutato.
+name = "endero-anteprima"
+main = "worker/anteprima.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[site]
+bucket = "./dist"

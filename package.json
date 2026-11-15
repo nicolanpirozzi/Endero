@@ -12,6 +12,7 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@cloudflare/kv-asset-handler": "0.4.0",
     "esbuild": "^0.25.12",
     "wrangler": "^4.162.0"
   },
