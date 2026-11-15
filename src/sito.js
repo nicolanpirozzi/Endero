@@ -114,6 +114,41 @@ function testata() {
   aggiorna();
 }
 
+// ---------------------------------------------------------------- menu del telefono
+// Senza script "Menu" è un link al piè di pagina. Con lo script diventa un pulsante che apre un <dialog> a tutto
+// schermo: il fuoco resta dentro, Esc lo chiude, la pagina sotto non scorre, scegliere una voce lo chiude.
+function menu() {
+  const dialogo = document.querySelector('[data-menu]');
+  const link = document.querySelector('[data-menu-apri]');
+  if (!dialogo || !link || typeof dialogo.showModal !== 'function') return;
+  const pulsante = document.createElement('button');
+  pulsante.type = 'button';
+  pulsante.className = link.className;
+  pulsante.textContent = link.textContent;
+  pulsante.setAttribute('aria-haspopup', 'dialog');
+  pulsante.setAttribute('aria-expanded', 'false');
+  pulsante.setAttribute('aria-controls', dialogo.id);
+  link.replaceWith(pulsante);
+
+  const chiudi = () => { if (dialogo.open) dialogo.close(); };
+  pulsante.addEventListener('click', () => {
+    dialogo.showModal();
+    pulsante.setAttribute('aria-expanded', 'true');
+    document.documentElement.classList.add('menu-aperto');
+    lenis?.stop();
+  });
+  // alla chiusura (pulsante, Esc o voce scelta) la pagina torna a scorrere e il fuoco torna su "Menu"
+  dialogo.addEventListener('close', () => {
+    pulsante.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('menu-aperto');
+    lenis?.start();
+  });
+  dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', chiudi);
+  dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', chiudi));
+  // se lo schermo si allarga (telefono girato, finestra ingrandita) il menu non serve più
+  matchMedia('(min-width: 810px)').addEventListener('change', (e) => { if (e.matches) chiudi(); });
+}
+
 // ---------------------------------------------------------------- selettore delle sezioni
 function selettore() {
   const nav = document.querySelector('[data-selettore]');
@@ -380,6 +415,7 @@ function avvia(nome, fn) {
 avvia('scorrimento', scorrimento);
 avvia('ancore', ancore);
 avvia('testata', testata);
+avvia('menu', menu);
 avvia('selettore', selettore);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));

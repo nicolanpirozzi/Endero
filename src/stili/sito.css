@@ -426,11 +426,13 @@ button {
   left: 0;
   right: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  padding: 10px;
-  padding-left: max(10px, env(safe-area-inset-left));
-  padding-right: max(10px, env(safe-area-inset-right));
+  gap: 12px;
+  /* la testata sta sugli stessi margini del contenuto */
+  padding: 10px var(--margine);
+  padding-left: max(var(--margine), env(safe-area-inset-left));
+  padding-right: max(var(--margine), env(safe-area-inset-right));
   color: var(--filo);
   pointer-events: none;
   transition: transform 420ms var(--morbido), background-color 300ms ease-out;
@@ -441,8 +443,9 @@ button {
 }
 
 .testata__marchio {
-  display: block;
-  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   color: inherit;
 }
 
@@ -453,7 +456,106 @@ button {
 
 .testata__azioni {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+.testata__menu {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ menu del telefono */
+/* Un <dialog> a tutto schermo sul blu del piè di pagina: tiene il fuoco dentro e si chiude con Esc. */
+
+.menu {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 10px var(--margine) max(24px, env(safe-area-inset-bottom));
+  padding-left: max(var(--margine), env(safe-area-inset-left));
+  padding-right: max(var(--margine), env(safe-area-inset-right));
+  border: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--blu);
+  color: var(--filo);
+}
+
+.menu[open] {
+  display: flex;
+  flex-direction: column;
+  animation: menu-entra 240ms var(--morbido);
+}
+
+.menu::backdrop {
+  background: var(--blu);
+}
+
+@keyframes menu-entra {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+.menu__testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.menu__corpo {
+  margin-top: 40px;
+}
+
+.menu__voci {
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.menu__voci a {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 22px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.menu__voci a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.menu__contatti {
+  display: grid;
+  margin-top: auto;
+  padding-top: 40px;
+}
+
+.menu__contatti a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 12px;
+  font-weight: 400;
+  font-stretch: 118%;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+html.menu-aperto {
+  overflow: hidden;
 }
 
 /* Con lo script la testata resta in vista sull'apertura e sul video, poi si ritira;
@@ -487,7 +589,7 @@ main[tabindex="-1"]:focus {
 .pillola-fissa {
   position: fixed;
   z-index: 25;
-  right: max(21px, env(safe-area-inset-right));
+  right: max(var(--margine), env(safe-area-inset-right));
   bottom: max(21px, env(safe-area-inset-bottom));
   height: 37px;
   padding: 0 18px;
@@ -1554,7 +1656,7 @@ body[data-barra] .selettore {
     "marchio colonne"
     "fondo fondo";
   gap: 40px 24px;
-  padding: 40px 28px 18px;
+  padding: 40px var(--margine) 18px;
   padding-bottom: max(18px, env(safe-area-inset-bottom));
   background: var(--blu);
   color: var(--filo);
@@ -2134,7 +2236,7 @@ body[data-barra] .selettore {
 
 @media (max-width: 809px) {
   :root {
-    --margine: 10px;
+    --margine: 16px;
     --spazio-sezione: 90px;
   }
 
@@ -2142,9 +2244,29 @@ body[data-barra] .selettore {
     display: none;
   }
 
-  .testata .pillola {
-    font-size: 10px;
+  .testata .pillola,
+  .menu__chiudi {
+    height: 44px;
+    font-size: 11px;
     padding: 0 18px;
+  }
+
+  .testata__marchio svg {
+    width: 100px;
+  }
+
+  .testata__menu {
+    display: inline-flex;
+  }
+
+  /* sul telefono la pillola dice solo "Prenota": il resto lo leggono i lettori di schermo */
+  .testata__resto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .eroe__testo {
@@ -2486,7 +2608,7 @@ body[data-barra] .selettore {
       "colonne"
       "fondo";
     gap: 36px;
-    padding: 56px 28px 22px;
+    padding: 56px var(--margine) 22px;
     padding-bottom: max(22px, env(safe-area-inset-bottom));
   }
 
@@ -2494,20 +2616,24 @@ body[data-barra] .selettore {
     width: 200px;
   }
 
-  .piede__colonne {
+  .piede__colonne,
+  .piede__link {
     flex-direction: column;
     row-gap: 28px;
     padding: 0;
   }
 
-  .piede__link {
-    column-gap: 40px;
+  /* sul telefono i collegamenti del piè di pagina si toccano col dito: almeno 44 px */
+  .piede__colonne a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    line-height: 1.3;
+    white-space: normal;
   }
 
-  /* sul telefono i collegamenti del piè di pagina si toccano col dito: righe più alte */
-  .piede__colonne a,
   .piede__sede {
-    line-height: 34px;
+    line-height: 30px;
   }
 
   .piede__fondo {
@@ -2517,7 +2643,7 @@ body[data-barra] .selettore {
   }
 
   .pillola-fissa {
-    right: max(14px, env(safe-area-inset-right));
+    right: max(var(--margine), env(safe-area-inset-right));
     bottom: max(14px, env(safe-area-inset-bottom));
   }
 

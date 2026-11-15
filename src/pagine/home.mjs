@@ -70,5 +70,5 @@ export default function home({ sito, testi: h, risorse, anteprima }) {
     ${prezzo(h.prezzo, sito)}
   </div>
 </main>`;
-  return pagina({ sito, meta: h.meta, percorso: '/', corpo, risorse, anteprima, dati: datiBase(sito, h.meta), classe: 'pagina-home', prenota: '#prenota' });
+  return pagina({ sito, meta: h.meta, percorso: '/', corpo, risorse, anteprima, dati: datiBase(sito, h.meta), classe: 'pagina-home', azione: { href: '#prenota' } });
 }

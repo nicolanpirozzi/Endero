@@ -34,5 +34,5 @@ export default function paginaSuMisura({ sito, testi: p, home: h, risorse, antep
       mainEntity: confermate.map((v) => ({ '@type': 'Question', name: v.domanda, acceptedAnswer: { '@type': 'Answer', text: v.risposta } })),
     }] : []),
   ];
-  return pagina({ sito, meta: p.meta, percorso: '/camicie-su-misura/', corpo, risorse, anteprima, dati, classe: 'pagina-su-misura', prenota: '#prenota' });
+  return pagina({ sito, meta: p.meta, percorso: '/camicie-su-misura/', corpo, risorse, anteprima, dati, classe: 'pagina-su-misura', azione: { href: '#prenota' } });
 }

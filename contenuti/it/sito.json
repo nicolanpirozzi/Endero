@@ -18,7 +18,28 @@
   "testata": {
     "home": "Endero, pagina iniziale",
     "prenota": "Prenota la presa misure",
-    "collezione": "Collezione"
+    "prenota_breve": "Prenota",
+    "prenota_link": "/camicie-su-misura/#prenota",
+    "collezione": "Collezione",
+    "rivenditori": "Rivenditori",
+    "menu": "Menu",
+    "menu_chiudi": "Chiudi il menu"
+  },
+  "menu": {
+    "_nota": "Il pannello del menu sul telefono. Senza JavaScript il pulsante Menu porta al piè di pagina, che ha le stesse voci.",
+    "etichetta": "Menu",
+    "chiudi": "Chiudi",
+    "voci": [
+      { "testo": "Collezione", "link": "/collezione/" },
+      { "testo": "Su misura", "link": "/camicie-su-misura/" },
+      { "testo": "Cultura e artigianato", "link": "/cultura-e-artigianato/" },
+      { "testo": "Rivenditori", "link": "/diventa-rivenditore/" },
+      { "testo": "Dove siamo", "link": "/dove-siamo/" }
+    ],
+    "contatti": [
+      { "testo": "WhatsApp 333 854 8712", "link": "https://wa.me/393338548712" },
+      { "testo": "info@endero.it", "link": "mailto:info@endero.it" }
+    ]
   },
   "pillola_fissa": "Scrivici su WhatsApp",
   "foto_in_arrivo": "Foto in arrivo",
@@ -28,22 +49,11 @@
       {
         "titolo": "Sito",
         "voci": [
-          {
-            "testo": "Su misura",
-            "link": "/camicie-su-misura/"
-          },
-          {
-            "testo": "Collezione",
-            "link": "/collezione/"
-          },
-          {
-            "testo": "Storia",
-            "link": "/storia/"
-          },
-          {
-            "testo": "Dove siamo",
-            "link": "/dove-siamo/"
-          }
+          { "testo": "Collezione", "link": "/collezione/" },
+          { "testo": "Su misura", "link": "/camicie-su-misura/" },
+          { "testo": "Cultura e artigianato", "link": "/cultura-e-artigianato/" },
+          { "testo": "Dove siamo", "link": "/dove-siamo/" },
+          { "testo": "Diventa rivenditore", "link": "/diventa-rivenditore/" }
         ]
       },
       {
