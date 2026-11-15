@@ -57,6 +57,49 @@ def orienta(ob):
     print('facce girate:', girate, 'su', len(me.polygons))
 
 
+def abbassa_braccia(ob, gradi):
+    """Il modello ha le braccia molto aperte (41 gradi dalla verticale). Le maniche si piegano verso il basso
+    attorno al giro manica: sulla cucitura non si muove nulla, a 14 cm dalla cucitura la rotazione è completa,
+    in mezzo cresce con dolcezza. Il corpo della camicia non si tocca."""
+    if not gradi:
+        return
+    me = ob.data
+    nomi = [m.name for m in me.materials]
+    co = np.zeros((len(me.vertices), 3)); me.vertices.foreach_get('co', co.ravel())
+    manica = np.zeros(len(me.vertices), bool); corpo = np.zeros(len(me.vertices), bool)
+    for p in me.polygons:
+        n = nomi[p.material_index]
+        v = list(p.vertices)
+        if n in ('Sleeve_Right', 'Sleeve_Left', 'Cuffs_Boundry'):
+            manica[v] = True
+        elif n in ('Front', 'Back', 'Shirt_Middle_Boundry', 'Pockert_Boundry'):
+            corpo[v] = True
+        elif abs(co[v[0], 0]) > 0.3:                 # bottoni e fili dei polsini
+            manica[v] = True
+    cucitura = manica & corpo
+    manica &= ~cucitura
+    from mathutils import kdtree
+    a = math.radians(gradi)
+    for segno in (1.0, -1.0):
+        lato = co[:, 0] * segno > 0
+        cuc = np.nonzero(cucitura & lato)[0]
+        perno = co[cuc].mean(0)
+        albero = kdtree.KDTree(len(cuc))
+        for k, i in enumerate(cuc):
+            albero.insert(co[i], k)
+        albero.balance()
+        idx = np.nonzero(manica & lato)[0]
+        dist = np.array([albero.find(co[i])[2] for i in idx])
+        t = np.clip(dist / 0.14, 0.0, 1.0)
+        ang = a * t * t * (3 - 2 * t) * segno          # verso il corpo: il segno cambia da un lato all'altro
+        rel = co[idx] - perno
+        c, sn = np.cos(ang), np.sin(ang)
+        # rotazione attorno all'asse davanti-dietro (Y) passante per il centro del giro manica
+        co[idx, 0] = perno[0] + rel[:, 0] * c + rel[:, 2] * sn
+        co[idx, 2] = perno[2] - rel[:, 0] * sn + rel[:, 2] * c
+    me.vertices.foreach_set('co', co.ravel()); me.update()
+
+
 def tre_materiali(ob):
     """Riduce i nove materiali del modello a tre e restituisce, per ogni faccia, 0 tessuto, 1 bottone, 2 filo."""
     me = ob.data
@@ -182,11 +225,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('obj'); ap.add_argument('uscita')
     ap.add_argument('--campioni', type=int, default=96, help="campioni per la luce d'ambiente")
+    ap.add_argument('--braccia', type=float, default=0.0, help='di quanti gradi abbassare le braccia (0: come nel modello)')
     a = ap.parse_args()
     os.makedirs(a.uscita, exist_ok=True)
 
     sc, ob = importa(a.obj)
     me = ob.data
+    # la libertà di movimento si decide sulla posa originale, dove polsini e collo si riconoscono dalla posizione
+    co0 = np.zeros((len(me.vertices), 3)); me.vertices.foreach_get('co', co0.ravel())
+    co0 -= np.array([0.0, 0.0, (co0[:, 2].max() + co0[:, 2].min()) / 2])
+    abbassa_braccia(ob, a.braccia)
     tipo_faccia = tre_materiali(ob)
     co, centro = centra(ob)
     metri_per_uv = mappa_in_scala(ob, tipo_faccia)
@@ -199,7 +247,7 @@ def main():
     print('vertici', len(me.vertices), 'triangoli', sum(len(p.vertices) - 2 for p in me.polygons), 'centro tolto', centro.round(3))
     print('ingombro', co.min(0).round(3), co.max(0).round(3))
 
-    lib = liberta(co, tipo_vertice)
+    lib = liberta(co0, tipo_vertice)
     occ = liscia(occlusione(sc, ob, a.campioni), ob)
     print('occlusione: min', round(float(occ.min()), 3), 'media', round(float(occ.mean()), 3), 'max', round(float(occ.max()), 3))
     scrivi_dati(ob, lib, np.clip(occ, 0, 1))
