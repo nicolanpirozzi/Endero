@@ -572,12 +572,6 @@ html.menu-aperto {
   transform: none;
 }
 
-section[tabindex="-1"]:focus,
-footer[tabindex="-1"]:focus,
-main[tabindex="-1"]:focus {
-  outline: none;
-}
-
 .js .testata[data-stato="barra"] {
   background: rgba(10, 27, 69, 0.86);
   -webkit-backdrop-filter: blur(16px);
@@ -634,7 +628,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
 .eroe__fondo .attesa__nota {
   left: 50%;
   right: auto;
-  bottom: 84px;
+  bottom: 28px;
   transform: translateX(-50%);
   text-align: center;
 }
@@ -673,7 +667,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
 }
 
 .nastro {
-  height: 288px;
+  height: 220px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -946,7 +940,7 @@ body[data-barra] .selettore {
 
 .scheda-misure .pillola {
   justify-self: start;
-  height: 37px;
+  height: 45px;
   padding: 0 18px;
 }
 
@@ -1706,6 +1700,10 @@ body[data-barra] .selettore {
   }
 }
 
+.vetrina {
+  padding-top: 48px;
+}
+
 .vetrina__tutti {
   margin-top: 40px;
   text-align: center;
@@ -1713,7 +1711,7 @@ body[data-barra] .selettore {
 
 /* i tre ingressi per categoria, subito sotto la vetrina */
 .collezione--sola {
-  margin-top: 10px;
+  margin-top: var(--spazio-sezione);
   padding: 0;
   background: none;
 }
@@ -1832,7 +1830,7 @@ body[data-barra] .selettore {
 
 /* fascia dei rivenditori: come il blocco della collezione, senza riquadri */
 .fascia {
-  padding: 72px 0;
+  padding: 56px 0;
 }
 
 .fascia .intesta {
@@ -2455,6 +2453,271 @@ body[data-barra] .selettore {
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* ------------------------------------------------------------------ strato di tocco (punto 11) */
+/* Ogni pulsante, link e foto cliccabile risponde al puntatore; il fuoco da tastiera mostra lo stesso stato.
+   Si muovono solo trasformazioni, opacità e colori: mai larghezze, altezze o margini. */
+
+.pillola {
+  transition: transform 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pillola:hover {
+    transform: translate3d(0, -1px, 0);
+    transition-duration: 150ms;
+  }
+}
+
+.pillola:focus-visible {
+  transform: translate3d(0, -1px, 0);
+}
+
+.pillola:active {
+  transform: translate3d(0, 1px, 0) scale(0.985);
+  transition-duration: 90ms;
+}
+
+/* link di testo: un solo aspetto. A riposo una riga sottile; al passaggio una riga piena si disegna da sinistra */
+/* le righe sono due pseudo-elementi: la riga piena cresce con una trasformazione, il resto non si muove */
+.collegamento,
+.collegamento--indietro,
+.piede__colonne a,
+.pannello-sede__righe a,
+.contatti__valore,
+.menu__contatti a {
+  position: relative;
+}
+
+.collegamento,
+.collegamento--indietro {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.collegamento::before,
+.collegamento::after,
+.piede__colonne a::after,
+.pannello-sede__righe a::after,
+.contatti__valore::after,
+.menu__contatti a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  pointer-events: none;
+}
+
+/* a riposo: la riga sottile dei link di testo */
+.collegamento::before {
+  opacity: 0.3;
+}
+
+/* la riga piena: si disegna da sinistra al passaggio o con il fuoco */
+.collegamento::after,
+.piede__colonne a::after,
+.pannello-sede__righe a::after,
+.contatti__valore::after,
+.menu__contatti a::after {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 120ms ease-out;
+}
+
+/* nel piè di pagina, nel menu e negli elenchi i link stanno senza riga: la riga sta subito sotto la parola */
+.piede__colonne a::after,
+.menu__contatti a::after {
+  bottom: calc(50% - 0.85em);
+}
+
+.pannello-sede__righe a::after,
+.contatti__valore::after {
+  bottom: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .collegamento:hover::after,
+  .piede__colonne a:hover::after,
+  .pannello-sede__righe a:hover::after,
+  .contatti a:hover .contatti__valore::after,
+  .menu__contatti a:hover::after {
+    transform: none;
+    transition-duration: 150ms;
+  }
+  .piede__colonne a:hover,
+  .pannello-sede__righe a:hover,
+  .contatti a:hover .contatti__valore {
+    text-decoration: none;
+  }
+  .collegamento:hover .icona {
+    transform: translate3d(2px, -2px, 0);
+  }
+}
+
+.collegamento:focus-visible::after,
+.piede__colonne a:focus-visible::after,
+.pannello-sede__righe a:focus-visible::after,
+.contatti a:focus-visible .contatti__valore::after,
+.menu__contatti a:focus-visible::after {
+  transform: none;
+}
+
+.collegamento .icona {
+  transition: transform 150ms ease-out;
+}
+
+/* foto dentro un link: si avvicina dentro la sua cornice, che non cresce */
+.riquadro > .attesa,
+.capo__foto img,
+.capo__foto .attesa,
+.griglia__cornice > img,
+.griglia__cornice > .attesa {
+  transition: transform 400ms var(--morbido);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .riquadro:hover > .attesa,
+  a.capo__link:hover .capo__foto img,
+  a.capo__link:hover .capo__foto .attesa,
+  .griglia__link:hover .griglia__cornice > * {
+    transform: scale(1.03);
+    transition-duration: 600ms;
+  }
+}
+
+.riquadro:focus-visible > .attesa,
+.griglia__link:focus-visible .griglia__cornice > * {
+  transform: scale(1.03);
+}
+
+/* le schede che portano altrove salgono di 2 px */
+.contatti a {
+  transition: transform 120ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .contatti a:hover {
+    transform: translate3d(0, -2px, 0);
+    transition-duration: 180ms;
+  }
+}
+
+/* fuoco da tastiera: anello blu sulle zone chiare, chiaro sulle foto; i punti d'arrivo dei link interni lo mostrano */
+.riquadro:focus-visible {
+  outline: 2px solid var(--blu);
+  outline-offset: 3px;
+}
+
+section[tabindex="-1"]:focus-visible,
+.pannello[tabindex="-1"]:focus-visible,
+.capitolo[tabindex="-1"]:focus-visible,
+footer[tabindex="-1"]:focus-visible,
+main[tabindex="-1"]:focus-visible {
+  outline: 2px solid var(--blu);
+  outline-offset: -2px;
+}
+
+.piede[tabindex="-1"]:focus-visible,
+.eroe[tabindex="-1"]:focus-visible {
+  outline-color: var(--filo);
+  outline-offset: -4px;
+}
+
+/* campo del modulo con il fuoco: bordo blu pieno e anello, ben più di 3:1 sul campo bianco */
+.campo input:focus,
+.campo textarea:focus {
+  border-color: var(--blu);
+  box-shadow: 0 0 0 3px rgba(15, 40, 94, 0.22);
+}
+
+/* testata: le pillole in vetro si staccano anche sopra le zone scure */
+.testata .pillola--vetro {
+  background: rgba(251, 249, 244, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .testata .pillola--vetro:hover {
+    background: rgba(251, 249, 244, 0.24);
+  }
+}
+
+/* la pillola di WhatsApp ha un filo chiaro per staccarsi dalle foto scure; quando è nascosta non si raggiunge col Tab */
+.pillola-fissa {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.32), 0 6px 20px rgba(10, 27, 69, 0.18);
+  transition: opacity 300ms ease-out, transform 300ms var(--morbido), background-color 120ms ease-out, visibility 0s;
+}
+
+body:has([data-modulo]:focus-within) .pillola-fissa,
+.pillola-fissa[data-via],
+.js .pagina-home .pillola-fissa:not([data-visibile]) {
+  visibility: hidden;
+  transition: opacity 300ms ease-out, transform 300ms var(--morbido), visibility 0s linear 300ms;
+}
+
+/* sulle pagine chiare l'anello del fuoco è blu: quello chiaro non si vedrebbe */
+.salta-al-contenuto:focus-visible,
+.pagina-chiara .testata .pillola:focus-visible,
+.pagina-chiara .testata__marchio:focus-visible {
+  outline-color: var(--blu);
+}
+
+/* le scelte a pillola: la casella vera è nascosta ma resta raggiungibile; si tocca tutta la pillola */
+.scelta input {
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  pointer-events: none;
+}
+
+.scelta span {
+  cursor: pointer;
+}
+
+/* numeri dei passi: 4,5:1 sul bianco */
+.passi__numero {
+  opacity: 1;
+  color: var(--blu-tenue);
+}
+
+/* dopo il nastro la sezione che segue non raddoppia lo spazio */
+.nastro + .corpo > .sezione:first-child {
+  padding-top: 48px;
+}
+
+.nastro + .corpo > .collezione:first-child {
+  margin-top: 0;
+}
+
+/* "Salta l'introduzione" si tocca bene col dito: 44 px di altezza, stesso aspetto */
+.apertura__salta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* le foto segnaposto chiare: la nota si legge a 4,5:1 */
+.attesa--chiaro {
+  color: rgba(15, 40, 94, 0.8);
+}
+
+/* passaggio da una pagina all'altra: dissolvenza breve, solo dove il browser la conosce e senza movimento ridotto */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+    animation-timing-function: ease-out;
+  }
+}
+
 /* ------------------------------------------------------------------ schermi medi */
 
 @media (max-width: 1199px) {
@@ -2547,7 +2810,7 @@ body[data-barra] .selettore {
   }
 
   .nastro {
-    height: 258px;
+    height: 200px;
   }
 
   .nastro__binario li {
@@ -3012,12 +3275,143 @@ body[data-barra] .selettore {
   }
 
   .nastro__fatti {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 36px;
+    grid-template-columns: 1fr;
+    row-gap: 28px;
   }
 
   .nastro__fatti li {
     font-size: 15px;
+  }
+
+  /* --- un solo margine sul telefono: testi, foto, pannelli e testata stanno a var(--margine) dal bordo */
+  .intesta,
+  .domande .titolo,
+  .prezzo__testo {
+    padding-left: var(--margine);
+    padding-right: var(--margine);
+  }
+
+  .funziona {
+    padding-left: var(--margine);
+    padding-right: var(--margine);
+  }
+
+  .funziona__testo {
+    padding: 0;
+  }
+
+  .riquadri {
+    margin: 0 var(--margine);
+  }
+
+  .domande__elenco {
+    padding: 14px var(--margine);
+  }
+
+  .prezzo__foto {
+    margin: 0 var(--margine);
+  }
+
+  .scheda-misure,
+  .pannello-sede {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* --- zone di tocco di almeno 44 px */
+  .pillola-fissa {
+    height: 44px;
+  }
+
+  .js .selettore__apri:not([hidden]) {
+    height: 44px;
+  }
+
+  .collegamento,
+  .collegamento--indietro {
+    min-height: 44px;
+    padding: 12px 0;
+  }
+
+  .collegamento::before,
+  .collegamento::after {
+    bottom: 10px;
+  }
+
+  .pannello-sede__righe a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .pannello-sede__righe a::after {
+    bottom: calc(50% - 0.85em);
+  }
+
+  .pannello-sede__righe p {
+    line-height: 1.2;
+  }
+
+  /* "Salta l'introduzione", le parole lunghe dei capitoli e la testata stanno anche a 320 px */
+  .capitolo__etichetta {
+    font-size: min(48px, 11vw);
+  }
+
+  .pillola--grande {
+    padding: 0 24px;
+  }
+
+  .legale {
+    padding-left: var(--margine);
+    padding-right: var(--margine);
+  }
+
+  .pillola {
+    height: 44px;
+  }
+
+  .scelta span {
+    height: 44px;
+  }
+
+  .consenso {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .consenso input {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  .vetrina {
+    padding-top: 48px;
+  }
+
+  /* --- una sola altezza per le pillole blu a tutta larghezza */
+  .prezzo__fondo .pillola,
+  .modulo__piede .pillola,
+  .chiusura__azioni .pillola,
+  .prodotto__chiedi {
+    height: 56px;
+  }
+}
+
+/* ------------------------------------------------------------------ telefoni stretti (320 px) */
+
+@media (max-width: 359px) {
+  .testata__marchio svg {
+    width: 84px;
+  }
+
+  .testata .pillola {
+    padding: 0 12px;
+    font-size: 10px;
+  }
+
+  .testata {
+    gap: 8px;
   }
 }
 
