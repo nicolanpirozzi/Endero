@@ -148,6 +148,6 @@ function paginaErrore(messaggio, percorsoModulo) {
   // si torna solo a una pagina di questo sito (percorso già verificato), mai a un indirizzo esterno
   const indietro = percorsoModulo ? pulisci(percorsoModulo) : '/';
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Richiesta non inviata · Endero</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-content:center;gap:16px;padding:24px;text-align:center;font:300 15px/1.6 system-ui,sans-serif;color:#0f285e;background:#faf9f7}a{color:inherit}h1{font-size:22px;font-weight:600;text-transform:uppercase}h1,p{margin:0}</style></head>
+<style>body{margin:0;min-height:100vh;display:grid;place-content:center;gap:16px;padding:24px;text-align:center;font:300 15px/1.6 system-ui,sans-serif;color:#0f285e;background:#faf9f7}a{color:inherit}h1{font-size:22px;font-weight:600;text-transform:uppercase}h1,p{margin:0}@media (prefers-reduced-motion:no-preference){@view-transition{navigation:auto}}</style></head>
 <body><h1>Richiesta non inviata</h1><p>${testo}</p><p><a href="${indietro}">Torna al modulo</a> · <a href="https://wa.me/393338548712">Scrivici su WhatsApp</a></p></body></html>`;
 }
