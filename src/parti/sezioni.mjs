@@ -69,7 +69,7 @@ export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } =
     ${intesta(p)}
     <div class="grande">
       ${attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
-      <div class="vetro scheda-misure">
+      <div class="vetro scheda-misure" data-pillola-via>
         <div class="vetro__testa">
           <h3 class="vetro__titolo">${esc(s.titolo)}</h3>
           <span class="chip chip--vetro">cm</span>

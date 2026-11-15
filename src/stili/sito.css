@@ -3257,10 +3257,11 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
     padding: 18px 18px 20px;
   }
 
+  /* la scheda sta sopra la pillola di WhatsApp, che resta in basso a destra */
   .mestiere--vivo .mestiere__scheda {
     left: var(--margine);
     right: var(--margine);
-    bottom: max(var(--margine), env(safe-area-inset-bottom));
+    bottom: calc(max(var(--margine), env(safe-area-inset-bottom)) + 56px);
   }
 
   .mestiere__titolo {

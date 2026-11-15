@@ -73,7 +73,8 @@ function testata() {
   const eroe = document.querySelector('.eroe');
   const apertura = document.querySelector('.apertura');
   const piede = document.querySelector('.piede');
-  const moduli = [...document.querySelectorAll('[data-modulo]')];
+  // sul telefono la pillola si fa da parte sopra i moduli e sopra le schede con un pulsante in basso ([data-pillola-via])
+  const moduli = [...document.querySelectorAll('[data-modulo], [data-pillola-via]')];
   const stretto = matchMedia('(max-width: 809px)');
   if (!el) return;
   let ultimo = scrollY;
