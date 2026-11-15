@@ -173,7 +173,7 @@ export async function avviaCamicia(contenitore, o) {
     uTocchi: { value: Array.from({ length: TOCCHI }, () => new Vector4(0, 0, 0, -10)) },
     uForze: { value: new Array(TOCCHI).fill(0) },
     uTempo: { value: 0 },
-    uVento: { value: o.fermo ? 0 : 0.0016 },
+    uVento: { value: o.fermo ? 0 : 0.0024 },
     uInMetri: { value: new Matrix4() },
     uScala: { value: 1 },
   };
@@ -263,12 +263,12 @@ export async function avviaCamicia(contenitore, o) {
       return;
     }
     if (e.pointerType === 'touch') { punta.set(x, y); return; }
-    if (!o.fermo) { meta.y = x * 0.38; meta.x = -y * 0.10; }
+    if (!o.fermo) { meta.y = x * 0.5; meta.x = -y * 0.14; }
     // passando sopra il tessuto: una spinta e un'increspatura
     const corsa = primo ? 0 : velPunta.length();
-    if (corsa > 0.004 && tempo - ultimoTocco > 0.09 && tocca(x, y, Math.min(0.006 + corsa * 0.07, 0.016))) {
+    if (corsa > 0.004 && tempo - ultimoTocco > 0.09 && tocca(x, y, Math.min(0.011 + corsa * 0.12, 0.026))) {
       ultimoTocco = tempo;
-      if (!o.fermo) { giro.vy += velPunta.x * 2.6; giro.vx -= velPunta.y * 0.9; }
+      if (!o.fermo) { giro.vy += velPunta.x * 4.4; giro.vx -= velPunta.y * 1.6; }
     }
     punta.set(x, y);
   }
@@ -277,7 +277,7 @@ export async function avviaCamicia(contenitore, o) {
     tela.setPointerCapture?.(e.pointerId);
     tela.classList.add('camicia__tela--presa');
     const r = tela.getBoundingClientRect();
-    tocca(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1), 0.014);
+    tocca(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1), 0.022);
   }
   function suSu() { trascina = null; tela.classList.remove('camicia__tela--presa'); }
   function suFuori() { puntaDentro = false; meta.y = 0; meta.x = 0; }
@@ -294,7 +294,7 @@ export async function avviaCamicia(contenitore, o) {
     // dopo un po' che nessuno la gira, torna a mostrarsi di tre quarti
     if (!trascina && tempo - ultimoGesto > 5) base += (Math.round(base / (2 * Math.PI)) * 2 * Math.PI - base) * Math.min(dt * 1.2, 1);
     // molla smorzata verso la meta
-    const k = 38, c = 9.5;
+    const k = 34, c = 6.8;         // poco smorzata: dopo una spinta oscilla un paio di volte prima di fermarsi
     const ty = base + (o.fermo ? 0 : 0.34) + meta.y, tx = meta.x;
     giro.vy += (k * (ty - giro.y) - c * giro.vy) * dt; giro.y += giro.vy * dt;
     giro.vx += (k * (tx - giro.x) - c * giro.vx) * dt; giro.x += giro.vx * dt;

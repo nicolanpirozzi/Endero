@@ -7,12 +7,13 @@
 // URL_ANTEPRIMA (indirizzo provvisorio dell'anteprima, per esempio https://endero-anteprima.xxx.workers.dev).
 import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import home from '../src/pagine/home.mjs';
 import paginaSuMisura from '../src/pagine/su-misura.mjs';
+import paginaConfiguratore from '../src/pagine/configuratore.mjs';
 import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
 import paginaStoria from '../src/pagine/storia.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
@@ -53,9 +54,14 @@ mkdirSync(DIST, { recursive: true });
 cpSync(join(RADICE, 'public'), DIST, { recursive: true });
 
 // 2 · script e stili, con l'impronta nel nome così si possono tenere in cache per sempre
+// il motore della camicia 3D (three.js) e il foglio del configuratore si caricano solo nella sua pagina
+const ENTRATE = {
+  sito: 'src/sito.js', apertura: 'src/apertura/apertura.js', stile: 'src/stili/sito.css',
+  camicia3d: 'src/configuratore/camicia3d.js', configuratore: 'src/configuratore/configuratore.js', 'stile-configuratore': 'src/configuratore/configuratore.css',
+};
 const esito = await build({
   absWorkingDir: RADICE,
-  entryPoints: { sito: 'src/sito.js', apertura: 'src/apertura/apertura.js', stile: 'src/stili/sito.css' },
+  entryPoints: ENTRATE,
   outdir: join(DIST, 'risorse'),
   entryNames: '[name]-[hash]',
   bundle: true,
@@ -69,7 +75,7 @@ const esito = await build({
 const risorsa = {};
 for (const [file, info] of Object.entries(esito.metafile.outputs)) {
   if (!info.entryPoint) continue;
-  const nome = info.entryPoint.includes('apertura') ? 'apertura' : info.entryPoint.endsWith('.css') ? 'stile' : 'sito';
+  const nome = Object.keys(ENTRATE).find((n) => ENTRATE[n] === info.entryPoint);
   risorsa[nome] = '/' + relative(DIST, join(RADICE, file)).split('\\').join('/');
 }
 
@@ -95,6 +101,18 @@ function genera(percorso, html) {
   pagine.push(percorso);
 }
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, home: testiHome, risorse: base, anteprima }));
+// configuratore: se il file del modello non c'è (non sta nel repository) la pagina esce con la sola immagine ferma
+const fileCamicia = join(RADICE, 'public/camicia/camicia.glb');
+const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0, scala: 0 };
+if (existsSync(fileCamicia)) {
+  const impronta = createHash('sha256').update(readFileSync(fileCamicia)).digest('hex').slice(0, 10);
+  camicia.modello = `/camicia/camicia.glb?v=${impronta}`;
+  camicia.peso = statSync(fileCamicia).size;
+  camicia.scala = JSON.parse(readFileSync(join(RADICE, 'public/camicia/camicia.json'), 'utf8')).metri_per_uv;
+} else {
+  console.warn('  attenzione: manca public/camicia/camicia.glb, il configuratore mostra solo la camicia ferma (vedi CLAUDE.md)');
+}
+genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
 const visti = new Set();
 for (const capo of prodotti) {
@@ -149,6 +167,9 @@ ${anteprima ? '  X-Robots-Tag: noindex, nofollow\n' : ''}
   Cache-Control: public, max-age=31536000, immutable
 
 /film/*
+  Cache-Control: public, max-age=604800
+
+/camicia/*
   Cache-Control: public, max-age=604800
 `);
 

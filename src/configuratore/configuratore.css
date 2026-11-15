@@ -213,6 +213,11 @@
   justify-content: center;
 }
 
+.configura__scheda .pillola[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ------------------------------------------------------------------ telefono */
 
 @media (max-width: 809px) {
