@@ -88,7 +88,7 @@ Contatti, legale, tracciamento
 - 2026-11-14 · Tracciamento: banner dei consensi ed eventi predisposti, codici di Google Analytics e Meta Pixel inseriti dopo. Nessuno script di terze parti parte prima del consenso.
 - 2026-11-14 · Esiste già un account Cloudflare. La chiave si chiede con il modulo sicuro delle credenziali quando serve la prima anteprima, mai in chat.
 - 2026-11-15 · Sull'account Cloudflare del proprietario ci sono altri suoi progetti: si crea e si tocca solo ciò che si chiama `endero-…`, dopo aver guardato in sola lettura cosa esiste. La chiave data ha solo i permessi sull'account (niente domini, niente D1) e scade il 2026-11-22: per pubblicare dopo ne serve una nuova. (proprietario)
-- 2026-11-15 · Il proprietario ha fatto pubblicare l'anteprima prima che finissero due delle tre revisioni, con l'accordo di aggiornarla con le loro correzioni.
+- 2026-11-15 · Il proprietario ha fatto pubblicare l'anteprima prima che finissero due delle tre revisioni, con l'accordo di aggiornarla con le loro correzioni: vale come ok ad aggiornare l'anteprima dopo le correzioni dei revisori, non per le pagine nuove, che si mostrano prima.
 
 Diventa rivenditore
 
@@ -124,6 +124,7 @@ Strumenti
 - 2026-11-14 · Acciaio che sembra vetro scuro e tessuto velato di grigio. Causa: un solo ambiente per luce e riflessi, e troppa "peluria" (sheen) in controluce. Soluzione già in `film/scena.py`: due ambienti scelti con il nodo percorso della luce, sheen basso.
 - 2026-11-14 · La resa dei toni "AgX" ingrigisce i fili bianchi. Soluzione: resa "Standard".
 - 2026-11-15 · Sul telefono la testata esce dallo schermo e tutto sembra rimpicciolito. Causa: un elemento che sporge di lato (il carosello) allarga la pagina e il browser si adatta. Soluzione: ritagliare la sezione con `overflow: clip` e controllare che la larghezza della pagina resti 390 su iPhone 14.
+- 2026-11-15 · Sul telefono la pillola fissa di WhatsApp copre il pulsante di invio dei moduli, e i link che portano a un modulo lo lasciano sotto la testata. Soluzione: la pillola si fa da parte sopra ogni `[data-modulo]` e sul piè di pagina (`src/sito.js`), e l'ancora sta sul riquadro del modulo (`.pannello`), non sulla sezione. Vale per ogni modulo nuovo, anche quello dei rivenditori.
 - 2026-11-15 · `wrangler deploy` con gli assets fallisce con 401 su `workers/assets/upload`. Causa: l'ambiente di lavoro inietta la chiave Cloudflare in ogni richiesta e sostituisce l'autorizzazione temporanea di quel caricamento. Soluzione: l'anteprima usa Workers Sites su KV (`wrangler.anteprima.toml`, `worker/anteprima.js`); con wrangler si passa `CLOUDFLARE_API_TOKEN=proxy-injected` e `CLOUDFLARE_ACCOUNT_ID`. Per la messa online vera servirà pubblicare da un ambiente senza iniezione, o restare su KV.
 - 2026-11-15 · Il proprietario non è pratico di Cloudflare: i passi vanno dati uno per uno sui pulsanti che vede (la pagina dei token è cambiata: si sceglie il riquadro "Edit Cloudflare Workers" e si toglie la "Zone policy").
 - 2026-11-15 · Il repository GitHub è pubblico, ma contiene il dossier di ricerca con ciò che il proprietario non vuole diffondere (produzione all'estero, altri indirizzi, dati societari da directory). Soluzione: renderlo privato, e lo può fare solo il proprietario dalle impostazioni di GitHub; cancellare le righe non basta, restano nella cronologia. Finché è pubblico non aggiungere altro di riservato.
@@ -144,5 +145,6 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
 - Nome utente Instagram e altri profili. Serve per: link nel piè di pagina.
+- Prova su un iPhone vero: il sito è stato controllato solo con Chromium, mai con Safari, e lo scorrimento morbido col dito va sentito a mano. Serve per: messa online.
 - "Diventa rivenditore": loghi dei negozi clienti che danno il permesso, foto per la pagina, conferma dei testi in bozza. Serve per: completare la pagina dopo la costruzione.
 - (In sospeso con il configuratore) Opzioni del su misura, tempi di consegna, email che riceve gli ordini.

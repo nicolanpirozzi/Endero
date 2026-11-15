@@ -78,7 +78,7 @@ export function presaMisure(p, sito, { gruppo = 'su-misura' } = {}) {
 
 // 8 · Testo a sinistra, pannello con il modulo di prenotazione a destra.
 export function comeFunziona(c, turnstile, { gruppo = 'su-misura' } = {}) {
-  return `<section class="sezione funziona" id="prenota"${agr(gruppo)}>
+  return `<section class="sezione funziona"${agr(gruppo)}>
     <div class="funziona__testo">
       <h2 class="titolo">${t(c.titolo)}</h2>
       <p class="testo">${t(c.testo)}</p>
@@ -86,7 +86,7 @@ export function comeFunziona(c, turnstile, { gruppo = 'su-misura' } = {}) {
         ${c.passi.map((p, i) => `<li><span class="passi__numero">${String(i + 1).padStart(2, '0')}</span><h3 class="passi__titolo">${esc(p.titolo)}</h3><p class="testo">${t(p.testo)}</p></li>`).join('\n        ')}
       </ol>
     </div>
-    <div class="pannello">
+    <div class="pannello" id="prenota">
       ${modulo(c.modulo, { tipo: 'presa-misure', turnstile })}
     </div>
   </section>`;

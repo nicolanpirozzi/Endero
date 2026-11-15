@@ -10,7 +10,7 @@ export default function paginaDoveSiamo({ sito, testi: p, risorse, anteprima }) 
   ${eroePagina(p.eroe, sito)}
   <div class="corpo">
     ${sedeConFoto(p.sede, sito, { id: 'sede' })}
-    <section class="sezione funziona" id="scrivici">
+    <section class="sezione funziona">
       <div class="funziona__testo">
         <h2 class="titolo">${t(c.titolo)}</h2>
         <p class="testo">${t(c.testo)}</p>
@@ -21,7 +21,7 @@ export default function paginaDoveSiamo({ sito, testi: p, risorse, anteprima }) 
           }).join('\n          ')}
         </ul>
       </div>
-      <div class="pannello">
+      <div class="pannello" id="scrivici">
         ${modulo(c.modulo, { tipo: 'contatto', turnstile: risorse.turnstile })}
       </div>
     </section>

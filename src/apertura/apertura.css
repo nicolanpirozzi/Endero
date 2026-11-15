@@ -83,6 +83,27 @@
   }
 }
 
+/* Con lo script in arrivo la versione ferma non lampeggia prima del caricatore: resta il fondo blu.
+   Lo script mette .apertura--viva (film) o .apertura--ferma (movimento ridotto, risparmio dati, film non
+   raggiungibile). Se lo script non arriva affatto, dopo qualche secondo la versione ferma compare da sola. */
+.js .apertura:not(.apertura--viva):not(.apertura--ferma) {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.js .apertura:not(.apertura--viva):not(.apertura--ferma) > picture,
+.js .apertura:not(.apertura--viva):not(.apertura--ferma) > .apertura__storia,
+.js .apertura:not(.apertura--viva):not(.apertura--ferma) > .apertura__salta {
+  opacity: 0;
+  animation: apertura-ripiego 0.4s 6s forwards;
+}
+
+@keyframes apertura-ripiego {
+  to {
+    opacity: 1;
+  }
+}
+
 /* ------------------------------------------------------------------ film */
 
 .apertura--viva {

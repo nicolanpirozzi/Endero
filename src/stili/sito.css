@@ -235,6 +235,10 @@ button {
   color: var(--filo);
 }
 
+.pillola--blu:focus-visible {
+  outline-color: var(--blu);
+}
+
 .pillola--chiara {
   background: var(--filo);
   color: var(--blu);
@@ -312,7 +316,7 @@ button {
   height: 22px;
   padding: 0 10px;
   border-radius: var(--raggio-pillola);
-  background: var(--vetro);
+  background: rgba(10, 27, 69, 0.74);
   box-shadow: inset 0 0 0 1px var(--bordo-vetro);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -491,6 +495,8 @@ main[tabindex="-1"]:focus {
 }
 
 /* nella pagina iniziale compare solo a fine film: nascosta fin dal primo istante, senza lampeggiare */
+body:has([data-modulo]:focus-within) .pillola-fissa,
+.pillola-fissa[data-via],
 .js .pagina-home .pillola-fissa:not([data-visibile]) {
   opacity: 0;
   transform: translateY(10px);
@@ -618,8 +624,8 @@ main[tabindex="-1"]:focus {
   margin: 6px auto 0;
   padding: 6px;
   border-radius: var(--raggio-pillola);
-  background: rgba(70, 82, 110, 0.62);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  background: rgba(58, 70, 98, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   backdrop-filter: blur(16px) saturate(140%);
   color: var(--bianco);
@@ -958,6 +964,7 @@ body[data-barra] .selettore {
 }
 
 .pannello {
+  scroll-margin-top: 104px;
   background: var(--pannello);
   border-radius: var(--raggio-pannello);
   padding: 22px 26px 26px;
@@ -1035,6 +1042,13 @@ body[data-barra] .selettore {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--blu-tenue);
+}
+
+.campo input,
+.campo textarea,
+.consenso input,
+.scelta input {
+  scroll-margin-top: 150px;
 }
 
 .campo input,
@@ -2167,7 +2181,7 @@ body[data-barra] .selettore {
     margin: 0;
     padding: 0;
     border-radius: 0;
-    background: rgba(70, 82, 110, 0.7);
+    background: rgba(58, 70, 98, 0.86);
   }
 
   body[data-barra] .selettore {
@@ -2289,6 +2303,11 @@ body[data-barra] .selettore {
     width: auto;
     margin: -110px 10px 0;
     grid-area: 2 / 1;
+    background: rgba(10, 27, 69, 0.94);
+  }
+
+  .pannello {
+    scroll-margin-top: 58px;
   }
 
   .grande--pannello > .attesa {
@@ -2589,6 +2608,14 @@ body[data-barra] .selettore {
   }
   .nastro__binario li[aria-hidden="true"] {
     display: none;
+  }
+  .nastro__binario li {
+    padding-right: 0;
+    white-space: normal;
+    text-align: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
   .nastro__binario li:nth-child(4) .nastro__punto {
     display: none;

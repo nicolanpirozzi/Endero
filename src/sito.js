@@ -72,6 +72,9 @@ function testata() {
   const pillola = document.querySelector('[data-pillola-fissa]');
   const eroe = document.querySelector('.eroe');
   const apertura = document.querySelector('.apertura');
+  const piede = document.querySelector('.piede');
+  const moduli = [...document.querySelectorAll('[data-modulo]')];
+  const stretto = matchMedia('(max-width: 809px)');
   if (!el) return;
   let ultimo = scrollY;
   let stato = '';
@@ -97,7 +100,13 @@ function testata() {
     else if (!stato) imposta('via');
     if (Math.abs(delta) > 6 || y < limite) ultimo = y;
     // la pillola di WhatsApp non copre il film: compare quando l'apertura sta per finire
-    if (pillola) pillola.toggleAttribute('data-visibile', !apertura || apertura.getBoundingClientRect().bottom <= innerHeight * 0.5);
+    if (pillola) {
+      const sulFilm = apertura && apertura.getBoundingClientRect().bottom > innerHeight * 0.5;
+      const sulPiede = piede && piede.getBoundingClientRect().top < innerHeight - 8;
+      const sulModulo = stretto.matches && moduli.some((m) => { const r = m.getBoundingClientRect(); return r.top < innerHeight - 40 && r.bottom > innerHeight - 140; });
+      pillola.toggleAttribute('data-visibile', !sulFilm);
+      pillola.toggleAttribute('data-via', Boolean(sulPiede || sulModulo));
+    }
   }
 
   addEventListener('scroll', () => { if (!richiesta) richiesta = requestAnimationFrame(aggiorna); }, { passive: true });
@@ -120,9 +129,11 @@ function selettore() {
   apri.hidden = false;
   nav.classList.add('selettore--chiuso');
   const chiudi = () => { nav.classList.add('selettore--chiuso'); apri.setAttribute('aria-expanded', 'false'); };
+  let apertoA = 0;
   apri.addEventListener('click', () => {
     const chiuso = nav.classList.toggle('selettore--chiuso');
     apri.setAttribute('aria-expanded', String(!chiuso));
+    apertoA = scrollY;
   });
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) chiudi(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') chiudi(); });
@@ -148,6 +159,7 @@ function selettore() {
 
   function aggiorna() {
     richiesta = 0;
+    if (!nav.classList.contains('selettore--chiuso') && Math.abs(scrollY - apertoA) > 48) chiudi();
     const soglia = nav.getBoundingClientRect().bottom + 60;
     let scelto = sezioni[0]?.dataset.gruppo;
     for (const s of sezioni) if (s.getBoundingClientRect().top <= soglia) scelto = s.dataset.gruppo;
@@ -246,6 +258,9 @@ function comparse() {
     }
   }, { rootMargin: '0px 0px -10% 0px' });
   tutti.forEach((el) => { if (!el.hasAttribute('data-visto')) osserva.observe(el); });
+  document.addEventListener('focusin', (e) => {
+    for (let el = e.target.closest?.('[data-rivela]'); el; el = el.parentElement?.closest('[data-rivela]')) el.setAttribute('data-visto', '');
+  });
 
   // il titolo del video è coperto dall'apertura: entra quando il telo si solleva
   const eroe = document.querySelector('.eroe');

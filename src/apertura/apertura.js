@@ -36,14 +36,16 @@ function crea(tag, classe, genitore, attributi = {}) {
 }
 
 export async function avviaApertura(radice) {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (navigator.connection && navigator.connection.saveData) return;      // chi risparmia dati vede la versione ferma
+  // Quando il film non parte si mostra la versione ferma (apertura.css la tiene nascosta finché lo script decide).
+  const ferma = () => radice.classList.add('apertura--ferma');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return ferma();
+  if (navigator.connection && navigator.connection.saveData) return ferma();      // chi risparmia dati vede la versione ferma
   const base = radice.dataset.apertura.replace(/\/?$/, '/');
   let dati;
   try {
     dati = await (await fetch(base + 'film.json')).json();
   } catch (errore) {
-    return;                                   // senza dati resta la versione ferma
+    return ferma();                           // senza dati resta la versione ferma
   }
   const palco = radice.querySelector('.apertura__palco');
   const tessuto = radice.querySelector('.apertura__tessuto');
@@ -53,7 +55,7 @@ export async function avviaApertura(radice) {
   const caricatore = radice.querySelector('.apertura__carica');
   const percento = radice.querySelector('.apertura__percento');
   const storia = radice.querySelector('.apertura__storia');
-  if (!palco || !tessuto || !tela || !tela.getContext) return;
+  if (!palco || !tessuto || !tela || !tela.getContext) return ferma();
 
   // ---------------------------------------------------------------- misure fisse del film
   const STR = dati.striscia;
