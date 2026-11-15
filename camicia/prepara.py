@@ -4,15 +4,16 @@ Il proprietario ha fornito un modello già fatto (camicia a maniche lunghe, form
 cartamodello vero con la mappa del tessuto in scala reale) e ha chiesto di partire da quello e migliorarlo.
 Il modello originale NON sta nel repository: è materiale comprato, va tenuto fuori finché il repository è pubblico.
 
-    <venv>/bin/python camicia/prepara.py <Shirt OBJ.obj> <cartella di uscita> [--manifesto] [--braccia GRADI]
+    <venv>/bin/python camicia/prepara.py <Shirt OBJ.obj> <cartella di uscita> [--braccia GRADI]
 
 Cosa fa:
   1. importa il modello in metri e lo centra;
   2. riduce i materiali a tre: tessuto, bottone, filo;
   3. calcola per ogni punto quanta luce d'ambiente riceve (le pieghe, sotto il collo, dentro la camicia)
      e quanto è libero di muoversi quando il puntatore lo sfiora: il visualizzatore li legge dal colore dei vertici;
-  4. esporta `camicia.glb`;
-  5. con --manifesto calcola anche l'immagine ferma per chi non può vedere il 3D.
+  4. stacca il taschino in un pezzo a parte, così il visualizzatore lo può accendere e spegnere;
+  5. esporta `camicia.glb`, con dentro la camicia e il taschino;
+L'immagine ferma per chi non può vedere il 3D la fa `camicia/manifesto.py`.
 Si usa come modulo Python di Blender (vedi CLAUDE.md, "Problemi già incontrati").
 """
 import argparse
@@ -55,6 +56,122 @@ def orienta(ob):
     if me.has_custom_normals:
         bpy.ops.mesh.customdata_custom_splitnormals_clear()
     print('facce girate:', girate, 'su', len(me.polygons))
+
+
+def facce_taschino(ob):
+    """Le facce del taschino. Nel modello il taschino è fatto di tre pezzi di cartamodello cuciti sopra il davanti,
+    che sotto resta intero: si riconoscono perché sono le sole isole della mappa che stanno tutte dentro la sua zona."""
+    me = ob.data
+    nomi = [m.name for m in me.materials]
+    bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
+    uvl = bm.loops.layers.uv.active
+
+    def mappa(f, e):
+        return {(round(l[uvl].uv.x, 5), round(l[uvl].uv.y, 5)) for l in f.loops if l.vert in e.verts}
+
+    stoffa = [nomi[f.material_index] in TESSUTO for f in bm.faces]
+    isola = [-1] * len(bm.faces)
+    quante = 0
+    for f in bm.faces:
+        if isola[f.index] != -1 or not stoffa[f.index]:
+            continue
+        pila = [f]; isola[f.index] = quante
+        while pila:
+            g = pila.pop()
+            for e in g.edges:
+                for h in e.link_faces:
+                    if isola[h.index] == -1 and stoffa[h.index] and mappa(g, e) == mappa(h, e):
+                        isola[h.index] = quante; pila.append(h)
+        quante += 1
+    isola = np.array(isola)
+    cen = np.array([f.calc_center_median()[:] for f in bm.faces])
+    bm.free()
+    # la zona del taschino, sul petto a sinistra di chi la indossa (misure del modello in metri, prima di centrarlo)
+    dentro = (cen[:, 0] > 0.04) & (cen[:, 0] < 0.17) & (cen[:, 2] > 1.35) & (cen[:, 2] < 1.50) & (cen[:, 1] < 0)
+    scelte = [k for k in range(quante) if dentro[isola == k].all()]
+    # dei due pezzi grandi, quello più interno non è taschino: è il davanti della camicia che gli sta sotto,
+    # tagliato come pezzo a parte. Resta sulla camicia: `rattoppa` lo ricuce bene al resto e lo liscia.
+    grandi = sorted(scelte, key=lambda k: -int((isola == k).sum()))[:2]      # i due pezzi grandi: taschino e fondo
+    fondo = max(grandi, key=lambda k: cen[isola == k][:, 1].mean())
+    print('taschino: pezzi nella zona', {k: (int((isola == k).sum()), round(float(cen[isola == k][:, 1].mean()), 4)) for k in scelte}, '· fondo, che resta sulla camicia:', fondo)
+    scelte = [k for k in scelte if k != fondo]
+    facce = np.nonzero(np.isin(isola, scelte))[0]
+    return facce, np.nonzero(isola == fondo)[0]
+
+
+def rattoppa(ob, tasca, fondo, giri=30):
+    """Prepara la camicia a stare senza taschino.
+    Sotto il taschino il davanti è un pezzo a parte (il "fondo"), cucito al resto quasi dappertutto: in sette
+    tratti corti, agli angoli, la cucitura passava dal taschino, e tolto quello resterebbero fessure scure.
+    Qui quei tratti si ricuciono: ogni punto rimasto libero si salda al punto più vicino dell'altro lembo.
+    Poi il fondo si liscia, perché porta ancora il segno delle cuciture del taschino.
+    Le facce del taschino restano nella mesh, segnate, e si staccano più avanti con `separa`."""
+    from mathutils import kdtree
+    me = ob.data
+    bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
+    segno = bm.faces.layers.int.new('taschino')
+    for i in tasca:
+        bm.faces[int(i)][segno] = 1
+    del_fondo = {bm.faces[int(i)] for i in fondo}
+    zona = lambda v: 0.03 < v.co.x < 0.18 and 1.32 < v.co.z < 1.52 and v.co.y < 0
+    camicia = lambda f: not f[segno]
+    bm.normal_update()
+
+    # i lembi liberi: lati che, senza contare il taschino, hanno una faccia sola
+    liberi = {v for e in bm.edges if zona(e.verts[0]) and zona(e.verts[1])
+              and sum(1 for f in e.link_faces if camicia(f)) == 1 for v in e.verts}
+    # i punti a cui saldarli: quelli dello strato di fuori, divisi tra fondo e resto del davanti
+    fuori = lambda v: zona(v) and v not in liberi and any(camicia(f) and f.normal.y < -0.5 for f in v.link_faces)
+    sul_fondo = lambda v: any(f in del_fondo for f in v.link_faces)
+    gruppi = {True: [v for v in bm.verts if fuori(v) and sul_fondo(v)], False: [v for v in bm.verts if fuori(v) and not sul_fondo(v)]}
+    alberi = {}
+    for k, vv in gruppi.items():
+        t = kdtree.KDTree(len(vv))
+        for i, v in enumerate(vv):
+            t.insert(v.co, i)
+        t.balance(); alberi[k] = t
+    coppie = []
+    for v in liberi:
+        altro = not sul_fondo(v)                      # un punto del fondo si salda al davanti, e viceversa
+        pos, i, dist = alberi[altro].find(v.co)
+        if dist < 0.0075:
+            coppie.append((v, gruppi[altro][i], dist))
+    for v, meta, _ in coppie:
+        if v.is_valid and meta.is_valid and v is not meta:
+            v.co = meta.co
+            bmesh.ops.pointmerge(bm, verts=[v, meta], merge_co=meta.co)
+    print('taschino: punti liberi', len(liberi), '· saldati', len(coppie), '· distanza massima mm', round(max((d for *_, d in coppie), default=0) * 1000, 1))
+
+    # il fondo e due dita di tessuto intorno si lisciano
+    bm.verts.ensure_lookup_table(); bm.faces.ensure_lookup_table()
+    da_lisciare = {v for f in bm.faces if f in del_fondo and f.is_valid for v in f.verts}
+    for _ in range(2):
+        da_lisciare |= {e.other_vert(v) for v in da_lisciare for e in v.link_edges if any(camicia(f) for f in e.link_faces)}
+    da_lisciare = [v for v in da_lisciare if v.is_valid]
+    for _ in range(giri):
+        nuove = []
+        for v in da_lisciare:
+            vic = [e.other_vert(v).co for e in v.link_edges if any(camicia(f) for f in e.link_faces)]
+            nuove.append(sum(vic, Vector()) / len(vic) if vic else v.co.copy())
+        for v, n in zip(da_lisciare, nuove):
+            v.co = v.co.lerp(n, 0.5)
+    bmesh.ops.recalc_face_normals(bm, faces=[f for f in bm.faces])
+    bm.to_mesh(me); bm.free()
+    me.update()
+
+
+def separa(ob, nome):
+    """Stacca in un oggetto nuovo le facce segnate come taschino. Attributi, mappa e materiali restano su entrambi."""
+    nuovo = bpy.data.objects.new(nome, ob.data.copy())
+    bpy.context.scene.collection.objects.link(nuovo)
+    for oggetto, tieni in ((ob, 0), (nuovo, 1)):
+        bm = bmesh.new(); bm.from_mesh(oggetto.data)
+        segno = bm.faces.layers.int['taschino']
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f[segno] != tieni], context='FACES')
+        bm.faces.layers.int.remove(segno)
+        bm.to_mesh(oggetto.data); bm.free()
+        oggetto.data.update()
+    return nuovo
 
 
 def abbassa_braccia(ob, gradi):
@@ -156,7 +273,7 @@ def liberta(co, tipo_vertice):
     z_alto = co[:, 2].max()
     collo = 1.0 - gradino(z_alto - 0.17, z_alto - 0.07, co[:, 2])            # il collo e le spalle tengono la forma
     polso = 1.0 - gradino(0.42, 0.52, np.abs(co[:, 0]))                       # i polsini sono rigidi
-    abbottonatura = 0.45 + 0.55 * gradino(0.012, 0.05, np.abs(co[:, 0]))     # il cannoncino è doppio: si muove meno
+    abbottonatura = gradino(0.012, 0.05, np.abs(co[:, 0]))                   # lungo i bottoni il tessuto non si gonfia: i bottoni non lo seguirebbero
     davanti = np.where(co[:, 1] < 0, abbottonatura, 1.0)
     corpo = np.where(np.abs(co[:, 0]) < 0.22, davanti, 1.0)
     lib = collo * polso * corpo
@@ -164,9 +281,13 @@ def liberta(co, tipo_vertice):
     return lib
 
 
-def occlusione(sc, ob, campioni=96):
-    """Luce d'ambiente per vertice, calcolata con Cycles. Restituisce un valore 0..1 per ogni vertice."""
+def occlusione(sc, ob, campioni=96, nascosti=()):
+    """Luce d'ambiente per vertice, calcolata con Cycles. Restituisce un valore 0..1 per ogni vertice.
+    `nascosti`: oggetti che durante il calcolo non devono fare ombra (il taschino, per la camicia senza)."""
     me = ob.data
+    for o in sc.objects:
+        o.hide_render = o in nascosti
+        o.select_set(False)
     att = me.color_attributes.new('occlusione', 'FLOAT_COLOR', 'POINT')
     me.color_attributes.active_color = att
     me.color_attributes.render_color_index = me.color_attributes.find('occlusione')
@@ -199,21 +320,23 @@ def liscia(valori, ob, giri=2):
     return v
 
 
-def scrivi_dati(ob, lib, occ):
-    """Rosso: libertà di movimento. Verde: occlusione. Il visualizzatore li legge come attributo `aDati`."""
+def scrivi_dati(ob, lib, occ, occ_taschino):
+    """Rosso: libertà di movimento. Verde: occlusione senza taschino. Blu: occlusione con il taschino.
+    Il visualizzatore li legge come attributo `aDati`."""
     me = ob.data
     att = me.color_attributes.new('Dati', 'BYTE_COLOR', 'POINT')
     col = np.ones((len(me.vertices), 4), dtype=np.float32)
-    col[:, 0] = lib; col[:, 1] = occ; col[:, 2] = 0.0
+    col[:, 0] = lib; col[:, 1] = np.clip(occ, 0, 1); col[:, 2] = np.clip(occ_taschino, 0, 1)
     att.data.foreach_set('color', col.ravel())
     me.color_attributes.active_color = att
     me.color_attributes.render_color_index = me.color_attributes.find('Dati')
 
 
-def esporta(ob, file):
+def esporta(oggetti, file):
     for o in bpy.context.scene.objects:
-        o.select_set(o is ob)
-    bpy.context.view_layer.objects.active = ob
+        o.hide_render = False
+        o.select_set(o in oggetti)
+    bpy.context.view_layer.objects.active = oggetti[0]
     bpy.ops.export_scene.gltf(
         filepath=file, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
         export_normals=True, export_texcoords=True, export_materials='EXPORT',
@@ -231,6 +354,8 @@ def main():
 
     sc, ob = importa(a.obj)
     me = ob.data
+    tasca, fondo_tasca = facce_taschino(ob)
+    rattoppa(ob, tasca, fondo_tasca)
     # la libertà di movimento si decide sulla posa originale, dove polsini e collo si riconoscono dalla posizione
     co0 = np.zeros((len(me.vertices), 3)); me.vertices.foreach_get('co', co0.ravel())
     co0 -= np.array([0.0, 0.0, (co0[:, 2].max() + co0[:, 2].min()) / 2])
@@ -247,16 +372,33 @@ def main():
     print('vertici', len(me.vertices), 'triangoli', sum(len(p.vertices) - 2 for p in me.polygons), 'centro tolto', centro.round(3))
     print('ingombro', co.min(0).round(3), co.max(0).round(3))
 
-    lib = liberta(co0, tipo_vertice)
-    occ = liscia(occlusione(sc, ob, a.campioni), ob)
-    print('occlusione: min', round(float(occ.min()), 3), 'media', round(float(occ.mean()), 3), 'max', round(float(occ.max()), 3))
-    scrivi_dati(ob, lib, np.clip(occ, 0, 1))
-    for p in me.polygons:
-        p.use_smooth = True
-    esporta(ob, os.path.join(a.uscita, 'camicia.glb'))
+    # la libertà viaggia con i vertici, così resta giusta anche dopo aver staccato il taschino
+    att = me.attributes.new('liberta', 'FLOAT', 'POINT')
+    att.data.foreach_set('value', liberta(co0, tipo_vertice).astype(np.float32))
+    ob.name = 'camicia'
+    taschino = separa(ob, 'taschino')
+
+    def letta(o):
+        v = np.zeros(len(o.data.vertices), dtype=np.float32)
+        o.data.attributes['liberta'].data.foreach_get('value', v)
+        return v
+
+    # tre calcoli: la camicia da sola, la camicia con il taschino addosso, il taschino
+    senza = liscia(occlusione(sc, ob, a.campioni, nascosti=(taschino,)), ob)
+    con = liscia(occlusione(sc, ob, a.campioni), ob)
+    del_taschino = liscia(occlusione(sc, taschino, a.campioni), taschino)
+    print('occlusione camicia: media senza taschino', round(float(senza.mean()), 3), 'con', round(float(con.mean()), 3),
+          '| vertici che cambiano:', int((np.abs(senza - con) > 0.05).sum()))
+    scrivi_dati(ob, letta(ob), senza, con)
+    scrivi_dati(taschino, letta(taschino), del_taschino, del_taschino)
+    for o in (ob, taschino):
+        o.data.attributes.remove(o.data.attributes['liberta'])
+        for p in o.data.polygons:
+            p.use_smooth = True
+    esporta([ob, taschino], os.path.join(a.uscita, 'camicia.glb'))
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(a.uscita, 'camicia.blend'))
     import json
-    dati = {'metri_per_uv': round(metri_per_uv, 4), 'vertici': len(me.vertices),
+    dati = {'metri_per_uv': round(metri_per_uv, 4), 'vertici': len(ob.data.vertices) + len(taschino.data.vertices),
             'mezzo_ingombro': [round(float(x), 4) for x in (co.max(0) - co.min(0)) / 2]}
     with open(os.path.join(a.uscita, 'camicia.json'), 'w') as f:
         json.dump(dati, f, indent=1)

@@ -22,7 +22,8 @@ await doc.transform(
   // La mappa del tessuto non è ancora usata da nessuna immagine ma serve al visualizzatore: non va tolta.
   prune({ keepAttributes: true }),
   // posizioni a 14 bit su una camicia larga 1,15 m: passi di 0,07 mm, molto sotto ciò che si vede
-  meshopt({ encoder: MeshoptEncoder, level: 'medium', quantizePosition: 14, quantizeNormal: 10, quantizeTexcoord: 14, quantizeColor: 8 }),
+  // un solo volume per tutto il file: camicia e taschino restano nello stesso sistema di misure e combaciano
+  meshopt({ encoder: MeshoptEncoder, level: 'medium', quantizePosition: 14, quantizeNormal: 10, quantizeTexcoord: 14, quantizeColor: 8, quantizationVolume: 'scene' }),
 );
 await io.write(uscita, doc);
 

@@ -38,17 +38,20 @@ def main():
     ap.add_argument('--larghezza', type=int, default=1600)
     ap.add_argument('--campioni', type=int, default=160)
     ap.add_argument('--giro', type=float, default=19.5, help='di quanti gradi è girata, come nel visualizzatore a riposo')
+    ap.add_argument('--taschino', action='store_true', help='con il taschino (di base è senza)')
     a = ap.parse_args()
 
     bpy.ops.wm.open_mainfile(filepath=os.path.join(a.cartella, 'camicia.blend'))
     sc = bpy.context.scene
-    ob = [o for o in sc.objects if o.type == 'MESH'][0]
+    oggetti = [o for o in sc.objects if o.type == 'MESH']
     materiale('tessuto', (0.90, 0.885, 0.85), 0.8, peluria=0.4)
     materiale('bottone', (0.84, 0.80, 0.72), 0.28, lucido=0.7)
     materiale('filo', (0.90, 0.885, 0.85), 0.9)
-    for p in ob.data.polygons:
-        p.use_smooth = True
-    ob.rotation_euler = (0, 0, math.radians(a.giro))
+    for ob in oggetti:
+        for p in ob.data.polygons:
+            p.use_smooth = True
+        ob.rotation_euler = (0, 0, math.radians(a.giro))
+        ob.hide_render = ob.name == 'taschino' and not a.taschino      # di base la camicia è senza taschino
 
     sc.render.engine = 'CYCLES'
     sc.cycles.device = 'CPU'
