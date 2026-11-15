@@ -1701,7 +1701,7 @@ body[data-barra] .selettore {
 }
 
 .vetrina {
-  padding-top: 48px;
+  padding-top: 24px;
 }
 
 .vetrina__tutti {
@@ -1840,8 +1840,8 @@ body[data-barra] .selettore {
 /* nastro fermo: la stessa fascia dei fatti, in fila, con un link sotto uno di loro */
 .nastro--fermo {
   height: auto;
-  min-height: 288px;
-  padding: 56px var(--margine);
+  min-height: 0;
+  padding: 48px var(--margine);
 }
 
 .nastro__fatti {
@@ -3135,7 +3135,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
       "colonne"
       "fondo";
     gap: 36px;
-    padding: 56px var(--margine) 22px;
+    padding: 40px var(--margine) 22px;
     padding-bottom: max(22px, env(safe-area-inset-bottom));
   }
 
@@ -3152,7 +3152,8 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
 
   /* sul telefono i collegamenti del piè di pagina si toccano col dito: almeno 44 px */
   .piede__colonne a {
-    display: inline-flex;
+    display: flex;
+    width: fit-content;
     align-items: center;
     min-height: 44px;
     line-height: 1.3;
@@ -3352,6 +3353,12 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
     line-height: 1.2;
   }
 
+  .pannello-sede .chip {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 10px;
+  }
+
   /* "Salta l'introduzione", le parole lunghe dei capitoli e la testata stanno anche a 320 px */
   .capitolo__etichetta {
     font-size: min(48px, 11vw);
@@ -3385,8 +3392,20 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
     margin: 0;
   }
 
+  .corpo {
+    padding-bottom: 64px;
+  }
+
+  .prezzo {
+    margin-bottom: -64px;
+  }
+
+  .corpo--a-filo {
+    padding-bottom: 0;
+  }
+
   .vetrina {
-    padding-top: 48px;
+    padding-top: 32px;
   }
 
   /* --- una sola altezza per le pillole blu a tutta larghezza */

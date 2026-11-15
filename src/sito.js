@@ -143,6 +143,14 @@ function menu() {
     document.documentElement.classList.remove('menu-aperto');
     lenis?.start();
   });
+  // il fuoco gira dentro il pannello: dall'ultima voce si torna alla prima, e viceversa
+  dialogo.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const tutti = [...dialogo.querySelectorAll('a[href], button:not([disabled])')];
+    const primo = tutti[0], ultimo = tutti[tutti.length - 1];
+    if (e.shiftKey && document.activeElement === primo) { e.preventDefault(); ultimo.focus(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primo.focus(); }
+  });
   dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', chiudi);
   dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', chiudi));
   // se lo schermo si allarga (telefono girato, finestra ingrandita) il menu non serve più
@@ -173,7 +181,8 @@ function selettore() {
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) chiudi(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') chiudi(); });
 
-  voci.forEach((a) => a.addEventListener('click', chiudi));
+  let sceltaGuidata = '';
+  voci.forEach((a) => a.addEventListener('click', () => { sceltaGuidata = a.dataset.voce; chiudi(); }));
 
   // la pillola blu che scivola sotto la voce attiva (solo su schermi larghi, vedi sito.css)
   const indicatore = document.createElement('span');
@@ -199,6 +208,9 @@ function selettore() {
     let scelto = sezioni[0]?.dataset.gruppo;
     for (const s of sezioni) if (s.getBoundingClientRect().top <= soglia) scelto = s.dataset.gruppo;
     if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) scelto = sezioni[sezioni.length - 1]?.dataset.gruppo;
+    // dopo un clic su una voce resta quella, anche se la pagina finisce prima che la sezione arrivi in cima
+    if (sceltaGuidata && guidato) scelto = sceltaGuidata;
+    else if (!guidato) sceltaGuidata = '';
     if (scelto === gruppo) return;
     const primaVolta = !gruppo;
     gruppo = scelto;
