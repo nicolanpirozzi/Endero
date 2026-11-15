@@ -1839,6 +1839,38 @@ body[data-barra] .selettore {
   margin-bottom: 0;
 }
 
+/* nastro fermo: la stessa fascia dei fatti, in fila, con un link sotto uno di loro */
+.nastro--fermo {
+  height: auto;
+  min-height: 288px;
+  padding: 56px var(--margine);
+}
+
+.nastro__fatti {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  align-items: start;
+}
+
+.nastro__fatti li {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.15;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.nastro__fatti .collegamento {
+  white-space: nowrap;
+}
+
 /* su misura: l'ingresso al configuratore in cima alla pagina (si vede solo con configuratore.attivo) */
 .ingresso .intesta {
   margin-bottom: 24px;
@@ -2909,7 +2941,7 @@ body[data-barra] .selettore {
   }
 
   .capitolo__testo {
-    padding: 0 10px;
+    padding: 0;
   }
 
   .chiusura__azioni .pillola {
@@ -2954,6 +2986,15 @@ body[data-barra] .selettore {
   .fascia {
     padding: 60px 0;
   }
+
+  .nastro__fatti {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 36px;
+  }
+
+  .nastro__fatti li {
+    font-size: 15px;
+  }
 }
 
 /* ------------------------------------------------------------------ movimento ridotto */
@@ -2961,7 +3002,7 @@ body[data-barra] .selettore {
 @media (prefers-reduced-motion: reduce) {
   .nastro {
     height: auto;
-    padding: 56px 20px;
+    padding: 56px var(--margine);
   }
   .nastro__binario {
     animation: none;

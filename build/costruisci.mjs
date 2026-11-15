@@ -14,11 +14,12 @@ import { fileURLToPath } from 'node:url';
 import home from '../src/pagine/home.mjs';
 import paginaSuMisura from '../src/pagine/su-misura.mjs';
 import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
-import paginaStoria from '../src/pagine/storia.mjs';
+import paginaCultura, { PERCORSO as PERCORSO_CULTURA } from '../src/pagine/cultura.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
 import paginaLegale from '../src/pagine/legale.mjs';
 import semplice from '../src/pagine/semplice.mjs';
 import { INTESTAZIONI, IMPRONTA_SCRIPT_IN_LINEA } from '../worker/intestazioni.mjs';
+import { fileRedirects } from '../worker/reindirizzamenti.mjs';
 
 const RADICE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(RADICE, 'dist');
@@ -35,7 +36,6 @@ const testi = {
   cultura: leggi('cultura-e-artigianato.json'),
   rivenditori: leggi('diventa-rivenditore.json'),
   collezione: leggi('collezione.json'),
-  storia: leggi('storia.json'),
   doveSiamo: leggi('dove-siamo.json'),
   legale: leggi('legale.json'),
 };
@@ -110,7 +110,7 @@ for (const capo of prodotti) {
   visti.add(capo.slug);
 }
 for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }));
-genera('/storia/', paginaStoria({ sito, testi: testi.storia, home: testiHome, risorse: base, anteprima }));
+genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }));
 genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }));
 genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }));
 genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }));
@@ -132,12 +132,8 @@ ${pagine.map((p) => `  <url><loc>${sito.dominio}${p}</loc></url>`).join('\n')}
 </urlset>
 `);
 
-// 6 · i vecchi indirizzi del negozio PrestaShop portano alle pagine nuove (punto 5 della direzione creativa)
-scrivi('_redirects', `/2-home / 301
-/3-camicia-su-misura /camicie-su-misura/ 301
-/home/1-43-camicione-in-flanella-camicia-su-misura.html /collezione/ 301
-/contact-us /dove-siamo/ 301
-`);
+// 6 · reindirizzamenti: vecchi indirizzi PrestaShop e /storia/ (elenco in worker/reindirizzamenti.mjs)
+scrivi('_redirects', fileRedirects());
 
 // 7 · intestazioni per Cloudflare: cache lunga per i file con l'impronta, sicurezza per tutti
 // l'unico script in linea delle pagine deve corrispondere all'impronta ammessa dalla Content-Security-Policy

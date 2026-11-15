@@ -32,6 +32,18 @@ export function nastro(voci) {
   </section>`;
 }
 
+/**
+ * Il nastro dei fatti, fermo: stessa fascia e stesse parole, ma i fatti stanno in fila e uno di loro
+ * può portare un link sotto (in Cultura e artigianato: "Diventa rivenditore" sotto "2.500 negozi serviti").
+ */
+export function nastroFermo(voci, richiamo) {
+  return `<section class="nastro nastro--fermo" aria-label="Endero in breve">
+    <ul class="nastro__fatti">
+      ${voci.map((v) => `<li><span>${esc(v)}</span>${richiamo && v === richiamo.dopo ? `<a class="collegamento" href="${esc(richiamo.href)}">${esc(richiamo.testo)}${icona.freccia}</a>` : ''}</li>`).join('\n      ')}
+    </ul>
+  </section>`;
+}
+
 // 5–6 · Titolo e griglia di foto verticali.
 export function suMisura(s, sito, { id = 'su-misura', gruppo = 'su-misura' } = {}) {
   return `<section class="sezione sezione--griglia"${aid(id)}${agr(gruppo)}>
