@@ -15,7 +15,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 - Da costruire: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Progetto fatto con Fable 5.2 il 2026-11-15: punto 9 della direzione creativa, testi in `contenuti/it/diventa-rivenditore.json`. La realizza Opus 5.5 (proprietario). Non c'entra con il brand workwear, che resta fuori.
 - In sospeso: il configuratore. Il proprietario ha chiesto di metterlo da parte e pensarci dopo (2026-11-14). Non fare domande né lavoro sul configuratore finché non lo riapre lui. Le decisioni già prese restano valide. Si lavora prima su pagina iniziale, storia e vetrina.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
-- Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it.
+- Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it. L'anteprima è online dal 2026-11-15 su `https://endero-anteprima.orange-truth-81a7.workers.dev` (non indicizzabile, moduli che non salvano): il proprietario la manda al fondatore. Per aggiornarla: `URL_ANTEPRIMA=<indirizzo> node build/costruisci.mjs && npx wrangler deploy --config wrangler.anteprima.toml`.
 
 ## Tecnologie
 
@@ -87,6 +87,8 @@ Contatti, legale, tracciamento
 - 2026-11-14 · Dati legali, informativa privacy e cookie: bozza nostra, da far validare a Endero o al suo consulente prima della messa online.
 - 2026-11-14 · Tracciamento: banner dei consensi ed eventi predisposti, codici di Google Analytics e Meta Pixel inseriti dopo. Nessuno script di terze parti parte prima del consenso.
 - 2026-11-14 · Esiste già un account Cloudflare. La chiave si chiede con il modulo sicuro delle credenziali quando serve la prima anteprima, mai in chat.
+- 2026-11-15 · Sull'account Cloudflare del proprietario ci sono altri suoi progetti: si crea e si tocca solo ciò che si chiama `endero-…`, dopo aver guardato in sola lettura cosa esiste. La chiave data ha solo i permessi sull'account (niente domini, niente D1) e scade il 2026-11-22: per pubblicare dopo ne serve una nuova. (proprietario)
+- 2026-11-15 · Il proprietario ha fatto pubblicare l'anteprima prima che finissero due delle tre revisioni, con l'accordo di aggiornarla con le loro correzioni.
 
 Diventa rivenditore
 
@@ -122,6 +124,8 @@ Strumenti
 - 2026-11-14 · Acciaio che sembra vetro scuro e tessuto velato di grigio. Causa: un solo ambiente per luce e riflessi, e troppa "peluria" (sheen) in controluce. Soluzione già in `film/scena.py`: due ambienti scelti con il nodo percorso della luce, sheen basso.
 - 2026-11-14 · La resa dei toni "AgX" ingrigisce i fili bianchi. Soluzione: resa "Standard".
 - 2026-11-15 · Sul telefono la testata esce dallo schermo e tutto sembra rimpicciolito. Causa: un elemento che sporge di lato (il carosello) allarga la pagina e il browser si adatta. Soluzione: ritagliare la sezione con `overflow: clip` e controllare che la larghezza della pagina resti 390 su iPhone 14.
+- 2026-11-15 · `wrangler deploy` con gli assets fallisce con 401 su `workers/assets/upload`. Causa: l'ambiente di lavoro inietta la chiave Cloudflare in ogni richiesta e sostituisce l'autorizzazione temporanea di quel caricamento. Soluzione: l'anteprima usa Workers Sites su KV (`wrangler.anteprima.toml`, `worker/anteprima.js`); con wrangler si passa `CLOUDFLARE_API_TOKEN=proxy-injected` e `CLOUDFLARE_ACCOUNT_ID`. Per la messa online vera servirà pubblicare da un ambiente senza iniezione, o restare su KV.
+- 2026-11-15 · Il proprietario non è pratico di Cloudflare: i passi vanno dati uno per uno sui pulsanti che vede (la pagina dei token è cambiata: si sceglie il riquadro "Edit Cloudflare Workers" e si toglie la "Zone policy").
 - 2026-11-15 · Gli strumenti in `tools/` sono CommonJS: `package.json` non deve avere `"type": "module"`, gli script di build sono `.mjs`.
 - 2026-11-14 · Nell'ambiente non c'è `potrace`. Soluzione per vettorializzare: pacchetto npm `potrace` dopo aver ingrandito 12 volte e sfocato l'immagine con Pillow.
 
