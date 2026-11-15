@@ -227,8 +227,32 @@ function selettore() {
   }
   addEventListener('resize', () => posiziona(true), { passive: true });
 
+  // Il tono del vetro segue quello che c'è sotto: si guarda in tre punti lungo il selettore. Basta un punto
+  // chiaro per il tono chiaro (le scritte blu si leggono anche sopra il blu scuro, quelle chiare sul bianco no).
+  const ignora = '[data-selettore], [data-testata], [data-pillola-fissa], dialog';
+  function sotto(x, y) {
+    for (const el of document.elementsFromPoint(x, y)) {
+      if (el.closest(ignora)) continue;
+      if (/^(IMG|VIDEO|CANVAS|PICTURE)$/.test(el.tagName)) return 'foto';
+      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g);
+      if (!m || (m[3] !== undefined && +m[3] < 0.5)) continue;
+      const [r, g, b] = m.map(Number);
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? 'chiaro' : 'scuro';
+    }
+    return 'chiaro';
+  }
+  function tono() {
+    const r = nav.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    const y = r.top + Math.min(r.height / 2, 22);
+    const toni = [0.12, 0.5, 0.88].map((f) => sotto(r.left + r.width * f, y));
+    const nuovo = toni.includes('chiaro') ? 'chiaro' : toni.includes('foto') ? 'foto' : 'scuro';
+    if (nav.dataset.tono !== nuovo) nav.dataset.tono = nuovo;
+  }
+
   function aggiorna() {
     richiesta = 0;
+    tono();
     if (!nav.classList.contains('selettore--chiuso') && Math.abs(scrollY - apertoA) > 48) chiudi();
     const soglia = nav.getBoundingClientRect().bottom + 60;
     let scelto = sezioni[0]?.dataset.gruppo;

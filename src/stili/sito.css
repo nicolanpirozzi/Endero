@@ -3006,6 +3006,62 @@ html.dialogo-aperto {
   }
 }
 
+/* ------------------------------------------------------------------ selettore in vetro */
+/* Il selettore lascia vedere la pagina sotto. Lo script guarda cosa c'è dietro (src/sito.js, selettore) e
+   cambia tono: vetro chiaro con scritte blu sopra le sezioni chiare, vetro blu con scritte chiare sopra
+   quelle scure e sulle foto. Le scritte restano almeno a 4,5:1 in tutti e due i casi.
+   Senza script resta il fondo quasi pieno di prima, che si legge sopra tutto. */
+
+.js .selettore[data-tono] {
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  transition: top 420ms var(--morbido), background-color 260ms ease-out, color 260ms ease-out, box-shadow 260ms ease-out;
+}
+
+.js .selettore[data-tono="chiaro"] {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(15, 40, 94, 0.14), 0 6px 24px rgba(15, 40, 94, 0.08);
+  color: var(--blu);
+}
+
+.js .selettore[data-tono="scuro"],
+.js .selettore[data-tono="foto"] {
+  background: rgba(10, 27, 69, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+  color: var(--bianco);
+}
+
+/* sopra una foto vera non si sa quanto è chiara: il vetro è più pieno, così anche sul bianco si legge a 5:1 */
+.js .selettore[data-tono="foto"] {
+  background: rgba(10, 27, 69, 0.62);
+}
+
+/* la voce attiva resta sulla pillola blu con la scritta chiara, qualunque sia il tono */
+.js .selettore[data-tono] .selettore__voci a[aria-current="true"] {
+  color: var(--bianco);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .js .selettore[data-tono="chiaro"] .selettore__voci a:not([aria-current="true"]):hover {
+    background: rgba(15, 40, 94, 0.08);
+  }
+}
+
+.js .selettore[data-tono="chiaro"] :focus-visible {
+  outline-color: var(--blu);
+}
+
+/* sul telefono è una barra a tutta larghezza: solo il filo sotto */
+@media (max-width: 809px) {
+  .js .selettore[data-tono="chiaro"] {
+    box-shadow: inset 0 -1px 0 rgba(15, 40, 94, 0.14);
+  }
+  .js .selettore[data-tono="scuro"],
+  .js .selettore[data-tono="foto"] {
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.24);
+  }
+}
+
 /* ------------------------------------------------------------------ schermi medi */
 
 @media (max-width: 1199px) {
