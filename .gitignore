@@ -11,3 +11,10 @@ __pycache__/
 
 # lavoro della skill design-taste-frontend
 .taste-skill/
+
+# camicia 3D: il modello è materiale comprato dal proprietario, resta fuori finché il repository è pubblico
+# (si rigenera con camicia/prepara.py e camicia/comprimi.mjs dal file originale)
+public/camicia/*.glb
+
+# copie di lavoro degli agenti
+.claude/worktrees/

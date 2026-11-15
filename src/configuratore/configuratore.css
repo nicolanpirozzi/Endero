@@ -1,0 +1,258 @@
+/* Configuratore, passo 1: la camicia sospesa e il riquadro in vetro.
+   Stato di base (senza JavaScript, senza WebGL, con il risparmio dati): l'immagine ferma della camicia.
+   Lo script mette data-stato="carica" e poi "viva": solo allora la tela 3D prende il posto dell'immagine.
+   Usa i colori e il vetro del sito (src/stili/sito.css). */
+
+.configura {
+  --blu-notte: #0a1b45;
+  --filo: #fbf9f4;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  gap: 0 36px;
+  padding: 0 36px 0 0;
+  min-height: 100svh;
+  color: var(--filo);
+  /* lo stesso mondo dell'apertura: blu profondo e una pozza di luce calda dietro la camicia */
+  background:
+    radial-gradient(58% 52% at 34% 46%, rgba(255, 214, 170, 0.2), rgba(255, 214, 170, 0) 70%),
+    radial-gradient(120% 90% at 50% 112%, #050f2b 0%, rgba(5, 15, 43, 0) 60%),
+    var(--blu-notte);
+  overflow: clip;
+}
+
+/* la camicia resta ferma sullo schermo mentre il riquadro, se è lungo, scorre */
+.configura__palco {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 420px;
+}
+
+.configura__tela,
+.configura__ferma {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.configura__ferma {
+  object-fit: contain;
+  object-position: center;
+  padding: 9svh 4%;
+  box-sizing: border-box;
+}
+
+.configura__tela {
+  opacity: 0;
+  transition: opacity 600ms ease-out;
+}
+
+.camicia__tela {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: pan-y;          /* col dito: di lato si gira la camicia, in verticale scorre la pagina */
+  outline: none;
+}
+
+.camicia__tela--presa {
+  cursor: grabbing;
+}
+
+.configura__palco[data-stato="carica"] .configura__ferma,
+.configura__palco[data-stato="viva"] .configura__ferma {
+  visibility: hidden;
+}
+
+.configura__palco[data-stato="viva"] .configura__tela {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ caricamento, come nell'apertura */
+
+.configura__carica {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  place-content: center;
+  justify-items: center;
+  gap: 1.6rem;
+  transition: opacity 500ms ease-out, visibility 0s linear 500ms;
+}
+
+.configura__palco[data-stato="carica"] .configura__carica,
+.configura__palco[data-stato="viva"] .configura__carica {
+  display: grid;
+}
+
+.configura__palco[data-stato="viva"] .configura__carica {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.configura__carica svg {
+  width: min(46vw, 220px);
+  height: auto;
+  color: var(--filo);
+}
+
+.configura__avanzamento {
+  position: relative;
+  width: min(60vw, 260px);
+  height: 3px;
+}
+
+.configura__avanzamento::before,
+.configura__avanzamento::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, currentColor 0 9px, transparent 9px 15px);
+}
+
+.configura__avanzamento::before {
+  opacity: 0.22;
+}
+
+.configura__avanzamento::after {
+  clip-path: inset(0 calc(100% - var(--avanzamento, 0) * 100%) 0 0);
+  transition: clip-path 200ms ease-out;
+}
+
+.configura__percento {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* ------------------------------------------------------------------ invito a girarla */
+
+.configura__invito {
+  position: absolute;
+  left: 50%;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  transform: translateX(-50%);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease-out;
+}
+
+.configura__invito svg {
+  width: 26px;
+  height: 14px;
+}
+
+.configura__palco[data-stato="viva"] .configura__invito {
+  opacity: 0.8;
+  transition-delay: 900ms;
+}
+
+.configura__palco[data-toccata] .configura__invito {
+  opacity: 0;
+  transition-delay: 0s;
+}
+
+/* ------------------------------------------------------------------ il riquadro in vetro */
+
+.configura__scheda {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  margin: 104px 0 48px;
+  padding: 28px;
+}
+
+.configura__titolo {
+  margin: 0 0 6px;
+}
+
+.configura__testo {
+  margin: 0 0 22px;
+  opacity: 0.85;
+}
+
+.configura__righe {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.configura__righe li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.configura__scheda .pillola {
+  margin-top: 22px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------------ telefono */
+
+@media (max-width: 809px) {
+  .configura {
+    display: block;
+    padding: 0;
+    background:
+      radial-gradient(90% 34% at 50% 27%, rgba(255, 214, 170, 0.2), rgba(255, 214, 170, 0) 70%),
+      var(--blu-notte);
+  }
+
+  .configura__palco {
+    position: relative;
+    height: 62svh;
+    min-height: 360px;
+  }
+
+  .configura__ferma {
+    padding: 76px 0 12px;
+  }
+
+  .configura__invito {
+    bottom: 10px;
+  }
+
+  .configura__scheda {
+    margin: 0 20px;
+    padding: 22px 20px;
+  }
+
+  .configura {
+    padding-bottom: 96px;       /* posto per la pillola fissa di WhatsApp */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .configura__tela,
+  .configura__carica,
+  .configura__invito,
+  .configura__avanzamento::after {
+    transition: none;
+  }
+}

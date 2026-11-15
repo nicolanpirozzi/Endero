@@ -6,7 +6,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
 - Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì: struttura a più pagine al punto 10, qualità al punto 11, configuratore al punto 12.
 - Film 3D dell'apertura: scena e calcolo in `film/`, lettore in `src/apertura/`, pezzi pronti in `public/film/`, pagina di prova `anteprima/apertura.html` (si apre con un server locale dalla radice del progetto). Approvato dal proprietario il 2026-11-15: non si rifà, si integra nella pagina iniziale. Dettagli al punto 4 della direzione creativa.
-- Camicia 3D del configuratore: lavoro in `camicia/`, modello pronto in `public/camicia/`. Dettagli al punto 12.
+- Camicia 3D del configuratore: strumenti in `camicia/`, motore in `src/configuratore/`, file pronti in `public/camicia/`. Il modello `.glb` non è nel repository (vedi Problemi): si rigenera dall'originale del proprietario con i comandi del punto 12.
 - Fatti sul brand e fonti: `docs/ricerca-endero.md`.
 - Logo vettoriale: `brand/logo/`.
 
@@ -111,6 +111,7 @@ Diventa rivenditore
 Configuratore (riaperto il 2026-11-15, a passi)
 
 - 2026-11-15 · Passo 1 (parole del proprietario): "il 3D di una camicia sospesa in aria che si muove quando ci passo sopra con il mouse. Accanto una tabella glass con le info che poi ti dirò e che il cliente deve compilare", con un caricamento. Riferimento per il 3D: `beat.noomoagency.com`. Qui il 3D è in diretta nel browser; per l'apertura resta scartato.
+- 2026-11-15 · La camicia 3D parte da un modello già fatto caricato dal proprietario ("credo sia troppo complicato partire da zero, parti da questo già fatto e miglioralo"). Scartato: modellarla noi con Blender, che avevamo cominciato.
 - 2026-11-15 · Chi ordina da casa dà solo le misure del corpo. Scartati: misurare una camicia che sta bene, scelta tra i due modi. (proprietario)
 - 2026-11-15 · Opzioni (tessuti, colli, polsi, vestibilità) e prezzi li manda il proprietario. Scartati: proposta nostra da correggere, modulo per il fondatore.
 - 2026-11-14 · Si chiude con un pagamento online: Stripe, importo intero all'ordine, pagina di pagamento ospitata da Stripe. Il sarto verifica le misure prima del taglio e scrive al cliente su WhatsApp se qualcosa non torna.
@@ -137,6 +138,11 @@ Strumenti
 - 2026-11-15 · `wrangler deploy` con gli assets fallisce con 401 su `workers/assets/upload`. Causa: l'ambiente di lavoro inietta la chiave Cloudflare in ogni richiesta e sostituisce l'autorizzazione temporanea di quel caricamento. Soluzione: l'anteprima usa Workers Sites su KV (`wrangler.anteprima.toml`, `worker/anteprima.js`); con wrangler si passa `CLOUDFLARE_API_TOKEN=proxy-injected` e `CLOUDFLARE_ACCOUNT_ID`. Per la messa online vera servirà pubblicare da un ambiente senza iniezione, o restare su KV.
 - 2026-11-15 · Il proprietario non è pratico di Cloudflare: i passi vanno dati uno per uno sui pulsanti che vede (la pagina dei token è cambiata: si sceglie il riquadro "Edit Cloudflare Workers" e si toglie la "Zone policy").
 - 2026-11-15 · Il repository GitHub è pubblico, ma contiene il dossier di ricerca con ciò che il proprietario non vuole diffondere (produzione all'estero, altri indirizzi, dati societari da directory). Soluzione: renderlo privato, e lo può fare solo il proprietario dalle impostazioni di GitHub; cancellare le righe non basta, restano nella cronologia. Finché è pubblico non aggiungere altro di riservato.
+- 2026-11-15 · Il modello della camicia è materiale comprato (nel file: "3D Models For Sales"). Soluzione: l'originale e il `.glb` restano fuori dal repository finché è pubblico (`.gitignore`); il proprietario deve controllare che la licenza permetta l'uso su un sito. Se il container riparte, il `.glb` si rigenera dall'originale, che va ricaricato in chat.
+- 2026-11-15 · Nell'ambiente non c'è nulla per aprire i `.rar`. Soluzione: pacchetto npm `node-unrar-js` in una cartella di lavoro, estraendo in una cartella nuova e vuota.
+- 2026-11-15 · Macchie scure sulla camicia nel browser. Causa: il tessuto ha due strati a 1,8 mm e, disegnando le facce da entrambi i lati, il rovescio spunta davanti al diritto. Soluzione: ogni strato si disegna solo dal suo lato (niente `DoubleSide`) e piani di taglio della camera stretti.
+- 2026-11-15 · Il Blender dell'ambiente non ha le librerie per comprimere i `.glb`. Soluzione: `camicia/comprimi.mjs` (meshopt). Attenzione: `dedup` fonde i materiali uguali e `prune` butta la mappa del tessuto se nessuna immagine la usa: `prune({ keepAttributes: true })`, niente `dedup`.
+- 2026-11-15 · Nel browser di prova il 3D gira sul processore: `page.screenshot` va in timeout. Soluzione: pagina con `?manuale` (il tempo avanza a comando) e schermate via CDP, come fa `tools/filma-camicia.js`. La simulazione dei tessuti di Blender qui impiega 12 minuti a prova e accartoccia: non usarla.
 - 2026-11-15 · Gli strumenti in `tools/` sono CommonJS: `package.json` non deve avere `"type": "module"`, gli script di build sono `.mjs`.
 - 2026-11-14 · Nell'ambiente non c'è `potrace`. Soluzione per vettorializzare: pacchetto npm `potrace` dopo aver ingrandito 12 volte e sfocato l'immagine con Pillow.
 
@@ -157,3 +163,4 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - "Diventa rivenditore": loghi dei negozi clienti che danno il permesso, foto per la pagina, conferma dei testi in bozza. Serve per: completare la pagina dopo la costruzione.
 - Foto di oggi per "Cultura e artigianato" e per il sito: il proprietario ne ha alcune e le carica. Serve per: scrivere i capitoli, uno per foto.
 - Configuratore: campi del riquadro in vetro, opzioni e prezzi (li manda il proprietario), tempi di consegna, email che riceve gli ordini. Serve per: passi dal 2 in poi.
+- La licenza del modello 3D della camicia permette di usarlo su un sito? Lo sa il proprietario, che l'ha comprato. Serve per: messa online del configuratore.
