@@ -297,6 +297,15 @@ Escono dalla pagina iniziale: i dettagli del su misura, "Come funziona" con il m
 
 **Ordine dei lavori.** 1) testata, menu e piè di pagina; 2) pagina iniziale nuova; 3) pagina del su misura con i testi suoi; 4) cultura e artigianato; 5) diventa rivenditore (punto 9); 6) qualità (punto 11); 7) video e schermate su computer e telefono al proprietario, prima di aggiornare l'anteprima online.
 
+**Costruita il 15 novembre 2026** da Opus 5.5 (passi 1–6), unita e ricontrollata. Da sapere per chi ci rimette mano:
+
+- I reindirizzamenti stanno in un elenco solo, `worker/reindirizzamenti.mjs`: lo leggono `_redirects`, il Worker dell'anteprima e il server locale.
+- Il modulo dei rivenditori salva i suoi campi nella colonna `dettagli`. Il database locale va ricreato (`npm run db:locale` dopo aver cancellato `.wrangler/`): la tabella che esiste già non prende la colonna nuova.
+- L'ingresso al configuratore nella pagina del su misura e la pillola "Crea la tua camicia" in pagina iniziale sono pronti ma spenti: `configuratore.attivo` in `contenuti/it/su-misura.json`. Si accendono quando il proprietario approva il configuratore.
+- Scelte prese costruendo, da far vedere al proprietario: il nastro è alto 220 px (nel riferimento circa 310) per regolare gli spazi; in "Cultura e artigianato" i fatti stanno in un nastro fermo, con "Diventa rivenditore" sotto "2.500 negozi serviti"; sul telefono la testata dice "Prenota" e non la frase intera, che a 320 px non entra.
+- Restano deboli a vedersi, finché mancano le foto: i capitoli di "Cultura e artigianato" sono tre riquadri uguali; molto bianco sopra quella sezione; nella pagina dei rivenditori parola grande e titolo si ripetono ("SU MISURA" e "Su misura per i tuoi clienti").
+- `npm run gusto` segnala ancora da 3 a 9 "CORREGGI" per pagina: sono tutte su scelte approvate (testata trasparente e pillola fissa sopra il contenuto, foto a filo, scheda che esce dalla foto sul telefono) o su pagine di solo testo. Vanno aggiunte all'elenco di `tools/gusto.js` solo dopo averle riguardate una per una.
+
 ## 11. Qualità: la skill `design-taste-frontend`
 
 Aggiunta dal proprietario il 15 novembre 2026 "per perfezionare la UX/UI". È un kit completo per costruire siti da zero, con regole sue. Alcune vanno contro scelte già approvate dal proprietario e dal fondatore: in quei casi **vince l'approvato** (scelta del proprietario: "tieni l'approvato, aggiungi il meglio").

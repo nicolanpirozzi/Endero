@@ -13,7 +13,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 ## Ambito
 
 - Dentro: solo il brand Endero (camicie e abbigliamento uomo): vendita ai privati e sezione "Diventa rivenditore".
-- Da costruire: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Progetto fatto con Fable 5.2 il 2026-11-15: punto 9 della direzione creativa, testi in `contenuti/it/diventa-rivenditore.json`. La realizza Opus 5.5 (proprietario). Non c'entra con il brand workwear, che resta fuori.
+- "Diventa rivenditore", per chi compra da Endero per rivendere: pagina costruita il 2026-11-15 (punto 9 della direzione creativa, testi in `contenuti/it/diventa-rivenditore.json`), da far approvare al proprietario. Non c'entra con il brand workwear, che resta fuori.
 - Configuratore: riaperto dal proprietario il 2026-11-15, da costruire a passi; ogni passo si mostra e si approva prima del successivo. Le decisioni del 2026-11-14 restano valide. Opzioni, prezzi e campi da compilare li manda lui: non inventarli e non costruire passi che non ha chiesto.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
 - Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it. L'anteprima è online dal 2026-11-15 su `https://endero-anteprima.orange-truth-81a7.workers.dev` (non indicizzabile, moduli che non salvano): il proprietario la manda al fondatore. Per aggiornarla: `URL_ANTEPRIMA=<indirizzo> node build/costruisci.mjs && npx wrangler deploy --config wrangler.anteprima.toml`.
@@ -32,7 +32,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 2. Rispetto di `prefers-reduced-motion` e funzionamento anche senza JavaScript: l'HTML esce già completo dal build, gli script lo arricchiscono.
 3. Revisioni indipendenti con più agenti prima di pubblicare.
 4. Ogni pagina si controlla su desktop e su mobile.
-5. Strategia con Fable 5.2, parte operativa con Opus 5.5: quando si passa da una all'altra, dirlo al proprietario così cambia modello. Il 3D (film, camicia) lo fa Fable.
+5. Strategia con Fable 5.2, parte operativa con Opus 5.5: quando si passa da una all'altra, dirlo al proprietario così cambia modello. Il 3D (film, camicia) lo fa Fable. Fable può anche mettere Opus al lavoro in parallelo come agente in una copia di lavoro separata, e poi controllare e unire il risultato: così è nata la struttura a più pagine.
 
 ## Skill del progetto
 
