@@ -19,7 +19,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
 ## Tecnologie
 
-- GSAP per le animazioni (tutti i plugin sono gratuiti dal 2025), Lenis per lo scorrimento morbido (rotella e dito).
+- GSAP per le animazioni complesse (tutti i plugin sono gratuiti dal 2025), Lenis per lo scorrimento morbido (rotella e dito, `syncTouch` acceso perché il proprietario l'ha chiesto anche per il dito: da provare sul telefono vero). Comparse e piccoli movimenti con transizioni CSS: non serve una libreria per una dissolvenza.
 - esbuild per compilare gli script. Sito in locale: `npm run anteprima` (porta 8766) o `npm run worker` (Worker e D1 locali, porta 8787, modulo attivo). Struttura dei file e comandi al punto 7 della direzione creativa.
 - Cloudflare Workers con Wrangler per pubblicare, D1 per i dati del modulo, Turnstile come antispam.
 - Playwright con Chromium per anteprime e controlli. È già installato nell'ambiente: non reinstallarlo. `tools/cattura.js` fotografa una pagina a schermate, desktop o mobile; `tools/filma.js` ne registra un video mentre scorre, da mandare al proprietario per l'approvazione.

@@ -320,7 +320,8 @@ export async function avviaApertura(radice) {
     salta(y);
     const dt = Math.min(0.1, (ora - prima) / 1000 || 0.016);
     prima = ora;
-    if (yMorbida < 0 || Math.abs(y - yMorbida) < 0.4) yMorbida = y;
+    // con lo scorrimento morbido del sito (Lenis) la posizione arriva già ammorbidita: niente secondo filtro
+    if (yMorbida < 0 || Math.abs(y - yMorbida) < 0.4 || document.documentElement.classList.contains('lenis-smooth')) yMorbida = y;
     else yMorbida += (y - yMorbida) * (1 - Math.exp(-dt / MORBIDEZZA));
     disegna(yMorbida);
     if (attivo) richiesta = requestAnimationFrame(passoCiclo);

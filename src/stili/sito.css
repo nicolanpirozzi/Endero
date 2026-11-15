@@ -3,6 +3,7 @@
    su https://www.seve.app/pr a 1440 × 900 e su iPhone 14. Il blu del logo prende il posto del nero. */
 
 @import "../apertura/apertura.css";
+@import "lenis/dist/lenis.css";
 
 @font-face {
   font-family: "Archivo";
@@ -30,7 +31,8 @@
   --raggio-pannello: 12px;
   --margine: 36px;            /* margine laterale delle foto grandi */
   --spazio-sezione: 100px;    /* tra una sezione e l'altra */
-  --morbido: cubic-bezier(0.23, 1, 0.32, 1);
+  --morbido: cubic-bezier(0.23, 1, 0.32, 1);          /* uscita decisa: comparse, pressioni */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);     /* movimento sullo schermo: tende, indicatore */
 }
 
 /* ------------------------------------------------------------------ base */
@@ -44,7 +46,6 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-padding-top: 96px;
 }
 
 body {
@@ -219,6 +220,8 @@ button {
   text-decoration: none;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
   transition: background-color 180ms ease-out, color 180ms ease-out, transform 160ms var(--morbido);
 }
 
@@ -248,7 +251,7 @@ button {
   padding: 0 40px;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .pillola--blu:hover {
     background: #1a3a7e;
   }
@@ -528,7 +531,7 @@ button {
   text-align: center;
 }
 
-.eroe__titolo span {
+.eroe__titolo > span {
   display: block;
 }
 
@@ -645,7 +648,7 @@ body[data-barra] .selettore {
   background: var(--blu);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .selettore__voci a:not([aria-current="true"]):hover {
     background: rgba(255, 255, 255, 0.14);
   }
@@ -736,7 +739,7 @@ body[data-barra] .selettore {
   opacity: 0.8;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .griglia__voce:hover .griglia__scheda {
     opacity: 1;
     transform: none;
@@ -882,7 +885,7 @@ body[data-barra] .selettore {
   line-height: 1.5;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .pannello-sede__righe a:hover {
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -1161,6 +1164,7 @@ body[data-barra] .selettore {
 
 /* 9 · tre riquadri: gli ingressi alla collezione */
 .collezione {
+  scroll-margin-top: 40px;
   margin-top: var(--spazio-sezione);
   padding: 50px 0;
   background: var(--carta);
@@ -1201,7 +1205,7 @@ body[data-barra] .selettore {
   position: relative;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .riquadro:hover > .attesa {
     transform: scale(1.03);
   }
@@ -1309,12 +1313,20 @@ body[data-barra] .selettore {
   transform: scale(0.94);
 }
 
+/* bersaglio da 48 px anche se il cerchio ne misura 36 */
+.carosello__freccia::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
 .carosello__freccia[hidden] {
   display: none;
 }
 
 /* con lo script: tre foto ad altezze diverse, quella centrale grande con la scheda */
 .carosello--vivo {
+  touch-action: pan-y;
   height: 817px;
   max-width: 1440px;
   margin: 0 auto;
@@ -1390,7 +1402,7 @@ body[data-barra] .selettore {
   right: calc(50% - 495px - 184px + 18px);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .carosello__freccia:hover {
     background: rgba(10, 27, 69, 0.55);
   }
@@ -1420,6 +1432,8 @@ body[data-barra] .selettore {
 }
 
 .domanda summary {
+  -webkit-user-select: none;
+  user-select: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1578,7 +1592,7 @@ body[data-barra] .selettore {
   white-space: nowrap;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .piede__colonne a:hover {
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -1595,6 +1609,122 @@ body[data-barra] .selettore {
   line-height: 25px;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ movimento */
+/* Solo con lo script e senza movimento ridotto: src/sito.js mette .movimento su <html> e segna gli elementi.
+   Senza script, o se lo script non parte, tutto resta visibile da subito. */
+
+.movimento [data-rivela="su"] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition: opacity 700ms var(--morbido), transform 900ms var(--morbido);
+  transition-delay: var(--ritardo, 0ms);
+}
+
+.movimento [data-rivela="scheda"] {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0) scale(0.98);
+  transition: opacity 600ms var(--morbido), transform 800ms var(--morbido);
+  transition-delay: var(--ritardo, 0ms);
+}
+
+/* le foto grandi si aprono dall'alto, come un telo che si alza */
+.movimento [data-rivela="tenda"] {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 1100ms var(--ease-in-out);
+}
+
+.movimento [data-rivela="tenda"] > .attesa {
+  transform: scale(1.06);
+  transition: transform 1600ms var(--morbido);
+}
+
+/* titoli: le parole entrano una alla volta */
+.movimento [data-rivela="parole"] .parola {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 0.4em, 0);
+  filter: blur(6px);
+  transition: opacity 600ms var(--morbido), transform 800ms var(--morbido), filter 600ms var(--morbido);
+  transition-delay: calc(var(--ritardo, 0ms) + var(--i, 0) * 55ms);
+}
+
+.movimento [data-rivela][data-visto],
+.movimento [data-rivela="parole"][data-visto] .parola {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.movimento [data-rivela="tenda"][data-visto] {
+  clip-path: inset(0 0 0 0);
+}
+
+.movimento [data-rivela="tenda"][data-visto] > .attesa {
+  transform: none;
+}
+
+/* già sullo schermo quando parte lo script: niente animazione */
+.movimento [data-subito],
+.movimento [data-subito] .parola,
+.movimento [data-subito] > .attesa {
+  transition: none !important;
+}
+
+/* selettore: la pillola blu scivola sotto la voce attiva */
+.selettore__indicatore {
+  display: none;
+}
+
+.selettore--indicatore .selettore__indicatore {
+  display: block;
+  position: absolute;
+  inset: 6px;
+  border-radius: var(--raggio-pillola);
+  background: var(--blu);
+  clip-path: inset(0 var(--destra, 100%) 0 var(--sinistra, 0px) round 999px);
+  transition: clip-path 420ms var(--ease-in-out);
+  pointer-events: none;
+}
+
+.selettore--indicatore .selettore__voci {
+  position: relative;
+}
+
+.selettore--indicatore .selettore__voci a[aria-current="true"] {
+  background: transparent;
+}
+
+.selettore__indicatore[data-subito] {
+  transition: none;
+}
+
+/* domande: la risposta si apre in altezza dove il browser lo sa fare, altrimenti si apre e basta */
+@supports (interpolate-size: allow-keywords) {
+  .domande {
+    interpolate-size: allow-keywords;
+  }
+  .domanda::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height 280ms var(--morbido), content-visibility 280ms allow-discrete;
+  }
+  .domanda[open]::details-content {
+    height: auto;
+  }
+  .domanda__risposta {
+    opacity: 0;
+    transition: opacity 240ms var(--morbido);
+  }
+  .domanda[open] .domanda__risposta {
+    opacity: 1;
+  }
+  @starting-style {
+    .domanda[open] .domanda__risposta {
+      opacity: 0;
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ pagine di servizio */
@@ -1682,10 +1812,6 @@ body[data-barra] .selettore {
     --spazio-sezione: 90px;
   }
 
-  html {
-    scroll-padding-top: 64px;
-  }
-
   .testata__secondaria {
     display: none;
   }
@@ -1734,6 +1860,14 @@ body[data-barra] .selettore {
 
   body[data-barra] .selettore {
     top: 64px;
+  }
+
+  .selettore--indicatore .selettore__indicatore {
+    display: none;
+  }
+
+  .selettore--indicatore .selettore__voci a[aria-current="true"] {
+    background: var(--blu);
   }
 
   .selettore__voci {
@@ -2037,6 +2171,12 @@ body[data-barra] .selettore {
 
   .piede__link {
     column-gap: 40px;
+  }
+
+  /* sul telefono i collegamenti del piè di pagina si toccano col dito: righe più alte */
+  .piede__colonne a,
+  .piede__sede {
+    line-height: 34px;
   }
 
   .piede__fondo {

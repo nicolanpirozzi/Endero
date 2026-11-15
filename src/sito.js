@@ -1,8 +1,59 @@
 // Comportamenti comuni del sito. La pagina funziona già senza: qui si aggiungono solo comodità.
 // L'apertura ha un suo file (src/apertura/apertura.js), caricato solo nella pagina iniziale.
 
-const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
-const comportamento = () => (ridotto.matches ? 'auto' : 'smooth');
+import Lenis from 'lenis';
+
+const ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------------------------------------------------------------- scorrimento morbido
+// Lenis ammorbidisce rotella e dito. Con il movimento ridotto resta lo scorrimento del sistema.
+let lenis = null;
+function scorrimento() {
+  if (ridotto) return;
+  lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 0.9, syncTouch: true, syncTouchLerp: 0.085, autoRaf: true });
+  // nei campi che scorrono da soli (le note del modulo) comanda il campo, non la pagina
+  document.querySelectorAll('textarea').forEach((el) => el.setAttribute('data-lenis-prevent', ''));
+}
+
+// Durante uno scorrimento guidato (selettore, collegamenti interni) la testata non torna come barra:
+// coprirebbe il titolo della sezione appena raggiunta.
+let guidato = false;
+let fineGuida = 0;
+
+/** Porta un elemento in cima allo schermo, rispettando il suo scroll-margin-top. */
+function vaiA(el, { subito = false } = {}) {
+  let y;
+  if (el.classList.contains('eroe')) {
+    // il video è attaccato sotto l'apertura: la sua posizione vera è dove l'apertura finisce
+    const a = document.querySelector('.apertura');
+    y = a ? a.getBoundingClientRect().bottom + scrollY : 0;
+  } else {
+    y = el.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(el).scrollMarginTop) || 0);
+  }
+  guidato = true;
+  clearTimeout(fineGuida);
+  const libera = () => { fineGuida = setTimeout(() => { guidato = false; }, 150); };
+  if (lenis) lenis.scrollTo(y, { immediate: subito, duration: 1.2, force: true, onComplete: libera });
+  else { scrollTo({ top: y, behavior: subito || ridotto ? 'auto' : 'smooth' }); fineGuida = setTimeout(() => { guidato = false; }, 1200); }
+  if (subito) libera();
+}
+
+// I collegamenti a un punto della stessa pagina scorrono fin lì; "Salta" ci va di colpo.
+function ancore() {
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href*="#"]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname || url.hash.length < 2) return;
+    const meta = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+    if (!meta) return;
+    e.preventDefault();
+    const salto = a.matches('.apertura__salta, .salta-al-contenuto');
+    vaiA(meta, { subito: salto });
+    history.replaceState(null, '', url.hash);
+    if (salto && meta.tabIndex === -1) meta.focus({ preventScroll: true });
+  });
+}
 
 // ---------------------------------------------------------------- testata e pillola fissa
 // Sull'apertura e sul video la testata resta trasparente; dopo si ritira scendendo e torna come barra risalendo.
@@ -30,6 +81,7 @@ function testata() {
     const delta = y - ultimo;
     const limite = eroe ? eroe.getBoundingClientRect().bottom + y - 80 : 160;
     if (y < limite) imposta('');
+    else if (guidato) imposta('via');
     else if (delta < -6) imposta('barra');
     else if (delta > 6) imposta('via');
     else if (!stato) imposta('via');
@@ -65,14 +117,24 @@ function selettore() {
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) chiudi(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') chiudi(); });
 
-  voci.forEach((a) => a.addEventListener('click', (e) => {
-    const meta = document.getElementById(a.dataset.voce);
-    if (!meta) return;
-    e.preventDefault();
-    chiudi();
-    meta.scrollIntoView({ behavior: comportamento(), block: 'start' });
-    history.replaceState(null, '', '#' + a.dataset.voce);
-  }));
+  voci.forEach((a) => a.addEventListener('click', chiudi));
+
+  // la pillola blu che scivola sotto la voce attiva (solo su schermi larghi, vedi sito.css)
+  const indicatore = document.createElement('span');
+  indicatore.className = 'selettore__indicatore';
+  indicatore.setAttribute('aria-hidden', 'true');
+  nav.prepend(indicatore);
+  nav.classList.add('selettore--indicatore');
+  function posiziona(subito) {
+    const a = voci.find((v) => v.dataset.voce === gruppo) || voci[0];
+    const largo = indicatore.offsetWidth;
+    if (!largo) return;
+    const sinistra = a.getBoundingClientRect().left - indicatore.getBoundingClientRect().left;
+    indicatore.toggleAttribute('data-subito', !!subito);
+    indicatore.style.setProperty('--sinistra', sinistra + 'px');
+    indicatore.style.setProperty('--destra', Math.max(0, largo - sinistra - a.offsetWidth) + 'px');
+  }
+  addEventListener('resize', () => posiziona(true), { passive: true });
 
   function aggiorna() {
     richiesta = 0;
@@ -80,15 +142,117 @@ function selettore() {
     let scelto = sezioni[0]?.dataset.gruppo;
     for (const s of sezioni) if (s.getBoundingClientRect().top <= soglia) scelto = s.dataset.gruppo;
     if (scelto === gruppo) return;
+    const primaVolta = !gruppo;
     gruppo = scelto;
     voci.forEach((a) => {
       const si = a.dataset.voce === gruppo;
       if (si) { a.setAttribute('aria-current', 'true'); attuale.textContent = a.textContent; }
       else a.removeAttribute('aria-current');
     });
+    posiziona(primaVolta);
   }
   addEventListener('scroll', () => { if (!richiesta) richiesta = requestAnimationFrame(aggiorna); }, { passive: true });
   aggiorna();
+}
+
+// ---------------------------------------------------------------- comparse allo scorrimento
+// Una volta sola per elemento: titoli parola per parola, testi e foto che salgono, foto grandi che si aprono.
+const COMPARSE = [
+  // [selettore, tipo, ritardo in ms o 'gruppo' per scalare gli elementi che entrano insieme]
+  ['.intesta .titolo, .funziona__testo > .titolo, .domande > .titolo, .prezzo__testo .titolo', 'parole', 0],
+  ['.intesta .testo, .funziona__testo > .testo, .prezzo__testo .testo', 'su', 160],
+  ['.intesta .collegamento', 'su', 260],
+  ['.nastro', 'su', 0],
+  ['.griglia__voce, .passi li, .riquadri li, .domanda', 'su', 'gruppo'],
+  ['.grande, .prezzo__foto', 'tenda', 0],
+  ['.scheda-misure', 'scheda', 450],
+  ['.pannello', 'su', 120],
+  ['.carosello', 'su', 0],
+  ['.prezzo__fondo', 'su', 200],
+];
+
+/** Mette ogni parola di un titolo in uno <span class="parola">; i segnaposto restano interi. */
+function dividiParole(el) {
+  let i = 0;
+  const cammina = (nodo) => {
+    for (const figlio of [...nodo.childNodes]) {
+      if (figlio.nodeType === Node.TEXT_NODE) {
+        const pezzi = document.createDocumentFragment();
+        for (const p of figlio.textContent.split(/(\s+)/)) {
+          if (!p) continue;
+          if (/^\s+$/.test(p)) { pezzi.append(p); continue; }
+          const s = document.createElement('span');
+          s.className = 'parola';
+          s.textContent = p;
+          s.style.setProperty('--i', i++);
+          pezzi.append(s);
+        }
+        figlio.replaceWith(pezzi);
+      } else if (figlio.nodeType === Node.ELEMENT_NODE) {
+        if (figlio.classList.contains('da-confermare')) { figlio.classList.add('parola'); figlio.style.setProperty('--i', i++); }
+        else cammina(figlio);
+      }
+    }
+  };
+  cammina(el);
+  return i;
+}
+
+function comparse() {
+  if (ridotto || !('IntersectionObserver' in window)) return;
+  const tutti = [];
+  for (const [sel, tipo, ritardo] of COMPARSE) {
+    document.querySelectorAll(sel).forEach((el) => {
+      if (el.dataset.rivela) return;
+      el.dataset.rivela = tipo;
+      if (ritardo === 'gruppo') el.dataset.gruppoComparsa = '';
+      else if (ritardo) el.style.setProperty('--ritardo', ritardo + 'ms');
+      if (tipo === 'parole') dividiParole(el);
+      tutti.push(el);
+    });
+  }
+  // quello che è già sullo schermo resta com'è
+  const apertura = document.querySelector('.apertura');
+  const copertoFinoA = apertura ? apertura.getBoundingClientRect().bottom : 0;
+  for (const el of tutti) {
+    const r = el.getBoundingClientRect();
+    if (r.top < innerHeight && r.bottom > Math.max(0, copertoFinoA)) el.setAttribute('data-subito', '');
+  }
+  document.documentElement.classList.add('movimento');
+  for (const el of tutti) if (el.hasAttribute('data-subito')) el.setAttribute('data-visto', '');
+
+  const osserva = new IntersectionObserver((voci) => {
+    const entrate = voci.filter((v) => v.isIntersecting).map((v) => v.target);
+    entrate.sort((a, b) => { const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return ra.top - rb.top || ra.left - rb.left; });
+    let k = 0;
+    for (const el of entrate) {
+      if ('gruppoComparsa' in el.dataset) el.style.setProperty('--ritardo', Math.min(k++, 6) * 60 + 'ms');
+      el.setAttribute('data-visto', '');
+      osserva.unobserve(el);
+    }
+  }, { rootMargin: '0px 0px -10% 0px' });
+  tutti.forEach((el) => { if (!el.hasAttribute('data-visto')) osserva.observe(el); });
+
+  // il titolo del video è coperto dall'apertura: entra quando il telo si solleva
+  const eroe = document.querySelector('.eroe');
+  if (!eroe) return;
+  const titolo = eroe.querySelector('.eroe__titolo');
+  const sotto = eroe.querySelector('.eroe__sotto');
+  titolo.dataset.rivela = 'parole';
+  const n = dividiParole(titolo);
+  sotto.dataset.rivela = 'su';
+  sotto.style.setProperty('--ritardo', 200 + n * 55 + 'ms');
+  let richiesta = 0;
+  const controlla = () => {
+    richiesta = 0;
+    if (apertura && apertura.getBoundingClientRect().bottom > innerHeight * 0.55) return;
+    titolo.setAttribute('data-visto', '');
+    sotto.setAttribute('data-visto', '');
+    removeEventListener('scroll', aScorrimento);
+  };
+  const aScorrimento = () => { if (!richiesta) richiesta = requestAnimationFrame(controlla); };
+  addEventListener('scroll', aScorrimento, { passive: true });
+  controlla();
 }
 
 // ---------------------------------------------------------------- carosello della storia
@@ -170,7 +334,10 @@ function modulo(form) {
   });
 }
 
+scorrimento();
+ancore();
 testata();
 selettore();
+comparse();
 document.querySelectorAll('[data-carosello]').forEach(carosello);
 document.querySelectorAll('[data-modulo]').forEach(modulo);
