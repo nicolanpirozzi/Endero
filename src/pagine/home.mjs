@@ -26,7 +26,11 @@ function apertura(a) {
     <canvas class="apertura__macchina" aria-hidden="true"></canvas>
     <canvas class="apertura__film" aria-hidden="true"></canvas>
     <div class="apertura__luce" aria-hidden="true"></div>
-    <p class="apertura__invito" aria-hidden="true">${esc(a.invito)}</p>
+    <div class="apertura__invito" aria-hidden="true">
+      <span class="invito__mouse"><span class="invito__rotella"></span></span>
+      <span class="invito__frecce">${icona.giu}${icona.giu}</span>
+      <span class="invito__testo">${esc(a.invito)}</span>
+    </div>
     <div class="apertura__carica" role="status" aria-live="polite">
       ${logo('completo')}
       <div class="apertura__avanzamento"></div>
