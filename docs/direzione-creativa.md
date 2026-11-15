@@ -1,6 +1,6 @@
 # Endero · direzione creativa e specifica di costruzione
 
-Scelte approvate dal proprietario il 14 novembre 2026. È il documento da cui parte la costruzione. I testi indicati sono bozze: vanno approvati prima della messa online. Fatti e contatti stanno in `CLAUDE.md` e `docs/ricerca-endero.md`.
+Scelte approvate dal proprietario il 14 novembre 2026. È il documento da cui parte la costruzione. **Dal 15 novembre 2026 sera il sito non è più una pagina unica: la struttura che vale è al punto 10, la qualità al punto 11, il configuratore al punto 12.** Dove i punti 3 e 5 dicono altro, vince il punto 10. I testi indicati sono bozze: vanno approvati prima della messa online. Fatti e contatti stanno in `CLAUDE.md` e `docs/ricerca-endero.md`.
 
 ## 1. Il riferimento
 
@@ -52,6 +52,8 @@ Il blu del logo prende il posto del nero. Tutto il resto resta come il riferimen
 - **Fotografie**: solo materiale vero di Endero. Finché non arriva, riquadri neutri con scritto quale foto ci va. Mai immagini di repertorio o generate.
 
 ## 3. Pagina iniziale, sezione per sezione
+
+> Superata in parte dal punto 10: il su misura, le domande e il prezzo sono passati alla pagina `/camicie-su-misura/`, la storia è diventata "Cultura e artigianato". I pezzi descritti qui restano quelli da usare.
 
 | # | Dal riferimento | Per Endero |
 | --- | --- | --- |
@@ -134,7 +136,7 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 - `sitemap.xml`, `robots.txt`, reindirizzamenti 301 dai vecchi indirizzi PrestaShop elencati nel dossier.
 - Struttura pronta per `/en/` con `hreflang`: testi in file separati dal codice.
 - Product senza offerta finché non c'è il carrello; il prezzo si mostra in pagina.
-- Il configuratore, quando si riapre, vive in `/camicie-su-misura/configuratore/`.
+- Il configuratore vive in `/camicie-su-misura/configuratore/` (riaperto il 15 novembre 2026: punto 12).
 - Tutte le pagine della tabella esistono dal 15 novembre 2026, con segnaposto dove mancano foto e testi. Le pagine dei capi nascono da `contenuti/it/prodotti.json` (campi e esempio nel file stesso). I vecchi indirizzi PrestaShop portano alle pagine nuove con `dist/_redirects`.
 - "Diventa rivenditore" (`/diventa-rivenditore/`): progettata il 15 novembre 2026, da costruire. Tutto al punto 9.
 
@@ -192,7 +194,7 @@ Progetto del 15 novembre 2026, sulle scelte del proprietario (in `CLAUDE.md`, "D
 | Ricerche | camicie uomo ingrosso, fornitore camicie per negozi, camicie con il proprio marchio, produzione camicie conto terzi, camicie su misura per negozi |
 | Dati strutturati | quelli di base, più tre `Service` con `audience` di tipo `BusinessAudience` e `provider` la sede, più `FAQPage` |
 
-**La pagina, dall'alto in basso.** Tutti pezzi già approvati in `src/parti/sezioni.mjs` e `src/pagine/storia.mjs`: nessun disegno nuovo.
+**La pagina, dall'alto in basso.** Tutti pezzi già approvati in `src/parti/sezioni.mjs` e nella pagina a capitoli (ex `/storia/`, ora `/cultura-e-artigianato/`): nessun disegno nuovo.
 
 | # | Pezzo | Contenuto |
 | --- | --- | --- |
@@ -235,11 +237,111 @@ Niente sezione prezzo e niente selettore.
 
 - Testata: terzo pulsante "Rivenditori", in vetro come "Collezione", solo su computer (da 810 px in su). Nella pagina dei rivenditori il pulsante chiaro dice "Fai richiesta" e porta al modulo, al posto di "Prenota la presa misure".
 - Piè di pagina: "Diventa rivenditore" nella colonna dei link, dopo "Dove siamo". Sul telefono è l'ingresso principale insieme alla fascia.
-- Pagina iniziale: una fascia su fondo chiaro caldo tra il prezzo e il piè di pagina, con titolo, una riga e il link. Stesso aspetto del blocco della collezione, senza riquadri. Non entra nel selettore.
-- `/storia/`: link "Diventa rivenditore" sotto il capitolo "2.500 negozi serviti".
+- Pagina iniziale: una fascia su fondo chiaro caldo tra la porta sul su misura e il piè di pagina, con titolo, una riga e il link. Stesso aspetto del blocco della collezione, senza riquadri. Dal punto 10 ha `id="rivenditori"` ed entra nel selettore.
+- `/cultura-e-artigianato/` (ex `/storia/`): link "Diventa rivenditore" accanto a "2.500 negozi serviti".
 - `/dove-siamo/`: quarta voce "Rivenditori" nell'elenco dei contatti.
 - `sitemap.xml`.
 
 **Controlli prima di mostrarla al proprietario.** Un solo H1; invio del modulo con e senza JavaScript, compreso l'errore "nessun interesse scelto"; riga salvata con `tipo` e `dettagli` giusti; terzo pulsante assente sotto 810 px e testata che non va a capo a 1024 px; nomi di negozio lunghissimi nel modulo; movimento ridotto; larghezza 390 senza scorrimento di lato. Poi video o schermate su computer e telefono, e pubblicazione solo dopo il suo ok.
 
 **Da ricevere.** Loghi dei negozi clienti che danno il permesso (a un colore, SVG o PNG); foto per la testa della pagina, i tre riquadri e i tre capitoli; conferma dei testi.
+
+## 10. Nuova struttura: più pagine, non una pagina unica
+
+Deciso dal proprietario il 15 novembre 2026, dopo che il fondatore ha visto l'anteprima ("gli piace e si aspetta un lavoro di alto livello"): la pagina unica era diventata troppo carica. Il su misura e i rivenditori hanno ciascuno la propria pagina; la pagina iniziale mostra i prodotti e, sotto, "Cultura e artigianato". Aspetto, proporzioni e movimento restano quelli del riferimento: cambiano l'ordine e la distribuzione dei pezzi, non i pezzi.
+
+**Le pagine.**
+
+| Indirizzo | Cosa contiene | Ricerca a cui risponde |
+| --- | --- | --- |
+| `/` | Apertura, eroe, vetrina dei prodotti, cultura e artigianato, porta verso il su misura, fascia rivenditori | Endero, camicie uomo |
+| `/collezione/`, `/collezione/<capo>/` | Come oggi | camicia uomo, nome del capo |
+| `/camicie-su-misura/` | Tutto il su misura che stava in pagina iniziale: dettagli, presa misure, come funziona con il modulo, prezzo, domande. In cima l'ingresso al configuratore | camicia su misura, camicia su misura Napoli |
+| `/camicie-su-misura/configuratore/` | Il configuratore (punto 12) | crea la tua camicia su misura |
+| `/cultura-e-artigianato/` | Prende il posto di `/storia/` | Endero camicie, chi siamo |
+| `/diventa-rivenditore/` | Punto 9, invariato | camicie uomo ingrosso |
+| `/dove-siamo/`, `/privacy/`, `/cookie/` | Come oggi | |
+
+`/storia/` non esiste più: un reindirizzamento 301 la porta a `/cultura-e-artigianato/` (il fondatore ha già visto il vecchio indirizzo).
+
+**Pagina iniziale, dall'alto in basso.**
+
+| # | Pezzo | Contenuto |
+| --- | --- | --- |
+| 0 | Apertura "La cucitura" | Invariata. È lei a raccontare la storia: i quattro fatti confermati. |
+| 1 | Eroe | Video del laboratorio. H1 nuovo, perché la pagina non parla più solo di su misura: "Camicie e abbigliamento uomo". Sotto: "Sartoria italiana contemporanea · Giugliano in Campania". Due pillole piccole sotto il testo: "Vedi la collezione" (alla vetrina) e "Camicia su misura" (alla sua pagina). |
+| 2 | Nastro | I fatti, come oggi: serve a chi salta l'apertura. |
+| 3 | Selettore | "Collezione · Artigianato · Su misura · Rivenditori · Dove siamo": porta alle sezioni di questa pagina, come oggi. Se a 1024 px cinque voci non stanno, "Dove siamo" esce dal selettore e resta nel piè di pagina. |
+| 4 | Vetrina, `id="collezione"` | Titolo e una riga, poi la griglia di foto a 6 colonne (2 sul telefono) che prima mostrava i dettagli del su misura: ora ogni riquadro è un capo di `prodotti.json`, con etichetta della categoria e, al passaggio, la scheda in vetro con nome, tessuto e prezzo. Ogni riquadro porta alla pagina del capo. Fino a 12 capi; se sono di più, i primi 12 e il link "Vedi tutta la collezione". Finché non ci sono capi: 12 riquadri segnaposto come oggi. Sotto, i tre ingressi per categoria (i tre riquadri di oggi). |
+| 5 | Cultura e artigianato, `id="artigianato"` | Prende il posto del carosello della storia. Vedi sotto. |
+| 6 | Porta sul su misura, `id="su-misura"` | La foto grande con la scheda misure in vetro (pezzo 7 del riferimento), titolo "La camicia su misura", una riga e la pillola "Scopri il su misura" verso `/camicie-su-misura/`. Quando il configuratore sarà completo la pillola diventerà "Crea la tua camicia". |
+| 7 | Fascia rivenditori, `id="rivenditori"` | Come al punto 9. |
+| 8 | Piè di pagina, `id="dove-siamo"` | Come oggi, con "Cultura e artigianato" al posto di "Storia" e "Diventa rivenditore". |
+
+Escono dalla pagina iniziale: i dettagli del su misura, "Come funziona" con il modulo, le domande, il prezzo. I loro testi passano da `home.json` a `su-misura.json`, così la pagina del su misura non dipende più dai testi della pagina iniziale. Title della pagina iniziale: "Endero · Camicie e abbigliamento uomo dal 1996". Non accostare mai "dal 1996" a "fatto in Italia" nella stessa frase.
+
+**Cultura e artigianato.** Il fondatore non ha foto d'archivio né un racconto da dare, e fatti inventati non se ne scrivono (regola in `CLAUDE.md`): per questo la storia lascia il posto al mestiere, che si può mostrare con le foto di oggi che il proprietario carica. Parole sue: "Cultura ed Artigianato"; sul sito "Cultura e artigianato".
+
+- *In pagina iniziale* è il momento forte dopo l'apertura: una sezione a capitoli che resta ferma sullo schermo mentre si scorre. Una foto a tutta larghezza per capitolo; ogni foto nuova si scopre dal basso sopra la precedente; in basso a sinistra un riquadro in vetro con il titolo del capitolo e due righe. Da tre a cinque capitoli, circa due terzi di schermo di scorrimento ciascuno. Sul telefono funziona allo stesso modo. Con movimento ridotto o senza JavaScript i capitoli stanno uno sotto l'altro, ogni foto sopra il suo testo. In fondo il link "Scopri come lavoriamo" verso la pagina.
+- *I capitoli nascono dalle foto*, non il contrario: prima arrivano le foto, poi si scrive un capitolo per ogni foto buona, descrivendo solo quello che la foto mostra. Finché le foto non ci sono, tre capitoli segnaposto ("Il taglio", "La cucitura", "Le rifiniture") con testo tra `[[ ]]`.
+- *La pagina* `/cultura-e-artigianato/` usa gli stessi capitoli nel formato a foto e testo alternati della vecchia `/storia/`, più il nastro dei fatti e il richiamo ai rivenditori sotto "2.500 negozi serviti". H1: "Cultura e artigianato".
+- Il carosello esce dalla pagina iniziale; il suo codice resta finché non è certo che non serve altrove.
+
+**Testata e menu.** Con più pagine serve arrivare ovunque da ovunque.
+
+- Computer (da 810 px): scritta Endero a sinistra; a destra "Collezione" e "Rivenditori" in vetro e la pillola chiara dell'azione principale. L'azione principale è "Prenota la presa misure" in tutto il sito, "Fai richiesta" nella pagina dei rivenditori.
+- Telefono: scritta, pillola dell'azione principale e un pulsante "Menu" che apre un pannello a tutto schermo sul blu del piè di pagina con: Collezione, Su misura, Cultura e artigianato, Rivenditori, Dove siamo, e in basso WhatsApp ed email. Senza JavaScript "Menu" è un link normale al piè di pagina, che contiene le stesse voci. Il pannello si chiude con il pulsante, con Esc e scegliendo una voce; mentre è aperto la pagina sotto non scorre e il fuoco della tastiera resta dentro.
+- La testata sta sugli stessi margini del contenuto, a ogni larghezza.
+
+**Passaggio da una pagina all'altra.** Dissolvenza breve tra le pagine con le transizioni di pagina del browser (`@view-transition { navigation: auto }`), solo CSS: dove il browser non le conosce il passaggio è quello normale. Niente con movimento ridotto.
+
+**Ordine dei lavori.** 1) testata, menu e piè di pagina; 2) pagina iniziale nuova; 3) pagina del su misura con i testi suoi; 4) cultura e artigianato; 5) diventa rivenditore (punto 9); 6) qualità (punto 11); 7) video e schermate su computer e telefono al proprietario, prima di aggiornare l'anteprima online.
+
+## 11. Qualità: la skill `design-taste-frontend`
+
+Aggiunta dal proprietario il 15 novembre 2026 "per perfezionare la UX/UI". È un kit completo per costruire siti da zero, con regole sue. Alcune vanno contro scelte già approvate dal proprietario e dal fondatore: in quei casi **vince l'approvato** (scelta del proprietario: "tieni l'approvato, aggiungi il meglio").
+
+| Dalla skill si prende | Dalla skill non si prende |
+| --- | --- |
+| Lo strato di tocco: ogni pulsante, link, scheda e foto cliccabile risponde al puntatore (`references/motion.md`, "The hover layer") | Il divieto di scorrimento morbido, comparse allo scorrimento, apertura con caricatore, nastro, fisarmonica |
+| I "momenti": una o due sezioni memorabili per pagina, guidate da foto o da parole (`references/moments.md`) | Foto di repertorio al posto di quelle mancanti (`scripts/photos.mjs`): per Endero solo foto vere |
+| Margini uguali, una sola misura per ogni tipo di pulsante, un solo aspetto per i link | Contatti finti (`.example`, indirizzo senza numero civico): Endero pubblica i suoi contatti veri |
+| Zone di tocco di almeno 44 px sul telefono, niente scorrimento di lato fino a 320 px | Colori, caratteri e forme "sorteggiati" e il suo `starter.html`: l'aspetto di Endero è deciso |
+| Le regole sui testi di `references/copy.md`: titoli che nominano una cosa, pulsanti con verbo e oggetto, ogni fatto detto una volta | Il blocco di fine lavoro (`gate.mjs --start`): non va armato, fermerebbe ogni sessione sulle regole che non valgono |
+| I controlli automatici, con `npm run gusto` | |
+
+**Strato di tocco, misure da rispettare.** Solo con mouse (`(hover: hover) and (pointer: fine)`); il fuoco da tastiera mostra lo stesso stato. Pulsante: al passaggio sale di 1 px e il colore fa un passo, alla pressione scende di 1 px e scala a 0,985; 150 ms in entrata, 120 in uscita, 90 alla pressione. Link di testo: una riga sottile che si disegna da sinistra. Foto dentro un link: scala a 1,03 dentro la sua cornice, 600 ms in entrata e 400 in uscita, la cornice non cresce. Scheda cliccabile: sale di 2 px. Niente inclinazioni, bagliori, pulsanti magnetici. Si muovono solo trasformazioni e opacità, mai larghezze, altezze o margini.
+
+**Controlli automatici.** `npm run gusto` genera il sito e passa la pagina iniziale; `node tools/gusto.js /camicie-su-misura/` un'altra pagina. Lo strumento apre la pagina a 1440, 390 e 320 px, toglie da solo le segnalazioni che per Endero non valgono (l'elenco e i motivi sono in testa a `tools/gusto.js`) e stampa il resto. Va usato su ogni pagina prima di mostrarla, insieme ai controlli nostri.
+
+**Difetti veri trovati sulla pagina iniziale del 15 novembre**, da correggere in tutto il sito:
+
+- A 320 px la pagina scorre di lato: testata, blocco del prezzo e piè di pagina escono dallo schermo.
+- Sul telefono sono sotto i 44 px: la scritta Endero in testata, "Salta l'introduzione", la pillola di WhatsApp, il pulsante del selettore, i link di testo ("Scopri il su misura", "Leggi la storia"), i link del piè di pagina, la casella del consenso.
+- Contrasto sotto 4,5:1: i numeri dei passi (`#6f7e9e` su bianco); il pulsante in vetro "Collezione" quasi non si stacca dal fondo quando sotto c'è una zona scura.
+- Il campo del modulo che riceve il fuoco cambia troppo poco (serve 3:1), e i punti dove il fuoco arriva da un link interno non mostrano nulla.
+- Sul telefono i margini sinistri sono quattro diversi (20, 26, 29 e 32 px) e la testata sta più fuori del contenuto: un solo margine.
+- La pillola blu ha due altezze sul telefono (56 e 67 px) e "Prenota la presa misure" compare tre volte con tre aspetti.
+- I link di testo hanno tre aspetti diversi.
+- Lo spazio tra le sezioni è irregolare in tre punti (dopo l'apertura, dopo il nastro, prima del piè di pagina).
+
+## 12. Configuratore
+
+Riaperto dal proprietario il 15 novembre 2026, da costruire **a passi**: ogni passo si mostra e si approva prima del successivo. Le decisioni del 14 novembre restano valide (pagamento con Stripe, importo intero all'ordine; ordini per email e in un pannello riservato; il sarto verifica le misure prima del taglio). Novità: chi ordina da casa dà **solo le misure del corpo**, guidate una per una. Opzioni e prezzi li manda il proprietario.
+
+**Passo 1: la camicia sospesa e il riquadro in vetro.** Parole del proprietario: "il 3D di una camicia sospesa in aria che si muove quando ci passo sopra con il mouse. Accanto una tabella glass con le info che poi ti dirò e che il cliente deve compilare. Considera un caricamento". Riferimento per il 3D: `beat.noomoagency.com`, dove un capo d'abbigliamento galleggia nel buio, come indossato da un corpo invisibile, e si gira piano seguendo il puntatore.
+
+- *Indirizzo*: `/camicie-su-misura/configuratore/`. La pagina del su misura la annuncia in cima.
+- *La scena*: lo stesso mondo dell'apertura, blu scuro con la luce calda in controluce. La camicia è al centro della parte sinistra, sospesa, vuota dentro (si vede l'interno dal collo), con un'ombra morbida sotto.
+- *Il 3D è in diretta nel browser*, con three.js: è la prima volta nel progetto. Per l'apertura il 3D in diretta era stato scartato e resta scartato lì; qui serve perché la camicia deve rispondere al puntatore e, dal passo 2, cambiare tessuto.
+- *La camicia* la modelliamo noi con Blender, come la macchina dell'apertura: niente modelli comprati o scaricati. File di lavoro in `camicia/`, modello pronto in `public/camicia/`. Corpo, collo, polsini e bottoni sono pezzi separati; il disegno del tessuto è steso su ogni pezzo in scala reale e nel verso giusto del filo, così dal passo 2 basta cambiare l'immagine del tessuto.
+- *Come si muove*: galleggia piano; segue il puntatore girandosi di pochi gradi, con inerzia; dove il puntatore la sfiora il tessuto si increspa; si può afferrare e girare, anche con il dito. Con movimento ridotto sta ferma e si gira solo trascinandola.
+- *Il riquadro in vetro* sta a destra (sotto, sul telefono): stesso vetro satinato delle schede del sito, su fondo scuro. I campi li detta il proprietario; fino ad allora titolo, tre righe segnaposto in giallo e il pulsante spento.
+- *Caricamento*: stesso caricatore dell'apertura (logo, cucitura che avanza, percentuale). Motore 3D e modello si scaricano solo in questa pagina. Peso da non superare: 2,5 MB in tutto prima di vedere la camicia.
+- *Se il 3D non può partire* (browser senza WebGL, risparmio dati, JavaScript spento): un'immagine ferma della stessa camicia, calcolata con Blender, e il riquadro funziona lo stesso.
+- *Controlli prima di mostrarlo*: 60 fotogrammi al secondo su un portatile normale e fluido su un telefono di fascia media; nessuna richiesta di rete prima che la pagina sia visibile oltre al necessario; tastiera e lettore di schermo arrivano al riquadro senza passare dal 3D; larghezza 390 e 320 senza scorrimento di lato.
+
+**Passi successivi, nell'ordine.** 2) scelta del tessuto, che cambia la camicia; 3) collo, polsi e altre opzioni, con i pezzi che cambiano; 4) misure del corpo guidate; 5) riepilogo, pagamento con Stripe, ordine a Endero. Ogni passo aspetta l'approvazione del precedente e i dati del proprietario (opzioni, prezzi, tempi di consegna).
+
+**Chi fa cosa.** Modello della camicia e scena 3D: Fable 5.2, come per il film. Pagina, riquadro, modulo e collegamento al resto del sito: Opus 5.5.
+

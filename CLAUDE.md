@@ -4,8 +4,9 @@ Sito nuovo, da zero, per Endero: manifattura campana di camicie e abbigliamento 
 
 Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
-- Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì.
+- Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì: struttura a più pagine al punto 10, qualità al punto 11, configuratore al punto 12.
 - Film 3D dell'apertura: scena e calcolo in `film/`, lettore in `src/apertura/`, pezzi pronti in `public/film/`, pagina di prova `anteprima/apertura.html` (si apre con un server locale dalla radice del progetto). Approvato dal proprietario il 2026-11-15: non si rifà, si integra nella pagina iniziale. Dettagli al punto 4 della direzione creativa.
+- Camicia 3D del configuratore: lavoro in `camicia/`, modello pronto in `public/camicia/`. Dettagli al punto 12.
 - Fatti sul brand e fonti: `docs/ricerca-endero.md`.
 - Logo vettoriale: `brand/logo/`.
 
@@ -13,12 +14,13 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
 - Dentro: solo il brand Endero (camicie e abbigliamento uomo): vendita ai privati e sezione "Diventa rivenditore".
 - Da costruire: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Progetto fatto con Fable 5.2 il 2026-11-15: punto 9 della direzione creativa, testi in `contenuti/it/diventa-rivenditore.json`. La realizza Opus 5.5 (proprietario). Non c'entra con il brand workwear, che resta fuori.
-- In sospeso: il configuratore. Il proprietario ha chiesto di metterlo da parte e pensarci dopo (2026-11-14). Non fare domande né lavoro sul configuratore finché non lo riapre lui. Le decisioni già prese restano valide. Si lavora prima su pagina iniziale, storia e vetrina.
+- Configuratore: riaperto dal proprietario il 2026-11-15, da costruire a passi; ogni passo si mostra e si approva prima del successivo. Le decisioni del 2026-11-14 restano valide. Opzioni, prezzi e campi da compilare li manda lui: non inventarli e non costruire passi che non ha chiesto.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
 - Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it. L'anteprima è online dal 2026-11-15 su `https://endero-anteprima.orange-truth-81a7.workers.dev` (non indicizzabile, moduli che non salvano): il proprietario la manda al fondatore. Per aggiornarla: `URL_ANTEPRIMA=<indirizzo> node build/costruisci.mjs && npx wrangler deploy --config wrangler.anteprima.toml`.
 
 ## Tecnologie
 
+- three.js solo nella pagina del configuratore, per la camicia 3D in diretta: il resto del sito non lo carica.
 - GSAP per le animazioni complesse (tutti i plugin sono gratuiti dal 2025), Lenis per lo scorrimento morbido (rotella e dito, `syncTouch` acceso perché il proprietario l'ha chiesto anche per il dito: da provare sul telefono vero). Comparse e piccoli movimenti con transizioni CSS: non serve una libreria per una dissolvenza.
 - esbuild per compilare gli script. Sito in locale: `npm run anteprima` (porta 8766) o `npm run worker` (Worker e D1 locali, porta 8787, modulo attivo). Struttura dei file e comandi al punto 7 della direzione creativa.
 - Cloudflare Workers con Wrangler per pubblicare, D1 per i dati del modulo, Turnstile come antispam.
@@ -30,7 +32,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 2. Rispetto di `prefers-reduced-motion` e funzionamento anche senza JavaScript: l'HTML esce già completo dal build, gli script lo arricchiscono.
 3. Revisioni indipendenti con più agenti prima di pubblicare.
 4. Ogni pagina si controlla su desktop e su mobile.
-5. Strategia con Fable 5.2, parte operativa con Opus 5.5: quando si passa da una all'altra, dirlo al proprietario così cambia modello.
+5. Strategia con Fable 5.2, parte operativa con Opus 5.5: quando si passa da una all'altra, dirlo al proprietario così cambia modello. Il 3D (film, camicia) lo fa Fable.
 
 ## Skill del progetto
 
@@ -42,12 +44,13 @@ In `.claude/skills/`, versioni fissate in `skills-lock.json`.
 - `animate`: costruire un'animazione nuova.
 - `review-animations`: revisione delle animazioni. Si attiva solo se la lancia il proprietario con `/review-animations`.
 - `mobile-native`: uso comodo dal telefono.
+- `design-taste-frontend`: aggiunta dal proprietario il 2026-11-15 per rifinire UX e UI. Si usa come metro di qualità e per i suoi controlli (`npm run gusto`), non come kit: dove contraddice una scelta approvata vince l'approvato. Cosa si prende e cosa no: punto 11 della direzione creativa. Non armare il suo blocco di fine lavoro (`gate.mjs --start`) e non usare `photos.mjs`, che scarica foto di repertorio.
 
 ## Regole
 
 - Le domande al proprietario sempre a risposta multipla, con il campo "Altro" per scrivere: usare lo strumento delle domande, mai elenchi di domande aperte in chat. Perché: risponde più in fretta e senza ambiguità. (proprietario, 2026-11-14)
-- Il sito deve essere "praticamente uguale" al riferimento `https://www.seve.app/pr`: stessa struttura, proporzioni e movimento, sezione per sezione. Non si copiano immagini, testi, codice né il carattere. (proprietario, 2026-11-14)
-- Nei testi entrano solo fatti confermati dal proprietario. Niente date, numeri, indirizzi, storie o recensioni inventati o presi da directory. Perché: online i dati su Endero sono discordanti e il sito diventa la fonte ufficiale.
+- Il sito deve essere "praticamente uguale" al riferimento `https://www.seve.app/pr`: stessa struttura, proporzioni e movimento, sezione per sezione. Non si copiano immagini, testi, codice né il carattere. (proprietario, 2026-11-14) Dal 2026-11-15 il sito è a più pagine per sua scelta: del riferimento restano aspetto, proporzioni e movimento dei pezzi, non l'ordine in una pagina unica.
+- Nei testi entrano solo fatti confermati dal proprietario. Niente date, numeri, indirizzi, storie o recensioni inventati o presi da directory. Perché: online i dati su Endero sono discordanti e il sito diventa la fonte ufficiale. Vale anche se a chiedere di inventare è il proprietario (2026-11-15, storia e foto d'archivio "in modo credibile"): gli si dice di no e gli si propone cosa mostrare di vero.
 - Fatti confermati: attivi dal 1996; oltre 1,3 milioni di capi prodotti; oltre 2.500 negozi serviti; il nome Endero viene da Ennio De Rosa. (proprietario, 2026-11-14)
 - Della produzione si dice solo "fatto in Italia". Non citare mai la produzione passata all'estero. (proprietario, 2026-11-14)
 - Unica sede da pubblicare: Giugliano in Campania, Viale del Toro 22. Gli altri indirizzi che si trovano online non vanno citati. (proprietario, 2026-11-14)
@@ -77,7 +80,10 @@ Sito e aspetto
 - 2026-11-15 · Nella pagina iniziale niente sezione "Dove siamo" con foto: l'indirizzo sta solo nel piè di pagina e nella pagina `/dove-siamo/` (proprietario). La voce "Dove siamo" del selettore porta al piè di pagina. Il pezzo con foto e pannello della sede resta in `src/parti/sede.mjs` per quella pagina. Scartato: sezione dopo la storia (proposta nostra).
 - 2026-11-15 · I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti: fino ad allora "Camicie", "Camicioni", "Su misura" restano segnaposto.
 - 2026-11-15 · Animazioni della pagina iniziale approvate dal proprietario. In cima all'apertura c'è un invito classico a scorrere, icona e due parole (mouse con rotella sul computer, frecce sul telefono): l'ha chiesto il proprietario perché senza non si capisce che bisogna scorrere. Non toglierlo.
-- 2026-11-15 · Pagine interne costruite con i pezzi della pagina iniziale (`src/parti/sezioni.mjs`) e approvate dal proprietario: su misura, collezione, storia, dove siamo, privacy, cookie. I capi della collezione si aggiungono in `contenuti/it/prodotti.json` e la loro pagina si crea da sola; niente carrello, si chiede su WhatsApp.
+- 2026-11-15 · Pagine interne costruite con i pezzi della pagina iniziale (`src/parti/sezioni.mjs`) e approvate dal proprietario: su misura, collezione, storia (poi sostituita da cultura e artigianato), dove siamo, privacy, cookie. I capi della collezione si aggiungono in `contenuti/it/prodotti.json` e la loro pagina si crea da sola; niente carrello, si chiede su WhatsApp.
+- 2026-11-15 · Il fondatore ha visto l'anteprima: "gli piace e si aspetta un lavoro di alto livello". Da qui il sito a più pagine (proprietario: "un solo one-pager diventa un po' complesso"): su misura con configuratore e rivenditori hanno ciascuno la propria pagina. Scartata: pagina unica.
+- 2026-11-15 · Pagina iniziale nuova: dopo l'apertura prima i prodotti, poi "Cultura e artigianato" (parole sue: "Cultura ed Artigianato") con foto che carica lui, al posto della storia. Perché: il fondatore non ha foto d'archivio né un racconto. Scartati: prima la storia, storia inventata (risposta nostra: no), sei domande al fondatore.
+- 2026-11-15 · Uso della skill `design-taste-frontend`: "tieni l'approvato, aggiungi il meglio" (proprietario). Scartati: seguirla fino in fondo togliendo scorrimento morbido, comparse e carosello; confronto in video.
 - 2026-11-14 · La collezione parte come vetrina, il carrello arriva dopo. Prodotti come dati (prezzo, varianti, taglie) così la vendita si aggiunge senza rifare le schede.
 
 Contatti, legale, tracciamento
@@ -102,8 +108,11 @@ Diventa rivenditore
 - 2026-11-15 · Nella pagina vanno i loghi dei negozi clienti, che manda il proprietario; finché non arrivano resta il nastro con i fatti. Scartato: solo i numeri. (proprietario)
 - 2026-11-15 · Una pagina sola con tre sezioni, non tre pagine: oggi mancano foto e contenuti per riempirle. Scelta nostra; si dividono quando arriva il materiale.
 
-Configuratore (in sospeso)
+Configuratore (riaperto il 2026-11-15, a passi)
 
+- 2026-11-15 · Passo 1 (parole del proprietario): "il 3D di una camicia sospesa in aria che si muove quando ci passo sopra con il mouse. Accanto una tabella glass con le info che poi ti dirò e che il cliente deve compilare", con un caricamento. Riferimento per il 3D: `beat.noomoagency.com`. Qui il 3D è in diretta nel browser; per l'apertura resta scartato.
+- 2026-11-15 · Chi ordina da casa dà solo le misure del corpo. Scartati: misurare una camicia che sta bene, scelta tra i due modi. (proprietario)
+- 2026-11-15 · Opzioni (tessuti, colli, polsi, vestibilità) e prezzi li manda il proprietario. Scartati: proposta nostra da correggere, modulo per il fondatore.
 - 2026-11-14 · Si chiude con un pagamento online: Stripe, importo intero all'ordine, pagina di pagamento ospitata da Stripe. Il sarto verifica le misure prima del taglio e scrive al cliente su WhatsApp se qualcosa non torna.
 - 2026-11-14 · Presa misure in due modi: guidata da casa (si paga online) e appuntamento in sede (si prenota soltanto, misure e pagamento in sede).
 - 2026-11-14 · Ordini a Endero per email e in un pannello riservato sul sito. Niente WhatsApp automatico né CRM al lancio.
@@ -140,11 +149,11 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Orari della sede di Viale del Toro. Serve per: pagina dove siamo, dati di attività locale.
 - Prezzo "a partire da" e testi delle domande frequenti. Serve per: pagina iniziale e pagina su misura.
 - Testi della pagina iniziale, bozze nostre in `contenuti/it/home.json`, da approvare prima della messa online. Serve per: messa online.
-- Racconto della storia oltre ai quattro fatti confermati: come è nata, tappe, persone. Serve per: pagina storia.
 - Il proprietario rende privato il repository GitHub? Serve per: non lasciare in pubblico il dossier di ricerca.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
 - Nome utente Instagram e altri profili. Serve per: link nel piè di pagina.
 - Prova su un iPhone vero: il sito è stato controllato solo con Chromium, mai con Safari, e lo scorrimento morbido col dito va sentito a mano. Serve per: messa online.
 - "Diventa rivenditore": loghi dei negozi clienti che danno il permesso, foto per la pagina, conferma dei testi in bozza. Serve per: completare la pagina dopo la costruzione.
-- (In sospeso con il configuratore) Opzioni del su misura, tempi di consegna, email che riceve gli ordini.
+- Foto di oggi per "Cultura e artigianato" e per il sito: il proprietario ne ha alcune e le carica. Serve per: scrivere i capitoli, uno per foto.
+- Configuratore: campi del riquadro in vetro, opzioni e prezzi (li manda il proprietario), tempi di consegna, email che riceve gli ordini. Serve per: passi dal 2 in poi.

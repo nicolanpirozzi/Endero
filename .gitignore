@@ -8,3 +8,6 @@ dist/
 .DS_Store
 film/.cache/
 __pycache__/
+
+# lavoro della skill design-taste-frontend
+.taste-skill/

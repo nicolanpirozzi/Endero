@@ -6,7 +6,8 @@
     "build": "node build/costruisci.mjs",
     "anteprima": "node build/costruisci.mjs && node build/servi.mjs",
     "worker": "node build/costruisci.mjs && wrangler dev",
-    "db:locale": "wrangler d1 execute endero --local --file db/schema.sql"
+    "db:locale": "wrangler d1 execute endero --local --file db/schema.sql",
+    "gusto": "node build/costruisci.mjs && node tools/gusto.js"
   },
   "engines": {
     "node": ">=20"
