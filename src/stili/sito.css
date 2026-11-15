@@ -1839,6 +1839,17 @@ body[data-barra] .selettore {
   margin-bottom: 0;
 }
 
+/* su misura: l'ingresso al configuratore in cima alla pagina (si vede solo con configuratore.attivo) */
+.ingresso .intesta {
+  margin-bottom: 24px;
+}
+
+.ingresso__azione {
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--margine);
+}
+
 /* in pagina iniziale l'ultima fascia tocca il piè di pagina */
 .corpo--a-filo {
   padding-bottom: 0;
