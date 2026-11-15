@@ -12,7 +12,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 ## Ambito
 
 - Dentro: solo il brand Endero (camicie e abbigliamento uomo): vendita ai privati e sezione "Diventa rivenditore".
-- Da costruire più avanti: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Il proprietario l'ha chiesta e ha detto di non ragionarci ora (2026-11-14): va prevista nella struttura del sito e nel menu, ma contenuti e funzioni si definiscono con lui quando la riapre. Non c'entra con il brand workwear, che resta fuori.
+- In progettazione: la sezione "Diventa rivenditore", per chi compra da Endero per rivendere. Le scelte del proprietario sono in Decisioni; il progetto (struttura, testi, campi del modulo) lo fa Fable 5.2 prima di scrivere codice, poi Opus 5.5 lo realizza (proprietario, 2026-11-15). Non c'entra con il brand workwear, che resta fuori.
 - In sospeso: il configuratore. Il proprietario ha chiesto di metterlo da parte e pensarci dopo (2026-11-14). Non fare domande né lavoro sul configuratore finché non lo riapre lui. Le decisioni già prese restano valide. Si lavora prima su pagina iniziale, storia e vetrina.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
 - Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it.
@@ -77,7 +77,7 @@ Sito e aspetto
 - 2026-11-15 · Nella pagina iniziale niente sezione "Dove siamo" con foto: l'indirizzo sta solo nel piè di pagina e nella pagina `/dove-siamo/` (proprietario). La voce "Dove siamo" del selettore porta al piè di pagina. Il pezzo con foto e pannello della sede resta in `src/parti/sede.mjs` per quella pagina. Scartato: sezione dopo la storia (proposta nostra).
 - 2026-11-15 · I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti: fino ad allora "Camicie", "Camicioni", "Su misura" restano segnaposto.
 - 2026-11-15 · Animazioni della pagina iniziale approvate dal proprietario. In cima all'apertura c'è un invito classico a scorrere, icona e due parole (mouse con rotella sul computer, frecce sul telefono): l'ha chiesto il proprietario perché senza non si capisce che bisogna scorrere. Non toglierlo.
-- 2026-11-15 · Pagine interne costruite con i pezzi della pagina iniziale (`src/parti/sezioni.mjs`): su misura, collezione, storia, dove siamo, privacy, cookie. I capi della collezione si aggiungono in `contenuti/it/prodotti.json` e la loro pagina si crea da sola; niente carrello, si chiede su WhatsApp.
+- 2026-11-15 · Pagine interne costruite con i pezzi della pagina iniziale (`src/parti/sezioni.mjs`) e approvate dal proprietario: su misura, collezione, storia, dove siamo, privacy, cookie. I capi della collezione si aggiungono in `contenuti/it/prodotti.json` e la loro pagina si crea da sola; niente carrello, si chiede su WhatsApp.
 - 2026-11-14 · La collezione parte come vetrina, il carrello arriva dopo. Prodotti come dati (prezzo, varianti, taglie) così la vendita si aggiunge senza rifare le schede.
 
 Contatti, legale, tracciamento
@@ -87,6 +87,13 @@ Contatti, legale, tracciamento
 - 2026-11-14 · Dati legali, informativa privacy e cookie: bozza nostra, da far validare a Endero o al suo consulente prima della messa online.
 - 2026-11-14 · Tracciamento: banner dei consensi ed eventi predisposti, codici di Google Analytics e Meta Pixel inseriti dopo. Nessuno script di terze parti parte prima del consenso.
 - 2026-11-14 · Esiste già un account Cloudflare. La chiave si chiede con il modulo sicuro delle credenziali quando serve la prima anteprima, mai in chat.
+
+Diventa rivenditore
+
+- 2026-11-15 · Cosa offre Endero ai rivenditori: collezione all'ingrosso, camicie con il marchio del cliente, su misura per i clienti del negozio (il negozio prende le misure, Endero cuce). (proprietario)
+- 2026-11-15 · Può fare richiesta chiunque: Endero valuta caso per caso. Scartati: solo negozi con partita IVA, negozi e agenti. (proprietario)
+- 2026-11-15 · Sul sito solo presentazione e modulo di richiesta; listino e condizioni Endero li manda in privato dopo il contatto. Scartati: area riservata con listino, catalogo PDF dopo l'approvazione. (proprietario)
+- 2026-11-15 · Le richieste arrivano come gli altri messaggi del sito: modulo salvato su D1, segnato come rivenditore, e più avanti anche per email a `info@endero.it`. (proprietario)
 
 Configuratore (in sospeso)
 
@@ -126,5 +133,5 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
 - Nome utente Instagram e altri profili. Serve per: link nel piè di pagina.
-- (Da aprire con il proprietario quando lo dice lui) "Diventa rivenditore": cosa offre la sezione, chi può fare richiesta, che dati si chiedono, a chi arrivano le richieste. Serve per: progettare la sezione.
+- "Diventa rivenditore": progetto della pagina con Fable 5.2 (struttura come il riferimento, testi, dati da chiedere nel modulo, posto nel menu e nel piè di pagina). Serve per: costruire la sezione.
 - (In sospeso con il configuratore) Opzioni del su misura, tempi di consegna, email che riceve gli ordini.
