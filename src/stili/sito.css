@@ -476,7 +476,8 @@ button {
   transition: opacity 300ms ease-out, transform 300ms var(--morbido), background-color 180ms ease-out;
 }
 
-.pillola-fissa[data-nascosta] {
+/* nella pagina iniziale compare solo a fine film: nascosta fin dal primo istante, senza lampeggiare */
+.js .pagina-home .pillola-fissa:not([data-visibile]) {
   opacity: 0;
   transform: translateY(10px);
   pointer-events: none;

@@ -35,7 +35,7 @@ function testata() {
     else if (!stato) imposta('via');
     if (Math.abs(delta) > 6 || y < limite) ultimo = y;
     // la pillola di WhatsApp non copre il film: compare quando l'apertura sta per finire
-    if (pillola && apertura) pillola.toggleAttribute('data-nascosta', apertura.getBoundingClientRect().bottom > innerHeight * 0.5);
+    if (pillola) pillola.toggleAttribute('data-visibile', !apertura || apertura.getBoundingClientRect().bottom <= innerHeight * 0.5);
   }
 
   addEventListener('scroll', () => { if (!richiesta) richiesta = requestAnimationFrame(aggiorna); }, { passive: true });
