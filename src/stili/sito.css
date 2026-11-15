@@ -61,6 +61,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
 }
 
 img,
@@ -1203,6 +1204,8 @@ body[data-barra] .selettore {
 
 .riquadro__titolo {
   position: relative;
+  padding: 0 28px;
+  text-align: center;
 }
 
 @media (hover: hover) and (pointer: fine) {
