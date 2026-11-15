@@ -9,5 +9,5 @@ export default function semplice({ sito, testi, percorso, risorse }) {
   <a class="pillola pillola--blu pillola--grande" href="${esc(testi.invito.href)}">${esc(testi.invito.testo)}</a>
 </main>`;
   // pagine di servizio: mai indicizzate
-  return pagina({ sito, meta: testi.meta, percorso, corpo, risorse, anteprima: true, classe: 'pagina-semplice' });
+  return pagina({ sito, meta: testi.meta, percorso, corpo, risorse, anteprima: true, classe: 'pagina-chiara pagina-semplice' });
 }

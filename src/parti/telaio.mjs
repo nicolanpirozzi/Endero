@@ -1,12 +1,12 @@
 // Il telaio di ogni pagina: intestazione HTML, testata, piè di pagina, pillola fissa.
 import { esc, t, piano, logo, foglioSimboli, icona } from './base.mjs';
 
-export function testata(sito) {
+export function testata(sito, prenota = '/camicie-su-misura/#prenota') {
   const s = sito.testata;
   return `<header class="testata" data-testata>
   <a class="testata__marchio" href="/" aria-label="${esc(s.home)}">${logo('scritta')}</a>
   <nav class="testata__azioni" aria-label="Azioni principali">
-    <a class="pillola pillola--chiara" href="/#prenota">${esc(s.prenota)}</a>
+    <a class="pillola pillola--chiara" href="${esc(prenota)}">${esc(s.prenota)}</a>
     <a class="pillola pillola--vetro testata__secondaria" href="/collezione/">${esc(s.collezione)}</a>
   </nav>
 </header>`;
@@ -55,9 +55,10 @@ export function piede(sito) {
  * @param {object} o.risorse    { css: [], js: [], precarica: [] } percorsi già con l'impronta
  * @param {object[]} o.dati     dati strutturati JSON-LD
  * @param {boolean} o.anteprima se vero, la pagina non va indicizzata
- * @param {string} o.classe     classe del <body>
+ * @param {string} o.classe     classe del <body>; `pagina-chiara` per le pagine senza foto in cima
+ * @param {string} o.prenota    dove porta "Prenota la presa misure" nella testata
  */
-export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '' }) {
+export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', prenota }) {
   const url = sito.dominio + percorso;
   const immagine = meta.immagine ? sito.dominio + meta.immagine : '';
   const ld = dati.length
@@ -92,7 +93,7 @@ ${ld}
 </head>
 <body class="${esc(classe)}">
 <a class="salta-al-contenuto" href="#contenuto">Vai al contenuto</a>
-${testata(sito)}
+${testata(sito, prenota)}
 ${corpo}
 ${piede(sito)}
 ${pillolaFissa(sito)}

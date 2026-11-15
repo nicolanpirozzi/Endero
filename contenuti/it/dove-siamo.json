@@ -1,7 +1,18 @@
 {
-  "_nota": "Testi della pagina /dove-siamo/, da costruire. Le parti tra [[ ]] sono segnaposto.",
+  "_nota": "Pagina /dove-siamo/. Le parti tra [[ ]] sono segnaposto. Gli orari sono una domanda aperta.",
+  "meta": {
+    "titolo": "Dove siamo e contatti · Endero, Giugliano in Campania",
+    "descrizione": "Endero è in Viale del Toro 22, 80014 Giugliano in Campania (NA). Presa misure su appuntamento. Scrivici su WhatsApp al 333 854 8712 o a info@endero.it.",
+    "immagine": "/film/manifesto.jpg",
+    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+  },
+  "eroe": {
+    "titolo": "Dove siamo e contatti",
+    "sottotitolo": "Viale del Toro 22 · Giugliano in Campania",
+    "foto": "L'ingresso della sede, foto orizzontale"
+  },
   "sede": {
-    "titolo": "Dove siamo",
+    "titolo": "La sede",
     "testo": "La sede Endero è a Giugliano in Campania, in provincia di Napoli. La presa misure è su appuntamento.",
     "foto": "La sede di Viale del Toro, foto orizzontale",
     "pannello": {
@@ -10,6 +21,44 @@
       "orari": "[[Orari da confermare]]",
       "contatti_titolo": "Contatti",
       "indicazioni": "Indicazioni"
+    }
+  },
+  "contatti": {
+    "titolo": "Scrivici",
+    "testo": "Per una domanda, un appuntamento o un capo della collezione. Rispondiamo su WhatsApp, per email o al telefono che ci lasci.",
+    "voci": [
+      {
+        "titolo": "WhatsApp",
+        "testo": "333 854 8712",
+        "link": "https://wa.me/393338548712"
+      },
+      {
+        "titolo": "Email",
+        "testo": "info@endero.it",
+        "link": "mailto:info@endero.it"
+      },
+      {
+        "titolo": "Presa misure",
+        "testo": "Su appuntamento",
+        "link": "/camicie-su-misura/#prenota"
+      }
+    ],
+    "modulo": {
+      "titolo": "Scrivici un messaggio",
+      "schede": [
+        "Messaggio"
+      ],
+      "nome": "Nome e cognome",
+      "telefono": "Telefono o WhatsApp",
+      "email": "Email (facoltativa)",
+      "note": "Messaggio",
+      "note_aiuto": "Scrivi qui la tua domanda.",
+      "privacy": "Ho letto l'<a href=\"/privacy/\">informativa privacy</a> e acconsento a essere ricontattato.",
+      "invia": "Invia il messaggio",
+      "invio": "Invio in corso…",
+      "fatto_titolo": "Messaggio ricevuto",
+      "fatto_testo": "Grazie. Ti rispondiamo al più presto.",
+      "errore": "Qualcosa non ha funzionato. Riprova, oppure scrivici su WhatsApp."
     }
   }
 }

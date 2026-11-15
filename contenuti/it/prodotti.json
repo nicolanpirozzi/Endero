@@ -1,0 +1,4 @@
+{
+  "_nota": "I capi della collezione. Uno per voce; la pagina si crea da sola. Campi: slug (indirizzo, minuscolo con trattini), nome, categoria, prezzo (numero, in euro), descrizione, colori (elenco), taglie (elenco), su_misura (vero/falso), foto (elenco di percorsi in public/foto/prodotti/, la prima è quella dell'elenco). Esempio: {\"slug\": \"camicione-flanella\", \"nome\": \"Camicione in flanella\", \"categoria\": \"Camicioni\", \"prezzo\": 60, \"descrizione\": \"...\", \"colori\": [\"Blu\"], \"taglie\": [\"S\", \"M\"], \"su_misura\": true, \"foto\": [\"/foto/prodotti/camicione-flanella-1.jpg\"]}. Solo dati confermati dal proprietario.",
+  "prodotti": []
+}

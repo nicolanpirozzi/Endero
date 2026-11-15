@@ -10,6 +10,11 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import home from '../src/pagine/home.mjs';
+import paginaSuMisura from '../src/pagine/su-misura.mjs';
+import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
+import paginaStoria from '../src/pagine/storia.mjs';
+import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
+import paginaLegale from '../src/pagine/legale.mjs';
 import semplice from '../src/pagine/semplice.mjs';
 
 const RADICE = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,6 +27,14 @@ const leggi = (f) => JSON.parse(readFileSync(join(RADICE, 'contenuti', lingua, f
 const sito = leggi('sito.json');
 const testiHome = leggi('home.json');
 const servizio = leggi('servizio.json');
+const testi = {
+  suMisura: leggi('su-misura.json'),
+  collezione: leggi('collezione.json'),
+  storia: leggi('storia.json'),
+  doveSiamo: leggi('dove-siamo.json'),
+  legale: leggi('legale.json'),
+};
+const prodotti = leggi('prodotti.json').prodotti;
 
 function scrivi(percorso, contenuto) {
   const file = join(DIST, percorso);
@@ -57,7 +70,8 @@ for (const [file, info] of Object.entries(esito.metafile.outputs)) {
   risorsa[nome] = '/' + relative(DIST, join(RADICE, file)).split('\\').join('/');
 }
 
-const base = { css: [risorsa.stile], js: [risorsa.sito] };
+const turnstile = process.env.TURNSTILE_SITE_KEY || '';
+const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile };
 
 // 3 · pagine
 scrivi('index.html', home({
@@ -68,9 +82,20 @@ scrivi('index.html', home({
     ...base,
     js: [risorsa.sito, risorsa.apertura],
     precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
-    turnstile: process.env.TURNSTILE_SITE_KEY || '',
   },
 }));
+const pagine = ['/'];
+function genera(percorso, html) {
+  scrivi(percorso.slice(1) + 'index.html', html);
+  pagine.push(percorso);
+}
+genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, home: testiHome, risorse: base, anteprima }));
+genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
+for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }));
+genera('/storia/', paginaStoria({ sito, testi: testi.storia, home: testiHome, risorse: base, anteprima }));
+genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }));
+genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }));
+genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }));
 scrivi('grazie/index.html', semplice({ sito, testi: servizio.grazie, percorso: '/grazie/', risorse: base }));
 scrivi('404.html', semplice({ sito, testi: servizio.non_trovata, percorso: '/404', risorse: base }));
 
@@ -80,7 +105,6 @@ scrivi('favicon.svg', svg('simbolo', '#0f285e'));
 scrivi('logo.svg', svg('completo', '#0f285e'));
 
 // 5 · file per i motori di ricerca. In anteprima il sito resta chiuso.
-const pagine = ['/'];
 scrivi('robots.txt', anteprima
   ? 'User-agent: *\nDisallow: /\n'
   : `User-agent: *\nAllow: /\n\nSitemap: ${sito.dominio}/sitemap.xml\n`);
@@ -90,7 +114,14 @@ ${pagine.map((p) => `  <url><loc>${sito.dominio}${p}</loc></url>`).join('\n')}
 </urlset>
 `);
 
-// 6 · intestazioni per Cloudflare: cache lunga per i file con l'impronta, sicurezza per tutti
+// 6 · i vecchi indirizzi del negozio PrestaShop portano alle pagine nuove (punto 5 della direzione creativa)
+scrivi('_redirects', `/2-home / 301
+/3-camicia-su-misura /camicie-su-misura/ 301
+/home/1-43-camicione-in-flanella-camicia-su-misura.html /collezione/ 301
+/contact-us /dove-siamo/ 301
+`);
+
+// 7 · intestazioni per Cloudflare: cache lunga per i file con l'impronta, sicurezza per tutti
 scrivi('_headers', `/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -106,5 +137,5 @@ ${anteprima ? '  X-Robots-Tag: noindex, nofollow\n' : ''}
   Cache-Control: public, max-age=604800
 `);
 
-console.log(`sito generato in dist/ (${anteprima ? 'anteprima, non indicizzabile' : 'pubblico'}) in ${Math.round(performance.now() - inizio)} ms`);
+console.log(`${pagine.length} pagine generate in dist/ (${anteprima ? 'anteprima, non indicizzabile' : 'pubblico'}) in ${Math.round(performance.now() - inizio)} ms`);
 for (const [nome, file] of Object.entries(risorsa)) console.log(`  ${nome.padEnd(9)} ${file}`);

@@ -1614,6 +1614,305 @@ body[data-barra] .selettore {
   text-transform: uppercase;
 }
 
+/* ------------------------------------------------------------------ pagine interne */
+
+/* in cima: foto con il titolo, come il video della pagina iniziale ma più bassa e senza telo */
+.eroe--pagina {
+  position: relative;
+  bottom: auto;
+  height: 72vh;
+  height: 72svh;
+  min-height: 460px;
+}
+
+.pillola--grigia {
+  background: rgba(15, 40, 94, 0.08);
+  color: var(--blu);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pillola--grigia:hover {
+    background: rgba(15, 40, 94, 0.14);
+  }
+}
+
+/* collezione: elenco dei capi, nome e prezzo sempre in vista (sul telefono non c'è il passaggio del mouse) */
+.capi {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px 10px;
+  margin: 0 var(--margine);
+}
+
+.capo__link {
+  display: grid;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.capo__foto {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: #e9e6df;
+}
+
+.capo__foto img,
+.capo__foto .attesa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms var(--morbido);
+}
+
+.capo__nome {
+  font-size: 12px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.capo__prezzo {
+  font-size: 14px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--blu-tenue);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a.capo__link:hover .capo__foto img,
+  a.capo__link:hover .capo__foto .attesa {
+    transform: scale(1.03);
+  }
+}
+
+/* scheda del capo: foto a sinistra che scorrono, testo a destra che resta fermo */
+.prodotto {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 48px;
+  padding: 96px var(--margine) var(--spazio-sezione);
+}
+
+.prodotto__foto {
+  display: grid;
+  gap: 10px;
+}
+
+.prodotto__immagine {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #e9e6df;
+}
+
+.prodotto__immagine img,
+.prodotto__immagine .attesa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.prodotto__testo {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  max-width: 440px;
+}
+
+.collegamento--indietro {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 18px;
+}
+
+.prodotto__categoria {
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blu-tenue);
+}
+
+.prodotto__prezzo {
+  font-size: 24px;
+  font-weight: 500;
+  font-stretch: 112%;
+  font-variant-numeric: tabular-nums;
+}
+
+.prodotto__scelte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prodotto__scelte .chip {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 10px;
+}
+
+.prodotto__chiedi {
+  margin-top: 12px;
+}
+
+/* storia: un capitolo per fatto, foto e testo alternati */
+.capitoli {
+  display: grid;
+  gap: 10px;
+  margin: 0 var(--margine);
+}
+
+.capitolo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 56px;
+}
+
+.capitolo:nth-child(even) .capitolo__foto {
+  order: 2;
+}
+
+.capitolo__foto {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.capitolo__foto > .attesa {
+  position: absolute;
+  inset: 0;
+}
+
+.capitolo__testo {
+  display: grid;
+  gap: 12px;
+  padding: 24px 0;
+  max-width: 420px;
+}
+
+.capitolo__etichetta {
+  font-size: clamp(48px, 6.2vw, 92px);
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.chiusura .intesta {
+  margin-bottom: 28px;
+}
+
+.chiusura__azioni {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+/* dove siamo: i modi per contattarci */
+.contatti {
+  display: grid;
+  margin-top: 26px;
+  max-width: 400px;
+  border-top: 1px solid var(--blu-filo);
+}
+
+.contatti a {
+  display: grid;
+  grid-template-columns: 110px 1fr 16px;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--blu-filo);
+  text-decoration: none;
+}
+
+.contatti__nome {
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blu-tenue);
+}
+
+.contatti__valore {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .contatti a:hover .contatti__valore {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* privacy e cookie: testo lungo, colonna stretta e comoda da leggere */
+.legale {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 150px 24px var(--spazio-sezione);
+}
+
+.legale__testa {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.legale__avviso {
+  font-size: 13px;
+}
+
+.legale__testo {
+  display: grid;
+  gap: 34px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.legale__testo section {
+  display: grid;
+  gap: 10px;
+}
+
+.legale__testo h2 {
+  font-size: 13px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.legale__testo ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 1.2em;
+  list-style: disc;
+}
+
+.legale__data {
+  font-size: 13px;
+  color: var(--blu-tenue);
+}
+
 /* ------------------------------------------------------------------ movimento */
 /* Solo con lo script e senza movimento ridotto: src/sito.js mette .movimento su <html> e segna gli elementi.
    Senza script, o se lo script non parte, tutto resta visibile da subito. */
@@ -1746,23 +2045,22 @@ body[data-barra] .selettore {
   margin-top: 18px;
 }
 
-.pagina-semplice .testata {
+.pagina-chiara .testata {
   color: var(--blu);
 }
 
-.pagina-semplice .testata .pillola--chiara {
+.pagina-chiara .testata .pillola--chiara {
   background: var(--blu);
   color: var(--filo);
 }
 
-.pagina-semplice .testata .pillola--vetro {
+.pagina-chiara .testata .pillola--vetro {
   background: rgba(15, 40, 94, 0.08);
   color: var(--blu);
   box-shadow: none;
 }
 
-.pagina-semplice .js .testata[data-stato="barra"],
-.js .pagina-semplice .testata[data-stato="barra"] {
+.js .pagina-chiara .testata[data-stato="barra"] {
   background: rgba(255, 255, 255, 0.9);
 }
 
@@ -2191,6 +2489,76 @@ body[data-barra] .selettore {
   .pillola-fissa {
     right: max(14px, env(safe-area-inset-right));
     bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .eroe--pagina {
+    height: 64svh;
+    min-height: 420px;
+  }
+
+  .capi {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 8px;
+  }
+
+  .prodotto {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 76px;
+  }
+
+  .prodotto__foto {
+    grid-auto-flow: column;
+    grid-auto-columns: 86%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin: 0 calc(-1 * var(--margine));
+    padding: 0 var(--margine);
+    scrollbar-width: none;
+  }
+
+  .prodotto__immagine {
+    scroll-snap-align: start;
+  }
+
+  .prodotto__testo {
+    position: static;
+    padding: 0 10px;
+  }
+
+  .prodotto__chiedi {
+    width: 100%;
+    height: 56px;
+  }
+
+  .capitoli {
+    gap: 48px;
+  }
+
+  .capitolo {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .capitolo:nth-child(even) .capitolo__foto {
+    order: 0;
+  }
+
+  .capitolo__testo {
+    padding: 0 10px;
+  }
+
+  .chiusura__azioni .pillola {
+    width: 100%;
+    height: 56px;
+  }
+
+  .contatti a {
+    grid-template-columns: 96px 1fr 16px;
+  }
+
+  .legale {
+    padding-top: 110px;
   }
 }
 

@@ -1,0 +1,105 @@
+{
+  "_nota": "Informativa privacy e cookie: bozza nostra, da far validare a Endero o al suo consulente prima della messa online (decisione del 2026-11-14). I dati societari sono da confermare.",
+  "avviso": "[[Bozza da validare con il consulente di Endero prima della messa online]]",
+  "aggiornamento": "Ultimo aggiornamento: [[data]]",
+  "privacy": {
+    "meta": {
+      "titolo": "Informativa privacy · Endero",
+      "descrizione": "Come Endero tratta i dati personali raccolti dal sito: modulo di contatto, prenotazione della presa misure, diritti dell'interessato."
+    },
+    "titolo": "Informativa privacy",
+    "sezioni": [
+      {
+        "titolo": "Titolare del trattamento",
+        "paragrafi": [
+          "[[Ragione sociale]], con sede legale in [[indirizzo della sede legale]], partita IVA [[numero]]. Per qualsiasi domanda sui tuoi dati puoi scrivere a info@endero.it."
+        ]
+      },
+      {
+        "titolo": "Quali dati raccogliamo",
+        "paragrafi": [
+          "Quando compili un modulo del sito: nome e cognome, numero di telefono, email se la indichi, giorno e fascia oraria preferiti per la presa misure, il testo del messaggio.",
+          "Mentre navighi: i dati tecnici che ogni sito riceve dal browser, come l'indirizzo IP, trattati dal fornitore che ospita il sito per farlo funzionare e proteggerlo."
+        ]
+      },
+      {
+        "titolo": "Perché li usiamo",
+        "elenco": [
+          "Per risponderti e fissare l'appuntamento per la presa misure, su tua richiesta (articolo 6, paragrafo 1, lettera b del Regolamento UE 2016/679).",
+          "Per la sicurezza del sito e per fermare lo spam nei moduli, nel nostro legittimo interesse (articolo 6, paragrafo 1, lettera f)."
+        ]
+      },
+      {
+        "titolo": "Sono obbligatori?",
+        "paragrafi": [
+          "Nome e telefono servono per ricontattarti: senza non possiamo rispondere alla richiesta. Gli altri campi sono facoltativi."
+        ]
+      },
+      {
+        "titolo": "Per quanto tempo li teniamo",
+        "paragrafi": [
+          "[[Durata da definire, per esempio 24 mesi dall'ultima richiesta]], poi li cancelliamo."
+        ]
+      },
+      {
+        "titolo": "Chi li vede",
+        "paragrafi": [
+          "Solo le persone di Endero che si occupano della tua richiesta e i fornitori che ci danno i servizi tecnici, nominati responsabili del trattamento: Cloudflare, Inc. per l'hosting del sito, il database delle richieste e il filtro antispam; [[Resend, per l'invio delle email, quando sarà attivo]]. I dati non vengono venduti né diffusi."
+        ]
+      },
+      {
+        "titolo": "Trasferimenti fuori dall'Unione europea",
+        "paragrafi": [
+          "I fornitori tecnici possono trattare dati anche negli Stati Uniti. In questo caso il trasferimento avviene con le garanzie previste dal Regolamento: decisione di adeguatezza (EU-US Data Privacy Framework) o clausole contrattuali standard."
+        ]
+      },
+      {
+        "titolo": "I tuoi diritti",
+        "paragrafi": [
+          "Puoi chiedere di vedere i tuoi dati, correggerli, cancellarli, limitarne l'uso, opporti al trattamento e riceverli in un formato leggibile (articoli 15–22 del Regolamento), scrivendo a info@endero.it.",
+          "Puoi anche presentare un reclamo al Garante per la protezione dei dati personali, www.garanteprivacy.it."
+        ]
+      }
+    ]
+  },
+  "cookie": {
+    "meta": {
+      "titolo": "Cookie · Endero",
+      "descrizione": "Quali cookie usa il sito di Endero e come gestirli."
+    },
+    "titolo": "Cookie",
+    "sezioni": [
+      {
+        "titolo": "Cosa sono",
+        "paragrafi": [
+          "I cookie sono piccoli file che un sito salva nel browser. Alcuni servono a far funzionare il sito, altri a misurare le visite o a mostrare pubblicità."
+        ]
+      },
+      {
+        "titolo": "Cosa usa questo sito oggi",
+        "paragrafi": [
+          "Solo strumenti tecnici, necessari al funzionamento e alla sicurezza. Non usiamo cookie di statistica né di profilazione.",
+          "Cloudflare, che ospita il sito, può salvare cookie tecnici per proteggerlo dagli accessi automatici. Il filtro antispam dei moduli (Cloudflare Turnstile) si attiva solo quando inizi a compilare un modulo."
+        ]
+      },
+      {
+        "titolo": "Statistiche e pubblicità",
+        "paragrafi": [
+          "[[Se e quando attiveremo Google Analytics e Meta Pixel, partiranno solo dopo il tuo consenso dal banner, e qui ci sarà l'elenco dei cookie con la loro durata.]]"
+        ]
+      },
+      {
+        "titolo": "Come gestirli",
+        "paragrafi": [
+          "Puoi cancellare o bloccare i cookie dalle impostazioni del browser. Bloccando quelli tecnici, alcune parti del sito potrebbero non funzionare."
+        ]
+      },
+      {
+        "titolo": "Contatti",
+        "paragrafi": [
+          "Per domande: info@endero.it. Per sapere come trattiamo i dati personali leggi l'informativa privacy."
+        ]
+      }
+    ]
+  }
+}

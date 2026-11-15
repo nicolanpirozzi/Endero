@@ -1,0 +1,23 @@
+{
+  "_nota": "Pagina /camicie-su-misura/. Bozza da approvare. Le sezioni presa misure, come funziona, domande e prezzo riprendono i testi di home.json; qui si scrive solo ciò che cambia. Il configuratore è in sospeso: non se ne parla.",
+  "meta": {
+    "titolo": "Camicie su misura a Giugliano, Napoli · Endero",
+    "descrizione": "Camicia su misura Endero, fatta in Italia: presa misure su appuntamento nella sede di Giugliano in Campania, Viale del Toro 22. Prenota online o su WhatsApp.",
+    "immagine": "/film/manifesto.jpg",
+    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+  },
+  "eroe": {
+    "titolo": "Camicie su misura a Giugliano, Napoli",
+    "sottotitolo": "Presa misure su appuntamento · Viale del Toro 22",
+    "foto": "Il sarto al lavoro su una camicia, foto orizzontale"
+  },
+  "dettagli": {
+    "titolo": "Fatta sulle tue misure",
+    "testo": "Collo, polsi, tessuto e vestibilità si scelgono a partire dalle tue misure. Ogni camicia Endero è fatta in Italia.",
+    "griglia_quante": 6
+  },
+  "servizio": {
+    "nome": "Camicie su misura",
+    "descrizione": "Camicie su misura fatte in Italia, con presa misure su appuntamento nella sede di Giugliano in Campania."
+  }
+}
