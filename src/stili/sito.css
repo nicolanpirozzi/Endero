@@ -426,11 +426,13 @@ button {
   left: 0;
   right: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  padding: 10px;
-  padding-left: max(10px, env(safe-area-inset-left));
-  padding-right: max(10px, env(safe-area-inset-right));
+  gap: 12px;
+  /* la testata sta sugli stessi margini del contenuto */
+  padding: 10px var(--margine);
+  padding-left: max(var(--margine), env(safe-area-inset-left));
+  padding-right: max(var(--margine), env(safe-area-inset-right));
   color: var(--filo);
   pointer-events: none;
   transition: transform 420ms var(--morbido), background-color 300ms ease-out;
@@ -441,8 +443,9 @@ button {
 }
 
 .testata__marchio {
-  display: block;
-  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   color: inherit;
 }
 
@@ -453,7 +456,106 @@ button {
 
 .testata__azioni {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+.testata__menu {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ menu del telefono */
+/* Un <dialog> a tutto schermo sul blu del piè di pagina: tiene il fuoco dentro e si chiude con Esc. */
+
+.menu {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 10px var(--margine) max(24px, env(safe-area-inset-bottom));
+  padding-left: max(var(--margine), env(safe-area-inset-left));
+  padding-right: max(var(--margine), env(safe-area-inset-right));
+  border: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--blu);
+  color: var(--filo);
+}
+
+.menu[open] {
+  display: flex;
+  flex-direction: column;
+  animation: menu-entra 240ms var(--morbido);
+}
+
+.menu::backdrop {
+  background: var(--blu);
+}
+
+@keyframes menu-entra {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+.menu__testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.menu__corpo {
+  margin-top: 40px;
+}
+
+.menu__voci {
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.menu__voci a {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 22px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.menu__voci a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.menu__contatti {
+  display: grid;
+  margin-top: auto;
+  padding-top: 40px;
+}
+
+.menu__contatti a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 12px;
+  font-weight: 400;
+  font-stretch: 118%;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+html.menu-aperto {
+  overflow: hidden;
 }
 
 /* Con lo script la testata resta in vista sull'apertura e sul video, poi si ritira;
@@ -470,12 +572,6 @@ button {
   transform: none;
 }
 
-section[tabindex="-1"]:focus,
-footer[tabindex="-1"]:focus,
-main[tabindex="-1"]:focus {
-  outline: none;
-}
-
 .js .testata[data-stato="barra"] {
   background: rgba(10, 27, 69, 0.86);
   -webkit-backdrop-filter: blur(16px);
@@ -487,7 +583,7 @@ main[tabindex="-1"]:focus {
 .pillola-fissa {
   position: fixed;
   z-index: 25;
-  right: max(21px, env(safe-area-inset-right));
+  right: max(var(--margine), env(safe-area-inset-right));
   bottom: max(21px, env(safe-area-inset-bottom));
   height: 37px;
   padding: 0 18px;
@@ -532,7 +628,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
 .eroe__fondo .attesa__nota {
   left: 50%;
   right: auto;
-  bottom: 84px;
+  bottom: 28px;
   transform: translateX(-50%);
   text-align: center;
 }
@@ -571,7 +667,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
 }
 
 .nastro {
-  height: 288px;
+  height: 220px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -844,7 +940,7 @@ body[data-barra] .selettore {
 
 .scheda-misure .pillola {
   justify-self: start;
-  height: 37px;
+  height: 45px;
   padding: 0 18px;
 }
 
@@ -1545,6 +1641,274 @@ body[data-barra] .selettore {
   font-variant-numeric: tabular-nums;
 }
 
+/* ------------------------------------------------------------------ pagina iniziale a più pagine (punto 10) */
+
+/* eroe: due pillole sotto il titolo */
+.eroe__azioni {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* vetrina: la griglia di foto con i capi; ogni riquadro porta al capo */
+.griglia__link {
+  position: absolute;
+  inset: 0;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.griglia__link:focus-visible {
+  outline-color: var(--filo);
+  outline-offset: -6px;
+}
+
+.griglia__cornice {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.griglia__cornice > img,
+.griglia__cornice > .attesa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.griglia__nome,
+.griglia__dettaglio {
+  display: block;
+}
+
+.griglia__voce:focus-within .griglia__scheda {
+  opacity: 1;
+  transform: none;
+}
+
+/* sul telefono non c'è il passaggio del mouse: nome e prezzo dei capi veri restano in vista */
+@media (hover: none) {
+  .griglia__voce--capo .griglia__scheda {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vetrina {
+  padding-top: 24px;
+}
+
+.vetrina__tutti {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* i tre ingressi per categoria, subito sotto la vetrina */
+.collezione--sola {
+  margin-top: var(--spazio-sezione);
+  padding: 0;
+  background: none;
+}
+
+/* cultura e artigianato: capitoli a foto intera */
+.mestiere__binario {
+  margin: 0 var(--margine);
+}
+
+.mestiere__palco {
+  display: grid;
+  gap: 10px;
+}
+
+.mestiere__capitolo {
+  position: relative;
+  aspect-ratio: 1368 / 760;
+  overflow: hidden;
+}
+
+.mestiere__foto,
+.mestiere__foto > .attesa {
+  position: absolute;
+  inset: 0;
+}
+
+.mestiere__foto .attesa__nota {
+  top: 20px;
+  bottom: auto;
+  left: auto;
+  right: 24px;
+  text-align: right;
+}
+
+.mestiere__scheda {
+  position: absolute;
+  left: 27px;
+  bottom: 27px;
+  width: min(440px, calc(100% - 54px));
+  display: grid;
+  gap: 8px;
+  padding: 22px 24px 24px;
+}
+
+.mestiere__numero {
+  font-size: 10px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.72;
+}
+
+.mestiere__titolo {
+  font-size: 22px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.mestiere__testo {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mestiere__fondo {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* con lo script: la sezione resta ferma sullo schermo e ogni foto nuova si scopre dal basso sopra la precedente */
+.mestiere--vivo .mestiere__binario {
+  margin: 0;
+  height: calc(100svh + (var(--n) - 1) * 66svh + 34svh);
+}
+
+.mestiere--vivo .mestiere__palco {
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.mestiere--vivo .mestiere__capitolo {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  clip-path: inset(calc((1 - var(--p, 1)) * 100%) 0 0 0);
+}
+
+.mestiere--vivo .mestiere__foto > .attesa {
+  transform: scale(calc(1.08 - 0.08 * var(--p, 1)));
+  transform-origin: 50% 100%;
+}
+
+.mestiere--vivo .mestiere__foto .attesa__nota {
+  top: 104px;
+  right: var(--margine);
+}
+
+.mestiere--vivo .mestiere__scheda {
+  left: var(--margine);
+  bottom: var(--margine);
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 400ms var(--morbido), transform 600ms var(--morbido);
+}
+
+.mestiere--vivo .mestiere__capitolo[data-attivo] .mestiere__scheda {
+  opacity: 1;
+  transform: none;
+}
+
+/* fascia dei rivenditori: come il blocco della collezione, senza riquadri */
+.fascia {
+  padding: 56px 0;
+}
+
+.fascia .intesta {
+  margin-bottom: 0;
+}
+
+/* nastro fermo: la stessa fascia dei fatti, in fila, con un link sotto uno di loro */
+.nastro--fermo {
+  height: auto;
+  min-height: 0;
+  padding: 48px var(--margine);
+}
+
+.nastro__fatti {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  align-items: start;
+}
+
+.nastro__fatti li {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.15;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.nastro__fatti .collegamento {
+  white-space: nowrap;
+}
+
+/* diventa rivenditore: tre capitoli ancorati, ognuno con il link al modulo */
+.capitoli--rivenditori {
+  margin-top: var(--spazio-sezione);
+}
+
+.capitolo[id] {
+  scroll-margin-top: 90px;
+}
+
+.capitolo__testo .collegamento {
+  justify-self: start;
+  margin-top: 8px;
+}
+
+/* i loghi dei negozi clienti, quando arrivano: a un colore, alti 20 px, nella fascia del nastro */
+.nastro--loghi .nastro__binario li {
+  padding-right: 72px;
+}
+
+.nastro--loghi img {
+  width: auto;
+  height: 20px;
+}
+
+/* su misura: l'ingresso al configuratore in cima alla pagina (si vede solo con configuratore.attivo) */
+.ingresso .intesta {
+  margin-bottom: 24px;
+}
+
+.ingresso__azione {
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--margine);
+}
+
+/* in pagina iniziale l'ultima fascia tocca il piè di pagina */
+.corpo--a-filo {
+  padding-bottom: 0;
+}
+
 /* ------------------------------------------------------------------ piè di pagina */
 
 .piede {
@@ -1554,7 +1918,7 @@ body[data-barra] .selettore {
     "marchio colonne"
     "fondo fondo";
   gap: 40px 24px;
-  padding: 40px 28px 18px;
+  padding: 40px var(--margine) 18px;
   padding-bottom: max(18px, env(safe-area-inset-bottom));
   background: var(--blu);
   color: var(--filo);
@@ -2089,6 +2453,271 @@ body[data-barra] .selettore {
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* ------------------------------------------------------------------ strato di tocco (punto 11) */
+/* Ogni pulsante, link e foto cliccabile risponde al puntatore; il fuoco da tastiera mostra lo stesso stato.
+   Si muovono solo trasformazioni, opacità e colori: mai larghezze, altezze o margini. */
+
+.pillola {
+  transition: transform 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pillola:hover {
+    transform: translate3d(0, -1px, 0);
+    transition-duration: 150ms;
+  }
+}
+
+.pillola:focus-visible {
+  transform: translate3d(0, -1px, 0);
+}
+
+.pillola:active {
+  transform: translate3d(0, 1px, 0) scale(0.985);
+  transition-duration: 90ms;
+}
+
+/* link di testo: un solo aspetto. A riposo una riga sottile; al passaggio una riga piena si disegna da sinistra */
+/* le righe sono due pseudo-elementi: la riga piena cresce con una trasformazione, il resto non si muove */
+.collegamento,
+.collegamento--indietro,
+.piede__colonne a,
+.pannello-sede__righe a,
+.contatti__valore,
+.menu__contatti a {
+  position: relative;
+}
+
+.collegamento,
+.collegamento--indietro {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.collegamento::before,
+.collegamento::after,
+.piede__colonne a::after,
+.pannello-sede__righe a::after,
+.contatti__valore::after,
+.menu__contatti a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  pointer-events: none;
+}
+
+/* a riposo: la riga sottile dei link di testo */
+.collegamento::before {
+  opacity: 0.3;
+}
+
+/* la riga piena: si disegna da sinistra al passaggio o con il fuoco */
+.collegamento::after,
+.piede__colonne a::after,
+.pannello-sede__righe a::after,
+.contatti__valore::after,
+.menu__contatti a::after {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 120ms ease-out;
+}
+
+/* nel piè di pagina, nel menu e negli elenchi i link stanno senza riga: la riga sta subito sotto la parola */
+.piede__colonne a::after,
+.menu__contatti a::after {
+  bottom: calc(50% - 0.85em);
+}
+
+.pannello-sede__righe a::after,
+.contatti__valore::after {
+  bottom: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .collegamento:hover::after,
+  .piede__colonne a:hover::after,
+  .pannello-sede__righe a:hover::after,
+  .contatti a:hover .contatti__valore::after,
+  .menu__contatti a:hover::after {
+    transform: none;
+    transition-duration: 150ms;
+  }
+  .piede__colonne a:hover,
+  .pannello-sede__righe a:hover,
+  .contatti a:hover .contatti__valore {
+    text-decoration: none;
+  }
+  .collegamento:hover .icona {
+    transform: translate3d(2px, -2px, 0);
+  }
+}
+
+.collegamento:focus-visible::after,
+.piede__colonne a:focus-visible::after,
+.pannello-sede__righe a:focus-visible::after,
+.contatti a:focus-visible .contatti__valore::after,
+.menu__contatti a:focus-visible::after {
+  transform: none;
+}
+
+.collegamento .icona {
+  transition: transform 150ms ease-out;
+}
+
+/* foto dentro un link: si avvicina dentro la sua cornice, che non cresce */
+.riquadro > .attesa,
+.capo__foto img,
+.capo__foto .attesa,
+.griglia__cornice > img,
+.griglia__cornice > .attesa {
+  transition: transform 400ms var(--morbido);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .riquadro:hover > .attesa,
+  a.capo__link:hover .capo__foto img,
+  a.capo__link:hover .capo__foto .attesa,
+  .griglia__link:hover .griglia__cornice > * {
+    transform: scale(1.03);
+    transition-duration: 600ms;
+  }
+}
+
+.riquadro:focus-visible > .attesa,
+.griglia__link:focus-visible .griglia__cornice > * {
+  transform: scale(1.03);
+}
+
+/* le schede che portano altrove salgono di 2 px */
+.contatti a {
+  transition: transform 120ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .contatti a:hover {
+    transform: translate3d(0, -2px, 0);
+    transition-duration: 180ms;
+  }
+}
+
+/* fuoco da tastiera: anello blu sulle zone chiare, chiaro sulle foto; i punti d'arrivo dei link interni lo mostrano */
+.riquadro:focus-visible {
+  outline: 2px solid var(--blu);
+  outline-offset: 3px;
+}
+
+section[tabindex="-1"]:focus-visible,
+.pannello[tabindex="-1"]:focus-visible,
+.capitolo[tabindex="-1"]:focus-visible,
+footer[tabindex="-1"]:focus-visible,
+main[tabindex="-1"]:focus-visible {
+  outline: 2px solid var(--blu);
+  outline-offset: -2px;
+}
+
+.piede[tabindex="-1"]:focus-visible,
+.eroe[tabindex="-1"]:focus-visible {
+  outline-color: var(--filo);
+  outline-offset: -4px;
+}
+
+/* campo del modulo con il fuoco: bordo blu pieno e anello, ben più di 3:1 sul campo bianco */
+.campo input:focus,
+.campo textarea:focus {
+  border-color: var(--blu);
+  box-shadow: 0 0 0 3px rgba(15, 40, 94, 0.22);
+}
+
+/* testata: le pillole in vetro si staccano anche sopra le zone scure */
+.testata .pillola--vetro {
+  background: rgba(251, 249, 244, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .testata .pillola--vetro:hover {
+    background: rgba(251, 249, 244, 0.24);
+  }
+}
+
+/* la pillola di WhatsApp ha un filo chiaro per staccarsi dalle foto scure; quando è nascosta non si raggiunge col Tab */
+.pillola-fissa {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.32), 0 6px 20px rgba(10, 27, 69, 0.18);
+  transition: opacity 300ms ease-out, transform 300ms var(--morbido), background-color 120ms ease-out, visibility 0s;
+}
+
+body:has([data-modulo]:focus-within) .pillola-fissa,
+.pillola-fissa[data-via],
+.js .pagina-home .pillola-fissa:not([data-visibile]) {
+  visibility: hidden;
+  transition: opacity 300ms ease-out, transform 300ms var(--morbido), visibility 0s linear 300ms;
+}
+
+/* sulle pagine chiare l'anello del fuoco è blu: quello chiaro non si vedrebbe */
+.salta-al-contenuto:focus-visible,
+.pagina-chiara .testata .pillola:focus-visible,
+.pagina-chiara .testata__marchio:focus-visible {
+  outline-color: var(--blu);
+}
+
+/* le scelte a pillola: la casella vera è nascosta ma resta raggiungibile; si tocca tutta la pillola */
+.scelta input {
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  pointer-events: none;
+}
+
+.scelta span {
+  cursor: pointer;
+}
+
+/* numeri dei passi: 4,5:1 sul bianco */
+.passi__numero {
+  opacity: 1;
+  color: var(--blu-tenue);
+}
+
+/* dopo il nastro la sezione che segue non raddoppia lo spazio */
+.nastro + .corpo > .sezione:first-child {
+  padding-top: 48px;
+}
+
+.nastro + .corpo > .collezione:first-child {
+  margin-top: 0;
+}
+
+/* "Salta l'introduzione" si tocca bene col dito: 44 px di altezza, stesso aspetto */
+.apertura__salta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* le foto segnaposto chiare: la nota si legge a 4,5:1 */
+.attesa--chiaro {
+  color: rgba(15, 40, 94, 0.8);
+}
+
+/* passaggio da una pagina all'altra: dissolvenza breve, solo dove il browser la conosce e senza movimento ridotto */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+    animation-timing-function: ease-out;
+  }
+}
+
 /* ------------------------------------------------------------------ schermi medi */
 
 @media (max-width: 1199px) {
@@ -2134,7 +2763,7 @@ body[data-barra] .selettore {
 
 @media (max-width: 809px) {
   :root {
-    --margine: 10px;
+    --margine: 16px;
     --spazio-sezione: 90px;
   }
 
@@ -2142,9 +2771,29 @@ body[data-barra] .selettore {
     display: none;
   }
 
-  .testata .pillola {
-    font-size: 10px;
+  .testata .pillola,
+  .menu__chiudi {
+    height: 44px;
+    font-size: 11px;
     padding: 0 18px;
+  }
+
+  .testata__marchio svg {
+    width: 100px;
+  }
+
+  .testata__menu {
+    display: inline-flex;
+  }
+
+  /* sul telefono la pillola dice solo "Prenota": il resto lo leggono i lettori di schermo */
+  .testata__resto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .eroe__testo {
@@ -2161,7 +2810,7 @@ body[data-barra] .selettore {
   }
 
   .nastro {
-    height: 258px;
+    height: 200px;
   }
 
   .nastro__binario li {
@@ -2486,7 +3135,7 @@ body[data-barra] .selettore {
       "colonne"
       "fondo";
     gap: 36px;
-    padding: 56px 28px 22px;
+    padding: 40px var(--margine) 22px;
     padding-bottom: max(22px, env(safe-area-inset-bottom));
   }
 
@@ -2494,20 +3143,25 @@ body[data-barra] .selettore {
     width: 200px;
   }
 
-  .piede__colonne {
+  .piede__colonne,
+  .piede__link {
     flex-direction: column;
     row-gap: 28px;
     padding: 0;
   }
 
-  .piede__link {
-    column-gap: 40px;
+  /* sul telefono i collegamenti del piè di pagina si toccano col dito: almeno 44 px */
+  .piede__colonne a {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    min-height: 44px;
+    line-height: 1.3;
+    white-space: normal;
   }
 
-  /* sul telefono i collegamenti del piè di pagina si toccano col dito: righe più alte */
-  .piede__colonne a,
   .piede__sede {
-    line-height: 34px;
+    line-height: 30px;
   }
 
   .piede__fondo {
@@ -2517,7 +3171,7 @@ body[data-barra] .selettore {
   }
 
   .pillola-fissa {
-    right: max(14px, env(safe-area-inset-right));
+    right: max(var(--margine), env(safe-area-inset-right));
     bottom: max(14px, env(safe-area-inset-bottom));
   }
 
@@ -2575,7 +3229,7 @@ body[data-barra] .selettore {
   }
 
   .capitolo__testo {
-    padding: 0 10px;
+    padding: 0;
   }
 
   .chiusura__azioni .pillola {
@@ -2590,6 +3244,199 @@ body[data-barra] .selettore {
   .legale {
     padding-top: 110px;
   }
+
+  .mestiere__capitolo {
+    aspect-ratio: 4 / 5;
+  }
+
+  .mestiere__scheda {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    padding: 18px 18px 20px;
+  }
+
+  /* la scheda sta sopra la pillola di WhatsApp, che resta in basso a destra */
+  .mestiere--vivo .mestiere__scheda {
+    left: var(--margine);
+    right: var(--margine);
+    bottom: calc(max(var(--margine), env(safe-area-inset-bottom)) + 56px);
+  }
+
+  .mestiere__titolo {
+    font-size: 18px;
+  }
+
+  .eroe__azioni .pillola {
+    padding: 0 20px;
+  }
+
+  .fascia {
+    padding: 60px 0;
+  }
+
+  .nastro--fermo {
+    height: auto;
+  }
+
+  .nastro__fatti {
+    grid-template-columns: 1fr;
+    row-gap: 28px;
+  }
+
+  .nastro__fatti li {
+    font-size: 15px;
+  }
+
+  /* --- un solo margine sul telefono: testi, foto, pannelli e testata stanno a var(--margine) dal bordo */
+  .intesta,
+  .domande .titolo,
+  .prezzo__testo {
+    padding-left: var(--margine);
+    padding-right: var(--margine);
+  }
+
+  .funziona {
+    padding-left: var(--margine);
+    padding-right: var(--margine);
+  }
+
+  .funziona__testo {
+    padding: 0;
+  }
+
+  .riquadri {
+    margin: 0 var(--margine);
+  }
+
+  .domande__elenco {
+    padding: 14px var(--margine);
+  }
+
+  .prezzo__foto {
+    margin: 0 var(--margine);
+  }
+
+  .scheda-misure,
+  .pannello-sede {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* --- zone di tocco di almeno 44 px */
+  .pillola-fissa {
+    height: 44px;
+  }
+
+  .js .selettore__apri:not([hidden]) {
+    height: 44px;
+  }
+
+  .collegamento,
+  .collegamento--indietro {
+    min-height: 44px;
+    padding: 12px 0;
+  }
+
+  .collegamento::before,
+  .collegamento::after {
+    bottom: 10px;
+  }
+
+  .pannello-sede__righe a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .pannello-sede__righe a::after {
+    bottom: calc(50% - 0.85em);
+  }
+
+  .pannello-sede__righe p {
+    line-height: 1.2;
+  }
+
+  .pannello-sede .chip {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 10px;
+  }
+
+  /* "Salta l'introduzione", le parole lunghe dei capitoli e la testata stanno anche a 320 px */
+  .capitolo__etichetta {
+    font-size: min(48px, 11vw);
+  }
+
+  .pillola--grande {
+    padding: 0 24px;
+  }
+
+  .legale {
+    padding-left: var(--margine);
+    padding-right: var(--margine);
+  }
+
+  .pillola {
+    height: 44px;
+  }
+
+  .scelta span {
+    height: 44px;
+  }
+
+  .consenso {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .consenso input {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  .corpo {
+    padding-bottom: 64px;
+  }
+
+  .prezzo {
+    margin-bottom: -64px;
+  }
+
+  .corpo--a-filo {
+    padding-bottom: 0;
+  }
+
+  .vetrina {
+    padding-top: 32px;
+  }
+
+  /* --- una sola altezza per le pillole blu a tutta larghezza */
+  .prezzo__fondo .pillola,
+  .modulo__piede .pillola,
+  .chiusura__azioni .pillola,
+  .prodotto__chiedi {
+    height: 56px;
+  }
+}
+
+/* ------------------------------------------------------------------ telefoni stretti (320 px) */
+
+@media (max-width: 359px) {
+  .testata__marchio svg {
+    width: 84px;
+  }
+
+  .testata .pillola {
+    padding: 0 12px;
+    font-size: 10px;
+  }
+
+  .testata {
+    gap: 8px;
+  }
 }
 
 /* ------------------------------------------------------------------ movimento ridotto */
@@ -2597,7 +3444,7 @@ body[data-barra] .selettore {
 @media (prefers-reduced-motion: reduce) {
   .nastro {
     height: auto;
-    padding: 56px 20px;
+    padding: 56px var(--margine);
   }
   .nastro__binario {
     animation: none;

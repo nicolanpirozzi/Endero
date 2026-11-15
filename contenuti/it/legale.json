@@ -19,6 +19,7 @@
         "titolo": "Quali dati raccogliamo",
         "paragrafi": [
           "Quando compili un modulo del sito: nome e cognome, numero di telefono, email se la indichi, giorno e fascia oraria preferiti per la presa misure, il testo del messaggio. Con la richiesta salviamo anche data e ora, la pagina da cui l'hai inviata e il Paese da cui ti colleghi.",
+          "Se chiedi di diventare rivenditore: nome del negozio o marchio, città, Paese, tipo di attività, partita IVA e sito se li indichi.",
           "Mentre navighi: i dati tecnici che ogni sito riceve dal browser, come l'indirizzo IP, trattati dal fornitore che ospita il sito per farlo funzionare e proteggerlo."
         ]
       },

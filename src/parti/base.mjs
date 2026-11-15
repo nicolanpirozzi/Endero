@@ -61,3 +61,9 @@ export const icona = {
   destra: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   freccia: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 11.5l7-7M6 4.5h5.5V10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
+
+/** Prezzo in euro, all'italiana: 60 → "60,00 €". */
+export const euro = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
+
+/** Indirizzo della pagina di un capo della collezione. */
+export const indirizzoCapo = (capo) => `/collezione/${capo.slug}/`;

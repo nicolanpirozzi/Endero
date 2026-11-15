@@ -1,7 +1,8 @@
-// Pagina iniziale. Ordine e proporzioni seguono il riferimento (docs/direzione-creativa.md, punti 1 e 3).
+// Pagina iniziale. Struttura del punto 10 della direzione creativa: apertura, eroe, nastro, selettore, vetrina,
+// cultura e artigianato, porta sul su misura, fascia dei rivenditori. Pezzi e proporzioni restano quelli del riferimento.
 import { esc, attesa, logo, icona } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
-import { nastro, suMisura, presaMisure, comeFunziona, collezione, storia, domande, prezzo, datiBase } from '../parti/sezioni.mjs';
+import { nastro, vetrina, collezione, mestiere, presaMisure, fascia, datiBase } from '../parti/sezioni.mjs';
 
 // 0 · Apertura "La cucitura": il film è in src/apertura/, qui solo la struttura che lo script arricchisce.
 function apertura(a) {
@@ -33,18 +34,19 @@ function apertura(a) {
 </section>`;
 }
 
-// 2 · Il video a tutto schermo con il titolo della pagina. Resta fermo sotto l'apertura, che si solleva come un telo.
+// 1 · Il video a tutto schermo con il titolo della pagina. Resta fermo sotto l'apertura, che si solleva come un telo.
 function eroe(e, sito) {
   return `<section class="eroe" id="contenuto" tabindex="-1">
     <div class="eroe__fondo">${attesa({ nota: e.video, tono: 'scuro', etichetta: sito.video_in_arrivo, classe: 'attesa--video' })}</div>
     <div class="eroe__testo">
       <h1 class="titolo eroe__titolo">${e.titolo.map((r) => `<span>${esc(r)}</span>`).join(' ')}</h1>
       <p class="eroe__sotto">${esc(e.sottotitolo)}</p>
+      ${e.pillole?.length ? `<p class="eroe__azioni">${e.pillole.map((p, i) => `<a class="pillola ${i === 0 ? 'pillola--chiara' : 'pillola--vetro'}" href="${esc(p.href)}">${esc(p.testo)}</a>`).join('')}</p>` : ''}
     </div>
   </section>`;
 }
 
-// 4 · Selettore che resta attaccato in alto: porta alle sezioni della pagina.
+// 3 · Selettore che resta attaccato in alto: porta alle sezioni della pagina.
 function selettore(s) {
   return `<nav class="selettore" aria-label="${esc(s.etichetta)}" data-selettore>
       <button class="selettore__apri" type="button" aria-expanded="false" hidden><span data-selettore-attuale>${esc(s.voci[0].testo)}</span>${icona.giu}</button>
@@ -54,21 +56,30 @@ function selettore(s) {
     </nav>`;
 }
 
-export default function home({ sito, testi: h, risorse, anteprima }) {
+/**
+ * @param {object} o.testi        home.json
+ * @param {object} o.cultura      cultura-e-artigianato.json (i capitoli)
+ * @param {object} o.suMisura     su-misura.json (scheda misure e interruttore del configuratore)
+ * @param {object} o.rivenditori  diventa-rivenditore.json (la fascia, in richiami.home)
+ * @param {object[]} o.prodotti   i capi di prodotti.json
+ */
+export default function home({ sito, testi: h, cultura, suMisura, rivenditori, prodotti, risorse, anteprima }) {
+  const conf = suMisura.configuratore || {};
+  const porta = { ...h.porta_su_misura, scheda: suMisura.presa_misure.scheda };
+  // finché il configuratore non è acceso la pillola porta alla pagina del su misura
+  const invito = conf.attivo ? { testo: conf.invito, href: conf.href } : porta.invito;
   const corpo = `${apertura(h.apertura)}
 <main>
   ${eroe(h.eroe, sito)}
   ${nastro(h.nastro)}
-  <div class="corpo">
+  <div class="corpo corpo--a-filo">
     ${selettore(h.selettore)}
-    ${suMisura(h.su_misura, sito)}
-    ${presaMisure(h.presa_misure, sito)}
-    ${comeFunziona(h.come_funziona, risorse.turnstile)}
-    ${collezione(h.collezione, sito)}
-    ${storia(h.storia, sito)}
-    ${domande(h.domande)}
-    ${prezzo(h.prezzo, sito)}
+    ${vetrina(h.vetrina, prodotti, sito)}
+    ${collezione(h.categorie, sito, { id: '', gruppo: 'collezione' })}
+    ${mestiere(h.artigianato, cultura.capitoli, sito)}
+    ${presaMisure(porta, sito, { id: 'su-misura', gruppo: 'su-misura', invito })}
+    ${fascia(rivenditori.richiami.home, { id: 'rivenditori', gruppo: 'rivenditori' })}
   </div>
 </main>`;
-  return pagina({ sito, meta: h.meta, percorso: '/', corpo, risorse, anteprima, dati: datiBase(sito, h.meta), classe: 'pagina-home', prenota: '#prenota' });
+  return pagina({ sito, meta: h.meta, percorso: '/', corpo, risorse, anteprima, dati: datiBase(sito, h.meta), classe: 'pagina-home' });
 }

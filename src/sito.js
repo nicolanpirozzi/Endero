@@ -73,7 +73,8 @@ function testata() {
   const eroe = document.querySelector('.eroe');
   const apertura = document.querySelector('.apertura');
   const piede = document.querySelector('.piede');
-  const moduli = [...document.querySelectorAll('[data-modulo]')];
+  // sul telefono la pillola si fa da parte sopra i moduli e sopra le schede con un pulsante in basso ([data-pillola-via])
+  const moduli = [...document.querySelectorAll('[data-modulo], [data-pillola-via]')];
   const stretto = matchMedia('(max-width: 809px)');
   if (!el) return;
   let ultimo = scrollY;
@@ -114,6 +115,49 @@ function testata() {
   aggiorna();
 }
 
+// ---------------------------------------------------------------- menu del telefono
+// Senza script "Menu" è un link al piè di pagina. Con lo script diventa un pulsante che apre un <dialog> a tutto
+// schermo: il fuoco resta dentro, Esc lo chiude, la pagina sotto non scorre, scegliere una voce lo chiude.
+function menu() {
+  const dialogo = document.querySelector('[data-menu]');
+  const link = document.querySelector('[data-menu-apri]');
+  if (!dialogo || !link || typeof dialogo.showModal !== 'function') return;
+  const pulsante = document.createElement('button');
+  pulsante.type = 'button';
+  pulsante.className = link.className;
+  pulsante.textContent = link.textContent;
+  pulsante.setAttribute('aria-haspopup', 'dialog');
+  pulsante.setAttribute('aria-expanded', 'false');
+  pulsante.setAttribute('aria-controls', dialogo.id);
+  link.replaceWith(pulsante);
+
+  const chiudi = () => { if (dialogo.open) dialogo.close(); };
+  pulsante.addEventListener('click', () => {
+    dialogo.showModal();
+    pulsante.setAttribute('aria-expanded', 'true');
+    document.documentElement.classList.add('menu-aperto');
+    lenis?.stop();
+  });
+  // alla chiusura (pulsante, Esc o voce scelta) la pagina torna a scorrere e il fuoco torna su "Menu"
+  dialogo.addEventListener('close', () => {
+    pulsante.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('menu-aperto');
+    lenis?.start();
+  });
+  // il fuoco gira dentro il pannello: dall'ultima voce si torna alla prima, e viceversa
+  dialogo.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const tutti = [...dialogo.querySelectorAll('a[href], button:not([disabled])')];
+    const primo = tutti[0], ultimo = tutti[tutti.length - 1];
+    if (e.shiftKey && document.activeElement === primo) { e.preventDefault(); ultimo.focus(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primo.focus(); }
+  });
+  dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', chiudi);
+  dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', chiudi));
+  // se lo schermo si allarga (telefono girato, finestra ingrandita) il menu non serve più
+  matchMedia('(min-width: 810px)').addEventListener('change', (e) => { if (e.matches) chiudi(); });
+}
+
 // ---------------------------------------------------------------- selettore delle sezioni
 function selettore() {
   const nav = document.querySelector('[data-selettore]');
@@ -138,7 +182,8 @@ function selettore() {
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) chiudi(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') chiudi(); });
 
-  voci.forEach((a) => a.addEventListener('click', chiudi));
+  let sceltaGuidata = '';
+  voci.forEach((a) => a.addEventListener('click', () => { sceltaGuidata = a.dataset.voce; chiudi(); }));
 
   // la pillola blu che scivola sotto la voce attiva (solo su schermi larghi, vedi sito.css)
   const indicatore = document.createElement('span');
@@ -164,6 +209,9 @@ function selettore() {
     let scelto = sezioni[0]?.dataset.gruppo;
     for (const s of sezioni) if (s.getBoundingClientRect().top <= soglia) scelto = s.dataset.gruppo;
     if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) scelto = sezioni[sezioni.length - 1]?.dataset.gruppo;
+    // dopo un clic su una voce resta quella, anche se la pagina finisce prima che la sezione arrivi in cima
+    if (sceltaGuidata && guidato) scelto = sceltaGuidata;
+    else if (!guidato) sceltaGuidata = '';
     if (scelto === gruppo) return;
     const primaVolta = !gruppo;
     gruppo = scelto;
@@ -190,6 +238,7 @@ const COMPARSE = [
   ['.capitolo__foto', 'tenda', 0],
   ['.capitolo__testo', 'su', 200],
   ['.chiusura__azioni', 'su', 260],
+  ['.vetrina__tutti, .mestiere__fondo', 'su', 0],
   ['.grande, .prezzo__foto', 'tenda', 0],
   ['.scheda-misure', 'scheda', 450],
   ['.pannello', 'su', 120],
@@ -274,17 +323,57 @@ function comparse() {
     sotto.dataset.rivela = 'su';
     sotto.style.setProperty('--ritardo', 200 + n * 55 + 'ms');
   }
+  // le pillole sotto il titolo entrano per ultime; se ricevono il fuoco prima, compaiono subito
+  const azioni = eroe.querySelector('.eroe__azioni');
+  if (azioni) {
+    azioni.dataset.rivela = 'su';
+    azioni.style.setProperty('--ritardo', 360 + n * 55 + 'ms');
+  }
   let richiesta = 0;
   const controlla = () => {
     richiesta = 0;
     if (apertura && apertura.getBoundingClientRect().bottom > innerHeight * 0.55) return;
     titolo.setAttribute('data-visto', '');
     sotto?.setAttribute('data-visto', '');
+    azioni?.setAttribute('data-visto', '');
     removeEventListener('scroll', aScorrimento);
   };
   const aScorrimento = () => { if (!richiesta) richiesta = requestAnimationFrame(controlla); };
   addEventListener('scroll', aScorrimento, { passive: true });
   controlla();
+}
+
+// ---------------------------------------------------------------- cultura e artigianato
+// La sezione resta ferma sullo schermo: ogni foto nuova si scopre dal basso sopra la precedente, circa due terzi
+// di schermo di scorrimento ciascuna. Senza script o con movimento ridotto i capitoli stanno uno sotto l'altro.
+function mestiere() {
+  if (ridotto) return;
+  document.querySelectorAll('[data-mestiere]').forEach((sez) => {
+    const binario = sez.querySelector('.mestiere__binario');
+    const palco = sez.querySelector('.mestiere__palco');
+    const capitoli = [...sez.querySelectorAll('.mestiere__capitolo')];
+    if (!binario || capitoli.length < 2) return;
+    sez.classList.add('mestiere--vivo');
+    let richiesta = 0;
+    function aggiorna() {
+      richiesta = 0;
+      const alto = palco.clientHeight;
+      const passo = alto * 0.66;
+      const fatto = -binario.getBoundingClientRect().top - alto * 0.17;   // un attimo fermi prima della prima foto
+      let attivo = 0;
+      capitoli.forEach((c, k) => {
+        if (!k) return;
+        const p = Math.min(1, Math.max(0, (fatto - (k - 1) * passo) / passo));
+        c.style.setProperty('--p', p.toFixed(4));
+        if (p >= 0.55) attivo = k;
+      });
+      capitoli.forEach((c, k) => c.toggleAttribute('data-attivo', k === attivo));
+    }
+    const chiedi = () => { if (!richiesta) richiesta = requestAnimationFrame(aggiorna); };
+    addEventListener('scroll', chiedi, { passive: true });
+    addEventListener('resize', chiedi, { passive: true });
+    aggiorna();
+  });
 }
 
 // ---------------------------------------------------------------- carosello della storia
@@ -344,8 +433,19 @@ function modulo(form) {
     }, { once: true });
   }
 
+  // "almeno una casella" non si impone con il solo HTML: lo si controlla qui (e il Worker lo ricontrolla sempre)
+  const gruppi = [...form.querySelectorAll('[data-almeno-uno]')];
+  const controllaGruppi = () => {
+    for (const g of gruppi) {
+      const caselle = [...g.querySelectorAll('input[type="checkbox"]')];
+      caselle[0]?.setCustomValidity(caselle.some((c) => c.checked) ? '' : g.dataset.errore || 'Scegli almeno una voce.');
+    }
+  };
+  gruppi.forEach((g) => g.addEventListener('change', controllaGruppi));
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    controllaGruppi();
     if (!form.reportValidity()) return;
     const testo = bottone.textContent;
     bottone.disabled = true;
@@ -380,7 +480,9 @@ function avvia(nome, fn) {
 avvia('scorrimento', scorrimento);
 avvia('ancore', ancore);
 avvia('testata', testata);
+avvia('menu', menu);
 avvia('selettore', selettore);
+avvia('mestiere', mestiere);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
 avvia('modulo', () => document.querySelectorAll('[data-modulo]').forEach(modulo));

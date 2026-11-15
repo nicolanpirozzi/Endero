@@ -4,6 +4,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { destinazione } from '../worker/reindirizzamenti.mjs';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 const porta = Number(process.argv[2] || process.env.PORT || 8766);
@@ -19,6 +20,9 @@ createServer((req, res) => {
     res.writeHead(503, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ ok: false, errore: 'Nel server locale il modulo non è attivo: usare npm run worker.' }));
   }
+  // gli stessi reindirizzamenti del sito vero (dist/_redirects)
+  const altrove = destinazione(url.toString());
+  if (altrove) { res.writeHead(301, { Location: new URL(altrove).pathname + url.search }); return res.end(); }
   let file = normalize(join(DIST, decodeURIComponent(url.pathname)));
   if (!file.startsWith(DIST)) { res.writeHead(403); return res.end(); }
   if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');

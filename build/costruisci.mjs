@@ -15,11 +15,13 @@ import home from '../src/pagine/home.mjs';
 import paginaSuMisura from '../src/pagine/su-misura.mjs';
 import paginaConfiguratore from '../src/pagine/configuratore.mjs';
 import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
-import paginaStoria from '../src/pagine/storia.mjs';
+import paginaCultura, { PERCORSO as PERCORSO_CULTURA } from '../src/pagine/cultura.mjs';
+import paginaRivenditori, { PERCORSO as PERCORSO_RIVENDITORI } from '../src/pagine/rivenditori.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
 import paginaLegale from '../src/pagine/legale.mjs';
 import semplice from '../src/pagine/semplice.mjs';
 import { INTESTAZIONI, IMPRONTA_SCRIPT_IN_LINEA } from '../worker/intestazioni.mjs';
+import { fileRedirects } from '../worker/reindirizzamenti.mjs';
 
 const RADICE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(RADICE, 'dist');
@@ -33,8 +35,9 @@ const testiHome = leggi('home.json');
 const servizio = leggi('servizio.json');
 const testi = {
   suMisura: leggi('su-misura.json'),
+  cultura: leggi('cultura-e-artigianato.json'),
+  rivenditori: leggi('diventa-rivenditore.json'),
   collezione: leggi('collezione.json'),
-  storia: leggi('storia.json'),
   doveSiamo: leggi('dove-siamo.json'),
   legale: leggi('legale.json'),
 };
@@ -88,6 +91,10 @@ const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAntep
 scrivi('index.html', home({
   sito,
   testi: testiHome,
+  cultura: testi.cultura,
+  suMisura: testi.suMisura,
+  rivenditori: testi.rivenditori,
+  prodotti,
   anteprima,
   risorse: {
     ...base,
@@ -100,7 +107,7 @@ function genera(percorso, html) {
   scrivi(percorso.slice(1) + 'index.html', html);
   pagine.push(percorso);
 }
-genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, home: testiHome, risorse: base, anteprima }));
+genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
 // configuratore: se il file del modello non c'è (non sta nel repository) la pagina esce con la sola immagine ferma
 const fileCamicia = join(RADICE, 'public/camicia/camicia.glb');
 const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0, scala: 0 };
@@ -122,7 +129,8 @@ for (const capo of prodotti) {
   visti.add(capo.slug);
 }
 for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }));
-genera('/storia/', paginaStoria({ sito, testi: testi.storia, home: testiHome, risorse: base, anteprima }));
+genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }));
+genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori, nastro: testiHome.nastro, risorse: base, anteprima }));
 genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }));
 genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }));
 genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }));
@@ -144,12 +152,8 @@ ${pagine.map((p) => `  <url><loc>${sito.dominio}${p}</loc></url>`).join('\n')}
 </urlset>
 `);
 
-// 6 · i vecchi indirizzi del negozio PrestaShop portano alle pagine nuove (punto 5 della direzione creativa)
-scrivi('_redirects', `/2-home / 301
-/3-camicia-su-misura /camicie-su-misura/ 301
-/home/1-43-camicione-in-flanella-camicia-su-misura.html /collezione/ 301
-/contact-us /dove-siamo/ 301
-`);
+// 6 · reindirizzamenti: vecchi indirizzi PrestaShop e /storia/ (elenco in worker/reindirizzamenti.mjs)
+scrivi('_redirects', fileRedirects());
 
 // 7 · intestazioni per Cloudflare: cache lunga per i file con l'impronta, sicurezza per tutti
 // l'unico script in linea delle pagine deve corrispondere all'impronta ammessa dalla Content-Security-Policy

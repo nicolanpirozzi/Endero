@@ -5,6 +5,7 @@ import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { contatto } from './index.js';
 import { INTESTAZIONI } from './intestazioni.mjs';
+import { destinazione } from './reindirizzamenti.mjs';
 
 const manifest = JSON.parse(manifestJSON);
 
@@ -34,6 +35,9 @@ export default {
       r.headers.set('X-Content-Type-Options', 'nosniff');
       return r;
     }
+    // _redirects qui non viene caricato (vedi wrangler.anteprima.toml): gli stessi reindirizzamenti li fa il Worker
+    const altrove = destinazione(request.url);
+    if (altrove) return new Response(null, { status: 301, headers: { Location: altrove, 'X-Robots-Tag': 'noindex, nofollow' } });
     const evento = { request, waitUntil: ctx.waitUntil.bind(ctx) };
     const opzioni = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: manifest, cacheControl: { bypassCache: false, edgeTTL: 3600, browserTTL: null } };
     try {

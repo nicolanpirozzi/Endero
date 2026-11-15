@@ -1,0 +1,48 @@
+{
+  "_nota": "Cultura e artigianato: prende il posto della storia (docs/direzione-creativa.md, punto 10). I capitoli nascono dalle foto: prima arrivano le foto vere, poi si scrive un capitolo per ogni foto buona, descrivendo solo quello che la foto mostra. Da tre a cinque capitoli. Gli stessi capitoli servono alla pagina /cultura-e-artigianato/ e alla sezione della pagina iniziale. Le parti tra [[ ]] sono segnaposto. Della produzione si dice solo 'fatto in Italia'.",
+  "meta": {
+    "titolo": "Cultura e artigianato · Endero, camicie e abbigliamento uomo",
+    "descrizione": "Cultura e artigianato Endero: il taglio, la cucitura e le rifiniture delle nostre camicie e dei capi uomo, fatti in Italia.",
+    "immagine": "/film/manifesto.jpg",
+    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+  },
+  "eroe": {
+    "titolo": "Cultura e artigianato",
+    "sottotitolo": "Come nasce un capo Endero",
+    "foto": "Mani al lavoro su una camicia, foto orizzontale"
+  },
+  "introduzione": {
+    "titolo": "Il mestiere",
+    "testo": "[[Testo sul modo di lavorare di Endero. Si scrive quando arrivano le foto, raccontando solo quello che mostrano.]]"
+  },
+  "capitoli": [
+    {
+      "etichetta": "01",
+      "titolo": "Il taglio",
+      "testo": "[[Due righe su quello che mostra la foto del taglio.]]",
+      "foto": "Il taglio del tessuto, foto orizzontale"
+    },
+    {
+      "etichetta": "02",
+      "titolo": "La cucitura",
+      "testo": "[[Due righe su quello che mostra la foto della cucitura.]]",
+      "foto": "La cucitura di una camicia, foto orizzontale"
+    },
+    {
+      "etichetta": "03",
+      "titolo": "Le rifiniture",
+      "testo": "[[Due righe su quello che mostra la foto delle rifiniture.]]",
+      "foto": "Rifiniture: asole, bottoni, stiro, foto orizzontale"
+    }
+  ],
+  "fatti": {
+    "etichetta": "Endero in breve",
+    "richiamo_dopo": "2.500 negozi serviti"
+  },
+  "chiusura": {
+    "titolo": "Vieni a trovarci",
+    "testo": "Su appuntamento nella sede di Giugliano in Campania, in Viale del Toro 22.",
+    "prenota": "Prenota la presa misure",
+    "whatsapp": "Scrivici su WhatsApp"
+  }
+}

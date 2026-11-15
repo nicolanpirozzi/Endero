@@ -18,7 +18,13 @@ export default {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 
-const TIPI = ['presa-misure', 'contatto'];
+import rivenditori from '../contenuti/it/diventa-rivenditore.json';
+
+const TIPI = ['presa-misure', 'contatto', 'rivenditore'];
+// i campi propri delle richieste dei rivenditori: nomi, scelte ammesse e lunghezze vengono dai contenuti della pagina,
+// così modulo e Worker non si possono disallineare. Quelli comuni hanno già le loro colonne.
+const COMUNI = ['nome', 'telefono', 'email', 'messaggio'];
+const CAMPI_RIVENDITORE = rivenditori.modulo.campi.filter((c) => !COMUNI.includes(c.nome));
 const FASCE = ['Mattina', 'Pomeriggio', 'Indifferente'];
 const PESO_MASSIMO = 32768;   // byte: un modulo compilato ne pesa pochi, il resto è abuso
 
@@ -84,6 +90,24 @@ export async function contatto(request, env) {
   if (dati.get('privacy') !== 'si') return rispondi(false, 422, 'Serve il consenso all\'informativa privacy.');
   if (r.email && !EMAIL.test(r.email)) return rispondi(false, 422, 'L\'indirizzo email non sembra corretto.');
 
+  // richiesta di un rivenditore: solo i campi previsti, con le loro lunghezze e scelte; listino e condizioni
+  // partono per email, quindi l'email serve; poi città e almeno un interesse
+  r.dettagli = '';
+  if (r.tipo === 'rivenditore') {
+    const d = {};
+    for (const c of CAMPI_RIVENDITORE) {
+      if (c.tipo === 'scelta-multipla') d[c.nome] = [...new Set(dati.getAll(c.nome).filter((v) => c.opzioni.includes(v)))];
+      else if (c.tipo === 'scelta-singola') d[c.nome] = c.opzioni.includes(dati.get(c.nome)) ? dati.get(c.nome) : '';
+      else d[c.nome] = campo(c.nome, c.max || 160, c.tipo === 'area');
+    }
+    if (!r.email) return rispondi(false, 422, 'Serve l\'email: listino e condizioni te li mandiamo lì.');
+    if (!d.citta) return rispondi(false, 422, 'Scrivi la città del negozio o dell\'attività.');
+    const interesse = CAMPI_RIVENDITORE.find((c) => c.nome === 'interesse');
+    if (interesse && !d.interesse.length) return rispondi(false, 422, `${interesse.etichetta}: ${interesse.errore || 'scegli almeno una voce.'}`);
+    r.giorno = r.fascia = '';
+    r.dettagli = JSON.stringify(d);
+  }
+
   // antispam: obbligatorio appena la chiave segreta è configurata sul Worker
   if (env.TURNSTILE_SECRET) {
     let superata = false;
@@ -108,8 +132,8 @@ export async function contatto(request, env) {
 
   try {
     await env.DB.prepare(
-      'INSERT INTO richieste (tipo, nome, telefono, email, giorno, fascia, messaggio, pagina, paese) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)'
-    ).bind(r.tipo, r.nome, r.telefono, r.email, r.giorno, r.fascia, r.messaggio, percorsoInterno(request.headers.get('Referer') || '', request), request.cf?.country || '').run();
+      'INSERT INTO richieste (tipo, nome, telefono, email, giorno, fascia, messaggio, dettagli, pagina, paese) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)'
+    ).bind(r.tipo, r.nome, r.telefono, r.email, r.giorno, r.fascia, r.messaggio, r.dettagli, percorsoInterno(request.headers.get('Referer') || '', request), request.cf?.country || '').run();
   } catch (errore) {
     console.error('salvataggio non riuscito', errore);
     return rispondi(false, 500, 'Non siamo riusciti a salvare la richiesta. Scrivici su WhatsApp.');
@@ -124,6 +148,6 @@ function paginaErrore(messaggio, percorsoModulo) {
   // si torna solo a una pagina di questo sito (percorso già verificato), mai a un indirizzo esterno
   const indietro = percorsoModulo ? pulisci(percorsoModulo) : '/';
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Richiesta non inviata · Endero</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-content:center;gap:16px;padding:24px;text-align:center;font:300 15px/1.6 system-ui,sans-serif;color:#0f285e;background:#faf9f7}a{color:inherit}h1{font-size:22px;font-weight:600;text-transform:uppercase}h1,p{margin:0}</style></head>
+<style>body{margin:0;min-height:100vh;display:grid;place-content:center;gap:16px;padding:24px;text-align:center;font:300 15px/1.6 system-ui,sans-serif;color:#0f285e;background:#faf9f7}a{color:inherit}h1{font-size:22px;font-weight:600;text-transform:uppercase}h1,p{margin:0}@media (prefers-reduced-motion:no-preference){@view-transition{navigation:auto}}</style></head>
 <body><h1>Richiesta non inviata</h1><p>${testo}</p><p><a href="${indietro}">Torna al modulo</a> · <a href="https://wa.me/393338548712">Scrivici su WhatsApp</a></p></body></html>`;
 }
