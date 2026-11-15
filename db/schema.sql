@@ -1,0 +1,20 @@
+-- Database D1 "endero": le richieste arrivate dal modulo del sito.
+-- In locale:  npm run db:locale
+-- Online:     npx wrangler d1 execute endero --remote --file db/schema.sql   (solo dopo l'ok alla pubblicazione)
+
+CREATE TABLE IF NOT EXISTS richieste (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  creata     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  tipo       TEXT    NOT NULL DEFAULT 'contatto',   -- presa-misure, contatto, ...
+  nome       TEXT    NOT NULL,
+  telefono   TEXT    NOT NULL,
+  email      TEXT    NOT NULL DEFAULT '',
+  giorno     TEXT    NOT NULL DEFAULT '',            -- giorno preferito, AAAA-MM-GG
+  fascia     TEXT    NOT NULL DEFAULT '',
+  messaggio  TEXT    NOT NULL DEFAULT '',
+  pagina     TEXT    NOT NULL DEFAULT '',            -- da quale pagina è partita
+  paese      TEXT    NOT NULL DEFAULT '',
+  gestita    INTEGER NOT NULL DEFAULT 0              -- 1 quando Endero ha ricontattato la persona
+);
+
+CREATE INDEX IF NOT EXISTS richieste_per_data ON richieste (creata DESC);

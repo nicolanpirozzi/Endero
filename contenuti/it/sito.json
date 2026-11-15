@@ -1,0 +1,50 @@
+{
+  "_nota": "Testi comuni a tutte le pagine. Le parti tra [[ ]] sono segnaposto: vanno confermate dal proprietario prima della messa online.",
+  "lingua": "it",
+  "nome": "Endero",
+  "dominio": "https://www.endero.it",
+  "contatti": {
+    "whatsapp": "333 854 8712",
+    "whatsapp_internazionale": "+39 333 854 8712",
+    "whatsapp_link": "https://wa.me/393338548712",
+    "email": "info@endero.it",
+    "via": "Viale del Toro 22",
+    "cap": "80014",
+    "citta": "Giugliano in Campania",
+    "provincia": "NA",
+    "paese": "IT",
+    "mappa": "https://www.google.com/maps/search/?api=1&query=Endero%2C+Viale+del+Toro+22%2C+Giugliano+in+Campania"
+  },
+  "testata": {
+    "home": "Endero, pagina iniziale",
+    "prenota": "Prenota la presa misure",
+    "collezione": "Collezione"
+  },
+  "pillola_fissa": "Scrivici su WhatsApp",
+  "foto_in_arrivo": "Foto in arrivo",
+  "video_in_arrivo": "Video in arrivo",
+  "piede": {
+    "colonne": [
+      {
+        "titolo": "Sito",
+        "voci": [
+          { "testo": "Su misura", "link": "/camicie-su-misura/" },
+          { "testo": "Collezione", "link": "/collezione/" },
+          { "testo": "Storia", "link": "/storia/" },
+          { "testo": "Dove siamo", "link": "/dove-siamo/" }
+        ]
+      },
+      {
+        "titolo": "Contatti",
+        "voci": [
+          { "testo": "WhatsApp 333 854 8712", "link": "https://wa.me/393338548712" },
+          { "testo": "info@endero.it", "link": "mailto:info@endero.it" },
+          { "testo": "Privacy", "link": "/privacy/" },
+          { "testo": "Cookie", "link": "/cookie/" }
+        ]
+      }
+    ],
+    "indirizzo": "Viale del Toro 22, 80014 Giugliano in Campania (NA)",
+    "legale": "© 2026 Endero · [[Ragione sociale e partita IVA da confermare]]"
+  }
+}

@@ -69,6 +69,10 @@ Il blu del logo prende il posto del nero. Tutto il resto resta come il riferimen
 | 12 | Prezzo | Foto a sinistra, "A partire da € __" a destra. Cifra da confermare. |
 | 13 | Piè di pagina | Fondo blu, logo completo grande, link, dati legali, contatti. |
 
+Nel riferimento c'è anche una seconda foto grande con un pannello in vetro a destra ("Create custom reports"). Nella pagina di Endero quello spazio è **Dove siamo**: foto della sede con l'indirizzo nel pannello. Sta dopo la storia, prima di domande e prezzo, così il selettore segue l'ordine della pagina (Su misura · Collezione · Storia · Dove siamo). Scelta nostra, da confermare con il proprietario.
+
+**Costruita il 15 novembre 2026** (passi 1–4 del punto 7). Testi in `contenuti/it/home.json`, modello in `src/pagine/home.mjs`, stile in `src/stili/sito.css`, comportamenti in `src/sito.js`. Nei file di testo le parti tra `[[ ]]` sono segnaposto: in anteprima si vedono evidenziate in giallo, così il proprietario sa cosa manca. Le foto in arrivo sono riquadri con una trama di tessuto e la descrizione della foto vera che ci andrà.
+
 ## 4. Apertura "La cucitura"
 
 Un film 3D realistico, calcolato in anticipo con Blender, che avanza con lo scorrimento. Il proprietario ha bocciato la prima versione disegnata in SVG: non va riproposta. Fotogrammi di riferimento in `docs/img/film/`.
@@ -143,12 +147,22 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 
 ## 7. Architettura e ordine dei lavori
 
-Sito statico a più pagine, generato da un piccolo script Node: pagine e parti comuni in HTML, testi e prodotti in file di dati, nessun framework. Perché: ogni pagina esce completa anche senza JavaScript, il codice HTML è sotto controllo per Google, il peso resta minimo. esbuild compila gli script, con l'apertura in un file caricato a parte. Un Worker serve i file e risponde al modulo.
+Sito statico a più pagine, generato da un piccolo script Node: pagine e parti comuni in HTML, testi e prodotti in file di dati, nessun framework.
 
-1. Impalcatura: script di generazione, esbuild, Wrangler, schema D1.
-2. Colori, carattere, testata, pillole, piè di pagina.
-3. Pagina iniziale ferma, senza animazioni, con riquadri segnaposto. Anteprima desktop e mobile al proprietario.
-4. Apertura "La cucitura": il film e il lettore sono già fatti (vedi punto 4): va solo inserita nella pagina iniziale e collegata alla testata.
+| Dove | Cosa |
+| --- | --- |
+| `contenuti/it/` | I testi, uno per pagina più `sito.json` per le parti comuni. Per l'inglese si aggiungerà `contenuti/en/`. |
+| `src/pagine/`, `src/parti/` | I modelli delle pagine: funzioni che ricevono i testi e restituiscono HTML completo. |
+| `src/stili/sito.css`, `src/sito.js` | Stile e comportamenti comuni. L'apertura ha i suoi file in `src/apertura/`. |
+| `build/costruisci.mjs` | Genera `dist/`: pagine, script e stili con l'impronta nel nome, `robots.txt`, `sitemap.xml`, `_headers`. |
+| `worker/index.js`, `wrangler.toml`, `db/schema.sql` | Il Worker: serve `dist/` e riceve il modulo (`POST /api/contatto`, salvataggio su D1, Turnstile se configurato). |
+
+Comandi: `npm run anteprima` (sito in locale su http://127.0.0.1:8766, modulo spento), `npm run worker` (Worker e D1 in locale su http://127.0.0.1:8787, modulo attivo; la prima volta `npm run db:locale`). Il build normale fa un'anteprima che Google non indicizza; `node build/costruisci.mjs --pubblico` solo per la messa online su endero.it, dopo l'ok del proprietario. Perché: ogni pagina esce completa anche senza JavaScript, il codice HTML è sotto controllo per Google, il peso resta minimo. esbuild compila gli script, con l'apertura in un file caricato a parte. Un Worker serve i file e risponde al modulo.
+
+1. Impalcatura: script di generazione, esbuild, Wrangler, schema D1. *Fatto.*
+2. Colori, carattere, testata, pillole, piè di pagina. *Fatto.*
+3. Pagina iniziale ferma, senza animazioni, con riquadri segnaposto. Anteprima desktop e mobile al proprietario. *Fatto, in attesa dell'ok.*
+4. Apertura "La cucitura": il film e il lettore sono già fatti (vedi punto 4): va solo inserita nella pagina iniziale e collegata alla testata. *Fatto: a fine film il telo si solleva e scopre il video con il titolo, che resta fermo sotto.*
 5. Movimento del resto della pagina con la skill `animate`; poi `make-interfaces-feel-better`, `mobile-native`, `break-ui`.
 6. Altre pagine, modulo con Worker, D1 e Turnstile, banner dei consensi, file per Google.
 7. Revisione indipendente con più agenti. Solo dopo l'ok del proprietario, pubblicazione sul link Cloudflare.

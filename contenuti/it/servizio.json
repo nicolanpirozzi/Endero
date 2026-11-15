@@ -1,0 +1,14 @@
+{
+  "grazie": {
+    "meta": { "titolo": "Richiesta ricevuta · Endero", "descrizione": "La tua richiesta è arrivata a Endero." },
+    "titolo": "Richiesta ricevuta",
+    "testo": "Grazie. Ti ricontattiamo al numero che ci hai lasciato per fissare il giorno della presa misure.",
+    "invito": { "testo": "Torna alla pagina iniziale", "href": "/" }
+  },
+  "non_trovata": {
+    "meta": { "titolo": "Pagina non trovata · Endero", "descrizione": "La pagina cercata non esiste o è stata spostata." },
+    "titolo": "Pagina non trovata",
+    "testo": "La pagina che cerchi non c'è, o non c'è ancora.",
+    "invito": { "testo": "Torna alla pagina iniziale", "href": "/" }
+  }
+}

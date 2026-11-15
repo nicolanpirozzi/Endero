@@ -20,7 +20,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 ## Tecnologie
 
 - GSAP per le animazioni (tutti i plugin sono gratuiti dal 2025), Lenis per lo scorrimento morbido (rotella e dito).
-- esbuild per compilare gli script.
+- esbuild per compilare gli script. Sito in locale: `npm run anteprima` (porta 8766) o `npm run worker` (Worker e D1 locali, porta 8787, modulo attivo). Struttura dei file e comandi al punto 7 della direzione creativa.
 - Cloudflare Workers con Wrangler per pubblicare, D1 per i dati del modulo, Turnstile come antispam.
 - Playwright con Chromium per anteprime e controlli. È già installato nell'ambiente: non reinstallarlo. `tools/cattura.js` fotografa una pagina a schermate, desktop o mobile; `tools/filma.js` ne registra un video mentre scorre, da mandare al proprietario per l'approvazione.
 
@@ -73,6 +73,7 @@ Sito e aspetto
 - 2026-11-14 · Sito statico a più pagine generato da uno script Node, senza framework. Perché: HTML completo senza JavaScript, controllo del codice per Google, peso minimo.
 - 2026-11-14 · Solo uomo. Italiano, con struttura pronta per l'inglese: testi separati dal codice, `hreflang` predisposto.
 - 2026-11-14 · Una sola sede, quindi una sola pagina "dove siamo" con dati di attività locale.
+- 2026-11-15 · Pagina iniziale costruita come il riferimento, sezione per sezione. "Dove siamo" occupa il posto della seconda foto grande con pannello a destra, dopo la storia: scelta nostra, da far confermare. Testi in `contenuti/it/`, segnaposto `[[ ]]` evidenziati in giallo in anteprima. Ogni anteprima esce con noindex e robots chiuso; solo `--pubblico` apre a Google.
 - 2026-11-14 · La collezione parte come vetrina, il carrello arriva dopo. Prodotti come dati (prezzo, varianti, taglie) così la vendita si aggiunge senza rifare le schede.
 
 Contatti, legale, tracciamento
@@ -104,6 +105,8 @@ Strumenti
 - 2026-11-14 · In Blender 5 il nodo Mix ha più prese con lo stesso nome ("A", "B", "Result"): sceglierle per tipo, non per nome (vedi `mescola` in `film/scena.py`). Le immagini generate vanno salvate su disco in EXR e ricaricate, altrimenti restano nere.
 - 2026-11-14 · Acciaio che sembra vetro scuro e tessuto velato di grigio. Causa: un solo ambiente per luce e riflessi, e troppa "peluria" (sheen) in controluce. Soluzione già in `film/scena.py`: due ambienti scelti con il nodo percorso della luce, sheen basso.
 - 2026-11-14 · La resa dei toni "AgX" ingrigisce i fili bianchi. Soluzione: resa "Standard".
+- 2026-11-15 · Sul telefono la testata esce dallo schermo e tutto sembra rimpicciolito. Causa: un elemento che sporge di lato (il carosello) allarga la pagina e il browser si adatta. Soluzione: ritagliare la sezione con `overflow: clip` e controllare che la larghezza della pagina resti 390 su iPhone 14.
+- 2026-11-15 · Gli strumenti in `tools/` sono CommonJS: `package.json` non deve avere `"type": "module"`, gli script di build sono `.mjs`.
 - 2026-11-14 · Nell'ambiente non c'è `potrace`. Soluzione per vettorializzare: pacchetto npm `potrace` dopo aver ingrandito 12 volte e sfocato l'immagine con Pillow.
 
 ## Domande aperte
@@ -114,6 +117,7 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Chi gestisce il dominio endero.it e i suoi DNS. Serve per: messa online ed email, non per l'anteprima.
 - Orari della sede di Viale del Toro. Serve per: pagina dove siamo, dati di attività locale.
 - Prezzo "a partire da" e testi delle domande frequenti. Serve per: pagina iniziale e pagina su misura.
+- Bozze della pagina iniziale da approvare: testi in `contenuti/it/home.json`, nomi dei tre ingressi alla collezione (Camicie, Camicioni, Su misura), posizione di "Dove siamo". Serve per: messa online.
 - Racconto della storia oltre ai quattro fatti confermati: come è nata, tappe, persone. Serve per: pagina storia.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
