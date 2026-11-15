@@ -10,9 +10,17 @@ const ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let lenis = null;
 function scorrimento() {
   if (ridotto) return;
-  lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 0.9, syncTouch: true, syncTouchLerp: 0.085, autoRaf: true });
-  // nei campi che scorrono da soli (le note del modulo) comanda il campo, non la pagina
-  document.querySelectorAll('textarea').forEach((el) => el.setAttribute('data-lenis-prevent', ''));
+  lenis = new Lenis({
+    lerp: 0.085,
+    wheelMultiplier: 0.9,
+    syncTouch: true,
+    syncTouchLerp: 0.085,
+    autoRaf: true,
+    // nel campo delle note comanda il campo solo se ha davvero testo da scorrere; altrimenti scorre la pagina
+    prevent: (el) => el.tagName === 'TEXTAREA' && el.scrollHeight > el.clientHeight,
+  });
+  // se la persona prende in mano lo scorrimento durante uno guidato, la guida finisce lì
+  lenis.on('virtual-scroll', () => { if (guidato) { clearTimeout(fineGuida); guidato = false; } });
 }
 
 // Durante uno scorrimento guidato (selettore, collegamenti interni) la testata non torna come barra:
@@ -51,7 +59,9 @@ function ancore() {
     const salto = a.matches('.apertura__salta, .salta-al-contenuto');
     vaiA(meta, { subito: salto });
     history.replaceState(null, '', url.hash);
-    if (salto && meta.tabIndex === -1) meta.focus({ preventScroll: true });
+    // il fuoco da tastiera segue la pagina: il prossimo Tab riparte dalla sezione raggiunta
+    if (!meta.hasAttribute('tabindex')) meta.tabIndex = -1;
+    meta.focus({ preventScroll: true });
   });
 }
 
@@ -141,6 +151,7 @@ function selettore() {
     const soglia = nav.getBoundingClientRect().bottom + 60;
     let scelto = sezioni[0]?.dataset.gruppo;
     for (const s of sezioni) if (s.getBoundingClientRect().top <= soglia) scelto = s.dataset.gruppo;
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) scelto = sezioni[sezioni.length - 1]?.dataset.gruppo;
     if (scelto === gruppo) return;
     const primaVolta = !gruppo;
     gruppo = scelto;
@@ -241,16 +252,19 @@ function comparse() {
   if (!eroe) return;
   const titolo = eroe.querySelector('.eroe__titolo');
   const sotto = eroe.querySelector('.eroe__sotto');
+  if (!titolo) return;
   titolo.dataset.rivela = 'parole';
   const n = dividiParole(titolo);
-  sotto.dataset.rivela = 'su';
-  sotto.style.setProperty('--ritardo', 200 + n * 55 + 'ms');
+  if (sotto) {
+    sotto.dataset.rivela = 'su';
+    sotto.style.setProperty('--ritardo', 200 + n * 55 + 'ms');
+  }
   let richiesta = 0;
   const controlla = () => {
     richiesta = 0;
     if (apertura && apertura.getBoundingClientRect().bottom > innerHeight * 0.55) return;
     titolo.setAttribute('data-visto', '');
-    sotto.setAttribute('data-visto', '');
+    sotto?.setAttribute('data-visto', '');
     removeEventListener('scroll', aScorrimento);
   };
   const aScorrimento = () => { if (!richiesta) richiesta = requestAnimationFrame(controlla); };
@@ -337,10 +351,21 @@ function modulo(form) {
   });
 }
 
-scorrimento();
-ancore();
-testata();
-selettore();
-comparse();
-document.querySelectorAll('[data-carosello]').forEach(carosello);
-document.querySelectorAll('[data-modulo]').forEach(modulo);
+// Ogni comodità parte per conto suo: se una si rompe, le altre funzionano lo stesso.
+// Se si rompono le comparse, la pagina torna tutta visibile.
+function avvia(nome, fn) {
+  try {
+    fn();
+  } catch (errore) {
+    console.error('sito: ' + nome, errore);
+    if (nome === 'comparse') document.documentElement.classList.remove('movimento');
+  }
+}
+
+avvia('scorrimento', scorrimento);
+avvia('ancore', ancore);
+avvia('testata', testata);
+avvia('selettore', selettore);
+avvia('comparse', comparse);
+avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
+avvia('modulo', () => document.querySelectorAll('[data-modulo]').forEach(modulo));

@@ -20,7 +20,7 @@ export function t(v) {
 /** Come `t`, ma lascia passare i collegamenti già scritti nei contenuti (solo <a href>). */
 export function tConLink(v) {
   return t(v)
-    .replace(/&lt;a href=&quot;([^&"]+)&quot;&gt;/g, '<a href="$1">')
+    .replace(/&lt;a href=&quot;((?:[^&"]|&amp;)+)&quot;&gt;/g, '<a href="$1">')
     .replace(/&lt;\/a&gt;/g, '</a>');
 }
 

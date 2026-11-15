@@ -4,6 +4,7 @@
 import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { contatto } from './index.js';
+import { INTESTAZIONI } from './intestazioni.mjs';
 
 const manifest = JSON.parse(manifestJSON);
 
@@ -17,9 +18,7 @@ function conIntestazioni(risposta, percorso, stato) {
   const r = new Response(risposta.body, { status: stato || risposta.status, headers: risposta.headers });
   r.headers.set('Cache-Control', durata(percorso));
   r.headers.set('X-Robots-Tag', 'noindex, nofollow');
-  r.headers.set('X-Content-Type-Options', 'nosniff');
-  r.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  r.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  for (const [nome, valore] of Object.entries(INTESTAZIONI)) r.headers.set(nome, valore);
   return r;
 }
 
@@ -28,7 +27,12 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/contatto') {
       if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
-      return contatto(request, env);
+      const risposta = await contatto(request, env);
+      // le risposte del modulo non passano dalle pagine: almeno queste due intestazioni le portano sempre
+      const r = new Response(risposta.body, risposta);
+      r.headers.set('X-Robots-Tag', 'noindex, nofollow');
+      r.headers.set('X-Content-Type-Options', 'nosniff');
+      return r;
     }
     const evento = { request, waitUntil: ctx.waitUntil.bind(ctx) };
     const opzioni = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: manifest, cacheControl: { bypassCache: false, edgeTTL: 3600, browserTTL: null } };

@@ -126,6 +126,7 @@ Strumenti
 - 2026-11-15 · Sul telefono la testata esce dallo schermo e tutto sembra rimpicciolito. Causa: un elemento che sporge di lato (il carosello) allarga la pagina e il browser si adatta. Soluzione: ritagliare la sezione con `overflow: clip` e controllare che la larghezza della pagina resti 390 su iPhone 14.
 - 2026-11-15 · `wrangler deploy` con gli assets fallisce con 401 su `workers/assets/upload`. Causa: l'ambiente di lavoro inietta la chiave Cloudflare in ogni richiesta e sostituisce l'autorizzazione temporanea di quel caricamento. Soluzione: l'anteprima usa Workers Sites su KV (`wrangler.anteprima.toml`, `worker/anteprima.js`); con wrangler si passa `CLOUDFLARE_API_TOKEN=proxy-injected` e `CLOUDFLARE_ACCOUNT_ID`. Per la messa online vera servirà pubblicare da un ambiente senza iniezione, o restare su KV.
 - 2026-11-15 · Il proprietario non è pratico di Cloudflare: i passi vanno dati uno per uno sui pulsanti che vede (la pagina dei token è cambiata: si sceglie il riquadro "Edit Cloudflare Workers" e si toglie la "Zone policy").
+- 2026-11-15 · Il repository GitHub è pubblico, ma contiene il dossier di ricerca con ciò che il proprietario non vuole diffondere (produzione all'estero, altri indirizzi, dati societari da directory). Soluzione: renderlo privato, e lo può fare solo il proprietario dalle impostazioni di GitHub; cancellare le righe non basta, restano nella cronologia. Finché è pubblico non aggiungere altro di riservato.
 - 2026-11-15 · Gli strumenti in `tools/` sono CommonJS: `package.json` non deve avere `"type": "module"`, gli script di build sono `.mjs`.
 - 2026-11-14 · Nell'ambiente non c'è `potrace`. Soluzione per vettorializzare: pacchetto npm `potrace` dopo aver ingrandito 12 volte e sfocato l'immagine con Pillow.
 
@@ -139,6 +140,7 @@ Da chiudere con il proprietario, sempre a risposta multipla.
 - Prezzo "a partire da" e testi delle domande frequenti. Serve per: pagina iniziale e pagina su misura.
 - Testi della pagina iniziale, bozze nostre in `contenuti/it/home.json`, da approvare prima della messa online. Serve per: messa online.
 - Racconto della storia oltre ai quattro fatti confermati: come è nata, tappe, persone. Serve per: pagina storia.
+- Il proprietario rende privato il repository GitHub? Serve per: non lasciare in pubblico il dossier di ricerca.
 - Conferma di ragione sociale, partita IVA e sede legale (quelli nel dossier vengono da directory). Serve per: testi legali.
 - Il negozio PrestaShop attuale si spegne al lancio? Serve per: reindirizzamenti.
 - Nome utente Instagram e altri profili. Serve per: link nel piè di pagina.

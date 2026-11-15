@@ -462,6 +462,16 @@ button {
   transform: translateY(-110%);
 }
 
+.js .testata[data-stato="via"]:focus-within {
+  transform: none;
+}
+
+section[tabindex="-1"]:focus,
+footer[tabindex="-1"]:focus,
+main[tabindex="-1"]:focus {
+  outline: none;
+}
+
 .js .testata[data-stato="barra"] {
   background: rgba(10, 27, 69, 0.86);
   -webkit-backdrop-filter: blur(16px);

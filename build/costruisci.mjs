@@ -5,6 +5,7 @@
 //
 // Variabili facoltative: TURNSTILE_SITE_KEY (chiave pubblica dell'antispam del modulo),
 // URL_ANTEPRIMA (indirizzo provvisorio dell'anteprima, per esempio https://endero-anteprima.xxx.workers.dev).
+import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -17,6 +18,7 @@ import paginaStoria from '../src/pagine/storia.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
 import paginaLegale from '../src/pagine/legale.mjs';
 import semplice from '../src/pagine/semplice.mjs';
+import { INTESTAZIONI, IMPRONTA_SCRIPT_IN_LINEA } from '../worker/intestazioni.mjs';
 
 const RADICE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(RADICE, 'dist');
@@ -94,6 +96,13 @@ function genera(percorso, html) {
 }
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, home: testiHome, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
+const visti = new Set();
+for (const capo of prodotti) {
+  // l'indirizzo del capo diventa una cartella: solo minuscole, cifre e trattini, e mai due uguali
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(capo.slug || '')) throw new Error(`prodotti.json: slug non valido per "${capo.nome}": "${capo.slug}"`);
+  if (visti.has(capo.slug)) throw new Error(`prodotti.json: slug doppio "${capo.slug}"`);
+  visti.add(capo.slug);
+}
 for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }));
 genera('/storia/', paginaStoria({ sito, testi: testi.storia, home: testiHome, risorse: base, anteprima }));
 genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }));
@@ -125,10 +134,13 @@ scrivi('_redirects', `/2-home / 301
 `);
 
 // 7 · intestazioni per Cloudflare: cache lunga per i file con l'impronta, sicurezza per tutti
+// l'unico script in linea delle pagine deve corrispondere all'impronta ammessa dalla Content-Security-Policy
+const inLinea = readFileSync(join(DIST, 'index.html'), 'utf8').match(/<script>([^<]*)<\/script>/)?.[1] ?? '';
+const impronta = 'sha256-' + createHash('sha256').update(inLinea).digest('base64');
+if (impronta !== IMPRONTA_SCRIPT_IN_LINEA) throw new Error(`Lo script in linea è cambiato: aggiornare IMPRONTA_SCRIPT_IN_LINEA in worker/intestazioni.mjs a '${impronta}'`);
+
 scrivi('_headers', `/*
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
+${Object.entries(INTESTAZIONI).map(([nome, valore]) => `  ${nome}: ${valore}`).join('\n')}
 ${anteprima ? '  X-Robots-Tag: noindex, nofollow\n' : ''}
 /risorse/*
   Cache-Control: public, max-age=31536000, immutable

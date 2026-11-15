@@ -10,3 +10,5 @@ workers_dev = true
 
 [site]
 bucket = "./dist"
+# file di configurazione per gli "assets" del sito vero: qui non servono e non devono essere leggibili
+exclude = ["_headers", "_redirects"]
