@@ -58,7 +58,7 @@ Il blu del logo prende il posto del nero. Tutto il resto resta come il riferimen
 | 0 | (non c'è) | **Apertura "La cucitura"**, vedi punto 4. |
 | 1 | Testata | Scritta Endero. Pillole: "Prenota la presa misure", "Collezione". Pillola fissa: "Scrivici su WhatsApp". |
 | 2 | Video a tutto schermo | Video vero del laboratorio. Titolo: "Camicie su misura, fatte in Italia". |
-| 3 | Nastro di loghi | Nastro di fatti: "Dal 1996 · 1,3 milioni di capi · 2.500 negozi serviti · Fatto in Italia". |
+| 3 | Nastro di loghi | Nastro di fatti: "Dal 1996 · 1,3 milioni di capi · 2.500 negozi serviti · Sartoria italiana contemporanea". |
 | 4 | Selettore | "Su misura · Collezione · Storia · Dove siamo": porta alle sezioni della pagina, ognuna con il link alla pagina completa. |
 | 5–6 | Titolo e griglia di foto | "Su misura": dettagli di colli, polsi, tessuti. Etichette "Su misura" / "Pronta". Scheda al passaggio con nome e tessuto. |
 | 7 | Foto grande con scheda | Presa misure: scheda in vetro con le voci della scheda misure e invito a prenotare. |
@@ -78,7 +78,7 @@ Un film 3D realistico, calcolato in anticipo con Blender, che avanza con lo scor
 **Regia, in tre tempi.**
 
 1. *Primo piano.* L'ago e il piedino in acciaio visti da vicino, con la profondità di campo di un obiettivo macro. L'ago fa i primi punti.
-2. *Vista dall'alto.* La camera sale e si ferma sopra il tessuto, dal lato di chi cuce: la macchina resta in piedi al centro, il tessuto scorre verso l'alto. A destra e a sinistra della cucitura passano le scritte ricamate (1996, 1,3 MILIONI, 2.500, ITALIA), ognuna con sotto la sua frase in testo vero.
+2. *Vista dall'alto.* La camera sale e si ferma sopra il tessuto, dal lato di chi cuce: la macchina resta in piedi al centro, il tessuto scorre verso l'alto. A destra e a sinistra della cucitura passano le scritte ricamate (1996, 1,3 MILIONI, 2.500, SARTORIA), ognuna con sotto la sua frase in testo vero: "Inizia la storia di Endero", "di capi prodotti", "negozi serviti", "italiana contemporanea".
 3. *Logo.* Finita la cucitura, la macchina si sposta sul logo e lo ricama: prima il simbolo, poi la scritta da sinistra a destra. A logo finito la macchina si ritira verso chi cuce ed esce dal basso dello schermo.
 
 Poi la sezione finisce e la pagina prosegue sul sito.

@@ -163,7 +163,8 @@ def dati(percorso):
         p = pl[max(0, nl - 1)][1] if nl > 0 else pl[0][0]
         aghi.append([round(colonna_x(float(p[0])), 1), round(riga(float(p[1])), 1)])
     capitoli = []
-    for cap in S.CAPITOLI:
+    forme = S.poligoni_capitoli(TTF)
+    for cap, forma in zip(S.CAPITOLI, forme):
         alt_tot = sum(a for _, a in cap["righe"]) + S.INTERLINEA * (len(cap["righe"]) - 1)
         capitoli.append({
             "lato": cap["lato"], "testi": [t for t, _ in cap["righe"]],
@@ -171,6 +172,7 @@ def dati(percorso):
             "riga_base": round(riga(cap["y"]), 1),                               # linea di base della prima riga
             "riga_sotto": round(riga(cap["y"]) + (alt_tot - cap["righe"][0][1]) * PXM, 1),  # fondo dell'ultima riga
             "altezza_prima": round(cap["righe"][0][1] * PXM, 1),
+            "larghezza": round((forma.bounds[2] - forma.bounds[0]) * PXM, 1),
         })
     n_punti = int(round(abs(S.FINE_CUCITURA) / S.PASSO))
     d = {

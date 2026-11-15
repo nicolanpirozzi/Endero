@@ -49,7 +49,7 @@ CAPITOLI = [                # scritte ricamate: lato, y della prima linea di bas
     {"lato": "sx", "y": -0.090, "righe": [("1996", 12.5 * MM)]},
     {"lato": "dx", "y": -0.185, "righe": [("1,3", 12.5 * MM), ("MILIONI", 6.2 * MM)]},
     {"lato": "sx", "y": -0.280, "righe": [("2.500", 11.5 * MM)]},
-    {"lato": "dx", "y": -0.375, "righe": [("ITALIA", 9.3 * MM)]},
+    {"lato": "dx", "y": -0.375, "righe": [("SARTORIA", 6.3 * MM)]},
 ]
 LOGO_LARG = 0.092           # larghezza del logo
 LOGO_Y = -0.500

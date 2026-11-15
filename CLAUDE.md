@@ -5,7 +5,7 @@ Sito nuovo, da zero, per Endero: manifattura campana di camicie e abbigliamento 
 Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 
 - Cosa costruire e come: `docs/direzione-creativa.md`. Si parte da lì.
-- Film 3D dell'apertura: scena e calcolo in `film/`, lettore in `src/apertura/`, pagina di prova `anteprima/apertura.html` (si apre con un server locale dalla radice del progetto). Dettagli al punto 4 della direzione creativa.
+- Film 3D dell'apertura: scena e calcolo in `film/`, lettore in `src/apertura/`, pezzi pronti in `public/film/`, pagina di prova `anteprima/apertura.html` (si apre con un server locale dalla radice del progetto). Approvato dal proprietario il 2026-11-15: non si rifà, si integra nella pagina iniziale. Dettagli al punto 4 della direzione creativa.
 - Fatti sul brand e fonti: `docs/ricerca-endero.md`.
 - Logo vettoriale: `brand/logo/`.
 
@@ -63,7 +63,8 @@ Sito e aspetto
 - 2026-11-14 · Apertura "La cucitura": scorrere è cucire. La cucitura racconta la storia e ricama il logo, poi il telo si solleva sul sito. Si rivede completa a ogni visita, con link per saltarla. Scartate: versione breve automatica e video con logo in sovrimpressione.
 - 2026-11-14 · L'apertura è un film 3D realistico calcolato in anticipo con Blender, che avanza con lo scorrimento, preceduto da un caricatore. Il proprietario ha bocciato la versione disegnata in SVG ("non deve essere una cosa fatta in vettoriale e schifosa in 2D"): non riproporla. Scartati anche il 3D calcolato in diretta nel browser e le riprese vere.
 - 2026-11-14 · Regia del film: si apre in primo piano sull'ago, poi la camera sale alla vista dall'alto dal lato di chi cuce, con la macchina in piedi al centro e le scritte ricamate a destra e a sinistra della cucitura; alla fine la macchina ricama il logo. Macchina essenziale, solo parti in acciaio.
-- 2026-11-14 · Scritte ricamate nel tessuto: "1996", "1,3" con "MILIONI" sotto (il proprietario non vuole "M" né "MLN": potrebbero non essere capiti), "2.500", "ITALIA". Sotto ognuna una frase in testo vero, che scorre insieme al tessuto.
+- 2026-11-15 · Scritte ricamate nel tessuto e frasi sotto, in testo vero: "1996" ("Inizia la storia di Endero"), "1,3" con "MILIONI" sotto ("di capi prodotti"), "2.500" ("negozi serviti"), "SARTORIA" ("italiana contemporanea"). Il proprietario non vuole "M" né "MLN" (potrebbero non essere capiti), ha tolto "in trent'anni" e ha bocciato "ITALIA / Fatto in Italia" ("fa schifo"): non riproporli. "Sartoria italiana contemporanea" è una formula sua, si può usare nei testi del sito.
+- 2026-11-15 · Film dell'apertura approvato dal proprietario sui video di computer e telefono. A logo finito la macchina esce dal basso dello schermo, poi la pagina prosegue.
 - 2026-11-14 · Blu del tessuto nel film: scelto da noi su mandato del proprietario ("un blu scuro che funziona con la trama e le ombre"). Luce calda in controluce con ombre profonde, ricamo lucido, tessuto con pieghe e grinze.
 - 2026-11-14 · Il blu del logo `#0f285e` prende il posto del nero del riferimento: testi, pillole, piè di pagina. Fondo chiaro caldo.
 - 2026-11-14 · Carattere: alternativa gratuita a Field Gothic Wide, cioè Archivo variabile con asse della larghezza, ospitato sul sito. Scartato l'acquisto dell'originale.

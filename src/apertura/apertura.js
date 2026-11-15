@@ -137,11 +137,14 @@ export async function avviaApertura(radice) {
     radice.style.setProperty('--apertura-testo', (modo === 'alto' ? limita(15 / k, 34, 50) : 34).toFixed(0) + 'px');
     // sugli schermi stretti il tessuto si sposta di lato per mostrare intera la scritta del capitolo
     const mezza = vw / (2 * k);
-    panMax = limita(830 + 36 - mezza, 0, Math.max(0, mezza - 44));
+    // quanto si allontanano dalla cucitura la scritta ricamata e la frase sotto (larga al massimo 640)
+    const fin = (cap) => Math.abs(cap.x - centroX) + Math.max(cap.larghezza || 710, 640);
+    const serve = (cap) => limita(fin(cap) + 36 - mezza, 0, Math.max(0, mezza - 44));
+    panMax = Math.max(...dati.capitoli.map(serve));
     sosta = [[riga0 + passo * (S1 - 0.3), 0]];             // lo spostamento parte solo dopo la dissolvenza: i fotogrammi dell'apertura sono centrati
     for (const cap of dati.capitoli) {
       const centro = (cap.riga_base - cap.altezza_prima + cap.riga_sotto) / 2;
-      const verso = cap.lato === 'dx' ? -panMax : panMax;
+      const verso = (cap.lato === 'dx' ? -1 : 1) * serve(cap);
       sosta.push([centro - 300, verso], [centro + 320, verso]);
     }
     sosta.push([rigaFine, 0]);
