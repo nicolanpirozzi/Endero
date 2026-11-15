@@ -15,6 +15,7 @@ import home from '../src/pagine/home.mjs';
 import paginaSuMisura from '../src/pagine/su-misura.mjs';
 import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
 import paginaCultura, { PERCORSO as PERCORSO_CULTURA } from '../src/pagine/cultura.mjs';
+import paginaRivenditori, { PERCORSO as PERCORSO_RIVENDITORI } from '../src/pagine/rivenditori.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
 import paginaLegale from '../src/pagine/legale.mjs';
 import semplice from '../src/pagine/semplice.mjs';
@@ -111,6 +112,7 @@ for (const capo of prodotti) {
 }
 for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }));
 genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }));
+genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori, nastro: testiHome.nastro, risorse: base, anteprima }));
 genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }));
 genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }));
 genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }));

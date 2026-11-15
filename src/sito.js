@@ -420,8 +420,19 @@ function modulo(form) {
     }, { once: true });
   }
 
+  // "almeno una casella" non si impone con il solo HTML: lo si controlla qui (e il Worker lo ricontrolla sempre)
+  const gruppi = [...form.querySelectorAll('[data-almeno-uno]')];
+  const controllaGruppi = () => {
+    for (const g of gruppi) {
+      const caselle = [...g.querySelectorAll('input[type="checkbox"]')];
+      caselle[0]?.setCustomValidity(caselle.some((c) => c.checked) ? '' : g.dataset.errore || 'Scegli almeno una voce.');
+    }
+  };
+  gruppi.forEach((g) => g.addEventListener('change', controllaGruppi));
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    controllaGruppi();
     if (!form.reportValidity()) return;
     const testo = bottone.textContent;
     bottone.disabled = true;

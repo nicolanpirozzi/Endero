@@ -1871,6 +1871,30 @@ body[data-barra] .selettore {
   white-space: nowrap;
 }
 
+/* diventa rivenditore: tre capitoli ancorati, ognuno con il link al modulo */
+.capitoli--rivenditori {
+  margin-top: var(--spazio-sezione);
+}
+
+.capitolo[id] {
+  scroll-margin-top: 90px;
+}
+
+.capitolo__testo .collegamento {
+  justify-self: start;
+  margin-top: 8px;
+}
+
+/* i loghi dei negozi clienti, quando arrivano: a un colore, alti 20 px, nella fascia del nastro */
+.nastro--loghi .nastro__binario li {
+  padding-right: 72px;
+}
+
+.nastro--loghi img {
+  width: auto;
+  height: 20px;
+}
+
 /* su misura: l'ingresso al configuratore in cima alla pagina (si vede solo con configuratore.attivo) */
 .ingresso .intesta {
   margin-bottom: 24px;

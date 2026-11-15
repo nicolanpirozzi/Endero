@@ -41,6 +41,11 @@
         "titolo": "Presa misure",
         "testo": "Su appuntamento",
         "link": "/camicie-su-misura/#prenota"
+      },
+      {
+        "titolo": "Rivenditori",
+        "testo": "Fai richiesta",
+        "link": "/diventa-rivenditore/"
       }
     ],
     "modulo": {

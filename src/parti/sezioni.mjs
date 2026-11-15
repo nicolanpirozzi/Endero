@@ -90,7 +90,7 @@ export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } =
 }
 
 // 8 · Testo a sinistra, pannello con il modulo di prenotazione a destra.
-export function comeFunziona(c, turnstile, { gruppo = 'su-misura' } = {}) {
+export function comeFunziona(c, turnstile, { gruppo = 'su-misura', tipo = 'presa-misure', ancora = 'prenota' } = {}) {
   return `<section class="sezione funziona"${agr(gruppo)}>
     <div class="funziona__testo">
       <h2 class="titolo">${t(c.titolo)}</h2>
@@ -99,22 +99,70 @@ export function comeFunziona(c, turnstile, { gruppo = 'su-misura' } = {}) {
         ${c.passi.map((p, i) => `<li><span class="passi__numero">${String(i + 1).padStart(2, '0')}</span><h3 class="passi__titolo">${esc(p.titolo)}</h3><p class="testo">${t(p.testo)}</p></li>`).join('\n        ')}
       </ol>
     </div>
-    <div class="pannello" id="prenota">
-      ${modulo(c.modulo, { tipo: 'presa-misure', turnstile })}
+    <div class="pannello" id="${esc(ancora)}">
+      ${modulo(c.modulo, { tipo, turnstile })}
     </div>
   </section>`;
 }
 
-/** Il modulo: prenotazione della presa misure (con giorno e fascia) o messaggio semplice. Funziona anche senza JavaScript. */
+const TIPO_INPUT = { testo: 'text', telefono: 'tel', email: 'email' };
+
+/**
+ * Un campo descritto nei contenuti (modulo.campi): così i moduli nuovi non chiedono codice nuovo.
+ * Tipi: testo, telefono, email, area, scelta-singola (pillole radio), scelta-multipla (pillole a caselle, almeno una
+ * se obbligatoria: lo controllano lo script prima dell'invio e il Worker sempre).
+ */
+function campoDescritto(c, id) {
+  const largo = c.largo ? ' campo--largo' : '';
+  const max = c.max ? ` maxlength="${Number(c.max)}"` : '';
+  const auto = c.autocomplete ? ` autocomplete="${esc(c.autocomplete)}"` : '';
+  const obbl = c.obbligatorio ? ' required' : '';
+  if (c.tipo === 'scelta-multipla' || c.tipo === 'scelta-singola') {
+    const multipla = c.tipo === 'scelta-multipla';
+    const almeno = multipla && c.obbligatorio ? ` data-almeno-uno data-errore="${esc(c.errore || '')}"` : '';
+    return `<fieldset class="campo${largo}"${almeno}>
+        <legend class="campo__nome">${esc(c.etichetta)}</legend>
+        <div class="scelte">${c.opzioni.map((o) => `<label class="scelta"><input type="${multipla ? 'checkbox' : 'radio'}" name="${esc(c.nome)}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('')}</div>
+      </fieldset>`;
+  }
+  const etichetta = `<span class="campo__nome">${esc(c.etichetta)}</span>`;
+  if (c.tipo === 'area') {
+    return `<label class="campo${largo}">${etichetta}<textarea name="${esc(c.nome)}" rows="4"${max}${obbl}${c.aiuto ? ` placeholder="${esc(c.aiuto)}"` : ''}></textarea></label>`;
+  }
+  const tipo = TIPO_INPUT[c.tipo] || 'text';
+  const extra = c.tipo === 'telefono' ? ' inputmode="tel"' : '';
+  const valore = c.valore ? ` value="${esc(c.valore)}"` : '';
+  return `<label class="campo${largo}" for="${id}">${etichetta}<input id="${id}" type="${tipo}" name="${esc(c.nome)}"${auto}${extra}${max}${obbl}${valore}></label>`;
+}
+
+/**
+ * Il modulo: prenotazione della presa misure (con giorno e fascia), messaggio semplice, oppure, se i contenuti
+ * descrivono i campi (m.campi), quei campi. Funziona anche senza JavaScript.
+ */
 export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
   const prenotazione = tipo === 'presa-misure';
-  return `<form class="modulo" action="/api/contatto" method="post" data-modulo${turnstile ? ' data-turnstile' : ''}>
+  const testa = `<form class="modulo" action="/api/contatto" method="post" data-modulo${turnstile ? ' data-turnstile' : ''}>
     <div class="modulo__testa">
       <h3 class="modulo__titolo">${esc(m.titolo)}</h3>
       <div class="modulo__schede">${m.schede.map((s, i) => `<span class="chip${i === 0 ? ' chip--attivo' : ''}">${esc(s)}</span>`).join('')}</div>
     </div>
     <input type="hidden" name="tipo" value="${esc(tipo)}">
-    <div class="modulo__esca" aria-hidden="true"><label>Non compilare<input type="text" name="sito_web" tabindex="-1" autocomplete="off"></label></div>
+    <div class="modulo__esca" aria-hidden="true"><label>Non compilare<input type="text" name="sito_web" tabindex="-1" autocomplete="off"></label></div>`;
+  const piede = `${turnstile ? `<div class="cf-turnstile" data-sitekey="${esc(turnstile)}" data-language="it" data-size="flexible"></div>` : ''}
+    <label class="consenso"><input type="checkbox" name="privacy" value="si" required><span>${tConLink(m.privacy)}</span></label>
+    <div class="modulo__piede">
+      <button class="pillola pillola--blu pillola--grande" type="submit" data-testo-invio="${esc(m.invio)}">${esc(m.invia)}</button>
+      <p class="modulo__esito" role="status" aria-live="polite" data-fatto="${esc(m.fatto_testo)}" data-errore="${esc(m.errore)}"></p>
+    </div>
+  </form>`;
+  if (m.campi) {
+    return `${testa}
+    <div class="modulo__campi">
+      ${m.campi.map((c) => campoDescritto(c, `${tipo}-${c.nome}`)).join('\n      ')}
+    </div>
+    ${piede}`;
+  }
+  return `${testa}
     <div class="modulo__campi">
       <label class="campo"><span class="campo__nome">${esc(m.nome)}</span><input type="text" name="nome" autocomplete="name" required maxlength="120"></label>
       <label class="campo"><span class="campo__nome">${esc(m.telefono)}</span><input type="tel" name="telefono" autocomplete="tel" inputmode="tel" required maxlength="40"></label>
@@ -126,13 +174,7 @@ export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
       </fieldset>` : ''}
       <label class="campo campo--largo"><span class="campo__nome">${esc(m.note)}</span><textarea name="messaggio" rows="${prenotazione ? 3 : 5}" maxlength="2000" placeholder="${esc(m.note_aiuto)}"${prenotazione ? '' : ' required'}></textarea></label>
     </div>
-    ${turnstile ? `<div class="cf-turnstile" data-sitekey="${esc(turnstile)}" data-language="it" data-size="flexible"></div>` : ''}
-    <label class="consenso"><input type="checkbox" name="privacy" value="si" required><span>${tConLink(m.privacy)}</span></label>
-    <div class="modulo__piede">
-      <button class="pillola pillola--blu pillola--grande" type="submit" data-testo-invio="${esc(m.invio)}">${esc(m.invia)}</button>
-      <p class="modulo__esito" role="status" aria-live="polite" data-fatto="${esc(m.fatto_testo)}" data-errore="${esc(m.errore)}"></p>
-    </div>
-  </form>`;
+    ${piede}`;
 }
 
 // 9 · Tre riquadri: gli ingressi alla collezione.

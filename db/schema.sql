@@ -5,13 +5,14 @@
 CREATE TABLE IF NOT EXISTS richieste (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   creata     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-  tipo       TEXT    NOT NULL DEFAULT 'contatto',   -- presa-misure, contatto, ...
+  tipo       TEXT    NOT NULL DEFAULT 'contatto',   -- presa-misure, contatto, rivenditore
   nome       TEXT    NOT NULL,
   telefono   TEXT    NOT NULL,
   email      TEXT    NOT NULL DEFAULT '',
   giorno     TEXT    NOT NULL DEFAULT '',            -- giorno preferito, AAAA-MM-GG
   fascia     TEXT    NOT NULL DEFAULT '',
   messaggio  TEXT    NOT NULL DEFAULT '',
+  dettagli   TEXT    NOT NULL DEFAULT '',            -- JSON con i campi propri di un tipo (rivenditore: attività, città, interessi…)
   pagina     TEXT    NOT NULL DEFAULT '',            -- da quale pagina è partita
   paese      TEXT    NOT NULL DEFAULT '',
   gestita    INTEGER NOT NULL DEFAULT 0              -- 1 quando Endero ha ricontattato la persona
