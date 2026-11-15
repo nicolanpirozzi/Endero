@@ -135,6 +135,7 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 - Struttura pronta per `/en/` con `hreflang`: testi in file separati dal codice.
 - Product senza offerta finché non c'è il carrello; il prezzo si mostra in pagina.
 - Il configuratore, quando si riapre, vive in `/camicie-su-misura/configuratore/`.
+- Tutte le pagine della tabella esistono dal 15 novembre 2026, con segnaposto dove mancano foto e testi. Le pagine dei capi nascono da `contenuti/it/prodotti.json` (campi e esempio nel file stesso). I vecchi indirizzi PrestaShop portano alle pagine nuove con `dist/_redirects`.
 - "Diventa rivenditore" (chi compra da Endero per rivendere): sezione chiesta dal proprietario il 14 novembre 2026, ancora da definire con lui. Indirizzo previsto `/diventa-rivenditore/`; il menu e il piè di pagina devono lasciarle il posto. Finché non è definita non si costruisce e non compare nel sito.
 
 ## 6. Contatti, modulo ed email
@@ -164,7 +165,7 @@ Comandi: `npm run anteprima` (sito in locale su http://127.0.0.1:8766, modulo sp
 3. Pagina iniziale ferma, senza animazioni, con riquadri segnaposto. Anteprima desktop e mobile al proprietario. *Fatto, approvato dal proprietario il 15 novembre 2026.*
 4. Apertura "La cucitura": il film e il lettore sono già fatti (vedi punto 4): va solo inserita nella pagina iniziale e collegata alla testata. *Fatto: a fine film il telo si solleva e scopre il video con il titolo, che resta fermo sotto.*
 5. Movimento del resto della pagina con la skill `animate`; poi `make-interfaces-feel-better`, `mobile-native`, `break-ui`. *Fatto il 15 novembre 2026, da far vedere al proprietario:* scorrimento morbido con Lenis (rotella e dito), titoli che entrano parola per parola, testi e foto che salgono, foto grandi che si aprono come un telo, schede in vetro che compaiono dopo la foto, pillola del selettore che scivola, risposte delle domande che si aprono in altezza. Tutto in `src/sito.js` (elenco `COMPARSE`) e in fondo a `src/stili/sito.css`. Con il movimento ridotto niente Lenis né comparse; senza JavaScript tutto è visibile da subito. GSAP non è servito: si userà dove serve una sequenza vera (per esempio il configuratore).
-6. Altre pagine, modulo con Worker, D1 e Turnstile, banner dei consensi, file per Google.
+6. Altre pagine, modulo con Worker, D1 e Turnstile, banner dei consensi, file per Google. *Fatto il 15 novembre 2026, tranne il banner dei consensi:* oggi il sito non usa cookie di statistica né pubblicità, il banner serve quando si collegano Google Analytics e Meta Pixel. Turnstile si accende mettendo le chiavi (`TURNSTILE_SITE_KEY` al build, `TURNSTILE_SECRET` sul Worker).
 7. Revisione indipendente con più agenti. Solo dopo l'ok del proprietario, pubblicazione sul link Cloudflare.
 
 ## 8. Materiali da ricevere

@@ -76,6 +76,8 @@ Sito e aspetto
 - 2026-11-15 · Pagina iniziale approvata dal proprietario sui video ("Approvata, avanti"): struttura come il riferimento, sezione per sezione. Testi in `contenuti/it/`, segnaposto `[[ ]]` evidenziati in giallo in anteprima. Ogni anteprima esce con noindex e robots chiuso; solo `--pubblico` apre a Google.
 - 2026-11-15 · Nella pagina iniziale niente sezione "Dove siamo" con foto: l'indirizzo sta solo nel piè di pagina e nella pagina `/dove-siamo/` (proprietario). La voce "Dove siamo" del selettore porta al piè di pagina. Il pezzo con foto e pannello della sede resta in `src/parti/sede.mjs` per quella pagina. Scartato: sezione dopo la storia (proposta nostra).
 - 2026-11-15 · I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti: fino ad allora "Camicie", "Camicioni", "Su misura" restano segnaposto.
+- 2026-11-15 · Animazioni della pagina iniziale approvate dal proprietario. In cima all'apertura c'è un invito classico a scorrere, icona e due parole (mouse con rotella sul computer, frecce sul telefono): l'ha chiesto il proprietario perché senza non si capisce che bisogna scorrere. Non toglierlo.
+- 2026-11-15 · Pagine interne costruite con i pezzi della pagina iniziale (`src/parti/sezioni.mjs`): su misura, collezione, storia, dove siamo, privacy, cookie. I capi della collezione si aggiungono in `contenuti/it/prodotti.json` e la loro pagina si crea da sola; niente carrello, si chiede su WhatsApp.
 - 2026-11-14 · La collezione parte come vetrina, il carrello arriva dopo. Prodotti come dati (prezzo, varianti, taglie) così la vendita si aggiunge senza rifare le schede.
 
 Contatti, legale, tracciamento
