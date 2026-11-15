@@ -7,7 +7,6 @@ import { nastro, vetrina, collezione, mestiere, presaMisure, fascia, datiBase } 
 // 0 · Apertura "La cucitura": il film è in src/apertura/, qui solo la struttura che lo script arricchisce.
 function apertura(a) {
   return `<section class="apertura" data-apertura="/film/" aria-label="${esc(a.etichetta)}">
-  <a class="apertura__salta" href="#contenuto">${esc(a.salta)}</a>
   <picture>
     <source media="(orientation: portrait)" srcset="/film/manifesto-alto.jpg" width="1040" height="1520">
     <img class="apertura__manifesto" src="/film/manifesto.jpg" width="1920" height="1200" alt="Il logo Endero ricamato in filo bianco su tessuto blu" fetchpriority="high">

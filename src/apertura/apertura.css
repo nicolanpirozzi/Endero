@@ -50,39 +50,6 @@
   display: none;
 }
 
-.apertura__salta {
-  position: absolute;
-  z-index: 6;
-  left: max(1rem, env(safe-area-inset-left));
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  padding: 0.55rem 1rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--filo);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.apertura__salta:focus-visible {
-  outline: 2px solid var(--filo);
-  outline-offset: 3px;
-}
-
-@media (hover: hover) {
-  .apertura__salta {
-    transition: background-color 160ms ease-out;
-  }
-  .apertura__salta:hover {
-    background: rgba(255, 255, 255, 0.24);
-  }
-}
-
 /* Con lo script in arrivo la versione ferma non lampeggia prima del caricatore: resta il fondo blu.
    Lo script mette .apertura--viva (film) o .apertura--ferma (movimento ridotto, risparmio dati, film non
    raggiungibile). Se lo script non arriva affatto, dopo qualche secondo la versione ferma compare da sola. */
@@ -92,8 +59,7 @@
 }
 
 .js .apertura:not(.apertura--viva):not(.apertura--ferma) > picture,
-.js .apertura:not(.apertura--viva):not(.apertura--ferma) > .apertura__storia,
-.js .apertura:not(.apertura--viva):not(.apertura--ferma) > .apertura__salta {
+.js .apertura:not(.apertura--viva):not(.apertura--ferma) > .apertura__storia {
   opacity: 0;
   animation: apertura-ripiego 0.4s 6s forwards;
 }
@@ -112,16 +78,6 @@
 
 .apertura--viva .apertura__manifesto {
   display: none;
-}
-
-.apertura--viva .apertura__salta {
-  position: fixed;
-  opacity: var(--apertura-salta, 1);
-  transition: opacity 240ms ease-out;
-}
-
-.apertura__salta[data-spento] {
-  pointer-events: none;
 }
 
 .apertura--viva .apertura__palco {
@@ -325,7 +281,7 @@
   }
 }
 
-/* su schermi stretti sta sopra "Salta l'introduzione", che è in basso a sinistra */
+/* su schermi stretti sta più in alto: posizione approvata così, non si sposta */
 @media (max-width: 809px) {
   .apertura__invito {
     bottom: max(5.4rem, calc(env(safe-area-inset-bottom) + 4.6rem));
@@ -409,8 +365,7 @@
     animation: none;
   }
   .apertura__carica,
-  .apertura__avanzamento::after,
-  .apertura__salta {
+  .apertura__avanzamento::after {
     transition: none;
   }
 }

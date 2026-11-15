@@ -46,7 +46,7 @@ function vaiA(el, { subito = false } = {}) {
   if (subito) libera();
 }
 
-// I collegamenti a un punto della stessa pagina scorrono fin lì; "Salta" ci va di colpo.
+// I collegamenti a un punto della stessa pagina scorrono fin lì; "Vai al contenuto" ci va di colpo.
 function ancore() {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href*="#"]');
@@ -56,7 +56,7 @@ function ancore() {
     const meta = document.getElementById(decodeURIComponent(url.hash.slice(1)));
     if (!meta) return;
     e.preventDefault();
-    const salto = a.matches('.apertura__salta, .salta-al-contenuto');
+    const salto = a.matches('.salta-al-contenuto');
     vaiA(meta, { subito: salto });
     history.replaceState(null, '', url.hash);
     // il fuoco da tastiera segue la pagina: il prossimo Tab riparte dalla sezione raggiunta

@@ -2694,13 +2694,6 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
   margin-top: 0;
 }
 
-/* "Salta l'introduzione" si tocca bene col dito: 44 px di altezza, stesso aspetto */
-.apertura__salta {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-
 /* le foto segnaposto chiare: la nota si legge a 4,5:1 */
 .attesa--chiaro {
   color: rgba(15, 40, 94, 0.8);
@@ -3364,7 +3357,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
     font-size: 10px;
   }
 
-  /* "Salta l'introduzione", le parole lunghe dei capitoli e la testata stanno anche a 320 px */
+  /* le parole lunghe dei capitoli e la testata stanno anche a 320 px */
   .capitolo__etichetta {
     font-size: min(48px, 11vw);
   }
