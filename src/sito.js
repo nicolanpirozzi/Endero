@@ -160,7 +160,14 @@ function finestra({ dialogo, link, classe, chiudiFuori = false }) {
     if (e.shiftKey && document.activeElement === primo) { e.preventDefault(); ultimo.focus(); }
     else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primo.focus(); }
   });
-  dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', chiudi));
+  // una voce che porta più giù nella stessa pagina chiude la finestra subito; una che porta a un'altra pagina la
+  // lascia aperta fino al cambio di pagina (chiuderla proprio mentre parte la dissolvenza la interrompe)
+  dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || url.pathname === location.pathname) chiudi();
+  }));
+  // tornando indietro alla pagina tenuta in memoria dal browser, la finestra è già chiusa
+  addEventListener('pageshow', (e) => { if (e.persisted) chiudi(); });
   // un clic sul fondo scurito, fuori dal riquadro, la chiude
   if (chiudiFuori) dialogo.addEventListener('click', (e) => { if (e.target === dialogo) chiudi(); });
   return { chiudi };
