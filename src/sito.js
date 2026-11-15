@@ -225,6 +225,7 @@ const COMPARSE = [
   ['.capitolo__foto', 'tenda', 0],
   ['.capitolo__testo', 'su', 200],
   ['.chiusura__azioni', 'su', 260],
+  ['.vetrina__tutti, .mestiere__fondo', 'su', 0],
   ['.grande, .prezzo__foto', 'tenda', 0],
   ['.scheda-misure', 'scheda', 450],
   ['.pannello', 'su', 120],
@@ -309,17 +310,57 @@ function comparse() {
     sotto.dataset.rivela = 'su';
     sotto.style.setProperty('--ritardo', 200 + n * 55 + 'ms');
   }
+  // le pillole sotto il titolo entrano per ultime; se ricevono il fuoco prima, compaiono subito
+  const azioni = eroe.querySelector('.eroe__azioni');
+  if (azioni) {
+    azioni.dataset.rivela = 'su';
+    azioni.style.setProperty('--ritardo', 360 + n * 55 + 'ms');
+  }
   let richiesta = 0;
   const controlla = () => {
     richiesta = 0;
     if (apertura && apertura.getBoundingClientRect().bottom > innerHeight * 0.55) return;
     titolo.setAttribute('data-visto', '');
     sotto?.setAttribute('data-visto', '');
+    azioni?.setAttribute('data-visto', '');
     removeEventListener('scroll', aScorrimento);
   };
   const aScorrimento = () => { if (!richiesta) richiesta = requestAnimationFrame(controlla); };
   addEventListener('scroll', aScorrimento, { passive: true });
   controlla();
+}
+
+// ---------------------------------------------------------------- cultura e artigianato
+// La sezione resta ferma sullo schermo: ogni foto nuova si scopre dal basso sopra la precedente, circa due terzi
+// di schermo di scorrimento ciascuna. Senza script o con movimento ridotto i capitoli stanno uno sotto l'altro.
+function mestiere() {
+  if (ridotto) return;
+  document.querySelectorAll('[data-mestiere]').forEach((sez) => {
+    const binario = sez.querySelector('.mestiere__binario');
+    const palco = sez.querySelector('.mestiere__palco');
+    const capitoli = [...sez.querySelectorAll('.mestiere__capitolo')];
+    if (!binario || capitoli.length < 2) return;
+    sez.classList.add('mestiere--vivo');
+    let richiesta = 0;
+    function aggiorna() {
+      richiesta = 0;
+      const alto = palco.clientHeight;
+      const passo = alto * 0.66;
+      const fatto = -binario.getBoundingClientRect().top - alto * 0.17;   // un attimo fermi prima della prima foto
+      let attivo = 0;
+      capitoli.forEach((c, k) => {
+        if (!k) return;
+        const p = Math.min(1, Math.max(0, (fatto - (k - 1) * passo) / passo));
+        c.style.setProperty('--p', p.toFixed(4));
+        if (p >= 0.55) attivo = k;
+      });
+      capitoli.forEach((c, k) => c.toggleAttribute('data-attivo', k === attivo));
+    }
+    const chiedi = () => { if (!richiesta) richiesta = requestAnimationFrame(aggiorna); };
+    addEventListener('scroll', chiedi, { passive: true });
+    addEventListener('resize', chiedi, { passive: true });
+    aggiorna();
+  });
 }
 
 // ---------------------------------------------------------------- carosello della storia
@@ -417,6 +458,7 @@ avvia('ancore', ancore);
 avvia('testata', testata);
 avvia('menu', menu);
 avvia('selettore', selettore);
+avvia('mestiere', mestiere);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
 avvia('modulo', () => document.querySelectorAll('[data-modulo]').forEach(modulo));

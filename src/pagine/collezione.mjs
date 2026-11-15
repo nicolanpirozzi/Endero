@@ -1,11 +1,10 @@
 // Pagina /collezione/ e una pagina per ogni capo. I capi sono dati (contenuti/it/prodotti.json):
 // prezzo, colori, taglie. Il carrello arriverà dopo; per ora si chiede su WhatsApp.
-import { esc, t, piano, attesa, icona } from '../parti/base.mjs';
+import { esc, t, piano, attesa, icona, euro, indirizzoCapo } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 import { eroePagina, intesta, datiBase } from '../parti/sezioni.mjs';
 
-export const euro = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
-export const indirizzoCapo = (capo) => `/collezione/${capo.slug}/`;
+export { euro, indirizzoCapo };
 
 function foto(src, alt, classe = '') {
   return `<img class="${classe}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async">`;

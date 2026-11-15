@@ -1647,6 +1647,203 @@ body[data-barra] .selettore {
   font-variant-numeric: tabular-nums;
 }
 
+/* ------------------------------------------------------------------ pagina iniziale a più pagine (punto 10) */
+
+/* eroe: due pillole sotto il titolo */
+.eroe__azioni {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* vetrina: la griglia di foto con i capi; ogni riquadro porta al capo */
+.griglia__link {
+  position: absolute;
+  inset: 0;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.griglia__link:focus-visible {
+  outline-color: var(--filo);
+  outline-offset: -6px;
+}
+
+.griglia__cornice {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.griglia__cornice > img,
+.griglia__cornice > .attesa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.griglia__nome,
+.griglia__dettaglio {
+  display: block;
+}
+
+.griglia__voce:focus-within .griglia__scheda {
+  opacity: 1;
+  transform: none;
+}
+
+/* sul telefono non c'è il passaggio del mouse: nome e prezzo dei capi veri restano in vista */
+@media (hover: none) {
+  .griglia__voce--capo .griglia__scheda {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vetrina__tutti {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* i tre ingressi per categoria, subito sotto la vetrina */
+.collezione--sola {
+  margin-top: 10px;
+  padding: 0;
+  background: none;
+}
+
+/* cultura e artigianato: capitoli a foto intera */
+.mestiere__binario {
+  margin: 0 var(--margine);
+}
+
+.mestiere__palco {
+  display: grid;
+  gap: 10px;
+}
+
+.mestiere__capitolo {
+  position: relative;
+  aspect-ratio: 1368 / 760;
+  overflow: hidden;
+}
+
+.mestiere__foto,
+.mestiere__foto > .attesa {
+  position: absolute;
+  inset: 0;
+}
+
+.mestiere__foto .attesa__nota {
+  top: 20px;
+  bottom: auto;
+  left: auto;
+  right: 24px;
+  text-align: right;
+}
+
+.mestiere__scheda {
+  position: absolute;
+  left: 27px;
+  bottom: 27px;
+  width: min(440px, calc(100% - 54px));
+  display: grid;
+  gap: 8px;
+  padding: 22px 24px 24px;
+}
+
+.mestiere__numero {
+  font-size: 10px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.72;
+}
+
+.mestiere__titolo {
+  font-size: 22px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.mestiere__testo {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mestiere__fondo {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* con lo script: la sezione resta ferma sullo schermo e ogni foto nuova si scopre dal basso sopra la precedente */
+.mestiere--vivo .mestiere__binario {
+  margin: 0;
+  height: calc(100svh + (var(--n) - 1) * 66svh + 34svh);
+}
+
+.mestiere--vivo .mestiere__palco {
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.mestiere--vivo .mestiere__capitolo {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  clip-path: inset(calc((1 - var(--p, 1)) * 100%) 0 0 0);
+}
+
+.mestiere--vivo .mestiere__foto > .attesa {
+  transform: scale(calc(1.08 - 0.08 * var(--p, 1)));
+  transform-origin: 50% 100%;
+}
+
+.mestiere--vivo .mestiere__foto .attesa__nota {
+  top: 104px;
+  right: var(--margine);
+}
+
+.mestiere--vivo .mestiere__scheda {
+  left: var(--margine);
+  bottom: var(--margine);
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 400ms var(--morbido), transform 600ms var(--morbido);
+}
+
+.mestiere--vivo .mestiere__capitolo[data-attivo] .mestiere__scheda {
+  opacity: 1;
+  transform: none;
+}
+
+/* fascia dei rivenditori: come il blocco della collezione, senza riquadri */
+.fascia {
+  padding: 72px 0;
+}
+
+.fascia .intesta {
+  margin-bottom: 0;
+}
+
+/* in pagina iniziale l'ultima fascia tocca il piè di pagina */
+.corpo--a-filo {
+  padding-bottom: 0;
+}
+
 /* ------------------------------------------------------------------ piè di pagina */
 
 .piede {
@@ -2715,6 +2912,36 @@ body[data-barra] .selettore {
 
   .legale {
     padding-top: 110px;
+  }
+
+  .mestiere__capitolo {
+    aspect-ratio: 4 / 5;
+  }
+
+  .mestiere__scheda {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    padding: 18px 18px 20px;
+  }
+
+  .mestiere--vivo .mestiere__scheda {
+    left: var(--margine);
+    right: var(--margine);
+    bottom: max(var(--margine), env(safe-area-inset-bottom));
+  }
+
+  .mestiere__titolo {
+    font-size: 18px;
+  }
+
+  .eroe__azioni .pillola {
+    padding: 0 20px;
+  }
+
+  .fascia {
+    padding: 60px 0;
   }
 }
 

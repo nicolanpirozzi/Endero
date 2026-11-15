@@ -32,6 +32,8 @@ const testiHome = leggi('home.json');
 const servizio = leggi('servizio.json');
 const testi = {
   suMisura: leggi('su-misura.json'),
+  cultura: leggi('cultura-e-artigianato.json'),
+  rivenditori: leggi('diventa-rivenditore.json'),
   collezione: leggi('collezione.json'),
   storia: leggi('storia.json'),
   doveSiamo: leggi('dove-siamo.json'),
@@ -82,6 +84,10 @@ const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAntep
 scrivi('index.html', home({
   sito,
   testi: testiHome,
+  cultura: testi.cultura,
+  suMisura: testi.suMisura,
+  rivenditori: testi.rivenditori,
+  prodotti,
   anteprima,
   risorse: {
     ...base,
@@ -94,7 +100,7 @@ function genera(percorso, html) {
   scrivi(percorso.slice(1) + 'index.html', html);
   pagine.push(percorso);
 }
-genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, home: testiHome, risorse: base, anteprima }));
+genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
 const visti = new Set();
 for (const capo of prodotti) {

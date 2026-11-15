@@ -1,8 +1,8 @@
 {
-  "_nota": "Testi della pagina iniziale, in bozza. Fatti ammessi: solo quelli confermati in CLAUDE.md. Le parti tra [[ ]] sono segnaposto da confermare; le voci 'foto' descrivono la foto vera che ci andrà. I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti.",
+  "_nota": "Testi della pagina iniziale, in bozza. Fatti ammessi: solo quelli confermati in CLAUDE.md. Le parti tra [[ ]] sono segnaposto da confermare; le voci 'foto' descrivono la foto vera che ci andrà. I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti. Mai 'dal 1996' e 'fatto in Italia' nella stessa frase. I capitoli di Cultura e artigianato stanno in cultura-e-artigianato.json, la fascia dei rivenditori in diventa-rivenditore.json (richiami.home).",
   "meta": {
-    "titolo": "Endero, dal 1996 · Camicie su misura fatte in Italia",
-    "descrizione": "Camicie su misura e abbigliamento uomo Endero, fatti in Italia. Presa misure su appuntamento a Giugliano in Campania, in Viale del Toro 22.",
+    "titolo": "Endero · Camicie e abbigliamento uomo dal 1996",
+    "descrizione": "Camicie e abbigliamento uomo Endero: la collezione, la camicia su misura con presa misure a Giugliano in Campania e le proposte per negozi e marchi.",
     "immagine": "/film/manifesto.jpg",
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
   },
@@ -31,11 +31,21 @@
   },
   "eroe": {
     "titolo": [
-      "Camicie su misura,",
-      "fatte in Italia"
+      "Camicie e",
+      "abbigliamento uomo"
     ],
-    "sottotitolo": "Camicie e abbigliamento uomo · Giugliano in Campania",
-    "video": "Video del laboratorio, 10–20 secondi"
+    "sottotitolo": "Sartoria italiana contemporanea · Giugliano in Campania",
+    "video": "Video del laboratorio, 10–20 secondi",
+    "pillole": [
+      {
+        "testo": "Vedi la collezione",
+        "href": "#collezione"
+      },
+      {
+        "testo": "Camicia su misura",
+        "href": "/camicie-su-misura/"
+      }
+    ]
   },
   "nastro": [
     "Dal 1996",
@@ -47,16 +57,20 @@
     "etichetta": "Sezioni della pagina",
     "voci": [
       {
-        "id": "su-misura",
-        "testo": "Su misura"
-      },
-      {
         "id": "collezione",
         "testo": "Collezione"
       },
       {
-        "id": "storia",
-        "testo": "Storia"
+        "id": "artigianato",
+        "testo": "Artigianato"
+      },
+      {
+        "id": "su-misura",
+        "testo": "Su misura"
+      },
+      {
+        "id": "rivenditori",
+        "testo": "Rivenditori"
       },
       {
         "id": "dove-siamo",
@@ -64,165 +78,24 @@
       }
     ]
   },
-  "su_misura": {
-    "titolo": "La camicia su misura",
-    "testo": "[[Collo, polsi, tessuto e vestibilità]] si scelgono a partire dalle tue misure. Ogni camicia Endero è fatta in Italia.",
-    "link": {
-      "testo": "Scopri il su misura",
-      "href": "/camicie-su-misura/"
-    },
-    "griglia": [
-      {
-        "foto": "Colletto, primo piano",
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Camicia indossata",
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Polsino e bottone",
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Capo della collezione",
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Tessuto da vicino",
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Camicia indossata, di spalle",
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Al banco del taglio",
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Camicia piegata",
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Cucitura del carré",
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Camicia con giacca",
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Bottoni da vicino",
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      },
-      {
-        "foto": "Tessuti in rotolo",
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
-      }
-    ]
-  },
-  "presa_misure": {
-    "titolo": "La presa misure",
-    "testo": "Su appuntamento, nella nostra sede di Giugliano in Campania. Prendiamo le misure insieme e scegli tessuto e dettagli; il sarto ricontrolla le misure prima del taglio.",
-    "foto": "Presa misure in sede, foto orizzontale",
-    "scheda": {
-      "titolo": "La tua scheda misure",
-      "gruppi": [
-        {
-          "titolo": "Busto",
-          "voci": [
-            "Collo",
-            "Spalle",
-            "Torace",
-            "Vita",
-            "Fianchi"
-          ]
-        },
-        {
-          "titolo": "Braccia e lunghezze",
-          "voci": [
-            "Lunghezza manica",
-            "Polso",
-            "Lunghezza camicia"
-          ]
-        }
-      ],
-      "unita": "— cm",
-      "foto": "Foto del capo",
-      "invito": "Prenota la presa misure"
-    }
-  },
-  "come_funziona": {
-    "titolo": "Come funziona",
-    "testo": "Tre passi, dalla prenotazione alla camicia finita.",
-    "passi": [
-      {
-        "titolo": "Prenotazione",
-        "testo": "Scegli il giorno dal modulo o scrivici su WhatsApp: ti ricontattiamo per confermare."
-      },
-      {
-        "titolo": "Misure e tessuto",
-        "testo": "In sede prendiamo le misure e scegli [[tessuto, collo e polsi]]."
-      },
-      {
-        "titolo": "Cucitura",
-        "testo": "Il sarto ricontrolla le misure prima del taglio. Tempi di consegna: [[da confermare]]."
-      }
-    ],
-    "modulo": {
-      "titolo": "Prenota la presa misure",
-      "schede": [
-        "In sede",
-        "Giugliano in Campania"
-      ],
-      "nome": "Nome e cognome",
-      "telefono": "Telefono o WhatsApp",
-      "email": "Email (facoltativa)",
-      "giorno": "Giorno preferito (facoltativo)",
-      "fascia": "Fascia oraria",
-      "fasce": [
-        "Mattina",
-        "Pomeriggio",
-        "Indifferente"
-      ],
-      "note": "Note (facoltative)",
-      "note_aiuto": "Per esempio: quante camicie, un tessuto che hai in mente.",
-      "privacy": "Ho letto l'<a href=\"/privacy/\">informativa privacy</a> e acconsento a essere ricontattato per la prenotazione.",
-      "invia": "Invia la richiesta",
-      "invio": "Invio in corso…",
-      "fatto_titolo": "Richiesta ricevuta",
-      "fatto_testo": "Grazie. Ti ricontattiamo al numero che ci hai lasciato per fissare il giorno.",
-      "errore": "Qualcosa non ha funzionato. Riprova, oppure scrivici su WhatsApp."
-    }
-  },
-  "collezione": {
+  "vetrina": {
     "titolo": "La collezione",
     "testo": "Camicie e capi uomo pronti da indossare, con taglie e prezzi chiari.",
+    "quanti": 12,
+    "tutti": {
+      "testo": "Vedi tutta la collezione",
+      "href": "/collezione/"
+    },
+    "attesa": {
+      "_nota": "Riquadri mostrati finché prodotti.json è vuoto.",
+      "foto": "Foto del capo",
+      "categoria": "[[Categoria]]",
+      "nome": "[[Nome del capo]]",
+      "tessuto": "[[Tessuto]]",
+      "prezzo": "[[€ —]]"
+    }
+  },
+  "categorie": {
     "riquadri": [
       {
         "titolo": "[[Camicie]]",
@@ -241,78 +114,22 @@
       }
     ]
   },
-  "storia": {
-    "titolo": "La storia di Endero",
-    "testo": "Dal 1996, camicie e abbigliamento uomo.",
+  "artigianato": {
+    "titolo": "Cultura e artigianato",
+    "testo": "Il mestiere che c'è dietro ogni capo Endero.",
     "link": {
-      "testo": "Leggi la storia",
-      "href": "/storia/"
-    },
-    "precedente": "Capitolo precedente",
-    "successivo": "Capitolo successivo",
-    "capitoli": [
-      {
-        "etichetta": "1996",
-        "testo": "Inizia la storia di Endero.",
-        "foto": "Foto d'archivio degli inizi"
-      },
-      {
-        "etichetta": "Il nome",
-        "testo": "Endero viene da Ennio De Rosa.",
-        "foto": "Ritratto di Ennio De Rosa"
-      },
-      {
-        "etichetta": "1,3 milioni",
-        "testo": "Oltre 1,3 milioni di capi prodotti.",
-        "foto": "Il laboratorio al lavoro"
-      },
-      {
-        "etichetta": "2.500",
-        "testo": "Oltre 2.500 negozi serviti.",
-        "foto": "Capi pronti per la consegna"
-      },
-      {
-        "etichetta": "Oggi",
-        "testo": "Sartoria italiana contemporanea.",
-        "foto": "La sede di Viale del Toro"
-      }
-    ]
+      "testo": "Scopri come lavoriamo",
+      "href": "/cultura-e-artigianato/"
+    }
   },
-  "domande": {
-    "titolo": "Domande frequenti",
-    "voci": [
-      {
-        "domanda": "Come si prenota la presa misure?",
-        "risposta": "Dal modulo in questa pagina o su WhatsApp al 333 854 8712. Ti ricontattiamo per fissare il giorno."
-      },
-      {
-        "domanda": "Dove si prendono le misure?",
-        "risposta": "Nella nostra sede di Giugliano in Campania, in Viale del Toro 22, su appuntamento."
-      },
-      {
-        "domanda": "Quanto costa una camicia su misura?",
-        "risposta": "A partire da [[€ — prezzo da confermare]]."
-      },
-      {
-        "domanda": "In quanto tempo è pronta?",
-        "risposta": "[[Tempi di consegna da confermare]]"
-      },
-      {
-        "domanda": "Si ritira in sede o arriva a casa?",
-        "risposta": "[[Modalità di consegna da confermare]]"
-      },
-      {
-        "domanda": "Le camicie sono fatte in Italia?",
-        "risposta": "Sì, ogni camicia Endero è fatta in Italia."
-      }
-    ]
-  },
-  "prezzo": {
-    "titolo": "Il su misura",
-    "testo": "La camicia Endero cucita sulle tue misure, con il tessuto e i dettagli che scegli tu.",
-    "foto": "Camicia su misura indossata, foto orizzontale",
-    "a_partire": "A partire da",
-    "cifra": "[[€ —]]",
-    "invito": "Prenota la presa misure"
+  "porta_su_misura": {
+    "_nota": "Porta verso /camicie-su-misura/. Quando il configuratore è acceso (su-misura.json, configuratore.attivo) la pillola diventa quella del configuratore.",
+    "titolo": "La camicia su misura",
+    "testo": "Cucita sulle tue misure, con il tessuto e i dettagli che scegli. Presa misure su appuntamento a Giugliano in Campania.",
+    "foto": "Presa misure in sede, foto orizzontale",
+    "invito": {
+      "testo": "Scopri il su misura",
+      "href": "/camicie-su-misura/"
+    }
   }
 }

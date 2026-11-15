@@ -1,27 +1,36 @@
-// Pagina /camicie-su-misura/: la camicia su misura, la presa misure, la prenotazione.
-// Riusa le sezioni approvate della pagina iniziale; i testi comuni vengono da home.json.
-import { piano } from '../parti/base.mjs';
+// Pagina /camicie-su-misura/: tutto il su misura, con i testi suoi (contenuti/it/su-misura.json).
+// In cima l'ingresso al configuratore, spento finché la sua pagina non esiste (configuratore.attivo).
+import { esc, piano } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
-import { eroePagina, suMisura, presaMisure, comeFunziona, domande, prezzo, datiBase } from '../parti/sezioni.mjs';
+import { eroePagina, intesta, suMisura, presaMisure, comeFunziona, domande, prezzo, datiBase } from '../parti/sezioni.mjs';
 
 const daConfermare = (s) => /\[\[/.test(s);
 
-export default function paginaSuMisura({ sito, testi: p, home: h, risorse, anteprima }) {
-  const griglia = { ...h.su_misura, ...p.dettagli, link: null, griglia: h.su_misura.griglia.slice(0, p.dettagli.griglia_quante) };
+/** L'ingresso al configuratore: titolo, una riga e la pillola. Si vede solo con configuratore.attivo. */
+function ingressoConfiguratore(c) {
+  if (!c?.attivo) return '';
+  return `<section class="sezione ingresso" id="configuratore">
+      ${intesta({ titolo: c.titolo, testo: c.testo })}
+      <p class="ingresso__azione"><a class="pillola pillola--blu pillola--grande" href="${esc(c.href)}">${esc(c.invito)}</a></p>
+    </section>`;
+}
+
+export default function paginaSuMisura({ sito, testi: p, risorse, anteprima }) {
   const corpo = `<main>
   ${eroePagina(p.eroe, sito)}
   <div class="corpo">
-    ${suMisura(griglia, sito, { id: 'dettagli', gruppo: '' })}
-    ${presaMisure(h.presa_misure, sito, { gruppo: '' })}
-    ${comeFunziona(h.come_funziona, risorse.turnstile, { gruppo: '' })}
-    ${domande(h.domande, { gruppo: '' })}
-    ${prezzo(h.prezzo, sito, { gruppo: '' })}
+    ${ingressoConfiguratore(p.configuratore)}
+    ${suMisura(p.dettagli, sito, { id: 'dettagli', gruppo: '' })}
+    ${presaMisure(p.presa_misure, sito, { gruppo: '' })}
+    ${comeFunziona(p.come_funziona, risorse.turnstile, { gruppo: '' })}
+    ${domande(p.domande, { gruppo: '' })}
+    ${prezzo(p.prezzo, sito, { gruppo: '' })}
   </div>
 </main>`;
   const d = sito.dominio;
   const url = `${d}/camicie-su-misura/`;
   // nelle domande per Google entrano solo le risposte già confermate
-  const confermate = h.domande.voci.filter((v) => !daConfermare(v.domanda) && !daConfermare(v.risposta));
+  const confermate = p.domande.voci.filter((v) => !daConfermare(v.domanda) && !daConfermare(v.risposta));
   const dati = [
     ...datiBase(sito, p.meta),
     {

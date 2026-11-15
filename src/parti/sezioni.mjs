@@ -1,6 +1,6 @@
 // Sezioni del sito, condivise tra la pagina iniziale e le altre pagine.
 // Ordine e proporzioni vengono dal riferimento (docs/direzione-creativa.md, punti 1 e 3).
-import { esc, t, tConLink, piano, attesa, logo, icona } from './base.mjs';
+import { esc, t, tConLink, piano, attesa, logo, icona, euro, indirizzoCapo } from './base.mjs';
 
 const aid = (id) => (id ? ` id="${esc(id)}"` : '');
 const agr = (gruppo) => (gruppo ? ` data-gruppo="${esc(gruppo)}"` : '');
@@ -50,9 +50,10 @@ export function suMisura(s, sito, { id = 'su-misura', gruppo = 'su-misura' } = {
 }
 
 // 7 · Foto grande con scheda in vetro: la presa misure.
-export function presaMisure(p, sito, { gruppo = 'su-misura' } = {}) {
+export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } = {}) {
   const s = p.scheda;
-  return `<section class="sezione"${agr(gruppo)}>
+  const pillola = invito || { testo: s.invito, href: '#prenota' };
+  return `<section class="sezione"${aid(id)}${agr(gruppo)}>
     ${intesta(p)}
     <div class="grande">
       ${attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
@@ -70,7 +71,7 @@ export function presaMisure(p, sito, { gruppo = 'su-misura' } = {}) {
           </div>
           <div class="scheda-misure__capo">${attesa({ nota: s.foto, etichetta: sito.foto_in_arrivo })}</div>
         </div>
-        <a class="pillola pillola--chiara" href="#prenota">${esc(s.invito)}</a>
+        <a class="pillola pillola--chiara" href="${esc(pillola.href)}">${esc(pillola.testo)}</a>
       </div>
     </div>
   </section>`;
@@ -124,15 +125,17 @@ export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
 
 // 9 · Tre riquadri: gli ingressi alla collezione.
 export function collezione(c, sito, { id = 'collezione', gruppo = 'collezione' } = {}) {
-  return `<section class="collezione"${aid(id)}${agr(gruppo)}>
-    ${intesta(c)}
+  // senza titolo (in pagina iniziale, sotto la vetrina) è solo una fila di riquadri, non una sezione a sé
+  const tag = c.titolo ? 'section' : 'div';
+  return `<${tag} class="collezione${c.titolo ? '' : ' collezione--sola'}"${aid(id)}${agr(gruppo)}>
+    ${c.titolo ? intesta(c) : ''}
     <ul class="riquadri">
       ${c.riquadri.map((r) => `<li><a class="riquadro" href="${esc(r.href)}">
         ${attesa({ nota: r.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
         <span class="titolo riquadro__titolo">${t(r.titolo)}</span>
       </a></li>`).join('\n      ')}
     </ul>
-  </section>`;
+  </${tag}>`;
 }
 
 // 10 · Carosello: i capitoli della storia. Le citazioni dei clienti entreranno solo con recensioni vere.
@@ -184,6 +187,91 @@ export function prezzo(p, sito, { gruppo = 'su-misura' } = {}) {
       </div>
     </div>
   </section>`;
+}
+
+// ------------------------------------------------------------------ pezzi della struttura a più pagine (punto 10)
+
+/**
+ * Vetrina: la griglia di foto a 6 colonne (2 sul telefono) con i capi di prodotti.json. Ogni riquadro porta al capo;
+ * al passaggio compare la scheda in vetro con nome, tessuto e prezzo. Finché non ci sono capi, riquadri segnaposto.
+ */
+export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione' } = {}) {
+  const quanti = v.quanti || 12;
+  const capi = prodotti.slice(0, quanti);
+  const voce = (capo) => {
+    const foto = capo.foto?.[0]
+      ? `<img src="${esc(capo.foto[0])}" alt="${esc(capo.nome)}" loading="lazy" decoding="async">`
+      : attesa({ nota: capo.nome, etichetta: sito.foto_in_arrivo });
+    const dettaglio = [capo.tessuto, capo.prezzo != null ? euro(capo.prezzo) : ''].filter(Boolean).map(esc).join(' · ');
+    return `<li class="griglia__voce griglia__voce--capo"><a class="griglia__link" href="${esc(indirizzoCapo(capo))}">
+        <span class="griglia__cornice">${foto}</span>
+        ${capo.categoria ? `<span class="etichetta">${esc(capo.categoria)}</span>` : ''}
+        <span class="vetro griglia__scheda">
+          <span class="griglia__nome">${esc(capo.nome)}</span>
+          ${dettaglio ? `<span class="griglia__dettaglio">${dettaglio}</span>` : ''}
+        </span>
+      </a></li>`;
+  };
+  const a = v.attesa;
+  const inAttesa = () => `<li class="griglia__voce">
+        ${attesa({ nota: a.foto, etichetta: sito.foto_in_arrivo })}
+        <span class="etichetta">${t(a.categoria)}</span>
+        <div class="vetro griglia__scheda">
+          <p class="griglia__nome">${t(a.nome)}</p>
+          <p class="griglia__dettaglio">${t(a.tessuto)} · ${t(a.prezzo)}</p>
+        </div>
+      </li>`;
+  const voci = capi.length ? capi.map(voce) : Array.from({ length: quanti }, inAttesa);
+  const tutti = prodotti.length > quanti && v.tutti ? `<p class="vetrina__tutti"><a class="collegamento" href="${esc(v.tutti.href)}">${esc(v.tutti.testo)}${icona.freccia}</a></p>` : '';
+  return `<section class="sezione sezione--griglia vetrina"${aid(id)}${agr(gruppo)}>
+    ${intesta({ titolo: v.titolo, testo: v.testo })}
+    <ul class="griglia">
+      ${voci.join('\n      ')}
+    </ul>
+    ${tutti}
+  </section>`;
+}
+
+/**
+ * Cultura e artigianato in pagina iniziale: capitoli a foto intera che restano fermi sullo schermo mentre si scorre.
+ * Senza script o con movimento ridotto i capitoli stanno uno sotto l'altro, ogni foto con il suo testo:
+ * lo script (src/sito.js, "mestiere") aggiunge .mestiere--vivo e solo allora le foto si scoprono una sull'altra.
+ */
+export function mestiere(m, capitoli, sito, { id = 'artigianato', gruppo = 'artigianato' } = {}) {
+  return `<section class="sezione mestiere"${aid(id)}${agr(gruppo)} data-mestiere>
+    ${intesta({ titolo: m.titolo, testo: m.testo })}
+    <div class="mestiere__binario" style="--n: ${capitoli.length}">
+      <ol class="mestiere__palco">
+        ${capitoli.map((c, i) => `<li class="mestiere__capitolo"${i === 0 ? ' data-attivo' : ''}>
+          <div class="mestiere__foto">${attesa({ nota: c.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
+          <div class="vetro mestiere__scheda">
+            <p class="mestiere__numero">${String(i + 1).padStart(2, '0')} / ${String(capitoli.length).padStart(2, '0')}</p>
+            <h3 class="mestiere__titolo">${t(c.titolo)}</h3>
+            <p class="mestiere__testo">${t(c.testo)}</p>
+          </div>
+        </li>`).join('\n        ')}
+      </ol>
+    </div>
+    ${m.link ? `<p class="mestiere__fondo"><a class="collegamento" href="${esc(m.link.href)}">${esc(m.link.testo)}${icona.freccia}</a></p>` : ''}
+  </section>`;
+}
+
+/** Fascia su fondo chiaro caldo con titolo, una riga e un link: i rivenditori in pagina iniziale. */
+export function fascia(f, { id = '', gruppo = '' } = {}) {
+  return `<section class="collezione fascia"${aid(id)}${agr(gruppo)}>
+    ${intesta(f)}
+  </section>`;
+}
+
+/** Due pillole affiancate in fondo a una pagina: l'azione principale e WhatsApp. */
+export function chiusura(c, sito, { href }) {
+  return `<section class="sezione chiusura">
+      ${intesta(c)}
+      <div class="chiusura__azioni">
+        <a class="pillola pillola--blu pillola--grande" href="${esc(href)}">${esc(c.prenota)}</a>
+        <a class="pillola pillola--grigia pillola--grande" href="${esc(sito.contatti.whatsapp_link)}" target="_blank" rel="noopener">${esc(c.whatsapp)}</a>
+      </div>
+    </section>`;
 }
 
 /** Organizzazione, sito e sede: uguali in ogni pagina, si collegano tra loro con @id. */
