@@ -3276,6 +3276,10 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
     padding: 60px 0;
   }
 
+  .nastro--fermo {
+    height: auto;
+  }
+
   .nastro__fatti {
     grid-template-columns: 1fr;
     row-gap: 28px;
