@@ -172,10 +172,13 @@
 
 /* ------------------------------------------------------------------ il riquadro in vetro */
 
+/* Il riquadro è un modulo lungo: scorre con la pagina mentre la camicia resta ferma accanto.
+   Quattro gruppi: le misure (si compilano), la camicia e i contrasti (spenti), i dati. */
 .configura__scheda {
   position: relative;
   z-index: 1;
-  align-self: center;
+  align-self: start;
+  min-width: 0;
   margin: 104px 0 48px;
   padding: 28px;
 }
@@ -185,30 +188,173 @@
 }
 
 .configura__testo {
-  margin: 0 0 22px;
-  opacity: 0.85;
+  margin: 0 0 6px;
+  color: rgba(251, 249, 244, 0.86);
 }
 
-.configura__righe {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.configura__righe li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px 0;
+.configura__gruppo {
+  min-width: 0;
+  margin: 22px 0 0;
+  padding: 18px 0 0;
+  border: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.18);
-  font-size: 0.75rem;
+}
+
+.configura__gruppo-titolo {
+  float: left;          /* così la legenda sta dentro il bordo, come un titolo qualsiasi */
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 0;
+  font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
+.configura__gruppo-nota {
+  clear: both;
+  margin: -6px 0 14px;
+  font-size: 0.75rem;
+  color: rgba(251, 249, 244, 0.78);
+}
+
+.configura__campi {
+  clear: both;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+.misura {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.misura--larga {
+  grid-column: 1 / -1;
+}
+
+.misura__nome {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.misura__casella {
+  position: relative;
+  display: block;
+}
+
+.misura__casella input,
+.misura__casella textarea {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(5, 15, 43, 0.38);
+  color: var(--filo);
+  font: inherit;
+  font-size: 1rem;              /* 16 px: il telefono non ingrandisce la pagina quando si tocca il campo */
+  font-variant-numeric: tabular-nums;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out;
+}
+
+.misura__casella textarea {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+/* "cm" dentro la casella, a destra */
+.misura__casella input:has(+ .misura__unita) {
+  padding-right: 38px;
+}
+
+.misura__unita {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: rgba(251, 249, 244, 0.78);
+  pointer-events: none;
+}
+
+.misura__casella input:focus,
+.misura__casella textarea:focus {
+  outline: none;
+  border-color: var(--filo);
+  box-shadow: 0 0 0 3px rgba(251, 249, 244, 0.32);
+  background: rgba(5, 15, 43, 0.55);
+}
+
+.misura__casella input[aria-invalid="true"] {
+  border-color: #ffb4a8;
+  box-shadow: 0 0 0 1px #ffb4a8;
+}
+
+.misura__aiuto,
+.misura__errore {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgba(251, 249, 244, 0.82);
+}
+
+.misura__errore {
+  color: #ffc9c0;
+}
+
+.misura__errore:empty {
+  display: none;
+}
+
+/* campi spenti: si legge il nome, la casella è vuota, tratteggiata e chiaramente non compilabile */
+.misura--spenta .misura__nome {
+  color: rgba(251, 249, 244, 0.8);
+}
+
+.misura--spenta .misura__casella input,
+.misura--spenta .misura__casella textarea {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: transparent;
+  cursor: not-allowed;
+  resize: none;
+}
+
+.misura--sino {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.misura--sino input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px dashed rgba(255, 255, 255, 0.38);
+  border-radius: 6px;
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.configura__fondo {
+  margin-top: 26px;
+}
+
 .configura__scheda .pillola {
-  margin-top: 22px;
   width: 100%;
   justify-content: center;
 }
@@ -216,6 +362,14 @@
 .configura__scheda .pillola[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
+}
+
+.configura__nota {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  text-align: center;
+  color: rgba(251, 249, 244, 0.78);
 }
 
 /* ------------------------------------------------------------------ telefono */
@@ -244,8 +398,15 @@
   }
 
   .configura__scheda {
-    margin: 0 20px;
-    padding: 22px 20px;
+    margin: 0 16px;
+    padding: 22px 16px;
+  }
+
+  /* a 320 px due colonne di misure non stanno comode: si passa a una */
+  @media (max-width: 359px) {
+    .configura__campi {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .configura {

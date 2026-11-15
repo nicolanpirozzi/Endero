@@ -515,6 +515,27 @@ function modulo(form) {
   });
 }
 
+// ---------------------------------------------------------------- misure del configuratore
+// Il riquadro del configuratore per ora non invia nulla (data-non-invia). Qui si controlla solo che ogni misura
+// sia un numero positivo dentro i suoi limiti (data-min, data-max), con la virgola o con il punto.
+function misure(form) {
+  form.addEventListener('submit', (e) => e.preventDefault());
+  form.querySelectorAll('input[data-min]').forEach((campo) => {
+    const errore = document.getElementById(campo.id + '-errore');
+    const controlla = (mostra) => {
+      const v = campo.value.trim();
+      const n = Number(v.replace(',', '.'));
+      const buono = !v || (/^\d{1,3}([.,]\d{1,2})?$/.test(v) && n >= +campo.dataset.min && n <= +campo.dataset.max);
+      campo.setCustomValidity(buono ? '' : campo.dataset.errore);
+      if (buono) { campo.removeAttribute('aria-invalid'); if (errore) errore.textContent = ''; }
+      else if (mostra) { campo.setAttribute('aria-invalid', 'true'); if (errore) errore.textContent = campo.dataset.errore; }
+    };
+    // mentre si scrive si toglie l'errore appena il numero torna buono; si segnala solo uscendo dal campo
+    campo.addEventListener('input', () => controlla(campo.hasAttribute('aria-invalid')));
+    campo.addEventListener('change', () => controlla(true));
+  });
+}
+
 // Ogni comodità parte per conto suo: se una si rompe, le altre funzionano lo stesso.
 // Se si rompono le comparse, la pagina torna tutta visibile.
 function avvia(nome, fn) {
@@ -535,4 +556,5 @@ avvia('selettore', selettore);
 avvia('mestiere', mestiere);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
-avvia('modulo', () => document.querySelectorAll('[data-modulo]').forEach(modulo));
+avvia('modulo', () => document.querySelectorAll('[data-modulo]:not([data-non-invia])').forEach(modulo));
+avvia('misure', () => document.querySelectorAll('[data-modulo][data-non-invia]').forEach(misure));
