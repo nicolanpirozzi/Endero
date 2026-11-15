@@ -3,7 +3,8 @@
 //   node build/costruisci.mjs              anteprima: pagine non indicizzabili (noindex, robots chiuso)
 //   node build/costruisci.mjs --pubblico   messa online su endero.it: solo dopo l'ok del proprietario
 //
-// Variabili facoltative: TURNSTILE_SITE_KEY (chiave pubblica dell'antispam del modulo).
+// Variabili facoltative: TURNSTILE_SITE_KEY (chiave pubblica dell'antispam del modulo),
+// URL_ANTEPRIMA (indirizzo provvisorio dell'anteprima, per esempio https://endero-anteprima.xxx.workers.dev).
 import { build } from 'esbuild';
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -71,7 +72,9 @@ for (const [file, info] of Object.entries(esito.metafile.outputs)) {
 }
 
 const turnstile = process.env.TURNSTILE_SITE_KEY || '';
-const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile };
+// URL_ANTEPRIMA: l'indirizzo provvisorio su cui va l'anteprima (per l'immagine nella scheda del link)
+const origineAnteprima = (process.env.URL_ANTEPRIMA || '').replace(/\/$/, '');
+const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima };
 
 // 3 · pagine
 scrivi('index.html', home({

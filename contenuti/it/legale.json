@@ -18,7 +18,7 @@
       {
         "titolo": "Quali dati raccogliamo",
         "paragrafi": [
-          "Quando compili un modulo del sito: nome e cognome, numero di telefono, email se la indichi, giorno e fascia oraria preferiti per la presa misure, il testo del messaggio.",
+          "Quando compili un modulo del sito: nome e cognome, numero di telefono, email se la indichi, giorno e fascia oraria preferiti per la presa misure, il testo del messaggio. Con la richiesta salviamo anche data e ora, la pagina da cui l'hai inviata e il Paese da cui ti colleghi.",
           "Mentre navighi: i dati tecnici che ogni sito riceve dal browser, come l'indirizzo IP, trattati dal fornitore che ospita il sito per farlo funzionare e proteggerlo."
         ]
       },
@@ -32,7 +32,7 @@
       {
         "titolo": "Sono obbligatori?",
         "paragrafi": [
-          "Nome e telefono servono per ricontattarti: senza non possiamo rispondere alla richiesta. Gli altri campi sono facoltativi."
+          "Nome e telefono servono per ricontattarti: senza non possiamo rispondere alla richiesta. Nel modulo di contatto serve anche il messaggio. Gli altri campi sono facoltativi."
         ]
       },
       {
@@ -57,7 +57,7 @@
         "titolo": "I tuoi diritti",
         "paragrafi": [
           "Puoi chiedere di vedere i tuoi dati, correggerli, cancellarli, limitarne l'uso, opporti al trattamento e riceverli in un formato leggibile (articoli 15–22 del Regolamento), scrivendo a info@endero.it.",
-          "Puoi anche presentare un reclamo al Garante per la protezione dei dati personali, www.garanteprivacy.it."
+          "Puoi anche presentare un reclamo al Garante per la protezione dei dati personali, <a href=\"https://www.garanteprivacy.it/\">www.garanteprivacy.it</a>."
         ]
       }
     ]
@@ -79,7 +79,7 @@
         "titolo": "Cosa usa questo sito oggi",
         "paragrafi": [
           "Solo strumenti tecnici, necessari al funzionamento e alla sicurezza. Non usiamo cookie di statistica né di profilazione.",
-          "Cloudflare, che ospita il sito, può salvare cookie tecnici per proteggerlo dagli accessi automatici. Il filtro antispam dei moduli (Cloudflare Turnstile) si attiva solo quando inizi a compilare un modulo."
+          "Cloudflare, che ospita il sito, può salvare cookie tecnici per proteggerlo dagli accessi automatici. Il filtro antispam dei moduli (Cloudflare Turnstile), [[quando sarà attivo]], si caricherà solo quando inizi a compilare un modulo."
         ]
       },
       {
@@ -97,7 +97,7 @@
       {
         "titolo": "Contatti",
         "paragrafi": [
-          "Per domande: info@endero.it. Per sapere come trattiamo i dati personali leggi l'informativa privacy."
+          "Per domande: info@endero.it. Per sapere come trattiamo i dati personali leggi l'<a href=\"/privacy/\">informativa privacy</a>."
         ]
       }
     ]

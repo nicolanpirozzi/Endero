@@ -1,12 +1,12 @@
 // Pagine /privacy/ e /cookie/: testo semplice, ben leggibile. Bozze da far validare prima della messa online.
-import { esc, t } from '../parti/base.mjs';
+import { t, tConLink } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 
 export default function paginaLegale({ sito, testi: l, quale, risorse, anteprima }) {
   const p = l[quale];
   const sezioni = p.sezioni.map((s) => `<section>
       <h2>${t(s.titolo)}</h2>
-      ${(s.paragrafi || []).map((x) => `<p>${t(x)}</p>`).join('\n      ')}
+      ${(s.paragrafi || []).map((x) => `<p>${tConLink(x)}</p>`).join('\n      ')}
       ${s.elenco ? `<ul>${s.elenco.map((x) => `<li>${t(x)}</li>`).join('')}</ul>` : ''}
     </section>`).join('\n    ');
   const corpo = `<main class="legale" id="contenuto" tabindex="-1">

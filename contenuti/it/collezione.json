@@ -2,7 +2,7 @@
   "_nota": "Pagina /collezione/. I capi si aggiungono in prodotti.json: ogni capo ha la sua pagina /collezione/<nome>/. Finché l'elenco è vuoto si vedono i segnaposto.",
   "meta": {
     "titolo": "La collezione Endero · Camicie e abbigliamento uomo",
-    "descrizione": "La collezione Endero: camicie e abbigliamento uomo fatti in Italia, con taglie e prezzi chiari. Disponibili anche su misura.",
+    "descrizione": "La collezione Endero: camicie e abbigliamento uomo fatti in Italia, con taglie e prezzi chiari.",
     "immagine": "/film/manifesto.jpg",
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
   },
@@ -33,6 +33,9 @@
   "invito": {
     "titolo": "Su misura",
     "testo": "Non trovi la camicia che cerchi? Te la facciamo sulle tue misure.",
-    "link": { "testo": "Scopri il su misura", "href": "/camicie-su-misura/" }
+    "link": {
+      "testo": "Scopri il su misura",
+      "href": "/camicie-su-misura/"
+    }
   }
 }

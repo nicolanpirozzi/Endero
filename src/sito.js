@@ -325,7 +325,7 @@ function modulo(form) {
     try {
       const r = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
       const dati = await r.json().catch(() => ({}));
-      if (!r.ok || !dati.ok) throw new Error(dati.errore || 'invio non riuscito');
+      if (!r.ok || !dati.ok) { esito.textContent = dati.errore || esito.dataset.errore; return; }
       form.dataset.stato = 'fatto';
       esito.textContent = esito.dataset.fatto;
     } catch (errore) {

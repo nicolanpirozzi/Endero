@@ -1485,6 +1485,7 @@ body[data-barra] .selettore {
 
 .prezzo__foto {
   aspect-ratio: 937 / 540;
+  overflow: hidden;
 }
 
 .prezzo__testo {

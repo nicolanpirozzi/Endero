@@ -2,7 +2,7 @@
   "_nota": "Pagina /diventa-rivenditore/: progetto del 2026-11-15, ancora da costruire (docs/direzione-creativa.md, punto 9). Testi in bozza, scritti solo con le scelte del proprietario e i fatti confermati. Listino, ordine minimo e condizioni NON vanno sul sito: Endero li manda per email dopo la richiesta. Le parti tra [[ ]] sono segnaposto.",
   "meta": {
     "titolo": "Diventa rivenditore Endero · Camicie uomo all'ingrosso",
-    "descrizione": "Endero per negozi e marchi: collezione all'ingrosso, camicie con il tuo marchio e su misura per i tuoi clienti. Fatto in Italia, dal 1996, in Italia e all'estero.",
+    "descrizione": "Endero per negozi e marchi, in Italia e all'estero: collezione all'ingrosso, camicie con il tuo marchio e su misura per i tuoi clienti. Capi fatti in Italia.",
     "immagine": "/film/manifesto.jpg",
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
   },
@@ -20,9 +20,21 @@
     "titolo": "Tre modi di lavorare con Endero",
     "testo": "Vendi la nostra collezione, fai cucire camicie con il tuo marchio, oppure offri il su misura ai tuoi clienti.",
     "riquadri": [
-      { "titolo": "All'ingrosso", "href": "#ingrosso", "foto": "Capi della collezione piegati o appesi" },
-      { "titolo": "Con il tuo marchio", "href": "#marchio", "foto": "Etichetta cucita nel collo, primo piano" },
-      { "titolo": "Su misura per i tuoi clienti", "href": "#su-misura", "foto": "Presa misure in un negozio" }
+      {
+        "titolo": "All'ingrosso",
+        "href": "#ingrosso",
+        "foto": "Capi della collezione piegati o appesi"
+      },
+      {
+        "titolo": "Con il tuo marchio",
+        "href": "#marchio",
+        "foto": "Etichetta cucita nel collo, primo piano"
+      },
+      {
+        "titolo": "Su misura per i tuoi clienti",
+        "href": "#su-misura",
+        "foto": "Presa misure in un negozio"
+      }
     ]
   },
   "capitoli": [
@@ -53,26 +65,120 @@
     "titolo": "Come funziona",
     "testo": "Può fare richiesta chiunque: valutiamo ogni richiesta, caso per caso.",
     "passi": [
-      { "titolo": "Fai richiesta", "testo": "Compila il modulo: ci dici chi sei e cosa ti interessa." },
-      { "titolo": "Ricevi listino e condizioni", "testo": "Ti rispondiamo per email con listino e condizioni." },
-      { "titolo": "Vedi i capi", "testo": "In sede su appuntamento, a Giugliano in Campania, oppure con foto, catalogo e un campionario spedito." }
+      {
+        "titolo": "Fai richiesta",
+        "testo": "Compila il modulo: ci dici chi sei e cosa ti interessa."
+      },
+      {
+        "titolo": "Ricevi listino e condizioni",
+        "testo": "Ti rispondiamo per email con listino e condizioni."
+      },
+      {
+        "titolo": "Vedi i capi",
+        "testo": "In sede su appuntamento, a Giugliano in Campania, oppure con foto, catalogo e un campionario spedito."
+      }
     ]
   },
   "modulo": {
     "titolo": "Richiesta rivenditori",
-    "schede": ["Rivenditori"],
+    "schede": [
+      "Rivenditori"
+    ],
     "campi": [
-      { "nome": "nome", "etichetta": "Nome e cognome", "tipo": "testo", "obbligatorio": true, "autocomplete": "name", "max": 120 },
-      { "nome": "attivita", "etichetta": "Negozio o marchio (facoltativo)", "tipo": "testo", "autocomplete": "organization", "max": 120 },
-      { "nome": "telefono", "etichetta": "Telefono o WhatsApp", "tipo": "telefono", "obbligatorio": true, "autocomplete": "tel", "max": 40 },
-      { "nome": "email", "etichetta": "Email", "tipo": "email", "obbligatorio": true, "autocomplete": "email", "max": 160 },
-      { "nome": "citta", "etichetta": "Città", "tipo": "testo", "obbligatorio": true, "autocomplete": "address-level2", "max": 80 },
-      { "nome": "nazione", "etichetta": "Paese", "tipo": "testo", "obbligatorio": true, "valore": "Italia", "autocomplete": "country-name", "max": 60 },
-      { "nome": "interesse", "etichetta": "Cosa ti interessa", "tipo": "scelta-multipla", "obbligatorio": true, "largo": true, "opzioni": ["Collezione all'ingrosso", "Camicie con il mio marchio", "Su misura per i miei clienti"], "errore": "Scegli almeno una voce." },
-      { "nome": "tipo_attivita", "etichetta": "Tipo di attività (facoltativo)", "tipo": "scelta-singola", "largo": true, "opzioni": ["Negozio", "Negozio online", "Marchio", "Agente", "Altro"] },
-      { "nome": "partita_iva", "etichetta": "Partita IVA (facoltativa)", "tipo": "testo", "max": 20 },
-      { "nome": "profilo", "etichetta": "Sito o Instagram (facoltativo)", "tipo": "testo", "max": 160 },
-      { "nome": "messaggio", "etichetta": "Messaggio (facoltativo)", "tipo": "area", "largo": true, "aiuto": "Per esempio: dove si trova il negozio, quali capi ti interessano.", "max": 2000 }
+      {
+        "nome": "nome",
+        "etichetta": "Nome e cognome",
+        "tipo": "testo",
+        "obbligatorio": true,
+        "autocomplete": "name",
+        "max": 120
+      },
+      {
+        "nome": "attivita",
+        "etichetta": "Negozio o marchio (facoltativo)",
+        "tipo": "testo",
+        "autocomplete": "organization",
+        "max": 120
+      },
+      {
+        "nome": "telefono",
+        "etichetta": "Telefono o WhatsApp",
+        "tipo": "telefono",
+        "obbligatorio": true,
+        "autocomplete": "tel",
+        "max": 40
+      },
+      {
+        "nome": "email",
+        "etichetta": "Email",
+        "tipo": "email",
+        "obbligatorio": true,
+        "autocomplete": "email",
+        "max": 160
+      },
+      {
+        "nome": "citta",
+        "etichetta": "Città",
+        "tipo": "testo",
+        "obbligatorio": true,
+        "autocomplete": "address-level2",
+        "max": 80
+      },
+      {
+        "nome": "nazione",
+        "etichetta": "Paese",
+        "tipo": "testo",
+        "obbligatorio": true,
+        "valore": "Italia",
+        "autocomplete": "country-name",
+        "max": 60
+      },
+      {
+        "nome": "interesse",
+        "etichetta": "Cosa ti interessa",
+        "tipo": "scelta-multipla",
+        "obbligatorio": true,
+        "largo": true,
+        "opzioni": [
+          "Collezione all'ingrosso",
+          "Camicie con il mio marchio",
+          "Su misura per i miei clienti"
+        ],
+        "errore": "Scegli almeno una voce."
+      },
+      {
+        "nome": "tipo_attivita",
+        "etichetta": "Tipo di attività (facoltativo)",
+        "tipo": "scelta-singola",
+        "largo": true,
+        "opzioni": [
+          "Negozio",
+          "Negozio online",
+          "Marchio",
+          "Agente",
+          "Altro"
+        ]
+      },
+      {
+        "nome": "partita_iva",
+        "etichetta": "Partita IVA (facoltativa)",
+        "tipo": "testo",
+        "max": 20
+      },
+      {
+        "nome": "profilo",
+        "etichetta": "Sito o Instagram (facoltativo)",
+        "tipo": "testo",
+        "max": 160
+      },
+      {
+        "nome": "messaggio",
+        "etichetta": "Messaggio (facoltativo)",
+        "tipo": "area",
+        "largo": true,
+        "aiuto": "Per esempio: dove si trova il negozio, quali capi ti interessano.",
+        "max": 2000
+      }
     ],
     "privacy": "Ho letto l'<a href=\"/privacy/\">informativa privacy</a> e acconsento a essere ricontattato per la mia richiesta.",
     "invia": "Invia la richiesta",
@@ -84,13 +190,34 @@
   "domande": {
     "titolo": "Domande frequenti",
     "voci": [
-      { "domanda": "Chi può fare richiesta?", "risposta": "Chiunque. Valutiamo ogni richiesta, caso per caso, e ti rispondiamo." },
-      { "domanda": "Dove trovo listino e condizioni?", "risposta": "Te li mandiamo per email dopo la richiesta. Sul sito non sono pubblicati." },
-      { "domanda": "C'è un ordine minimo?", "risposta": "Le condizioni, compreso l'ordine minimo, arrivano per email insieme al listino." },
-      { "domanda": "Posso vedere i capi prima di ordinare?", "risposta": "Sì: in sede su appuntamento, in Viale del Toro 22 a Giugliano in Campania, oppure con foto, catalogo e un campionario spedito." },
-      { "domanda": "Posso avere camicie con il mio marchio?", "risposta": "Sì. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto." },
-      { "domanda": "Lavorate anche con l'estero?", "risposta": "Sì, serviamo rivenditori in Italia e all'estero." },
-      { "domanda": "Dove sono fatti i capi?", "risposta": "I capi Endero sono fatti in Italia." }
+      {
+        "domanda": "Chi può fare richiesta?",
+        "risposta": "Chiunque. Valutiamo ogni richiesta, caso per caso, e ti rispondiamo."
+      },
+      {
+        "domanda": "Dove trovo listino e condizioni?",
+        "risposta": "Te li mandiamo per email dopo la richiesta. Sul sito non sono pubblicati."
+      },
+      {
+        "domanda": "C'è un ordine minimo?",
+        "risposta": "Le condizioni, compreso l'ordine minimo, arrivano per email insieme al listino."
+      },
+      {
+        "domanda": "Posso vedere i capi prima di ordinare?",
+        "risposta": "Sì: in sede su appuntamento, in Viale del Toro 22 a Giugliano in Campania, oppure con foto, catalogo e un campionario spedito."
+      },
+      {
+        "domanda": "Posso avere camicie con il mio marchio?",
+        "risposta": "Sì. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto."
+      },
+      {
+        "domanda": "Lavorate anche con l'estero?",
+        "risposta": "Sì, serviamo rivenditori in Italia e all'estero."
+      },
+      {
+        "domanda": "Dove sono fatti i capi?",
+        "risposta": "I capi Endero sono fatti in Italia."
+      }
     ]
   },
   "chiusura": {
@@ -107,14 +234,34 @@
     "home": {
       "titolo": "Hai un negozio o un marchio?",
       "testo": "Vendi la collezione Endero, falla cucire con il tuo marchio o offri il su misura ai tuoi clienti.",
-      "link": { "testo": "Diventa rivenditore", "href": "/diventa-rivenditore/" }
+      "link": {
+        "testo": "Diventa rivenditore",
+        "href": "/diventa-rivenditore/"
+      }
     },
-    "storia": { "capitolo": "2.500", "testo": "Diventa rivenditore", "href": "/diventa-rivenditore/" },
-    "dove_siamo": { "titolo": "Rivenditori", "testo": "Fai richiesta", "link": "/diventa-rivenditore/" }
+    "storia": {
+      "capitolo": "2.500",
+      "testo": "Diventa rivenditore",
+      "href": "/diventa-rivenditore/"
+    },
+    "dove_siamo": {
+      "titolo": "Rivenditori",
+      "testo": "Fai richiesta",
+      "link": "/diventa-rivenditore/"
+    }
   },
   "servizi": [
-    { "nome": "Camicie uomo all'ingrosso", "descrizione": "La collezione Endero per i negozi: camicie e capi uomo fatti in Italia." },
-    { "nome": "Camicie con il marchio del cliente", "descrizione": "Camicie cucite da Endero con l'etichetta del negozio o del marchio del cliente." },
-    { "nome": "Camicie su misura per i clienti dei negozi", "descrizione": "Il negozio prende le misure ai suoi clienti, Endero cuce la camicia." }
+    {
+      "nome": "Camicie uomo all'ingrosso",
+      "descrizione": "La collezione Endero per i negozi: camicie e capi uomo fatti in Italia."
+    },
+    {
+      "nome": "Camicie con il marchio del cliente",
+      "descrizione": "Camicie cucite da Endero con l'etichetta del negozio o del marchio del cliente."
+    },
+    {
+      "nome": "Camicie su misura per i clienti dei negozi",
+      "descrizione": "Il negozio prende le misure ai suoi clienti, Endero cuce la camicia."
+    }
   ]
 }

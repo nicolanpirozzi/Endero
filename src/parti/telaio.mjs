@@ -34,7 +34,7 @@ export function piede(sito) {
     </nav>
     <div class="piede__colonna piede__sede">
       <h2 class="nascosto">${esc(s.titolo)}</h2>
-      <address>${s.righe.map((r) => `<span>${esc(r)}</span>`).join('')}</address>
+      <address>${s.righe.map((r) => `<span>${esc(r)}</span>`).join(' ')}</address>
       <p>${t(s.orari)}</p>
       <a href="${esc(sito.contatti.mappa)}" target="_blank" rel="noopener">${esc(s.indicazioni)}${icona.freccia}</a>
     </div>
@@ -57,10 +57,13 @@ export function piede(sito) {
  * @param {boolean} o.anteprima se vero, la pagina non va indicizzata
  * @param {string} o.classe     classe del <body>; `pagina-chiara` per le pagine senza foto in cima
  * @param {string} o.prenota    dove porta "Prenota la presa misure" nella testata
+ * @param {boolean} o.servizio  pagina di servizio (404, conferma): senza indirizzo canonico
  */
-export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', prenota }) {
+export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', prenota, servizio = false }) {
   const url = sito.dominio + percorso;
-  const immagine = meta.immagine ? sito.dominio + meta.immagine : '';
+  // in anteprima la scheda del link punta all'indirizzo provvisorio, così immagine e titolo si vedono; canonical resta su endero.it
+  const origine = (anteprima && risorse.origineAnteprima) || sito.dominio;
+  const immagine = meta.immagine ? origine + meta.immagine : '';
   const ld = dati.length
     ? `<script type="application/ld+json">${JSON.stringify(dati.length === 1 ? dati[0] : { '@context': 'https://schema.org', '@graph': dati.map(({ '@context': _, ...d }) => d) }).replace(/</g, '\\u003c')}</script>`
     : '';
@@ -72,16 +75,16 @@ export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], antepr
 <script>document.documentElement.classList.add('js')</script>
 <title>${esc(piano(meta.titolo))}</title>
 <meta name="description" content="${esc(piano(meta.descrizione))}">
-${anteprima ? '<meta name="robots" content="noindex, nofollow">\n' : ''}<link rel="canonical" href="${esc(url)}">
+${anteprima ? '<meta name="robots" content="noindex, nofollow">\n' : ''}${servizio ? '' : `<link rel="canonical" href="${esc(url)}">
 <link rel="alternate" hreflang="it" href="${esc(url)}">
-<link rel="alternate" hreflang="x-default" href="${esc(url)}">
+<link rel="alternate" hreflang="x-default" href="${esc(url)}">`}
 <meta name="theme-color" content="#0a1b45">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="it_IT">
 <meta property="og:site_name" content="${esc(sito.nome)}">
 <meta property="og:title" content="${esc(piano(meta.titolo))}">
 <meta property="og:description" content="${esc(piano(meta.descrizione))}">
-<meta property="og:url" content="${esc(url)}">
+${servizio ? '' : `<meta property="og:url" content="${esc(origine + percorso)}">`}
 ${immagine ? `<meta property="og:image" content="${esc(immagine)}">
 <meta property="og:image:alt" content="${esc(meta.immagine_alt || '')}">
 <meta name="twitter:card" content="summary_large_image">

@@ -18,3 +18,9 @@ database_id = "00000000-0000-0000-0000-000000000000"   # da sostituire dopo `wra
 
 [observability]
 enabled = true
+
+# Anteprima da mostrare prima della messa online: `npx wrangler deploy --env anteprima`.
+# Worker separato (endero-anteprima), senza database: lì i moduli avvisano che non salvano.
+[env.anteprima]
+name = "endero-anteprima"
+workers_dev = true

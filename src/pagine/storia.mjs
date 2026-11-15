@@ -7,7 +7,7 @@ export default function paginaStoria({ sito, testi: s, home: h, risorse, antepri
   const capitoli = s.capitoli.map((c) => `<article class="capitolo">
       <div class="capitolo__foto">${attesa({ nota: c.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
       <div class="capitolo__testo">
-        <p class="capitolo__etichetta" aria-hidden="true">${esc(c.etichetta)}</p>
+        <p class="capitolo__etichetta">${esc(c.etichetta)}</p>
         <h2 class="titolo">${t(c.titolo)}</h2>
         <p class="testo">${t(c.testo)}</p>
       </div>

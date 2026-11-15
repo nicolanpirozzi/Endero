@@ -40,7 +40,7 @@ export function suMisura(s, sito, { id = 'su-misura', gruppo = 'su-misura' } = {
       ${s.griglia.map((g) => `<li class="griglia__voce">
         ${attesa({ nota: g.foto, etichetta: sito.foto_in_arrivo })}
         <span class="etichetta">${esc(g.etichetta)}</span>
-        <div class="vetro griglia__scheda" aria-hidden="true">
+        <div class="vetro griglia__scheda">
           <p class="griglia__nome">${t(g.nome)}</p>
           <p class="griglia__dettaglio">${t(g.tessuto)}</p>
         </div>
@@ -199,8 +199,8 @@ export function datiBase(sito, meta) {
       '@id': `${d}/#sede`,
       name: sito.nome,
       url: `${d}/`,
-      image: `${d}${meta.immagine || '/film/manifesto.jpg'}`,
-      description: piano(meta.descrizione),
+      image: `${d}/film/manifesto.jpg`,
+      description: piano(sito.descrizione),
       telephone: c.whatsapp_internazionale,
       email: c.email,
       address: { '@type': 'PostalAddress', streetAddress: c.via, postalCode: c.cap, addressLocality: c.citta, addressRegion: c.provincia, addressCountry: c.paese },

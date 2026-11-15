@@ -1,7 +1,7 @@
 {
   "_nota": "Testi della pagina iniziale, in bozza. Fatti ammessi: solo quelli confermati in CLAUDE.md. Le parti tra [[ ]] sono segnaposto da confermare; le voci 'foto' descrivono la foto vera che ci andrà. I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti.",
   "meta": {
-    "titolo": "Endero · Camicie su misura fatte in Italia, dal 1996",
+    "titolo": "Endero, dal 1996 · Camicie su misura fatte in Italia",
     "descrizione": "Camicie su misura e abbigliamento uomo Endero, fatti in Italia. Presa misure su appuntamento a Giugliano in Campania, in Viale del Toro 22.",
     "immagine": "/film/manifesto.jpg",
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
@@ -66,7 +66,7 @@
   },
   "su_misura": {
     "titolo": "La camicia su misura",
-    "testo": "Collo, polsi, tessuto e vestibilità si scelgono a partire dalle tue misure. Ogni camicia Endero è fatta in Italia.",
+    "testo": "[[Collo, polsi, tessuto e vestibilità]] si scelgono a partire dalle tue misure. Ogni camicia Endero è fatta in Italia.",
     "link": {
       "testo": "Scopri il su misura",
       "href": "/camicie-su-misura/"
@@ -91,7 +91,7 @@
         "tessuto": "[[Tessuto]]"
       },
       {
-        "foto": "Camicione in flanella",
+        "foto": "Capo della collezione",
         "etichetta": "Pronta",
         "nome": "[[Nome del capo]]",
         "tessuto": "[[Tessuto]]"
@@ -148,7 +148,7 @@
   },
   "presa_misure": {
     "titolo": "La presa misure",
-    "testo": "Su appuntamento, nella nostra sede di Giugliano in Campania. Prendiamo le misure insieme, scegli tessuto e dettagli, e il sarto le ricontrolla prima del taglio.",
+    "testo": "Su appuntamento, nella nostra sede di Giugliano in Campania. Prendiamo le misure insieme e scegli tessuto e dettagli; il sarto ricontrolla le misure prima del taglio.",
     "foto": "Presa misure in sede, foto orizzontale",
     "scheda": {
       "titolo": "La tua scheda misure",
@@ -182,12 +182,12 @@
     "testo": "Tre passi, dalla prenotazione alla camicia finita.",
     "passi": [
       {
-        "titolo": "Prenoti",
-        "testo": "Scegli il giorno dal modulo o scrivici su WhatsApp: ti richiamiamo per confermare."
+        "titolo": "Prenotazione",
+        "testo": "Scegli il giorno dal modulo o scrivici su WhatsApp: ti ricontattiamo per confermare."
       },
       {
         "titolo": "Misure e tessuto",
-        "testo": "In sede prendiamo le misure e scegli tessuto, collo e polsi."
+        "testo": "In sede prendiamo le misure e scegli [[tessuto, collo e polsi]]."
       },
       {
         "titolo": "Cucitura",
@@ -203,7 +203,7 @@
       "nome": "Nome e cognome",
       "telefono": "Telefono o WhatsApp",
       "email": "Email (facoltativa)",
-      "giorno": "Giorno preferito",
+      "giorno": "Giorno preferito (facoltativo)",
       "fascia": "Fascia oraria",
       "fasce": [
         "Mattina",
@@ -232,7 +232,7 @@
       {
         "titolo": "[[Camicioni]]",
         "href": "/collezione/",
-        "foto": "Camicione in flanella"
+        "foto": "Capo della collezione"
       },
       {
         "titolo": "[[Su misura]]",

@@ -17,7 +17,7 @@ export default function paginaDoveSiamo({ sito, testi: p, risorse, anteprima }) 
         <ul class="contatti">
           ${c.voci.map((v) => {
             const fuori = /^https?:/.test(v.link) ? ' target="_blank" rel="noopener"' : '';
-            return `<li><a href="${esc(v.link)}"${fuori}><span class="contatti__nome">${esc(v.titolo)}</span><span class="contatti__valore">${esc(v.testo)}</span>${icona.freccia}</a></li>`;
+            return `<li><a href="${esc(v.link)}"${fuori}><span class="contatti__nome">${esc(v.titolo)}</span> <span class="contatti__valore">${esc(v.testo)}</span>${icona.freccia}</a></li>`;
           }).join('\n          ')}
         </ul>
       </div>

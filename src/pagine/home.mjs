@@ -12,7 +12,7 @@ function apertura(a) {
     <img class="apertura__manifesto" src="/film/manifesto.jpg" width="1920" height="1200" alt="Il logo Endero ricamato in filo bianco su tessuto blu" fetchpriority="high">
   </picture>
   <ol class="apertura__storia">
-    ${a.capitoli.map((c) => `<li><span class="apertura__cifra">${esc(c.cifra)}</span><span class="apertura__frase">${esc(c.frase)}</span></li>`).join('\n    ')}
+    ${a.capitoli.map((c) => `<li><span class="apertura__cifra">${esc(c.cifra)}</span> <span class="apertura__frase">${esc(c.frase)}</span></li>`).join('\n    ')}
   </ol>
   <div class="apertura__palco">
     <div class="apertura__tessuto"></div>
