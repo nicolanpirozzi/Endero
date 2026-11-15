@@ -115,36 +115,44 @@ function testata() {
   aggiorna();
 }
 
-// ---------------------------------------------------------------- menu del telefono
-// Senza script "Menu" è un link al piè di pagina. Con lo script diventa un pulsante che apre un <dialog> a tutto
-// schermo: il fuoco resta dentro, Esc lo chiude, la pagina sotto non scorre, scegliere una voce lo chiude.
-function menu() {
-  const dialogo = document.querySelector('[data-menu]');
-  const link = document.querySelector('[data-menu-apri]');
-  if (!dialogo || !link || typeof dialogo.showModal !== 'function') return;
+// ---------------------------------------------------------------- finestre: menu e "La tua camicia"
+// Senza script il pulsante è un link (al piè di pagina, alla pagina del su misura). Con lo script diventa un
+// pulsante che apre un <dialog>: il fuoco resta dentro, Esc lo chiude, la pagina sotto non scorre, scegliere
+// una voce lo chiude, e alla chiusura il fuoco torna sul pulsante.
+function finestra({ dialogo, link, classe, chiudiFuori = false }) {
+  if (!dialogo || !link || typeof dialogo.showModal !== 'function') return null;
   const pulsante = document.createElement('button');
   pulsante.type = 'button';
   pulsante.className = link.className;
-  pulsante.textContent = link.textContent;
+  pulsante.innerHTML = link.innerHTML;
   pulsante.setAttribute('aria-haspopup', 'dialog');
   pulsante.setAttribute('aria-expanded', 'false');
   pulsante.setAttribute('aria-controls', dialogo.id);
   link.replaceWith(pulsante);
 
-  const chiudi = () => { if (dialogo.open) dialogo.close(); };
+  let aperta = false;
+  // rimette a posto la pagina subito, senza aspettare l'evento "close" (che arriva dopo): così un link della
+  // finestra che porta più giù nella stessa pagina trova lo scorrimento già libero
+  const libera = () => {
+    if (!aperta) return;
+    aperta = false;
+    pulsante.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove(classe);
+    lenis?.start();
+  };
+  const chiudi = () => { libera(); if (dialogo.open) dialogo.close(); };
   pulsante.addEventListener('click', () => {
     dialogo.showModal();
+    aperta = true;
     pulsante.setAttribute('aria-expanded', 'true');
-    document.documentElement.classList.add('menu-aperto');
+    document.documentElement.classList.add(classe);
     lenis?.stop();
   });
-  // alla chiusura (pulsante, Esc o voce scelta) la pagina torna a scorrere e il fuoco torna su "Menu"
   dialogo.addEventListener('close', () => {
-    pulsante.setAttribute('aria-expanded', 'false');
-    document.documentElement.classList.remove('menu-aperto');
-    lenis?.start();
+    libera();
+    if (document.activeElement === document.body || dialogo.contains(document.activeElement)) pulsante.focus({ preventScroll: true });
   });
-  // il fuoco gira dentro il pannello: dall'ultima voce si torna alla prima, e viceversa
+  // il fuoco gira dentro la finestra: dall'ultima voce si torna alla prima, e viceversa
   dialogo.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;
     const tutti = [...dialogo.querySelectorAll('a[href], button:not([disabled])')];
@@ -152,10 +160,27 @@ function menu() {
     if (e.shiftKey && document.activeElement === primo) { e.preventDefault(); ultimo.focus(); }
     else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primo.focus(); }
   });
-  dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', chiudi);
   dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', chiudi));
+  // un clic sul fondo scurito, fuori dal riquadro, la chiude
+  if (chiudiFuori) dialogo.addEventListener('click', (e) => { if (e.target === dialogo) chiudi(); });
+  return { chiudi };
+}
+
+function menu() {
+  const dialogo = document.querySelector('[data-menu]');
+  const f = finestra({ dialogo, link: document.querySelector('[data-menu-apri]'), classe: 'menu-aperto' });
+  if (!f) return;
+  dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', f.chiudi);
   // se lo schermo si allarga (telefono girato, finestra ingrandita) il menu non serve più
-  matchMedia('(min-width: 810px)').addEventListener('change', (e) => { if (e.matches) chiudi(); });
+  matchMedia('(min-width: 810px)').addEventListener('change', (e) => { if (e.matches) f.chiudi(); });
+}
+
+// "La tua camicia": due strade, il configuratore online o la presa misure in sede
+function camicia() {
+  const dialogo = document.querySelector('[data-camicia]');
+  const f = finestra({ dialogo, link: document.querySelector('[data-camicia-apri]'), classe: 'dialogo-aperto', chiudiFuori: true });
+  if (!f) return;
+  dialogo.querySelector('[data-camicia-chiudi]')?.addEventListener('click', f.chiudi);
 }
 
 // ---------------------------------------------------------------- selettore delle sezioni
@@ -481,6 +506,7 @@ avvia('scorrimento', scorrimento);
 avvia('ancore', ancore);
 avvia('testata', testata);
 avvia('menu', menu);
+avvia('camicia', camicia);
 avvia('selettore', selettore);
 avvia('mestiere', mestiere);
 avvia('comparse', comparse);
