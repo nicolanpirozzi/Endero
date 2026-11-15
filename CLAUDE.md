@@ -16,7 +16,7 @@ Questo file è la memoria del progetto: si aggiorna con la skill `memoria`.
 - "Diventa rivenditore", per chi compra da Endero per rivendere: pagina costruita il 2026-11-15 (punto 9 della direzione creativa, testi in `contenuti/it/diventa-rivenditore.json`), da far approvare al proprietario. Non c'entra con il brand workwear, che resta fuori.
 - Configuratore: riaperto dal proprietario il 2026-11-15, da costruire a passi; ogni passo si mostra e si approva prima del successivo. Le decisioni del 2026-11-14 restano valide. Opzioni, prezzi e campi da compilare li manda lui: non inventarli e non costruire passi che non ha chiesto.
 - Fuori: il brand workwear / divise da lavoro del piano marketing. Non va citato né progettato. (proprietario, 2026-11-14)
-- Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it. L'anteprima è online dal 2026-11-15 su `https://endero-anteprima.orange-truth-81a7.workers.dev` (non indicizzabile, moduli che non salvano): il proprietario la manda al fondatore. Per aggiornarla: `URL_ANTEPRIMA=<indirizzo> node build/costruisci.mjs && npx wrangler deploy --config wrangler.anteprima.toml`.
+- Pubblicazione: prima su un link Cloudflare di anteprima, poi sul dominio endero.it. L'anteprima è online dal 2026-11-15 su `https://endero-anteprima.orange-truth-81a7.workers.dev` (non indicizzabile, moduli che non salvano): il proprietario la manda al fondatore. Dalla sera del 15 mostra la struttura a più pagine e il configuratore. Per aggiornarla: `URL_ANTEPRIMA=<indirizzo> node build/costruisci.mjs && npx wrangler deploy --config wrangler.anteprima.toml`.
 
 ## Tecnologie
 
@@ -83,6 +83,7 @@ Sito e aspetto
 - 2026-11-15 · Pagine interne costruite con i pezzi della pagina iniziale (`src/parti/sezioni.mjs`) e approvate dal proprietario: su misura, collezione, storia (poi sostituita da cultura e artigianato), dove siamo, privacy, cookie. I capi della collezione si aggiungono in `contenuti/it/prodotti.json` e la loro pagina si crea da sola; niente carrello, si chiede su WhatsApp.
 - 2026-11-15 · Il fondatore ha visto l'anteprima: "gli piace e si aspetta un lavoro di alto livello". Da qui il sito a più pagine (proprietario: "un solo one-pager diventa un po' complesso"): su misura con configuratore e rivenditori hanno ciascuno la propria pagina. Scartata: pagina unica.
 - 2026-11-15 · Pagina iniziale nuova: dopo l'apertura prima i prodotti, poi "Cultura e artigianato" (parole sue: "Cultura ed Artigianato") con foto che carica lui, al posto della storia. Perché: il fondatore non ha foto d'archivio né un racconto. Scartati: prima la storia, storia inventata (risposta nostra: no), sei domande al fondatore.
+- 2026-11-15 · Struttura a più pagine costruita e messa sull'anteprima con l'ok del proprietario ("Sì, aggiorna l'anteprima"), sui video della pagina iniziale e le schermate dei rivenditori. Restano da fargli vedere le scelte prese costruendo: punto 10 della direzione creativa.
 - 2026-11-15 · Uso della skill `design-taste-frontend`: "tieni l'approvato, aggiungi il meglio" (proprietario). Scartati: seguirla fino in fondo togliendo scorrimento morbido, comparse e carosello; confronto in video.
 - 2026-11-14 · La collezione parte come vetrina, il carrello arriva dopo. Prodotti come dati (prezzo, varianti, taglie) così la vendita si aggiunge senza rifare le schede.
 
@@ -112,6 +113,7 @@ Configuratore (riaperto il 2026-11-15, a passi)
 
 - 2026-11-15 · Passo 1 (parole del proprietario): "il 3D di una camicia sospesa in aria che si muove quando ci passo sopra con il mouse. Accanto una tabella glass con le info che poi ti dirò e che il cliente deve compilare", con un caricamento. Riferimento per il 3D: `beat.noomoagency.com`. Qui il 3D è in diretta nel browser; per l'apertura resta scartato.
 - 2026-11-15 · La camicia 3D parte da un modello già fatto caricato dal proprietario ("credo sia troppo complicato partire da zero, parti da questo già fatto e miglioralo"). Scartato: modellarla noi con Blender, che avevamo cominciato.
+- 2026-11-15 · Sulla camicia il proprietario ha scelto le braccia più basse (20 gradi, sul confronto a immagini) e un movimento più deciso al passaggio del mouse. Il passo 1 è online in `/camicie-su-misura/configuratore/` perché lo provi dal vivo: non è ancora approvato e non è collegato dal resto del sito. Scartati: braccia aperte come nel modello, cuciture visibili (non scelte).
 - 2026-11-15 · Chi ordina da casa dà solo le misure del corpo. Scartati: misurare una camicia che sta bene, scelta tra i due modi. (proprietario)
 - 2026-11-15 · Opzioni (tessuti, colli, polsi, vestibilità) e prezzi li manda il proprietario. Scartati: proposta nostra da correggere, modulo per il fondatore.
 - 2026-11-14 · Si chiude con un pagamento online: Stripe, importo intero all'ordine, pagina di pagamento ospitata da Stripe. Il sarto verifica le misure prima del taglio e scrive al cliente su WhatsApp se qualcosa non torna.
