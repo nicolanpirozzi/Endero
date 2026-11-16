@@ -34,7 +34,12 @@
   top: 0;
   height: 100svh;
   min-height: 420px;
-  touch-action: pan-y;                 /* col dito: di lato si tocca la camicia, in verticale scorre la pagina */
+  /* col dito: di lato si tocca la camicia, in verticale scorre la pagina, con due dita si ingrandisce */
+  touch-action: pan-y pinch-zoom;
+  /* niente menu "Salva immagine" né selezione tenendo premuto: qui il dito tocca la camicia */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Immagine ferma e film occupano lo stesso posto. La parete con la luce della finestra fa da sfondo anche al riquadro
@@ -54,23 +59,26 @@
   mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
 
-/* Una scena si vede solo mentre va e dopo, ferma sull'ultimo fotogramma, che è la camicia a riposo.
-   Compare in un attimo: così un'eventuale differenza di colore tra l'immagine e il video non fa scalino. */
+/* Una scena si vede solo mentre va. Compare in un attimo, così un'eventuale differenza di colore tra l'immagine e il
+   video non fa scalino; a scena finita lascia il posto all'immagine ferma più piano, perché sugli schermi fitti
+   l'immagine è più nitida del film e il passaggio non deve notarsi. */
 .configura__film {
   opacity: 0;
-  transition: opacity 180ms linear;
+  transition: opacity 600ms ease-out;
   pointer-events: none;
 }
 
 .configura__film--vivo {
   opacity: 1;
+  transition-duration: 180ms;
 }
 
 /* ------------------------------------------------------------------ invito a passarci sopra */
 
 .configura__invito {
   position: absolute;
-  left: var(--posto);
+  /* sotto la camicia: stessa formula del fotogramma, più la distanza della camicia dal suo bordo sinistro */
+  left: calc(min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia))) + var(--largo) * var(--camicia));
   bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 1;
   display: flex;
@@ -93,7 +101,7 @@
   height: 14px;
 }
 
-.js .configura__palco[data-film] .configura__invito {
+.configura__palco[data-viva] .configura__invito {
   opacity: 0.8;
   transition-delay: 1400ms;
 }
@@ -322,22 +330,24 @@
 
 /* ------------------------------------------------------------------ telefono */
 
-/* Sotto i 960 px la colonna della camicia sarebbe più stretta della camicia: camicia sopra, riquadro sotto. */
-@media (max-width: 959px) {
+/* Camicia sopra e riquadro sotto, quando la colonna della camicia sarebbe più stretta della camicia: sotto i 960 px,
+   e nelle finestre alte e strette (un tablet o un monitor in verticale), dove la camicia, alta quanto lo schermo,
+   finirebbe sotto il riquadro. */
+@media (max-width: 959px), (max-aspect-ratio: 1/1), (max-width: 1279px) and (max-aspect-ratio: 6/5) {
   .configura {
     display: block;
     padding: 0 0 96px;
   }
 
-  /* il fotogramma si vede intero in altezza, centrato sulla camicia; in basso sfuma nel blu della pagina.
-     Se lo schermo è largo e basso il fotogramma è più alto del palco: si taglia più sotto che sopra. */
+  /* il fotogramma si vede intero in altezza, centrato sulla camicia, e il palco è alto quanto lui;
+     in basso sfuma nel blu della pagina */
   .configura__palco {
     --alto: max(62svh, 360px, 55.6vw);
-    --su: calc((100% - var(--alto)) * 0.3);
+    --su: 0px;
     --posto: 50%;
     position: relative;
-    height: 62svh;
-    min-height: 360px;
+    height: var(--alto);
+    min-height: 0;
     overflow: clip;
   }
 
@@ -374,6 +384,10 @@
     object-position: center 85%;
   }
 
+  .configura__invito {
+    left: 50%;
+  }
+
   /* a 320 px due colonne di misure non stanno comode: si passa a una */
   @media (max-width: 359px) {
     .configura__campi {
@@ -386,6 +400,15 @@
   .configura__film,
   .configura__invito {
     transition: none;
+  }
+}
+
+/* Safari 15 non conosce overflow: clip: lì il fotogramma si taglia con hidden (la camicia non resta più ferma
+   mentre il riquadro scorre, ma la pagina non sporge di lato). */
+@supports not (overflow: clip) {
+  .configura,
+  .configura__palco {
+    overflow: hidden;
   }
 }
 

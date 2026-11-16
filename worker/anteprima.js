@@ -30,7 +30,13 @@ function conIntestazioni(risposta, percorso, stato) {
  */
 async function aPezzi(request, risposta) {
   const chiesto = /^bytes=(\d*)-(\d*)$/.exec((request.headers.get('Range') || '').trim());
-  if (!chiesto || risposta.status !== 200 || (chiesto[1] === '' && chiesto[2] === '')) return risposta;
+  if (risposta.status !== 200) return risposta;
+  if (!chiesto || (chiesto[1] === '' && chiesto[2] === '')) {
+    // nessun pezzo chiesto, o una richiesta che non si sa ritagliare (più intervalli): il file intero, che è lecito
+    const tutta = new Response(risposta.body, risposta);
+    tutta.headers.set('Accept-Ranges', 'bytes');
+    return tutta;
+  }
   const tutto = await risposta.arrayBuffer(), n = tutto.byteLength;
   let da, a;
   if (chiesto[1] === '') { da = Math.max(0, n - Number(chiesto[2])); a = n - 1; }            // "gli ultimi N byte"
@@ -62,7 +68,10 @@ export default {
     // _redirects qui non viene caricato (vedi wrangler.anteprima.toml): gli stessi reindirizzamenti li fa il Worker
     const altrove = destinazione(request.url);
     if (altrove) return new Response(null, { status: 301, headers: { Location: altrove, 'X-Robots-Tag': 'noindex, nofollow' } });
-    const evento = { request, waitUntil: ctx.waitUntil.bind(ctx) };
+    // all'archivio si chiede sempre il file intero: il pezzo lo ritaglia aPezzi, uguale con e senza cache
+    const intera = new Request(request);
+    intera.headers.delete('Range');
+    const evento = { request: intera, waitUntil: ctx.waitUntil.bind(ctx) };
     const opzioni = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: manifest, cacheControl: { bypassCache: false, edgeTTL: 3600, browserTTL: null } };
     try {
       return conIntestazioni(await aPezzi(request, await getAssetFromKV(evento, opzioni)), url.pathname);

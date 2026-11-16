@@ -8,78 +8,125 @@ const palco = document.querySelector('[data-film]');
 if (palco) avvia(palco);
 
 function avvia(palco) {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) return;
   const scene = {};
   for (const v of palco.querySelectorAll('video[data-scena]')) scene[v.dataset.scena] = v;
   if (!scene['da-sinistra'] || !scene['da-destra']) return;
-
-  // sul telefono il film è ritagliato in verticale intorno alla camicia: si scarica solo quello che serve
-  const stretto = matchMedia('(max-width: 599px)');
+  const tutte = Object.values(scene);
+  const ferma = palco.querySelector('.configura__ferma');
   const VIVO = 'configura__film--vivo';
-  const carica = () => {
-    for (const v of Object.values(scene)) {
-      const file = stretto.matches ? v.dataset.telefono : v.dataset.computer;
-      if (v.getAttribute('src') !== file) { v.classList.remove(VIVO); v.src = file; v.load(); }
-    }
-  };
-  carica();
-  stretto.addEventListener('change', carica);
 
   // Una scena dura otto secondi: il tocco, il dondolio lento che si smorza, il ritorno a riposo. Un tocco nuovo può
   // partire quando la camicia è quasi ferma (dopo 6,8 secondi si sposta ormai di pochi millimetri): prima no, o la
   // camicia salterebbe da dov'è alla posizione di riposo.
   const QUASI_FERMA = 6.8;
-  let attiva = null;
+  let attiva = null, guardia = 0, daUtente = false;
+
+  /** Rimette la camicia a riposo: l'immagine ferma torna in vista e un tocco nuovo può partire. */
+  const riposa = (v) => {
+    v.classList.remove(VIVO);
+    if (attiva === v) { attiva = null; clearTimeout(guardia); }
+  };
+
+  // Con il movimento ridotto o il risparmio dati la camicia resta ferma e i film non si scaricano; la preferenza può
+  // cambiare a pagina aperta. Sul telefono il film è ritagliato in verticale: si scarica solo quello che serve.
+  // `data-viva` dice al foglio di stile che la camicia risponde: solo allora compare l'invito a passarci sopra.
+  const ridotto = matchMedia('(prefers-reduced-motion: reduce)'), stretto = matchMedia('(max-width: 599px)');
+  const arma = () => {
+    if (ridotto.matches || navigator.connection?.saveData) {
+      for (const v of tutte) { v.pause(); riposa(v); }
+      delete palco.dataset.viva;
+      return;
+    }
+    for (const v of tutte) {
+      const file = stretto.matches ? v.dataset.telefono : v.dataset.computer;
+      if (v.getAttribute('src') !== file) { riposa(v); v.src = file; v.load(); }
+    }
+    palco.dataset.viva = '';
+  };
+  arma();
+  ridotto.addEventListener('change', arma);
+  stretto.addEventListener('change', arma);
+
   /**
-   * Fa partire il tocco di una scena, se quello di prima è ormai passato.
+   * Fa partire il tocco di una scena, se quello di prima è ormai passato. `gesto`: l'ha chiesto il visitatore.
    * Il film compare quando sta davvero andando: su iPhone i video non si scaricano finché non li si fa partire,
    * e nel frattempo deve restare l'immagine ferma.
    */
-  function tocca(nome) {
+  function tocca(nome, gesto) {
+    if (!('viva' in palco.dataset)) return false;
     const v = scene[nome];
     if (attiva && !attiva.ended && !attiva.paused && attiva.currentTime < QUASI_FERMA) return false;
-    if (attiva && attiva !== v) { attiva.pause(); attiva.classList.remove(VIVO); }
+    if (attiva && attiva !== v) { const prima = attiva; attiva = null; prima.pause(); prima.classList.remove(VIVO); }
+    if (v.error) v.load();
     if (v.readyState >= 1) v.currentTime = 0;
-    attiva = v;
+    attiva = v; daUtente = gesto;
     if (v.readyState >= 3) v.classList.add(VIVO);
-    v.play().catch(() => { if (attiva === v) attiva = null; });        // il browser non l'ha lasciata partire: si riprova al prossimo gesto
+    // se la scena non arriva in fondo (la rete cade, il sistema la sospende) la camicia non deve restare bloccata
+    clearTimeout(guardia);
+    guardia = setTimeout(() => { if (attiva === v && !v.ended) v.pause(); }, 14000);
+    // il browser può non lasciarla partire (risparmio energetico, riproduzione automatica spenta): resta l'immagine
+    // ferma, e si riprova al prossimo gesto vero, cioè un clic o un tocco
+    v.play().catch(() => riposa(v));
     return true;
   }
-  for (const v of Object.values(scene)) {
-    v.addEventListener('playing', () => { if (attiva === v) v.classList.add(VIVO); });
+  for (const v of tutte) {
+    v.addEventListener('playing', () => {
+      if (attiva !== v) return;
+      v.classList.add(VIVO);
+      if (daUtente) palco.dataset.toccata = '';                          // l'invito ha fatto il suo lavoro
+    });
     // finita la scena si torna all'immagine ferma, che è identica al suo ultimo fotogramma
     v.addEventListener('ended', () => v.classList.remove(VIVO));
+    v.addEventListener('pause', () => { if (!v.ended) riposa(v); });      // fermata a metà: dal sistema o dalla guardia
+    v.addEventListener('error', () => riposa(v));
   }
+  // tornando alla pagina con "Indietro" il browser può ridarla com'era, con una scena ferma a metà
+  addEventListener('pageshow', (e) => { if (e.persisted) for (const v of tutte) { v.pause(); riposa(v); } });
 
-  // Il mouse: conta solo quando passa sulla camicia, che nel fotogramma largo sta tra il 25 e il 54% della larghezza
-  // e tra il 14 e il 95% dell'altezza (in quello verticale del telefono, tra il 16 e l'84% della larghezza).
-  // Il verso in cui si muove dice da che lato arriva la mano.
-  let ultimaX = null;
-  const ferma = palco.querySelector('.configura__ferma');
-  const sullaCamicia = (e) => {
+  // Dove sta la camicia: nel fotogramma largo tra il 25 e il 54% della larghezza e tra il 14 e il 95% dell'altezza
+  // (in quello verticale del telefono, tra il 16 e l'84% della larghezza).
+  const posto = (e) => {
     const r = ferma.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-    return y > 0.14 && y < 0.95 && (stretto.matches ? x > 0.16 && x < 0.84 : x > 0.25 && x < 0.54);
+    const [da, a] = stretto.matches ? [0.16, 0.84] : [0.25, 0.54];
+    return { sopra: y > 0.14 && y < 0.95 && x > da && x < a, aSinistra: x < (da + a) / 2 };
   };
+  /** Da che lato arriva la mano: lo dice il verso del movimento; se è quasi verticale, il lato in cui ci si trova. */
+  const lato = (dx, dy, aSinistra) => ((Math.abs(dx) >= 3 && Math.abs(dx) >= Math.abs(dy) * 0.5 ? dx > 0 : aSinistra) ? 'da-sinistra' : 'da-destra');
+
+  // Il mouse. Il tocco parte quando il mouse arriva sulla camicia; se c'è già sopra, quando si sposta di qualche
+  // pixel dal punto in cui stava (anche pianissimo: i pixel si contano dal punto fermo, non da un evento all'altro).
+  let fuori = null, fermo = null;
   palco.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
-    if (ultimaX !== null && sullaCamicia(e) && Math.abs(e.clientX - ultimaX) >= 2) {
-      if (tocca(e.clientX > ultimaX ? 'da-sinistra' : 'da-destra')) palco.dataset.toccata = '';
-    }
-    ultimaX = e.clientX;
+    const qui = [e.clientX, e.clientY], p = posto(e);
+    if (!p.sopra) { fuori = qui; fermo = null; return; }
+    const da = fuori || fermo;
+    if (!da) { fermo = qui; return; }
+    const dx = qui[0] - da[0], dy = qui[1] - da[1];
+    if (!fuori && Math.hypot(dx, dy) < 6) return;
+    fuori = null;
+    tocca(lato(dx, dy, p.aSinistra), true);
+    fermo = qui;
   });
-  palco.addEventListener('pointerleave', () => { ultimaX = null; });
+  palco.addEventListener('pointerleave', () => { fuori = null; fermo = null; });
 
-  // Il dito: una strisciata dà il verso; un tocco fermo vale come una mano che arriva dal lato in cui si tocca.
+  // Il dito: una strisciata di lato dà il verso; un tocco fermo vale come una mano che arriva dal lato in cui si
+  // tocca. Una strisciata in verticale è la pagina che scorre, e non conta.
   let giu = null;
-  palco.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') giu = e.clientX; });
+  palco.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') giu = [e.clientX, e.clientY]; });
   palco.addEventListener('pointerup', (e) => {
-    if (e.pointerType === 'mouse' || giu === null) return;
-    const corsa = e.clientX - giu, r = palco.getBoundingClientRect();
-    const daSinistra = Math.abs(corsa) > 12 ? corsa > 0 : e.clientX < r.left + r.width / 2;
-    if (tocca(daSinistra ? 'da-sinistra' : 'da-destra')) palco.dataset.toccata = '';
+    if (e.pointerType === 'mouse' || !giu) return;
+    const dx = e.clientX - giu[0], dy = e.clientY - giu[1], r = palco.getBoundingClientRect();
     giu = null;
+    if (Math.abs(dy) > Math.max(10, Math.abs(dx))) return;
+    tocca(Math.abs(dx) > 12 ? (dx > 0 ? 'da-sinistra' : 'da-destra') : (e.clientX < r.left + r.width / 2 ? 'da-sinistra' : 'da-destra'), true);
   });
-  palco.addEventListener('pointercancel', () => { giu = null; });         // il dito ha fatto scorrere la pagina
+  palco.addEventListener('pointercancel', () => { giu = null; });
+  // Un clic sulla camicia è un gesto vero: fa partire la scena anche dove il browser non lascia partire i video da soli.
+  palco.addEventListener('click', (e) => {
+    const p = posto(e);
+    if (p.sopra) tocca(p.aSinistra ? 'da-sinistra' : 'da-destra', true);
+  });
 
   // Appena è pronta, la camicia si muove una volta da sola: dice che è viva. Solo se la si sta guardando.
   let salutata = false;
@@ -87,7 +134,7 @@ function avvia(palco) {
     if (salutata || document.hidden) return;
     const r = palco.getBoundingClientRect();
     if (r.bottom < 80 || r.top > innerHeight - 80) return;
-    salutata = tocca('da-sinistra');
+    salutata = tocca('da-sinistra', false);
   };
   scene['da-sinistra'].addEventListener('canplaythrough', () => setTimeout(saluta, 700), { once: true });
   setTimeout(saluta, 2500);                                               // su iPhone "pronta" non arriva mai da sola
