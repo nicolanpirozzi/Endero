@@ -23,6 +23,30 @@ function conIntestazioni(risposta, percorso, stato) {
   return r;
 }
 
+/**
+ * Safari chiede i video a pezzi (intestazione Range) e non li fa partire se il server risponde con il file intero.
+ * L'archivio KV risponde a pezzi solo quando il file è già nella cache di Cloudflare: la prima volta no. Qui si
+ * ritaglia a mano il pezzo chiesto. I file sono piccoli (un video pesa meno di un megabyte), si possono leggere interi.
+ */
+async function aPezzi(request, risposta) {
+  const chiesto = /^bytes=(\d*)-(\d*)$/.exec((request.headers.get('Range') || '').trim());
+  if (!chiesto || risposta.status !== 200 || (chiesto[1] === '' && chiesto[2] === '')) return risposta;
+  const tutto = await risposta.arrayBuffer(), n = tutto.byteLength;
+  let da, a;
+  if (chiesto[1] === '') { da = Math.max(0, n - Number(chiesto[2])); a = n - 1; }            // "gli ultimi N byte"
+  else { da = Number(chiesto[1]); a = chiesto[2] === '' ? n - 1 : Math.min(Number(chiesto[2]), n - 1); }
+  const intestazioni = new Headers(risposta.headers);
+  intestazioni.set('Accept-Ranges', 'bytes');
+  if (da >= n || da > a) {
+    intestazioni.set('Content-Range', `bytes */${n}`);
+    intestazioni.delete('Content-Length');
+    return new Response(null, { status: 416, headers: intestazioni });
+  }
+  intestazioni.set('Content-Range', `bytes ${da}-${a}/${n}`);
+  intestazioni.set('Content-Length', String(a - da + 1));
+  return new Response(tutto.slice(da, a + 1), { status: 206, headers: intestazioni });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -41,7 +65,7 @@ export default {
     const evento = { request, waitUntil: ctx.waitUntil.bind(ctx) };
     const opzioni = { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: manifest, cacheControl: { bypassCache: false, edgeTTL: 3600, browserTTL: null } };
     try {
-      return conIntestazioni(await getAssetFromKV(evento, opzioni), url.pathname);
+      return conIntestazioni(await aPezzi(request, await getAssetFromKV(evento, opzioni)), url.pathname);
     } catch (errore) {
       if (errore instanceof MethodNotAllowedError) return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'GET, HEAD' } });
       if (!(errore instanceof NotFoundError)) return new Response('Errore del server', { status: 500 });

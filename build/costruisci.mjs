@@ -57,10 +57,10 @@ mkdirSync(DIST, { recursive: true });
 cpSync(join(RADICE, 'public'), DIST, { recursive: true });
 
 // 2 · script e stili, con l'impronta nel nome così si possono tenere in cache per sempre
-// il motore della camicia 3D (three.js) e il foglio del configuratore si caricano solo nella sua pagina
+// lo script e il foglio del configuratore si caricano solo nella sua pagina
 const ENTRATE = {
   sito: 'src/sito.js', apertura: 'src/apertura/apertura.js', stile: 'src/stili/sito.css',
-  camicia3d: 'src/configuratore/camicia3d.js', configuratore: 'src/configuratore/configuratore.js', 'stile-configuratore': 'src/configuratore/configuratore.css',
+  configuratore: 'src/configuratore/configuratore.js', 'stile-configuratore': 'src/configuratore/configuratore.css',
 };
 const esito = await build({
   absWorkingDir: RADICE,
@@ -108,21 +108,21 @@ function genera(percorso, html) {
   pagine.push(percorso);
 }
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
-// configuratore: se il file del modello non c'è (non sta nel repository) la pagina esce con la sola immagine ferma
-// il 3D è fatto di cinque file che vanno insieme: il modello, le sue misure, il telaio della stoffa, la luce, le cuciture
-const fileCamicia = ['camicia.glb', 'camicia.json', 'telaio.json', 'luce.webp', 'cuciture.webp'].map((f) => join(RADICE, 'public/camicia', f));
-const fermaCamicia = join(RADICE, 'public/camicia/camicia.webp');
-// l'immagine ferma porta la sua versione nell'indirizzo: il browser la tiene in memoria una settimana, e rifatta va riscaricata
-const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0,
-  ferma: `/camicia/camicia.webp?v=${createHash('sha256').update(readFileSync(fermaCamicia)).digest('hex').slice(0, 10)}` };
-if (fileCamicia.every((f) => existsSync(f))) {
-  const impronta = createHash('sha256');
-  for (const f of fileCamicia) impronta.update(readFileSync(f));
-  camicia.modello = `/camicia/camicia.glb?v=${impronta.digest('hex').slice(0, 10)}`;      // la stessa versione vale per tutti e cinque
-  camicia.peso = statSync(fileCamicia[0]).size;
-} else {
-  console.warn('  attenzione: in public/camicia/ mancano i file del 3D, il configuratore mostra solo la camicia ferma (vedi CLAUDE.md)');
+// configuratore: la camicia è un film calcolato prima (camicia/film/). L'immagine ferma c'è sempre; le scene di vento,
+// se i loro file mancano, la pagina ne fa a meno. Ogni file porta la sua versione nell'indirizzo: il browser li tiene
+// in memoria una settimana, e rifatti vanno riscaricati.
+const conVersione = (nome) => {
+  const file = join(RADICE, 'public/camicia', nome);
+  return existsSync(file) ? `/camicia/${nome}?v=${createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 10)}` : '';
+};
+const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore,
+  ferma: { computer: conVersione('ferma.webp'), computer2x: conVersione('ferma-2x.webp'), telefono: conVersione('ferma-telefono.webp'), telefono2x: conVersione('ferma-telefono-2x.webp') }, scene: {} };
+for (const nome of ['da-sinistra', 'da-destra']) {
+  const computer = conVersione(`${nome}.mp4`), telefono = conVersione(`${nome}-telefono.mp4`);
+  if (computer && telefono) camicia.scene[nome] = { computer, telefono };
 }
+if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
+if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene di vento, il configuratore mostra solo la camicia ferma');
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
 const visti = new Set();

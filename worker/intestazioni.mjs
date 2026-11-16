@@ -7,9 +7,7 @@ export const IMPRONTA_SCRIPT_IN_LINEA = 'sha256-Du+OJKJSbdUgz5nrHeWWINvez6XKDDU/
 
 export const CSP = [
   "default-src 'self'",
-  // 'wasm-unsafe-eval': il file della camicia 3D si decomprime con un piccolo modulo WebAssembly dentro three.js.
-  // Permette solo quello: il codice JavaScript scritto in una stringa resta vietato.
-  `script-src 'self' '${IMPRONTA_SCRIPT_IN_LINEA}' 'wasm-unsafe-eval' https://challenges.cloudflare.com`,   // Turnstile, quando ci saranno le chiavi
+  `script-src 'self' '${IMPRONTA_SCRIPT_IN_LINEA}' https://challenges.cloudflare.com`,   // Turnstile, quando ci saranno le chiavi
   "style-src 'self'",
   "style-src-attr 'unsafe-inline'",
   "img-src 'self' data:",

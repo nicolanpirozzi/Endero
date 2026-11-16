@@ -1,7 +1,8 @@
-// Pagina /camicie-su-misura/configuratore/. Passo 1: la camicia 3D sospesa e il riquadro in vetro
-// (docs/direzione-creativa.md, punto 12). Il 3D lo avvia src/configuratore/configuratore.js; senza script,
-// senza WebGL o senza il file del modello resta l'immagine ferma della camicia.
-import { esc, t, logo } from '../parti/base.mjs';
+// Pagina /camicie-su-misura/configuratore/. Passo 1: la camicia appesa e il riquadro in vetro
+// (docs/direzione-creativa.md, punto 12). La camicia è un film calcolato prima (camicia/film/): un'immagine ferma e
+// due scene di vento che src/configuratore/configuratore.js fa partire quando il mouse le passa sopra.
+// Senza script resta l'immagine ferma.
+import { esc, t } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 import { datiBase } from '../parti/sezioni.mjs';
 
@@ -54,24 +55,27 @@ function gruppo(g, s) {
 }
 
 /**
- * @param {object} o.camicia  { modello, peso, motore, ferma }: indirizzo e peso del 3D, indirizzo dell'immagine ferma; `modello` vuoto se il file non c'è
+ * @param {object} o.camicia  { stile, script, ferma: { computer, computer2x, telefono, telefono2x }, scene: { 'da-sinistra': { computer, telefono }, 'da-destra': … } }:
+ *   gli indirizzi dell'immagine ferma e delle scene di vento (scene vuoto se i file non ci sono)
  */
 export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, anteprima }) {
   const p = c.palco, s = c.scheda;
-  const dati3d = camicia.modello
-    ? ` data-camicia="${esc(camicia.modello)}" data-motore="${esc(camicia.motore)}" data-peso="${esc(camicia.peso)}"`
+  // l'immagine ferma c'è sempre, e per gli schermi fitti anche a grandezza doppia, se il file c'è
+  const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');
+  // le due scene di vento solo se i loro file ci sono
+  const video = (nome) => camicia.scene[nome]
+    ? `<video class="configura__film" data-scena="${nome}" data-computer="${esc(camicia.scene[nome].computer)}" data-telefono="${esc(camicia.scene[nome].telefono)}" muted playsinline preload="auto" tabindex="-1" aria-hidden="true"></video>`
     : '';
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
-  <div class="configura__palco"${dati3d}>
-    <img class="configura__ferma" src="${esc(camicia.ferma)}" width="1024" height="1312" alt="${esc(p.alt)}" fetchpriority="high">
-    <div class="configura__tela" data-tela></div>
-    <div class="configura__carica" role="status" aria-live="polite" aria-label="${esc(p.caricamento)}">
-      ${logo('completo')}
-      <div class="configura__avanzamento"></div>
-      <span class="configura__percento" data-percento>0%</span>
-    </div>
-    <p class="configura__invito" aria-hidden="true"><svg viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3 2 7l4 4M20 3l4 4-4 4M2 7h22"/></svg>${esc(p.invito)}</p>
+  <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}>
+    <picture>
+      <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 676, camicia.ferma.telefono2x))}" sizes="100vw" width="676" height="900">
+      <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 124vh, max(180vh, 90vw)" width="1800" height="900" alt="${esc(p.alt)}" fetchpriority="high">
+    </picture>
+    ${video('da-sinistra')}
+    ${video('da-destra')}
+    <p class="configura__invito" aria-hidden="true"><svg viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3 2 7l4 4M20 3l4 4-4 4M2 7h22"/></svg><span class="configura__invito-mouse">${esc(p.invito)}</span><span class="configura__invito-dito">${esc(p.invito_dito)}</span></p>
   </div>
   <form class="vetro configura__scheda" aria-labelledby="configura-titolo" data-modulo data-non-invia novalidate>
     <h1 class="titolo configura__titolo" id="configura-titolo">${t(s.titolo)}</h1>

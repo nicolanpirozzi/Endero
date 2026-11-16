@@ -1,15 +1,14 @@
-// La stoffa della camicia: fisica vera, calcolata nel browser a ogni fotogramma.
+// La stoffa della camicia: fisica vera, calcolata punto per punto.
 //
-// Non si simula la camicia intera (140.000 triangoli) ma il suo telaio: la stessa camicia semplificata a circa
-// 2.800 punti (`telaio.json`, lo prepara `camicia/prepara.py`). Ogni punto del telaio ha una massa, una velocità
-// e i suoi vincoli: i fili non si allungano, il tessuto si piega ma ricorda la sua forma, collo e spalle sono
-// appesi. L'aria spinge ogni lembo solo per la parte che lo investe di piatto e lo frena quando si muove: è
-// questo, non un'onda disegnata, che fa nascere le pieghe e le fa spegnere senza rimbalzi.
-// La camicia vera segue il telaio: ogni suo punto sta su un triangolo del telaio e si sposta con lui (vedi `lega`
-// in camicia3d.js).
+// Non si simula la camicia intera ma il suo telaio: la stessa camicia semplificata a qualche migliaio di punti
+// (`telaio.json`, lo prepara `telaio.py`). Ogni punto del telaio ha una massa, una velocità e i suoi vincoli: i fili
+// non si allungano, il tessuto si piega ma ricorda la sua forma, ciò che tocca la gruccia è appeso. L'aria spinge
+// ogni lembo solo per la parte che lo investe di piatto e lo frena quando si muove: è questo che fa nascere le
+// pieghe e le fa spegnere senza rimbalzi. La camicia vera segue il telaio punto per punto (vedi `lega` in muovi.mjs).
 //
-// Questo file non conosce three.js né il browser: si può provare da solo con Node (tools/prova-stoffa.js).
-// Il proprietario ha bocciato le onde ad anello e l'oscillazione a molla ("non è naturale"): qui non ci sono.
+// È nata per il 3D in diretta nel browser, che il proprietario ha bocciato il 17 novembre 2026; ora serve a calcolare
+// il movimento del film (`muovi.mjs`). Non conosce Blender né il browser: gira con Node.
+// Il proprietario ha bocciato anche le onde ad anello e l'oscillazione a molla ("non è naturale"): qui non ci sono.
 
 const PASSO = 1 / 300;            // passo di calcolo, in secondi: piccolo, così i fili restano inestensibili
 const PASSO_LENTO = 1 / 150;      // su un telefono lento: metà dei conti, i fili cedono appena di più

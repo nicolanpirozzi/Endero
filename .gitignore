@@ -12,13 +12,10 @@ __pycache__/
 # lavoro della skill design-taste-frontend
 .taste-skill/
 
-# camicia 3D: il modello è materiale comprato dal proprietario, resta fuori finché il repository è pubblico
-# (si rigenera con camicia/prepara.py e camicia/comprimi.mjs dal file originale). Lo stesso vale per ciò che ne deriva:
-# il telaio della stoffa e le immagini di luce e cuciture stese sul suo cartamodello
-public/camicia/*.glb
-public/camicia/telaio.json
-public/camicia/luce.webp
-public/camicia/cuciture.webp
+# camicia del configuratore: il file Blender comprato dal proprietario non sta mai nel repository (la licenza vieta di
+# ridistribuirlo). Qui stanno solo gli strumenti (camicia/film/) e le immagini e i video calcolati (public/camicia/).
+*.blend
+*.blend1
 
 # copie di lavoro degli agenti
 .claude/worktrees/

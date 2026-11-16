@@ -1,5 +1,5 @@
 {
-  "_nota": "Configuratore, passo 1: la camicia 3D e il riquadro in vetro con i campi del foglio 'Camicie su misura' di Endero. Le misure si compilano; 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. Le righe d'aiuto delle misure sono le note scritte a mano sul foglio: restano tra [[ ]] finché il proprietario non le conferma. 'min' e 'max' sono i limiti che il campo accetta, in centimetri (per la taglia, il numero): scelti da noi, larghi, da rivedere con il sarto.",
+  "_nota": "Configuratore, passo 1: la camicia appesa (un film calcolato prima) e il riquadro in vetro con i campi del foglio 'Camicie su misura' di Endero. Le misure si compilano; 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. Le righe d'aiuto delle misure sono le note scritte a mano sul foglio: restano tra [[ ]] finché il proprietario non le conferma. 'min' e 'max' sono i limiti che il campo accetta, in centimetri (per la taglia, il numero): scelti da noi, larghi, da rivedere con il sarto.",
   "meta": {
     "titolo": "Crea la tua camicia su misura · Endero",
     "descrizione": "La camicia Endero su misura, da guardare in 3D e comporre passo dopo passo.",
@@ -7,9 +7,9 @@
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
   },
   "palco": {
-    "alt": "Camicia bianca Endero a maniche lunghe, vista di tre quarti",
-    "invito": "Trascina per girarla",
-    "caricamento": "Caricamento della camicia"
+    "alt": "Camicia bianca a maniche lunghe appesa a una gruccia di legno, davanti a una parete blu",
+    "invito": "Passaci sopra con il mouse",
+    "invito_dito": "Toccala"
   },
   "scheda": {
     "titolo": "La tua camicia su misura",
@@ -21,18 +21,96 @@
         "titolo": "Le tue misure",
         "tipo": "misure",
         "campi": [
-          { "nome": "taglia", "etichetta": "Taglia", "unita": "", "min": 30, "max": 70 },
-          { "nome": "spalla", "etichetta": "Spalla", "unita": "cm", "min": 30, "max": 70 },
-          { "nome": "spallina", "etichetta": "Spallina", "unita": "cm", "min": 5, "max": 30 },
-          { "nome": "torace", "etichetta": "Torace", "unita": "cm", "min": 60, "max": 180, "aiuto": "[[da sotto il giromanica]]" },
-          { "nome": "pancia", "etichetta": "Pancia", "unita": "cm", "min": 50, "max": 180, "aiuto": "[[al quarto bottone dal fondo]]" },
-          { "nome": "bacino", "etichetta": "Bacino", "unita": "cm", "min": 60, "max": 180, "aiuto": "[[al primo bottone dal fondo]]" },
-          { "nome": "lunghezza_manica", "etichetta": "Lunghezza manica", "unita": "cm", "min": 40, "max": 95, "aiuto": "[[polso compreso, dalla cucitura della spallina]]" },
-          { "nome": "braccio", "etichetta": "Braccio", "unita": "cm", "min": 15, "max": 70, "aiuto": "[[a 10 cm dalla cucitura del giromanica]]" },
-          { "nome": "avambraccio", "etichetta": "Avambraccio", "unita": "cm", "min": 12, "max": 60, "aiuto": "[[a 15 cm dalla cucitura del fintino, con il polso]]" },
-          { "nome": "polso", "etichetta": "Polso", "unita": "cm", "min": 10, "max": 40 },
-          { "nome": "lunghezza_davanti", "etichetta": "Lunghezza totale davanti", "unita": "cm", "min": 50, "max": 120 },
-          { "nome": "lunghezza_dietro", "etichetta": "Lunghezza totale dietro", "unita": "cm", "min": 50, "max": 120 }
+          {
+            "nome": "taglia",
+            "etichetta": "Taglia",
+            "unita": "",
+            "min": 30,
+            "max": 70
+          },
+          {
+            "nome": "spalla",
+            "etichetta": "Spalla",
+            "unita": "cm",
+            "min": 30,
+            "max": 70
+          },
+          {
+            "nome": "spallina",
+            "etichetta": "Spallina",
+            "unita": "cm",
+            "min": 5,
+            "max": 30
+          },
+          {
+            "nome": "torace",
+            "etichetta": "Torace",
+            "unita": "cm",
+            "min": 60,
+            "max": 180,
+            "aiuto": "[[da sotto il giromanica]]"
+          },
+          {
+            "nome": "pancia",
+            "etichetta": "Pancia",
+            "unita": "cm",
+            "min": 50,
+            "max": 180,
+            "aiuto": "[[al quarto bottone dal fondo]]"
+          },
+          {
+            "nome": "bacino",
+            "etichetta": "Bacino",
+            "unita": "cm",
+            "min": 60,
+            "max": 180,
+            "aiuto": "[[al primo bottone dal fondo]]"
+          },
+          {
+            "nome": "lunghezza_manica",
+            "etichetta": "Lunghezza manica",
+            "unita": "cm",
+            "min": 40,
+            "max": 95,
+            "aiuto": "[[polso compreso, dalla cucitura della spallina]]"
+          },
+          {
+            "nome": "braccio",
+            "etichetta": "Braccio",
+            "unita": "cm",
+            "min": 15,
+            "max": 70,
+            "aiuto": "[[a 10 cm dalla cucitura del giromanica]]"
+          },
+          {
+            "nome": "avambraccio",
+            "etichetta": "Avambraccio",
+            "unita": "cm",
+            "min": 12,
+            "max": 60,
+            "aiuto": "[[a 15 cm dalla cucitura del fintino, con il polso]]"
+          },
+          {
+            "nome": "polso",
+            "etichetta": "Polso",
+            "unita": "cm",
+            "min": 10,
+            "max": 40
+          },
+          {
+            "nome": "lunghezza_davanti",
+            "etichetta": "Lunghezza totale davanti",
+            "unita": "cm",
+            "min": 50,
+            "max": 120
+          },
+          {
+            "nome": "lunghezza_dietro",
+            "etichetta": "Lunghezza totale dietro",
+            "unita": "cm",
+            "min": 50,
+            "max": 120
+          }
         ]
       },
       {
@@ -41,15 +119,43 @@
         "tipo": "spento",
         "nota": "Per ora non si compila.",
         "campi": [
-          { "nome": "tessuto", "etichetta": "Tessuto" },
-          { "nome": "collo", "etichetta": "Collo" },
-          { "nome": "colori_ricamo_carre", "etichetta": "Colori ricamo carré" },
-          { "nome": "taschino", "etichetta": "Taschino" },
-          { "nome": "asola", "etichetta": "Asola" },
-          { "nome": "bottone", "etichetta": "Bottone" },
-          { "nome": "filato_bottone", "etichetta": "Filato bottone" },
-          { "nome": "iniziali", "etichetta": "Iniziali" },
-          { "nome": "note", "etichetta": "Note", "righe": 3 }
+          {
+            "nome": "tessuto",
+            "etichetta": "Tessuto"
+          },
+          {
+            "nome": "collo",
+            "etichetta": "Collo"
+          },
+          {
+            "nome": "colori_ricamo_carre",
+            "etichetta": "Colori ricamo carré"
+          },
+          {
+            "nome": "taschino",
+            "etichetta": "Taschino"
+          },
+          {
+            "nome": "asola",
+            "etichetta": "Asola"
+          },
+          {
+            "nome": "bottone",
+            "etichetta": "Bottone"
+          },
+          {
+            "nome": "filato_bottone",
+            "etichetta": "Filato bottone"
+          },
+          {
+            "nome": "iniziali",
+            "etichetta": "Iniziali"
+          },
+          {
+            "nome": "note",
+            "etichetta": "Note",
+            "righe": 3
+          }
         ]
       },
       {
@@ -58,11 +164,31 @@
         "tipo": "spento",
         "nota": "Per ora non si compila.",
         "campi": [
-          { "nome": "tessuto_contrasto", "etichetta": "Tessuto di contrasto", "largo": true },
-          { "nome": "interno_collo", "etichetta": "Interno collo", "sino": true },
-          { "nome": "interno_polso", "etichetta": "Interno polso", "sino": true },
-          { "nome": "fintone_bottoni", "etichetta": "Fintone bottoni", "sino": true },
-          { "nome": "carre", "etichetta": "Carré", "sino": true }
+          {
+            "nome": "tessuto_contrasto",
+            "etichetta": "Tessuto di contrasto",
+            "largo": true
+          },
+          {
+            "nome": "interno_collo",
+            "etichetta": "Interno collo",
+            "sino": true
+          },
+          {
+            "nome": "interno_polso",
+            "etichetta": "Interno polso",
+            "sino": true
+          },
+          {
+            "nome": "fintone_bottoni",
+            "etichetta": "Fintone bottoni",
+            "sino": true
+          },
+          {
+            "nome": "carre",
+            "etichetta": "Carré",
+            "sino": true
+          }
         ]
       },
       {
@@ -70,9 +196,27 @@
         "titolo": "I tuoi dati",
         "tipo": "dati",
         "campi": [
-          { "nome": "nome", "etichetta": "Nome e cognome", "tipo": "text", "completa": "name", "massimo": 120 },
-          { "nome": "telefono", "etichetta": "Telefono o WhatsApp", "tipo": "tel", "completa": "tel", "massimo": 40 },
-          { "nome": "email", "etichetta": "Email", "tipo": "email", "completa": "email", "massimo": 160 }
+          {
+            "nome": "nome",
+            "etichetta": "Nome e cognome",
+            "tipo": "text",
+            "completa": "name",
+            "massimo": 120
+          },
+          {
+            "nome": "telefono",
+            "etichetta": "Telefono o WhatsApp",
+            "tipo": "tel",
+            "completa": "tel",
+            "massimo": 40
+          },
+          {
+            "nome": "email",
+            "etichetta": "Email",
+            "tipo": "email",
+            "completa": "email",
+            "massimo": 160
+          }
         ]
       }
     ],
