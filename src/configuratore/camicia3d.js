@@ -450,7 +450,7 @@ export async function avviaCamicia(contenitore, o) {
     const l = Math.hypot(dx, dy) || 1;
     versoVento.set(dx / l, (dy / l) * 0.5, -0.5).normalize().transformDirection(inversa);
     // se soffia già molto, la folata nuova è più debole: il tessuto non deve mai agitarsi
-    stoffa.folata(colpo[0], colpo[1], colpo[2], versoVento.x, versoVento.y, versoVento.z, forza / (1 + 4 * stoffa.carico()));
+    stoffa.folata(colpo[0], colpo[1], colpo[2], versoVento.x, versoVento.y, versoVento.z, forza / (1 + 3 * stoffa.carico()));
     return true;
   }
 
@@ -474,7 +474,7 @@ export async function avviaCamicia(contenitore, o) {
     // passando sopra la camicia si alza una folata, tanto più viva quanto più svelto è il gesto
     if (!fuori && !trascina && corsa > 0.006 && tempo - ultimaFolata > 0.12) {
       const svelto = Math.min(corsa / dt / 2.2, 1);     // 2,2 larghezze di tela al secondo: gesto deciso
-      if (soffia(x, y, dx, dy, 0.12 + 0.2 * svelto)) ultimaFolata = tempo;
+      if (soffia(x, y, dx, dy, 0.2 + 0.4 * svelto)) ultimaFolata = tempo;
     }
     puntaX = x; puntaY = y; ultimaMossa = ora;
   }
@@ -485,7 +485,7 @@ export async function avviaCamicia(contenitore, o) {
     tela.classList.add('camicia__tela--presa');
     [puntaX, puntaY] = inTela(e); ultimaMossa = performance.now();
     // toccata, cede appena sotto il dito: sul telefono è il solo modo di sentirla
-    if (soffia(puntaX, puntaY, 0, -0.2, 0.12)) ultimaFolata = tempo;
+    if (soffia(puntaX, puntaY, 0, -0.2, 0.22)) ultimaFolata = tempo;
   }
   function suSu() { trascina = null; tela.classList.remove('camicia__tela--presa'); }
   function suFuori() { if (!trascina) puntaX = puntaY = 2; }
@@ -501,7 +501,7 @@ export async function avviaCamicia(contenitore, o) {
     tempo += dt;
     const vivo = o.fermo ? 0 : 1;
     // appena compare, un soffio da sinistra: dice che è viva
-    if (vivo && !salutata && tempo > 0.7) { salutata = true; soffia(-0.2, 0.05, 1, 0.1, 0.22); }
+    if (vivo && !salutata && tempo > 0.7) { salutata = true; soffia(-0.2, 0.05, 1, 0.1, 0.36); }
 
     // rotazione: segue il trascinamento senza rimbalzi; lasciata andare scivola e poi, dopo un po', torna di tre quarti
     if (!trascina) {

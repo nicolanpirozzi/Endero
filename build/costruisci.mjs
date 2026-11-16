@@ -111,7 +111,10 @@ genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, riso
 // configuratore: se il file del modello non c'è (non sta nel repository) la pagina esce con la sola immagine ferma
 // il 3D è fatto di cinque file che vanno insieme: il modello, le sue misure, il telaio della stoffa, la luce, le cuciture
 const fileCamicia = ['camicia.glb', 'camicia.json', 'telaio.json', 'luce.webp', 'cuciture.webp'].map((f) => join(RADICE, 'public/camicia', f));
-const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0 };
+const fermaCamicia = join(RADICE, 'public/camicia/camicia.webp');
+// l'immagine ferma porta la sua versione nell'indirizzo: il browser la tiene in memoria una settimana, e rifatta va riscaricata
+const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0,
+  ferma: `/camicia/camicia.webp?v=${createHash('sha256').update(readFileSync(fermaCamicia)).digest('hex').slice(0, 10)}` };
 if (fileCamicia.every((f) => existsSync(f))) {
   const impronta = createHash('sha256');
   for (const f of fileCamicia) impronta.update(readFileSync(f));

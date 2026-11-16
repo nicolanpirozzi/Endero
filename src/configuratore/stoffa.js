@@ -24,7 +24,7 @@ export const TESSUTO = {
   compressione: 2600,   // un lato schiacciato cede (il tessuto fa una grinza); tirato, non si allunga
   piega: 70,            // memoria della forma tra due triangoli vicini
   rigido: 14,           // di quante volte è più dura la piega su polsini e abbottonatura
-  brezza: 0.011,       // vento di fondo, in metri al secondo: appena un respiro
+  brezza: 0.014,       // vento di fondo, in metri al secondo: appena un respiro
 };
 
 /** Il punto del triangolo (a, b, c: posizioni in `x`) più vicino a p: restituisce i tre pesi e il quadrato della distanza. */
@@ -210,7 +210,7 @@ export function creaStoffa(dati, o = {}) {
         // arriva in fretta e se ne va piano; il suo centro corre col vento e si allarga
         const inv = f.forza * (1 - Math.exp(-eta / 0.05)) * Math.exp(-eta / 0.5);
         if (inv < 1e-4) continue;
-        const corsa = 0.5 * eta, raggio = 0.11 + 0.14 * eta;
+        const corsa = 0.5 * eta, raggio = 0.13 + 0.16 * eta;
         const rx = px - (f.c[0] + f.d[0] * corsa), ry = py - (f.c[1] + f.d[1] * corsa), rz = pz - (f.c[2] + f.d[2] * corsa);
         const a = inv * Math.exp(-(rx * rx + ry * ry + rz * rz) / (raggio * raggio));
         if (a < 1e-4) continue;
@@ -229,7 +229,7 @@ export function creaStoffa(dati, o = {}) {
     dt = Math.min(dt, 0.05);
     tempo += dt;
     const inizio = orologio();
-    soffia(Math.max(-3, Math.min(3, gira)) * 0.22);      // meno del vero: girandola deve restare una camicia, non una bandiera
+    soffia(Math.max(-3, Math.min(3, gira)) * 0.3);      // meno del vero: girandola deve restare una camicia, non una bandiera
     const passi = Math.max(1, Math.min(12, Math.ceil(dt / passoDiCalcolo - 1e-6))), h = dt / passi, inv = 1 / (h * h);
     const frena = Math.max(0, 1 - P.attrito * h), tira = P.aria * h;
     for (let s = 0; s < passi; s++) {

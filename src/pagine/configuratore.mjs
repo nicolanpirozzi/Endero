@@ -54,7 +54,7 @@ function gruppo(g, s) {
 }
 
 /**
- * @param {object} o.camicia  { modello, peso, motore }: indirizzo e peso del 3D; `modello` vuoto se il file non c'è
+ * @param {object} o.camicia  { modello, peso, motore, ferma }: indirizzo e peso del 3D, indirizzo dell'immagine ferma; `modello` vuoto se il file non c'è
  */
 export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, anteprima }) {
   const p = c.palco, s = c.scheda;
@@ -64,7 +64,7 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
   <div class="configura__palco"${dati3d}>
-    <img class="configura__ferma" src="/camicia/camicia.webp" width="1024" height="1202" alt="${esc(p.alt)}" fetchpriority="high">
+    <img class="configura__ferma" src="${esc(camicia.ferma)}" width="1024" height="1202" alt="${esc(p.alt)}" fetchpriority="high">
     <div class="configura__tela" data-tela></div>
     <div class="configura__carica" role="status" aria-live="polite" aria-label="${esc(p.caricamento)}">
       ${logo('completo')}
