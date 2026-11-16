@@ -26,9 +26,11 @@ const misure = (p) => p.evaluate(() => {
     riquadro: Math.round(s.left), pagina: document.documentElement.scrollWidth, finestra: innerWidth };
 });
 
-async function apri(browser, opzioni, nome) {
+async function apri(browser, opzioni, nome, comeIPhone) {
   const contesto = await browser.newContext(opzioni);
   const p = await contesto.newPage();
+  // Safari su iPhone non scarica un video finché non lo si fa partire: qui lo si imita togliendo il precaricamento
+  if (comeIPhone) await p.route(PAGINA, async (r) => { const risposta = await r.fetch(); r.fulfill({ response: risposta, body: (await risposta.text()).replaceAll('preload="auto"', 'preload="none"') }); });
   const errori = [];
   p.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
   p.on('pageerror', (e) => errori.push(String(e)));
@@ -93,7 +95,7 @@ async function apri(browser, opzioni, nome) {
 
   // --- telefono: il film verticale, il tocco
   {
-    const { p, errori, chiudi } = await apri(browser, { ...devices['iPhone 14'] }, 'telefono (iPhone 14)');
+    const { p, errori, chiudi } = await apri(browser, { ...devices['iPhone 14'] }, 'telefono (iPhone 14, video non precaricati)', true);
     const m = await misure(p);
     nota(m.pagina === m.finestra, `la pagina è larga quanto lo schermo (${m.pagina} su ${m.finestra})`);
     await p.waitForFunction(() => document.querySelector('video[data-scena="da-sinistra"]').ended, null, { timeout: 20000 }).catch(() => {});

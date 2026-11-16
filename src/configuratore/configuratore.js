@@ -28,21 +28,28 @@ function avvia(palco) {
   // partire quando la camicia è quasi ferma (dopo 3,4 secondi si sposta ormai di pochi millimetri): prima no, o la
   // camicia salterebbe da dov'è alla posizione di riposo.
   const QUASI_FERMA = 3.4;
+  const VIVO = 'configura__film--vivo';
   let attiva = null;
-  /** Fa partire la folata di una scena, se quella di prima è ormai passata. */
+  /**
+   * Fa partire la folata di una scena, se quella di prima è ormai passata.
+   * Il film compare quando sta davvero andando: su iPhone i video non si scaricano finché non li si fa partire,
+   * e nel frattempo deve restare l'immagine ferma.
+   */
   function soffia(nome) {
     const v = scene[nome];
-    if (v.readyState < 3) return false;                                   // non è ancora scaricata abbastanza
     if (attiva && !attiva.ended && !attiva.paused && attiva.currentTime < QUASI_FERMA) return false;
-    if (attiva && attiva !== v) { attiva.pause(); attiva.classList.remove('configura__film--vivo'); }
-    v.currentTime = 0;
-    v.classList.add('configura__film--vivo');
-    v.play().catch(() => {});
+    if (attiva && attiva !== v) { attiva.pause(); attiva.classList.remove(VIVO); }
+    if (v.readyState >= 1) v.currentTime = 0;
     attiva = v;
+    if (v.readyState >= 3) v.classList.add(VIVO);
+    v.play().catch(() => { if (attiva === v) attiva = null; });        // il browser non l'ha lasciata partire: si riprova al prossimo gesto
     return true;
   }
-  // finita la scena si torna all'immagine ferma, che è identica al suo ultimo fotogramma
-  for (const v of Object.values(scene)) v.addEventListener('ended', () => v.classList.remove('configura__film--vivo'));
+  for (const v of Object.values(scene)) {
+    v.addEventListener('playing', () => { if (attiva === v) v.classList.add(VIVO); });
+    // finita la scena si torna all'immagine ferma, che è identica al suo ultimo fotogramma
+    v.addEventListener('ended', () => v.classList.remove(VIVO));
+  }
 
   // Il mouse: conta solo quando passa sulla camicia.
   // Il verso in cui si muove dice da che lato arriva il vento.
@@ -84,4 +91,6 @@ function avvia(palco) {
     salutata = soffia('da-sinistra');
   };
   scene['da-sinistra'].addEventListener('canplaythrough', () => setTimeout(saluta, 700), { once: true });
+  setTimeout(saluta, 2500);                                               // su iPhone "pronta" non arriva mai da sola
+  document.addEventListener('visibilitychange', () => setTimeout(saluta, 700));
 }
