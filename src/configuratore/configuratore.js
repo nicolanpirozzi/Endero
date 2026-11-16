@@ -30,6 +30,9 @@ function avvia(palco) {
   // camicia salterebbe da dov'è alla posizione di riposo.
   const QUASI_FERMA = 3.4;
   let attiva = null;
+  // PROVA DELLE VELOCITÀ (si toglie quando il proprietario ha scelto): con ?lento=1.6 nell'indirizzo le scene vanno
+  // 1,6 volte più piano. Serve a fargli scegliere dal vivo quanto rallentare, prima di rifare il calcolo.
+  const lento = Math.min(3, Math.max(1, Number(new URLSearchParams(location.search).get('lento')) || 1));
   /**
    * Fa partire il tocco di una scena, se quello di prima è ormai passato.
    * Il film compare quando sta davvero andando: su iPhone i video non si scaricano finché non li si fa partire,
@@ -40,6 +43,7 @@ function avvia(palco) {
     if (attiva && !attiva.ended && !attiva.paused && attiva.currentTime < QUASI_FERMA) return false;
     if (attiva && attiva !== v) { attiva.pause(); attiva.classList.remove(VIVO); }
     if (v.readyState >= 1) v.currentTime = 0;
+    v.playbackRate = 1 / lento;
     attiva = v;
     if (v.readyState >= 3) v.classList.add(VIVO);
     v.play().catch(() => { if (attiva === v) attiva = null; });        // il browser non l'ha lasciata partire: si riprova al prossimo gesto
