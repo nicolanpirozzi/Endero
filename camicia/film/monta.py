@@ -22,6 +22,11 @@ import numpy as np
 from PIL import Image
 
 SCENE = ('da-sinistra', 'da-destra')
+# Il proprietario ha voluto il movimento "molto più lento": il film va a metà della velocità con cui il movimento è
+# stato simulato (`muovi.mjs` scrive 24 stati al secondo, qui diventano 12 al secondo: otto secondi per scena).
+# I fotogrammi di mezzo non si calcolano con Cycles (sarebbero altre cinque ore): li ricava ffmpeg dal movimento tra
+# un fotogramma e il successivo, che a questa lentezza è piccolo.
+CALCOLATI_AL_SECONDO = 12
 AL_SECONDO = 24
 CENTRO_CAMICIA = 0.395           # dove sta la camicia nel fotogramma, in frazione della larghezza: lo stesso numero
                                  # sta in src/configuratore/configuratore.css (--camicia)
@@ -79,14 +84,18 @@ def main():
                             alfa = alfa * np.clip((x - colonne[0]) / SFUMA, 0, 1)[None, :, None]
                     im = Image.fromarray((px[:, :, :3] * alfa + base * (1 - alfa) + 0.5).astype(np.uint8))
                 scrivi(k, im.convert('RGB'))
-            scrivi(len(file), ferma)                             # e l'ultimo pure
-            comune = ['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(AL_SECONDO), '-i', os.path.join(lavoro, '%04d.png')]
+            # e l'ultimo pure; qualcuno in più, perché ricavando i fotogrammi di mezzo ffmpeg perde gli ultimi
+            for k in range(len(file), len(file) + 4):
+                scrivi(k, ferma)
+            comune = ['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(CALCOLATI_AL_SECONDO), '-i', os.path.join(lavoro, '%04d.png')]
             codifica = ['-c:v', 'libx264', '-preset', 'slow', '-crf', str(QUALITA), '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart',
                         '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'iec61966-2-1', '-color_range', 'tv']
-            pari = f'scale={L // 2 * 2}:{A // 2 * 2}:out_color_matrix=bt709:out_range=tv'
-            subprocess.run(comune + ['-vf', pari] + codifica + [os.path.join(uscita, f'{scena}.mp4')], check=True)
-            subprocess.run(comune + ['-vf', f'crop={largo_tel}:{A // 2 * 2}:{x_tel}:0,scale=out_color_matrix=bt709:out_range=tv'] + codifica + [os.path.join(uscita, f'{scena}-telefono.mp4')], check=True)
-        print(scena, ':', len(file) + 1, 'fotogrammi →', ', '.join(f'{n} {os.path.getsize(os.path.join(uscita, n)) // 1024} KB' for n in (f'{scena}.mp4', f'{scena}-telefono.mp4')))
+            mezzo = '' if AL_SECONDO == CALCOLATI_AL_SECONDO else f'minterpolate=fps={AL_SECONDO}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,'
+            durata = ['-t', f'{len(file) / CALCOLATI_AL_SECONDO + 1 / AL_SECONDO:.4f}']        # fino al primo fotogramma di riposo, compreso
+            pari = f'{mezzo}scale={L // 2 * 2}:{A // 2 * 2}:out_color_matrix=bt709:out_range=tv'
+            subprocess.run(comune + ['-vf', pari] + durata + codifica + [os.path.join(uscita, f'{scena}.mp4')], check=True)
+            subprocess.run(comune + ['-vf', f'{mezzo}crop={largo_tel}:{A // 2 * 2}:{x_tel}:0,scale=out_color_matrix=bt709:out_range=tv'] + durata + codifica + [os.path.join(uscita, f'{scena}-telefono.mp4')], check=True)
+        print(scena, ':', len(file) + 1, 'fotogrammi calcolati,', f'{len(file) / CALCOLATI_AL_SECONDO:.1f} secondi →', ', '.join(f'{n} {os.path.getsize(os.path.join(uscita, n)) // 1024} KB' for n in (f'{scena}.mp4', f'{scena}-telefono.mp4')))
     print('immagine a riposo:', L, 'x', A, '· telefono', largo_tel, 'x', A, 'da x =', x_tel)
     print(' · '.join(f'{n} {os.path.getsize(os.path.join(uscita, n)) // 1024} KB' for n in sorted(os.listdir(uscita)) if n.startswith('ferma')))
 

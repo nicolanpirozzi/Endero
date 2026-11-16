@@ -4,7 +4,7 @@ Calcola con Cycles i fotogrammi di una scena (la mano che tocca la camicia), met
 l'ha portato la fisica (`muovi.mjs`). Salta i fotogrammi già fatti: se si interrompe, si rilancia.
 
     <venv>/bin/python camicia/film/produci.py <file .blend comprato> <cartella di muovi.mjs> <cartella di uscita>
-        --scena da-sinistra [--campioni 64] [--bordo 0.06 0.63] [--da 1 --a 95 --ogni 1] [--larga 1800 --alta 900]
+        --scena da-sinistra [--campioni 64] [--bordo 0.055 0.64] [--da 1 --a 95 --ogni 1] [--larga 1800 --alta 1000]
 
 Con `--scena ferma` calcola la sola immagine di riposo (`ferma.png`), quella da cui ogni scena parte e a cui torna;
 con `--doppia` la calcola anche a grandezza doppia (`ferma-2x.png`), per gli schermi fitti: è l'immagine che si guarda
@@ -78,7 +78,9 @@ for k in range(a.da, min(a.a, quanti - 1) + 1, a.ogni):
     ang = dati['angoli'][k]
     pezzi['perno'].rotation_euler = (0, 0, ang['giro'])
     pezzi['altalena'].rotation_euler = (ang['fondo'], -ang['lato'], 0)      # di lato: intorno all'asse che viene verso chi guarda
-    sc.render.filepath = file
+    # si scrive con un nome provvisorio e poi si rinomina: se il calcolo viene interrotto non resta un file a metà
+    sc.render.filepath = os.path.join(cartella, f'in-corso-{k:04d}.png')
     t = time.time()
     bpy.ops.render.render(write_still=True)
+    os.replace(sc.render.filepath, file)
     print(f'{a.scena} {k}/{quanti - 1} in {time.time() - t:.0f} s', flush=True)

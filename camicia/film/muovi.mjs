@@ -20,8 +20,9 @@ import { creaStoffa, sulTriangolo } from './stoffa.mjs';
 const cartella = process.argv[2];
 if (!cartella) { console.error('uso: node camicia/film/muovi.mjs <cartella scritta da telaio.py> [curve.csv]'); process.exit(2); }
 
-const FOTOGRAMMI_AL_SECONDO = 24;
-const DURATA = 4.0;                    // secondi di ogni scena
+const FOTOGRAMMI_AL_SECONDO = 24;          // del movimento simulato. Il film va a metà velocità ("molto più lento", ha scelto il
+                                       // proprietario provandolo): questi stati diventano 12 al secondo, vedi monta.py
+const DURATA = 4.0;                    // secondi di movimento simulato per ogni scena (otto nel film)
 const RITORNO = 0.9;                   // negli ultimi secondi tutto torna, dolcemente, esattamente a riposo
 const PASSO = 1 / 120;                 // passo della fisica
 const SCENE = { 'da-sinistra': 1, 'da-destra': -1 };       // il verso in cui passa la mano sullo schermo
