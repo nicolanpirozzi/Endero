@@ -13,8 +13,12 @@ __pycache__/
 .taste-skill/
 
 # camicia 3D: il modello è materiale comprato dal proprietario, resta fuori finché il repository è pubblico
-# (si rigenera con camicia/prepara.py e camicia/comprimi.mjs dal file originale)
+# (si rigenera con camicia/prepara.py e camicia/comprimi.mjs dal file originale). Lo stesso vale per ciò che ne deriva:
+# il telaio della stoffa e le immagini di luce e cuciture stese sul suo cartamodello
 public/camicia/*.glb
+public/camicia/telaio.json
+public/camicia/luce.webp
+public/camicia/cuciture.webp
 
 # copie di lavoro degli agenti
 .claude/worktrees/

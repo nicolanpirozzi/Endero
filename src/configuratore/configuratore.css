@@ -37,11 +37,11 @@
   height: 100%;
 }
 
+/* l'immagine ferma è una fotografia del 3D (tools/manifesto-camicia.js): occupa lo stesso posto, così quando il 3D
+   la sostituisce la camicia non cambia misura né posizione */
 .configura__ferma {
   object-fit: contain;
   object-position: center;
-  padding: 9svh 4%;
-  box-sizing: border-box;
 }
 
 .configura__tela {
@@ -387,10 +387,6 @@
     position: relative;
     height: 62svh;
     min-height: 360px;
-  }
-
-  .configura__ferma {
-    padding: 76px 0 12px;
   }
 
   .configura__invito {

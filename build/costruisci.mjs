@@ -109,15 +109,16 @@ function genera(percorso, html) {
 }
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
 // configuratore: se il file del modello non c'è (non sta nel repository) la pagina esce con la sola immagine ferma
-const fileCamicia = join(RADICE, 'public/camicia/camicia.glb');
-const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0, scala: 0 };
-if (existsSync(fileCamicia)) {
-  const impronta = createHash('sha256').update(readFileSync(fileCamicia)).digest('hex').slice(0, 10);
-  camicia.modello = `/camicia/camicia.glb?v=${impronta}`;
-  camicia.peso = statSync(fileCamicia).size;
-  camicia.scala = JSON.parse(readFileSync(join(RADICE, 'public/camicia/camicia.json'), 'utf8')).metri_per_uv;
+// il 3D è fatto di cinque file che vanno insieme: il modello, le sue misure, il telaio della stoffa, la luce, le cuciture
+const fileCamicia = ['camicia.glb', 'camicia.json', 'telaio.json', 'luce.webp', 'cuciture.webp'].map((f) => join(RADICE, 'public/camicia', f));
+const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore, motore: risorsa.camicia3d, modello: '', peso: 0 };
+if (fileCamicia.every((f) => existsSync(f))) {
+  const impronta = createHash('sha256');
+  for (const f of fileCamicia) impronta.update(readFileSync(f));
+  camicia.modello = `/camicia/camicia.glb?v=${impronta.digest('hex').slice(0, 10)}`;      // la stessa versione vale per tutti e cinque
+  camicia.peso = statSync(fileCamicia[0]).size;
 } else {
-  console.warn('  attenzione: manca public/camicia/camicia.glb, il configuratore mostra solo la camicia ferma (vedi CLAUDE.md)');
+  console.warn('  attenzione: in public/camicia/ mancano i file del 3D, il configuratore mostra solo la camicia ferma (vedi CLAUDE.md)');
 }
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));

@@ -32,11 +32,10 @@ async function avvia(palco) {
   try {
     const { avviaCamicia } = await import(dati.motore);       // il motore 3D arriva solo qui
     segna(0.22);
-    const peso = Number(dati.peso) || 0;                      // il server comprime: la lunghezza vera la dice la pagina
     const camicia = await avviaCamicia(palco.querySelector('[data-tela]'), {
       modello: dati.camicia,
-      metriPerUv: Number(dati.scala) || undefined,
-      avanzamento: (caricati, totali) => segna(0.22 + 0.74 * Math.min(caricati / (totali || peso || caricati * 2), 1)),
+      peso: Number(dati.peso) || 0,                           // il server comprime: la lunghezza vera la dice la pagina
+      avanzamento: (quota) => segna(0.22 + 0.74 * quota),
       fermo: matchMedia('(prefers-reduced-motion: reduce)').matches,
       manuale: prova.has('manuale'),
     });
