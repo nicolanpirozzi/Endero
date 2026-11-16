@@ -8,20 +8,24 @@
 //     (`cuciture.webp`) e una trama appena irregolare;
 //  3. il vento è fisica vera: una stoffa semplificata simulata a ogni fotogramma (`stoffa.js`), che la camicia
 //     segue punto per punto. Niente onde disegnate, niente molle: il proprietario le ha bocciate.
+// Intorno, la scena che ha chiesto il 16 novembre: la camicia appesa a una gruccia davanti a una parete, con la luce
+// di una finestra e la sua ombra (`scena.js`).
 // I file li prepara `camicia/prepara.py`. Questo file si carica solo nella pagina del configuratore.
 import {
-  BackSide, Box3, BoxGeometry, BufferAttribute, CanvasTexture, Color, DataTexture, DoubleSide, FloatType, FrontSide, Group, LinearFilter,
-  LinearMipmapLinearFilter, Matrix4, Mesh, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, NearestFilter,
-  NeutralToneMapping, PerspectiveCamera, PlaneGeometry, PMREMGenerator, RGBAFormat, Scene, ShaderMaterial, SphereGeometry,
+  BackSide, Box3, BoxGeometry, BufferAttribute, Color, DataTexture, DoubleSide, FloatType, FrontSide, Group, LinearFilter,
+  LinearMipmapLinearFilter, Matrix3, Matrix4, Mesh, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, NearestFilter,
+  NeutralToneMapping, PerspectiveCamera, PMREMGenerator, RGBAFormat, Scene, ShaderMaterial, SphereGeometry,
   SRGBColorSpace, TextureLoader, Vector3, WebGLRenderer,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { creaScena, FINESTRA } from './scena.js';
 import { creaStoffa, sulTriangolo } from './stoffa.js';
 
 const AVORIO = new Color(0xf6f3ec);           // il bianco caldo del cotone
 
-/** Lo studio fotografico per i soli bottoni, che sono lucidi: pannelli luminosi come quelli del calcolo. */
+/** Lo studio fotografico per ciò che riflette (bottoni, gancio, legno): pannelli luminosi come quelli del calcolo,
+ *  con la finestra davanti a destra. */
 function studio(renderer) {
   const s = new Scene();
   const pannello = (colore, forza, pos, dim) => {
@@ -29,27 +33,15 @@ function studio(renderer) {
     m.position.set(...pos); m.lookAt(0, 0, 0); s.add(m);
   };
   s.add(new Mesh(new SphereGeometry(12, 32, 16), new MeshBasicMaterial({ color: new Color(0x16306e).multiplyScalar(0.55), side: BackSide })));
-  pannello(0xfff4e6, 5.5, [-4.5, 3.2, 4.5], [5, 5, 0.1]);
-  pannello(0xdfe8ff, 1.6, [5, 0.5, 3], [4, 6, 0.1]);
-  pannello(0xffd9ad, 9.0, [3.5, 2.5, -5], [3, 5, 0.1]);
+  pannello(0xfff4e6, 5.5, [4.5, 3.2, 4.5], [5, 5, 0.1]);
+  pannello(0xdfe8ff, 1.6, [-5, 0.5, 3], [4, 6, 0.1]);
+  pannello(0xffe9d2, 3.0, [-3.5, 2.5, -5], [3, 5, 0.1]);
   pannello(0xffffff, 2.2, [0, 7, 0], [7, 7, 0.1]);
   const pm = new PMREMGenerator(renderer);
   const ambiente = pm.fromScene(s, 0.035).texture;
   pm.dispose();
   s.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
   return ambiente;
-}
-
-/** L'ombra morbida sotto la camicia: dice che è sospesa. */
-function ombra() {
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const g = c.getContext('2d');
-  const r = g.createRadialGradient(128, 128, 0, 128, 128, 128);
-  r.addColorStop(0, 'rgba(2,8,26,0.55)'); r.addColorStop(0.55, 'rgba(2,8,26,0.18)'); r.addColorStop(1, 'rgba(2,8,26,0)');
-  g.fillStyle = r; g.fillRect(0, 0, 256, 256);
-  const t = new CanvasTexture(c);
-  t.colorSpace = SRGBColorSpace;
-  return new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false }));
 }
 
 // ------------------------------------------------------------------------------------------------ shader
@@ -65,6 +57,9 @@ const OSSA = /* glsl */`
   attribute vec3 aPesi;                // il punto del triangolo che gli sta sotto
   attribute vec3 aScarto;              // da lì al punto: lungo il lato, di traverso, verso fuori (metri)
   attribute vec3 aNorma;               // la sua normale, sugli stessi tre assi
+  /** Un vettore di lunghezza uno; se è nullo, la riserva. Mai un valore non valido: su molte schede grafiche
+   *  diventerebbe un puntino nero. */
+  vec3 unita(vec3 v, vec3 riserva) { float l = dot(v, v); return l > 1e-12 ? v * inversesqrt(l) : riserva; }
   void leggi(float quale, out vec3 p, out vec3 n) {
     int k = int(quale + 0.5) * 2;
     ivec2 c = ivec2(k % LARGHEZZA_OSSA, k / LARGHEZZA_OSSA);
@@ -73,12 +68,12 @@ const OSSA = /* glsl */`
   void segui(out vec3 P, out vec3 N) {
     vec3 pa, pb, pc, na, nb, nc;
     leggi(aOssi.x, pa, na); leggi(aOssi.y, pb, nb); leggi(aOssi.z, pc, nc);
-    vec3 su = normalize(aPesi.x * na + aPesi.y * nb + aPesi.z * nc);
+    vec3 su = unita(aPesi.x * na + aPesi.y * nb + aPesi.z * nc, na);
     vec3 lato = pb - pa;
-    vec3 lungo = normalize(lato - su * dot(su, lato));
+    vec3 lungo = unita(lato - su * dot(su, lato), vec3(1.0, 0.0, 0.0));
     vec3 traverso = cross(su, lungo);
     P = aPesi.x * pa + aPesi.y * pb + aPesi.z * pc + aScarto.x * lungo + aScarto.y * traverso + aScarto.z * su;
-    N = normalize(aNorma.x * lungo + aNorma.y * traverso + aNorma.z * su);
+    N = unita(aNorma.x * lungo + aNorma.y * traverso + aNorma.z * su, su);
   }`;
 
 const VERTICI = /* glsl */`
@@ -88,7 +83,7 @@ const VERTICI = /* glsl */`
   void main() {
     vec3 P, N;
     segui(P, N);
-    vUv = uv; vPos = P; vN = N; vN0 = normalize(mat3(uInMetri) * normal); vLuce = aDati.rgb * aDati.rgb;
+    vUv = uv; vPos = P; vN = N; vN0 = unita(mat3(uInMetri) * normal, N); vLuce = aDati.rgb * aDati.rgb;
     gl_Position = projectionMatrix * modelViewMatrix * (uDaMetri * vec4(P, 1.0));
   }`;
 
@@ -100,12 +95,17 @@ const CIELO = /* glsl */`
     return uSfera[0] + uSfera[1] * n.y + uSfera[2] * n.z + uSfera[3] * n.x + uSfera[4] * n.x * n.y + uSfera[5] * n.y * n.z
          + uSfera[6] * (3.0 * n.z * n.z - 1.0) + uSfera[7] * n.x * n.z + uSfera[8] * (n.x * n.x - n.y * n.y);
   }
-  /** La luce fissata vale per la posa di riposo: se il vento gira il lembo, cambia in proporzione.
-   *  Poi le si dà un po' di contrasto intorno al suo valore medio, come si fa stampando una fotografia: le pieghe
-   *  prendono corpo e il bianco resta bianco. */
-  vec3 corretta(vec3 fissata, vec3 riposo, vec3 adesso) {
-    vec3 luce = fissata * clamp(max(cielo(adesso), vec3(0.0)) / max(cielo(riposo), vec3(0.05)), 0.25, 2.6);
-    return uLuceMedia * pow(luce / uLuceMedia, vec3(CONTRASTO));
+  uniform mat3 uGiro;                  // di quanto la camicia è girata rispetto alla posa in cui la luce è stata calcolata
+  vec3 unitaF(vec3 v, vec3 riserva) { float l = dot(v, v); return l > 1e-10 ? v * inversesqrt(l) : riserva; }
+  /** La luce fissata vale per la posa di riposo: se il vento gira il lembo, o se si gira la camicia, cambia in
+   *  proporzione a quanta luce riceve una superficie che guarda da quella parte (le luci stanno ferme nella stanza).
+   *  La fiducia va da 0 a 1: dove le normali non sono affidabili (sui bordini, tra un lato del tessuto e l'altro) la
+   *  correzione si spegne, invece di sparare un punto nero o uno bianco.
+   *  Poi alla luce si dà un po' di contrasto intorno al suo valore medio, come si fa stampando una fotografia. */
+  vec3 corretta(vec3 fissata, vec3 riposo, vec3 adesso, float fiducia) {
+    vec3 rapporto = clamp(max(cielo(uGiro * adesso), vec3(0.02)) / max(cielo(riposo), vec3(0.08)), 0.45, 2.4);
+    vec3 luce = max(fissata, vec3(0.0)) * mix(vec3(1.0), rapporto, fiducia);
+    return uLuceMedia * pow(luce / uLuceMedia + 1e-5, vec3(CONTRASTO));
   }`;
 
 const DIRITTO = /* glsl */`
@@ -113,9 +113,11 @@ const DIRITTO = /* glsl */`
   uniform sampler2D uCuciture;         // r: distanza dal bordo del pezzo, g: passo dell'impuntura (coseno)
   uniform float uLuceScala, uPortata, uMetri;
   uniform vec3 uColore, uOcchio;
+  uniform mat4 uPerno;
   varying vec2 vUv; varying vec3 vPos; varying vec3 vN; varying vec3 vN0; varying vec3 vLuce;
   #define CONTRASTO 1.22
   ${CIELO}
+  ${FINESTRA}
   float caso(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float rumore(vec2 p) {
     vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -127,7 +129,7 @@ const DIRITTO = /* glsl */`
     vec3 r1 = cross(sy, n), r2 = cross(n, sx);
     float det = dot(sx, r1);
     vec3 g = sign(det) * (dFdx(h) * r1 + dFdy(h) * r2);
-    return normalize(abs(det) * n - g);
+    return unitaF(abs(det) * n - g, n);
   }
   /** Una riga larga s intorno a d0, che non sfarfalla quando è più sottile di un punto dello schermo. */
   float riga(float d, float d0, float s, float punto) {
@@ -136,7 +138,10 @@ const DIRITTO = /* glsl */`
     return (s / larga) * exp(-x * x);
   }
   void main() {
-    vec3 N0 = normalize(vN0), N = normalize(vN);
+    // tra un vertice che guarda fuori e uno che guarda dentro (i bordini) la normale interpolata si annulla: lì
+    // non ci si fida della correzione della luce
+    float fiducia = smoothstep(0.3, 0.75, min(length(vN), length(vN0)));
+    vec3 N = unitaF(vN, vec3(0.0, 0.0, 1.0)), N0 = unitaF(vN0, N);
     #ifdef ROVESCIO
       // Lo strato interno ha due facce. Quella che guarda dentro la camicia si vede dal collo e dai polsini: prende
       // la luce calcolata sui vertici più quella che attraversa il tessuto da fuori (il cotone bianco ne lascia
@@ -144,7 +149,7 @@ const DIRITTO = /* glsl */`
       // millimetri dietro il diritto e gli fa da fodera: ha la sua stessa mappa, quindi si disegna identica a lui.
       // Le due cose insieme nascondono i forellini che il modello ha lungo le cuciture.
       if (gl_FrontFacing) {
-        vec3 dentro = corretta(vLuce / uLuceScala, N0, N) + 0.36 * vec3(1.0, 0.97, 0.92) * texture2D(uLuce, vUv).rgb / uLuceScala;
+        vec3 dentro = corretta(vLuce / uLuceScala, N0, N, fiducia) + 0.36 * vec3(1.0, 0.97, 0.92) * texture2D(uLuce, vUv).rgb / uLuceScala;
         gl_FragColor = vec4(uColore * 0.94 * dentro, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -152,7 +157,7 @@ const DIRITTO = /* glsl */`
       }
       N0 = -N0; N = -N;
     #endif
-    vec3 V = normalize(uOcchio - vPos);
+    vec3 V = unitaF(uOcchio - vPos, vec3(0.0, 0.0, 1.0));
     float punto = max(length(dFdx(vPos)), length(dFdy(vPos)));       // quanto tessuto sta in un punto dello schermo
 
     // --- costure e impunture, dai bordi del cartamodello
@@ -162,12 +167,18 @@ const DIRITTO = /* glsl */`
     float costura = riga(d, 0.0, 0.0006, punto);                     // il solco dove due pezzi si uniscono
     float filo = riga(d, 0.0055, 0.00042, punto);                    // l'impuntura, a cinque millimetri e mezzo dal bordo
     float fascia = 1.0 - smoothstep(0.0048, 0.0064, d);              // tra bordo e impuntura il tessuto è doppio, e più alto
-    float h = 0.00016 * fascia - 0.00028 * costura - 0.00012 * filo * (0.6 - 0.4 * passo)
-            + 0.00004 * fascia * (1.0 - costura) * passo;            // tra un punto e l'altro il tessuto si arriccia appena
+    float h = 0.00009 * fascia - 0.00022 * costura - 0.00010 * filo * (0.6 - 0.4 * passo)
+            + 0.00003 * fascia * (1.0 - costura) * passo;            // tra un punto e l'altro il tessuto si arriccia appena
     vec3 Np = rilievo(vPos, N, h);
 
     // --- la luce: quella fissata, corretta per come è girato adesso il tessuto
-    vec3 luce = corretta(texture2D(uLuce, vUv).rgb / uLuceScala, N0, Np);
+    vec3 luce = corretta(texture2D(uLuce, vUv).rgb / uLuceScala, N0, Np, fiducia);
+    // la finestra: dove il raggio che arriva qui è fermato da una sbarra, il tessuto che guarda la finestra si scurisce
+    vec3 mondo = (uPerno * vec4(vPos, 1.0)).xyz;
+    float versoFinestra = clamp(dot(mat3(uPerno) * Np, uVersoFinestra), 0.0, 1.0);
+    luce *= 1.0 - 0.34 * (1.0 - finestraIn(mondo)) * smoothstep(0.0, 0.4, versoFinestra);
+    // il diritto del tessuto non è mai nero, nemmeno nella piega più fonda: un punto nero sarebbe un errore, non un'ombra
+    luce = max(luce, vec3(uLuceMedia * 0.1));
 
     // --- il tessuto: popeline di cotone. I fili non si distinguono a questa distanza: si vede che non è uniforme
     vec2 m = vUv * uMetri;
@@ -176,7 +187,7 @@ const DIRITTO = /* glsl */`
     float trama = rumore(vec2(m.x / 0.014, m.y / 0.00055) + 37.0) - 0.5;
     float nuvola = rumore(m / 0.006) - 0.5;
     vec3 colore = uColore * (1.0 + fine * 0.05 * (ordito + trama) + 0.018 * nuvola);
-    colore *= 1.0 - 0.26 * costura - 0.13 * filo * (0.65 - 0.35 * passo);
+    colore *= 1.0 - 0.2 * costura - 0.11 * filo * (0.65 - 0.35 * passo);
     colore *= 1.0 + 0.05 * filo * max(passo, 0.0);                   // il filo, appena più chiaro del tessuto
 
     // cotone: nessun riflesso, solo la peluria che si schiarisce di taglio
@@ -316,13 +327,14 @@ function lega(mesh, stoffa, cerca, rigido) {
  * @param {number} [o.peso]          byte del modello (il server comprime: la lunghezza vera la dice la pagina)
  * @param {boolean} [o.fermo]        movimento ridotto: niente vento, si gira solo trascinando
  * @param {boolean} [o.manuale]      il tempo lo fa avanzare chi chiama (per registrare i video di prova)
+ * @param {boolean} [o.grezzo]       senza levigatura dei bordi: serve alle prove, per vedere ogni punto sbagliato
  */
 export async function avviaCamicia(contenitore, o) {
-  const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new WebGLRenderer({ antialias: !o.grezzo, alpha: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = NeutralToneMapping;        // lascia bianco il bianco: con altre curve la camicia ingrigisce
-  renderer.toneMappingExposure = 0.98;
+  renderer.toneMappingExposure = 0.94;
   const tela = renderer.domElement;
   tela.className = 'camicia__tela';
   tela.setAttribute('aria-hidden', 'true');
@@ -358,7 +370,7 @@ export async function avviaCamicia(contenitore, o) {
   const scena = new Scene();
   scena.environment = studio(renderer);
   const camera = new PerspectiveCamera(24, 1, 0.1, 20);
-  const perno = new Group();        // gira e galleggia
+  const perno = new Group();        // la camicia con la sua gruccia: gira appesa al nastro
   const camicia = gltf.scene;
   perno.add(camicia);
   scena.add(perno);
@@ -370,11 +382,14 @@ export async function avviaCamicia(contenitore, o) {
     uLuceScala: { value: dati.luce_scala }, uPortata: { value: dati.cuciture_portata }, uMetri: { value: dati.metri_per_uv },
     uColore: { value: AVORIO }, uOcchio: { value: new Vector3() }, uLuceMedia: { value: dati.luce_media },
     uSfera: { value: dati.luce_sfera.map((c) => new Vector3(...c)) },
+    uGiro: { value: new Matrix3() }, uPerno: { value: perno.matrixWorld },
   };
+  const definizioni = { LARGHEZZA_OSSA: stoffa.larghezza };
+  const scenario = creaScena({ renderer, dati, ossa: OSSA, definizioni });
+  Object.assign(comuni, { uVersoFinestra: scenario.uniformi.uVersoFinestra, uParete: scenario.uniformi.uParete, uFinestra: scenario.uniformi.uFinestra });
   const cerca = cercatore(stoffa);
   const taschino = [];
   const delTaschino = (m) => { for (let p = m; p; p = p.parent) if (p.name === 'taschino') return true; return false; };
-  const definizioni = { LARGHEZZA_OSSA: stoffa.larghezza };
   camicia.traverse((m) => {
     if (!m.isMesh) return;
     const g = m.geometry, nome = m.material.name;
@@ -398,20 +413,19 @@ export async function avviaCamicia(contenitore, o) {
         uniforms: uniformi, vertexShader: VERTICI, fragmentShader: DIRITTO,
         defines: diritto ? definizioni : { ...definizioni, ROVESCIO: 1 }, side: diritto ? FrontSide : DoubleSide,
       });
+      if (diritto) scenario.gemello(m, uniformi);         // è il diritto a fare ombra sulla parete
     }
     if (delTaschino(m)) { taschino.push(m); m.visible = Boolean(o.taschino); }
   });
   const ingombro = new Box3().setFromObject(camicia);
   const mezzo = new Vector3().subVectors(ingombro.max, ingombro.min).multiplyScalar(0.5);
-  const sotto = ombra();
-  const largOmbra = mezzo.x * 1.9;
-  sotto.position.y = ingombro.min.y - 0.15;
-  scena.add(sotto);
+  perno.add(scenario.gruccia);
+  scena.add(scenario.parete);
 
   // --- stato del movimento -------------------------------------------------------------------------------
-  const RIPOSO = 0.34;                                 // di tre quarti, come nell'immagine ferma
-  let giro = RIPOSO + 0.12, inclina = 0;               // angoli attuali
-  let base = 0, velBase = 0, metaInclina = 0;          // rotazione scelta trascinando, con la sua inerzia
+  const RIPOSO = dati.riposo;                          // appena girata, come quando la luce è stata calcolata
+  let giro = RIPOSO - 0.14;                            // angolo attuale: arriva girandosi piano
+  let base = 0, velBase = 0;                           // rotazione scelta trascinando, con la sua inerzia
   let trascina = null;
   let ultimoGesto = -10;
   let puntaX = 2, puntaY = 2;                          // puntatore in coordinate della tela (-1..1)
@@ -423,16 +437,24 @@ export async function avviaCamicia(contenitore, o) {
     const w = contenitore.clientWidth || 1, h = contenitore.clientHeight || 1;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    // la camera si allontana quanto serve perché la camicia stia tutta, anche in uno schermo verticale stretto
+    // Sul computer la tela è larga quanto la pagina (la parete fa da sfondo anche al riquadro), ma la camicia sta
+    // nella sua colonna: la camera si regola sulla colonna e poi guarda un po' di lato.
+    const colonna = Math.min(o.colonna?.clientWidth || w, w);
+    // in verticale deve starci tutto: dall'orlo fino al gancio, più un pezzo di nastro
+    const sotto = ingombro.min.y - 0.09, sopra = scenario.cima + 0.12;
     const tan = Math.tan((camera.fov / 2) * Math.PI / 180);
-    camera.position.set(0, -0.03, Math.max((mezzo.y + 0.17) / tan, (mezzo.x + 0.05) / (tan * camera.aspect)));
-    // piani di taglio stretti intorno alla camicia: i due strati del tessuto restano distinti anche con poca precisione
+    camera.position.set(0, (sotto + sopra) / 2, Math.max((sopra - sotto) / 2 / tan, (mezzo.x + 0.05) / (tan * colonna / h)));
+    // piani di taglio stretti intorno alla scena: i due strati del tessuto restano distinti anche con poca precisione
     camera.near = Math.max(camera.position.z - 1.4, 0.1); camera.far = camera.position.z + 2.5;
+    // la camicia sta un po' a destra del centro della colonna: alla sua sinistra deve vedersi l'ombra sulla parete
+    const sposta = (w - colonna) / 2 - colonna * (w > colonna ? 0.07 : 0.03);
+    if (Math.abs(sposta) > 0.5) camera.setViewOffset(w, h, sposta, 0, w, h); else camera.clearViewOffset();
     camera.updateProjectionMatrix();
   }
   misura();
   const osserva = new ResizeObserver(misura);
   osserva.observe(contenitore);
+  if (o.colonna) osserva.observe(o.colonna);
 
   /** Una folata: nasce nel punto (x, y) della tela se lì c'è la camicia, e soffia nel verso (dx, dy) dello schermo.
    *  `forza` è la velocità dell'aria in metri al secondo: bastano pochi centimetri al secondo, perché il cotone
@@ -468,7 +490,6 @@ export async function avviaCamicia(contenitore, o) {
       const passo = (e.clientX - trascina.x) * 0.0085;
       // la velocità con cui la si lascia andare: mai più di un giro in due secondi, o un gesto brusco la farebbe trottolare
       base += passo; velBase = Math.max(-3.2, Math.min(3.2, passo / Math.max(dt, 0.008)));
-      metaInclina = Math.max(-0.28, Math.min(0.28, metaInclina + (e.clientY - trascina.y) * 0.003));
       trascina.x = e.clientX; trascina.y = e.clientY; ultimoGesto = tempo;
     }
     // passando sopra la camicia si alza una folata, tanto più viva quanto più svelto è il gesto
@@ -507,15 +528,16 @@ export async function avviaCamicia(contenitore, o) {
     if (!trascina) {
       base += velBase * dt; velBase *= Math.exp(-dt * 3.2);
       if (tempo - ultimoGesto > 5) base += (Math.round(base / (2 * Math.PI)) * 2 * Math.PI - base) * (1 - Math.exp(-dt * 1.1));
-      if (tempo - ultimoGesto > 2.5) metaInclina *= Math.exp(-dt * 1.5);
     }
     const segue = 1 - Math.exp(-dt * 11);
     giro += (base + RIPOSO - giro) * segue;
-    inclina += (metaInclina - inclina) * segue;
-    const angolo = giro + vivo * Math.sin(tempo * 0.37) * 0.035;
-    perno.rotation.set(inclina, angolo, 0);
-    perno.position.y = vivo * Math.sin(tempo * 0.8) * 0.008;
+    // appesa al nastro, a riposo si torce appena di qua e di là
+    const angolo = giro + vivo * Math.sin(tempo * 0.37) * 0.03;
+    perno.rotation.set(0, angolo, 0);
     perno.updateMatrixWorld(true);
+    // le luci stanno ferme nella stanza: alla camicia serve sapere di quanto è girata rispetto alla posa del calcolo
+    const c = Math.cos(angolo - RIPOSO), sn = Math.sin(angolo - RIPOSO);
+    comuni.uGiro.value.set(c, 0, sn, 0, 1, 0, -sn, 0, c);
 
     if (vivo) {
       // girandola, la camicia attraversa l'aria ferma: il tessuto resta indietro, come quello di una camicia vera
@@ -525,8 +547,7 @@ export async function avviaCamicia(contenitore, o) {
     giroPrima = angolo;
     comuni.uOcchio.value.copy(camera.position).applyMatrix4(inversa.copy(perno.matrixWorld).invert());
 
-    const q = 1 - perno.position.y * 6;
-    sotto.scale.set(largOmbra * q, largOmbra * 0.13 * q, 1); sotto.material.opacity = 0.9 * q;
+    if (scenario.parete.visible) scenario.disegnaOmbra(perno);
     renderer.render(scena, camera);
   }
 
@@ -544,9 +565,9 @@ export async function avviaCamicia(contenitore, o) {
   return {
     tela,
     /** Mette o toglie il taschino. */
-    imposta({ taschino: con }) {
-      if (con === undefined) return;
-      for (const m of taschino) m.visible = Boolean(con);
+    imposta({ taschino: con, parete }) {
+      if (con !== undefined) for (const m of taschino) m.visible = Boolean(con);
+      if (parete !== undefined) scenario.parete.visible = Boolean(parete);     // senza parete: per l'immagine ferma
     },
     /** Solo per le prove: fa avanzare il tempo di `dt` secondi e ridisegna. */
     avanza: passo,
@@ -556,7 +577,7 @@ export async function avviaCamicia(contenitore, o) {
     gira(angolo) { base = angolo; velBase = 0; ultimoGesto = tempo; },
     ferma() {
       cancelAnimationFrame(quadro); osserva.disconnect(); vista.disconnect();
-      renderer.dispose(); tela.remove();
+      scenario.libera(); renderer.dispose(); tela.remove();
     },
   };
 }

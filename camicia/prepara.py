@@ -157,6 +157,77 @@ def segna_strati(ob):
     me.update()
 
 
+def assottiglia(ob, spessore=0.0006):
+    """Nel modello il tessuto è spesso 1,8 mm: sui bordi (collo, polsini, orlo, abbottonatura) si vede, e la camicia
+    sembra di tela pesante. Lo strato interno si avvicina al diritto fino a `spessore` (un popeline da camicia è
+    sui tre decimi; più sottile di così i due strati si confonderebbero)."""
+    me = ob.data
+    bm = bmesh.new(); bm.from_mesh(me); bm.normal_update()
+    strato = bm.faces.layers.int['strato']
+    co = np.array([v.co[:] for v in bm.verts])
+    fuori = [v.index for v in bm.verts if any(f[strato] == 1 for f in v.link_faces)]
+    from mathutils import kdtree
+    albero = kdtree.KDTree(len(fuori))
+    for k, i in enumerate(fuori):
+        albero.insert(co[i], k)
+    albero.balance()
+    mossi, distanze = 0, []
+    for v in bm.verts:
+        dentro = [f for f in v.link_faces if f[strato] == -1]
+        if not dentro or any(f[strato] == 1 for f in v.link_faces):
+            continue
+        n = sum((f.normal * f.calc_area() for f in dentro), Vector())
+        if n.length < 1e-12:
+            continue
+        n.normalize()
+        d = albero.find(v.co)[2]                       # quanto dista adesso dal diritto
+        distanze.append(d)
+        if d > spessore:
+            v.co -= n * min(d - spessore, 0.0025)      # la normale dello strato interno guarda dentro la camicia
+            mossi += 1
+    print('spessore del tessuto: era', round(float(np.median(distanze)) * 1000, 2), 'mm · ora', spessore * 1000, 'mm · punti spostati', mossi)
+    bm.to_mesh(me); bm.free()
+    me.update()
+
+
+def misure_per_la_gruccia(ob):
+    """Dove sta la gruccia dentro la camicia: la linea delle spalle, sotto la quale passa il legno.
+    Restituisce, negli assi del browser, i punti dell'asse del legno da una spalla all'altra, con la sua mezza
+    altezza e la mezza larghezza che ci sta (la camicia in alto è stretta). Sotto il collo la linea prosegue l'arco
+    delle spalle."""
+    me = ob.data
+    co = np.zeros((len(me.vertices), 3)); me.vertices.foreach_get('co', co.ravel())
+    campioni = []
+    for x in np.linspace(-0.21, 0.21, 43):
+        if abs(x) < 0.125:                                  # fin qui arrivano le punte del colletto, appoggiate sulle spalle
+            continue
+        vicini = co[np.abs(co[:, 0] - x) < 0.008]
+        campioni.append((x, float(vicini[:, 2].max())))
+    campioni = np.array(campioni)
+    # l'arco delle spalle: simmetrico, più alto al centro
+    base = np.stack([np.ones(len(campioni)), np.abs(campioni[:, 0]), campioni[:, 0] ** 2], axis=1)
+    k = np.linalg.lstsq(base, campioni[:, 1], rcond=None)[0]
+    punti = []
+    for x in np.linspace(-0.2, 0.2, 33):
+        lungo = max(abs(x), 0.125)                         # sotto il collo il legno è piatto: resta dentro il colletto
+        cresta = float(k[0] + k[1] * lungo + k[2] * lungo * lungo)
+        alta = 0.017 - 0.008 * (abs(x) / 0.2) ** 2          # mezza altezza del legno: più sottile verso le punte
+        zc = cresta - 0.011 - alta
+        fetta = co[(np.abs(co[:, 0] - x) < 0.01) & (np.abs(co[:, 2] - zc) < 0.008)]
+        if len(fetta) < 2:
+            continue
+        y0, y1 = float(fetta[:, 1].min()), float(fetta[:, 1].max())
+        punti.append([round(float(x), 4), round(zc, 4), round(-(y0 + y1) / 2, 4), round(alta, 4), round(max(0.003, min(0.0075, (y1 - y0) / 2 - 0.004)), 4)])
+    # sotto il collo il davanti è aperto e la fetta non dice dove sta il mezzo: lì il legno prosegue dritto
+    ai_lati = [p for p in punti if abs(p[0]) >= 0.125]
+    for p in punti:
+        if abs(p[0]) < 0.125:
+            vicino = min(ai_lati, key=lambda q: abs(abs(q[0]) - 0.125))
+            p[2], p[4] = vicino[2], vicino[4]
+    print('gruccia: punti', len(punti), '· cresta al centro', round(float(k[0]), 3), '· mezza larghezza minima', min(p[4] for p in punti))
+    return punti
+
+
 def facce_taschino(ob):
     """Le facce del taschino. Nel modello il taschino è fatto di tre pezzi di cartamodello cuciti sopra il davanti,
     che sotto resta intero: si riconoscono perché sono le sole isole della mappa che stanno tutte dentro la sua zona."""
@@ -771,14 +842,18 @@ def mappa_cuciture(oggetti, metri_per_uv, lato=2048, portata=0.016, passo=0.0028
 
 def ripara_petto(immagine, petto):
     """Dove stava il taschino il tessuto è fatto di più pezzi sovrapposti per qualche millimetro, e i lembi di sotto
-    nel calcolo restano in ombra: dove spuntano, lasciano segnetti scuri. In quella zona il petto è liscio, e la
-    luce si può lisciare senza perdere nulla."""
+    nel calcolo restano in ombra: dove spuntano lasciano segnetti scuri, che col vento lampeggiano. In quella zona
+    il petto è liscio: la luce si ricostruisce dai soli punti in piena luce, sfumati tra loro. I segni spariscono
+    qualunque sia la loro grandezza, e la sfumatura del petto resta."""
     from scipy import ndimage
     righe, colonne = np.nonzero(petto)
-    r0, r1, c0, c1 = max(righe.min() - 24, 0), righe.max() + 24, max(colonne.min() - 24, 0), colonne.max() + 24
+    r0, r1, c0, c1 = max(righe.min() - 40, 0), righe.max() + 40, max(colonne.min() - 40, 0), colonne.max() + 40
     zona = immagine[r0:r1, c0:c1]
-    # la mediana toglie i segnetti (sono larghi due o tre punti) senza schiarire né scurire il resto
-    liscia = np.stack([ndimage.gaussian_filter(ndimage.median_filter(zona[:, :, k], size=15), 2.0) for k in range(3)], axis=2)
+    chiaro = zona.mean(axis=2)
+    intorno = ndimage.gaussian_filter(ndimage.maximum_filter(chiaro, size=41), 8.0)
+    buoni = (chiaro > 0.86 * intorno).astype(np.float32)             # i punti in piena luce
+    peso = np.maximum(ndimage.gaussian_filter(buoni, 9.0), 1e-4)
+    liscia = np.stack([ndimage.gaussian_filter(zona[:, :, k] * buoni, 9.0) / peso for k in range(3)], axis=2)
     sfuma = ndimage.gaussian_filter(petto[r0:r1, c0:c1].astype(np.float32), 3.0)[:, :, None]
     esce = immagine.copy()
     esce[r0:r1, c0:c1] = zona * (1 - sfuma) + liscia * sfuma
@@ -862,6 +937,7 @@ def main():
     sc, ob = importa(a.obj)
     me = ob.data
     segna_strati(ob)
+    assottiglia(ob)
     tasca, fondo_tasca = facce_taschino(ob)
     rattoppa(ob, tasca, fondo_tasca)
     # fermezza e parti si decidono sulla posa originale, dove polsini, collo e maniche si riconoscono dalla posizione
@@ -925,7 +1001,9 @@ def main():
             'cuciture_portata': 0.016, 'cuciture_passo': 0.0028,
             'luce_sfera': np.round(sfera, 4).tolist(),
             'vertici': len(ob.data.vertices) + len(taschino.data.vertices),
-            'mezzo_ingombro': [round(float(x), 4) for x in (co.max(0) - co.min(0)) / 2]}
+            'mezzo_ingombro': [round(float(x), 4) for x in (co.max(0) - co.min(0)) / 2],
+            'riposo': luci.RIPOSO, 'finestra': list(luci.FINESTRA), 'luce_chiave': list(luci.CHIAVE_PER_IL_BROWSER),
+            'gruccia': misure_per_la_gruccia(ob)}
     with open(os.path.join(a.uscita, 'camicia.json'), 'w') as f:
         json.dump(dati, f, indent=1)
     print('scritto', os.path.join(a.uscita, 'camicia.glb'), os.path.getsize(os.path.join(a.uscita, 'camicia.glb')), 'byte', dati)

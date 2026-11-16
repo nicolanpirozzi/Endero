@@ -17,7 +17,8 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
   await p.waitForTimeout(800);
   const cdp = await ctx.newCDPSession(p);
   const dir = path.join(out, 'fot-' + modo); fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
-  const r = await p.evaluate(() => { const q = document.querySelector('.camicia__tela').getBoundingClientRect(); return { x: q.left, y: q.top, w: q.width, h: q.height }; });
+  // i gesti si misurano sul palco, la colonna dove sta la camicia: sul computer la tela è larga quanto la pagina
+  const r = await p.evaluate(() => { const q = document.querySelector('[data-camicia]').getBoundingClientRect(); return { x: q.left, y: q.top, w: q.width, h: q.height }; });
   const fps = 30; let n = 0;
   const liscio = (t) => t * t * (3 - 2 * t);
   const scatta = async () => { const s = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 88 }); fs.writeFileSync(path.join(dir, String(n++).padStart(4, '0') + '.jpg'), Buffer.from(s.data, 'base64')); };

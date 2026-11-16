@@ -38,6 +38,8 @@ async function avvia(palco) {
       avanzamento: (quota) => segna(0.22 + 0.74 * quota),
       fermo: matchMedia('(prefers-reduced-motion: reduce)').matches,
       manuale: prova.has('manuale'),
+      grezzo: prova.has('grezzo'),
+      colonna: palco,                                         // la tela può essere più larga del palco: la camicia sta qui
     });
     segna(1);
     window.__camicia = camicia;                               // per le prove automatiche

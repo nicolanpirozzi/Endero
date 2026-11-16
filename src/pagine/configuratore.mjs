@@ -64,7 +64,7 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
   <div class="configura__palco"${dati3d}>
-    <img class="configura__ferma" src="${esc(camicia.ferma)}" width="1024" height="1202" alt="${esc(p.alt)}" fetchpriority="high">
+    <img class="configura__ferma" src="${esc(camicia.ferma)}" width="1024" height="1312" alt="${esc(p.alt)}" fetchpriority="high">
     <div class="configura__tela" data-tela></div>
     <div class="configura__carica" role="status" aria-live="polite" aria-label="${esc(p.caricamento)}">
       ${logo('completo')}

@@ -49,6 +49,15 @@
   transition: opacity 600ms ease-out;
 }
 
+/* Sul computer la tela del 3D è larga quanto la pagina: la parete con la luce della finestra fa da sfondo anche al
+   riquadro in vetro, che così è vetro davvero. La camicia resta nella sua colonna (ci pensa il 3D). */
+@media (min-width: 810px) {
+  .configura__tela {
+    right: auto;
+    width: 100vw;
+  }
+}
+
 .camicia__tela {
   display: block;
   width: 100%;
@@ -391,6 +400,12 @@
 
   .configura__invito {
     bottom: 10px;
+  }
+
+  /* sul telefono la parete finisce dove comincia il riquadro: in basso sfuma nel blu della pagina */
+  .configura__tela {
+    -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
   }
 
   .configura__scheda {
