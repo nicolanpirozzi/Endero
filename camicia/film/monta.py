@@ -48,14 +48,14 @@ def main():
         print(f'  ATTENZIONE: il centro previsto è {CENTRO_CAMICIA * 100:.2f}%: aggiornare CENTRO_CAMICIA qui e --camicia in configuratore.css')
     largo_tel = int(A * 0.75) // 2 * 2
     x_tel = max(0, min(L - largo_tel, int(L * CENTRO_CAMICIA - largo_tel / 2) // 2 * 2))
-    ferma.save(os.path.join(uscita, 'ferma.webp'), quality=90, method=6)
-    ferma.crop((x_tel, 0, x_tel + largo_tel, A)).save(os.path.join(uscita, 'ferma-telefono.webp'), quality=90, method=6)
+    ferma.save(os.path.join(uscita, 'ferma.webp'), quality=95, method=6)
+    ferma.crop((x_tel, 0, x_tel + largo_tel, A)).save(os.path.join(uscita, 'ferma-telefono.webp'), quality=95, method=6)
     doppia = os.path.join(entrata, 'ferma-2x.png')
     if os.path.exists(doppia):
         grande = Image.open(doppia).convert('RGB')
         assert grande.size == (L * 2, A * 2), f'ferma-2x.png è {grande.size}, attesa {(L * 2, A * 2)}'
-        grande.save(os.path.join(uscita, 'ferma-2x.webp'), quality=84, method=6)
-        grande.crop((x_tel * 2, 0, (x_tel + largo_tel) * 2, A * 2)).save(os.path.join(uscita, 'ferma-telefono-2x.webp'), quality=84, method=6)
+        grande.save(os.path.join(uscita, 'ferma-2x.webp'), quality=90, method=6)
+        grande.crop((x_tel * 2, 0, (x_tel + largo_tel) * 2, A * 2)).save(os.path.join(uscita, 'ferma-telefono-2x.webp'), quality=90, method=6)
     base = np.asarray(ferma).astype(np.float32)
     for scena in SCENE:
         file = sorted(glob.glob(os.path.join(entrata, scena, '[0-9]*.png')))
