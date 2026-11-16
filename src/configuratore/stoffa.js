@@ -17,14 +17,15 @@ const LARGHEZZA = 128;            // punti per riga nell'immagine delle ossa (du
 const FOLATE = 6;                 // quante folate possono convivere
 
 export const TESSUTO = {
-  ritorno: 10,          // con che forza ogni punto torna al suo posto (1/s²): bassa, la camicia dondola piano
+  ritorno: 5.5,         // con che forza ogni punto torna al suo posto (1/s²): bassa, il tessuto va lontano e torna piano
+  maniche: 0.45,        // le maniche pendono libere: tornano al loro posto con meno di metà della forza
   appeso: 900,          // in più su collo e spalle, da cui pende
   aria: 7.5,            // quanto l'aria trascina il tessuto (1/s): alta, perché il cotone leggero è in balìa dell'aria
-  attrito: 1.1,         // smorzamento del moto lungo il tessuto (1/s)
+  attrito: 0.9,         // smorzamento del moto lungo il tessuto (1/s)
   compressione: 2600,   // un lato schiacciato cede (il tessuto fa una grinza); tirato, non si allunga
-  piega: 70,            // memoria della forma tra due triangoli vicini
+  piega: 42,            // memoria della forma tra due triangoli vicini: poca, è un popeline leggero
   rigido: 14,           // di quante volte è più dura la piega su polsini e abbottonatura
-  brezza: 0.014,       // vento di fondo, in metri al secondo: appena un respiro
+  brezza: 0.008,       // vento di fondo, in metri al secondo: appena un respiro
 };
 
 /** Il punto del triangolo (a, b, c: posizioni in `x`) più vicino a p: restituisce i tre pesi e il quadrato della distanza. */
@@ -75,7 +76,8 @@ export function creaStoffa(dati, o = {}) {
   for (let i = 0; i < n; i++) {
     const a = dati.appeso[i], r = dati.rigido[i];
     libero[i] = a < 0.9 ? 1 : 0;
-    ritorno[i] = P.ritorno * (1 + 2.5 * r) + P.appeso * a * a;
+    const manica = dati.parte[i] > 0;
+    ritorno[i] = P.ritorno * (manica ? P.maniche * (1 + 0.6 * r) : 1 + 2.5 * r) + P.appeso * a * a;
   }
 
   // --- vincoli ---------------------------------------------------------------------------------------------
@@ -194,7 +196,7 @@ export function creaStoffa(dati, o = {}) {
     for (const f of folate) { const eta = tempo - f.nata; s += f.forza * Math.exp(-eta / 0.5); }
     return s;
   }
-  function soffia(gira) {
+  function soffia(gira, dondolo) {
     // brezza di fondo: gira piano intorno alla camicia e respira; le sue increspature corrono col vento
     const giro = tempo * 0.17, respiro = 0.55 + 0.45 * Math.sin(tempo * 0.43) * Math.sin(tempo * 0.29 + 1.3);
     const bx = Math.cos(giro), bz = Math.sin(giro) * 0.8 + 0.2, forzaB = P.brezza * respiro;
@@ -205,12 +207,17 @@ export function creaStoffa(dati, o = {}) {
       const mb = 0.6 + 0.4 * Math.sin(sb * 11 - tempo * 1.7 + py * 3.1) + 0.25 * Math.sin(sb * 23 - tempo * 2.9 + 1.1);
       // girando su sé stessa la camicia attraversa l'aria ferma: vista da lei, è l'aria che le gira intorno
       let wx = bx * forzaB * mb - gira * pz, wy = 0, wz = bz * forzaB * mb + gira * px;
+      if (dondolo) {
+        // la camicia dondola appesa al nastro: anche così attraversa l'aria ferma, e il tessuto resta indietro
+        const ax = px - dondolo[2], ay = py - dondolo[3], az = pz - dondolo[4];
+        wx += dondolo[1] * ay; wy += dondolo[0] * az - dondolo[1] * ax; wz -= dondolo[0] * ay;
+      }
       for (const f of folate) {
         const eta = tempo - f.nata;
         // arriva in fretta e se ne va piano; il suo centro corre col vento e si allarga
         const inv = f.forza * (1 - Math.exp(-eta / 0.05)) * Math.exp(-eta / 0.5);
         if (inv < 1e-4) continue;
-        const corsa = 0.5 * eta, raggio = 0.13 + 0.16 * eta;
+        const corsa = 0.5 * eta, raggio = 0.18 + 0.2 * eta;
         const rx = px - (f.c[0] + f.d[0] * corsa), ry = py - (f.c[1] + f.d[1] * corsa), rz = pz - (f.c[2] + f.d[2] * corsa);
         const a = inv * Math.exp(-(rx * rx + ry * ry + rz * rz) / (raggio * raggio));
         if (a < 1e-4) continue;
@@ -224,12 +231,13 @@ export function creaStoffa(dati, o = {}) {
     }
   }
 
-  /** Fa avanzare la stoffa di `dt` secondi. `gira` è la velocità con cui la camicia sta girando (radianti al secondo). */
-  function passo(dt, gira = 0) {
+  /** Fa avanzare la stoffa di `dt` secondi. `gira` è la velocità con cui la camicia sta girando (radianti al secondo);
+   *  `dondolo`, se c'è, è come sta dondolando appesa: velocità intorno a X e a Z, e il punto a cui è appesa (x, y, z). */
+  function passo(dt, gira = 0, dondolo = null) {
     dt = Math.min(dt, 0.05);
     tempo += dt;
     const inizio = orologio();
-    soffia(Math.max(-3, Math.min(3, gira)) * 0.3);      // meno del vero: girandola deve restare una camicia, non una bandiera
+    soffia(Math.max(-3, Math.min(3, gira)) * 0.6, dondolo);      // un po' meno del vero: girandola resta una camicia, non una bandiera
     const passi = Math.max(1, Math.min(12, Math.ceil(dt / passoDiCalcolo - 1e-6))), h = dt / passi, inv = 1 / (h * h);
     const frena = Math.max(0, 1 - P.attrito * h), tira = P.aria * h;
     for (let s = 0; s < passi; s++) {

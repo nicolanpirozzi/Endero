@@ -30,7 +30,7 @@ const allunghi = () => lati.map(([a, b]) => (lung(a, b, x) / lung(a, b, x0) - 1)
 
 const righe = ['t,' + Object.keys(sonde).join(',')];
 const DT = 1 / 60;
-const FORZA = Number(process.argv[4]) || 0.25, PREME = Number(process.argv[5]) || 0.5, SMORZA = Number(process.argv[6]) || 4;
+const FORZA = Number(process.argv[4]) || 0.85, PREME = Number(process.argv[5]) || 0.5, SMORZA = Number(process.argv[6]) || 1.6;
 let massimo = Object.fromEntries(Object.keys(sonde).map((k) => [k, [0, 0]])), tiro = 0, speso = 0;
 const quiete = {};
 for (let f = 0; f < 60 * 12; f++) {

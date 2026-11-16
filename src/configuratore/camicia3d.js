@@ -157,6 +157,10 @@ const DIRITTO = /* glsl */`
       }
       N0 = -N0; N = -N;
     #endif
+    #ifdef BORDINO
+      // i bordini si vedono da fuori, da tutti e due i lati: prendono la luce del diritto, come il tessuto che uniscono
+      if (!gl_FrontFacing) { N0 = -N0; N = -N; }
+    #endif
     vec3 V = unitaF(uOcchio - vPos, vec3(0.0, 0.0, 1.0));
     float punto = max(length(dFdx(vPos)), length(dFdy(vPos)));       // quanto tessuto sta in un punto dello schermo
 
@@ -180,13 +184,13 @@ const DIRITTO = /* glsl */`
     // il diritto del tessuto non è mai nero, nemmeno nella piega più fonda: un punto nero sarebbe un errore, non un'ombra
     luce = max(luce, vec3(uLuceMedia * 0.1));
 
-    // --- il tessuto: popeline di cotone. I fili non si distinguono a questa distanza: si vede che non è uniforme
+    // --- il tessuto: popeline di cotone leggero, stirato. I fili sono finissimi: si intuisce appena che non è uniforme
     vec2 m = vUv * uMetri;
     float fine = clamp(0.0007 / punto, 0.0, 1.0);
-    float ordito = rumore(vec2(m.x / 0.00055, m.y / 0.012)) - 0.5;
-    float trama = rumore(vec2(m.x / 0.014, m.y / 0.00055) + 37.0) - 0.5;
+    float ordito = rumore(vec2(m.x / 0.00042, m.y / 0.016)) - 0.5;
+    float trama = rumore(vec2(m.x / 0.018, m.y / 0.00042) + 37.0) - 0.5;
     float nuvola = rumore(m / 0.006) - 0.5;
-    vec3 colore = uColore * (1.0 + fine * 0.05 * (ordito + trama) + 0.018 * nuvola);
+    vec3 colore = uColore * (1.0 + fine * 0.032 * (ordito + trama) + 0.012 * nuvola);
     colore *= 1.0 - 0.2 * costura - 0.11 * filo * (0.65 - 0.35 * passo);
     colore *= 1.0 + 0.05 * filo * max(passo, 0.0);                   // il filo, appena più chiaro del tessuto
 
@@ -371,9 +375,11 @@ export async function avviaCamicia(contenitore, o) {
   scena.environment = studio(renderer);
   const camera = new PerspectiveCamera(24, 1, 0.1, 20);
   const perno = new Group();        // la camicia con la sua gruccia: gira appesa al nastro
+  const altalena = new Group();     // e dondola tutta, dal punto in cui il nastro è fissato
   const camicia = gltf.scene;
   perno.add(camicia);
-  scena.add(perno);
+  altalena.add(perno);
+  scena.add(altalena);
   perno.updateMatrixWorld(true);
 
   const comuni = {
@@ -408,10 +414,11 @@ export async function avviaCamicia(contenitore, o) {
     } else if (nome === 'filo') {
       m.material = cheSegue(new MeshStandardMaterial({ color: AVORIO, roughness: 0.95, envMapIntensity: 0.8 }), uniformi, stoffa.larghezza);
     } else {
+      // tre pezzi di stoffa: il diritto, il rovescio (che fa anche da fodera) e i bordini che li uniscono
       const diritto = nome === 'tessuto';
       m.material = new ShaderMaterial({
         uniforms: uniformi, vertexShader: VERTICI, fragmentShader: DIRITTO,
-        defines: diritto ? definizioni : { ...definizioni, ROVESCIO: 1 }, side: diritto ? FrontSide : DoubleSide,
+        defines: diritto ? definizioni : { ...definizioni, [nome === 'bordino' ? 'BORDINO' : 'ROVESCIO']: 1 }, side: diritto ? FrontSide : DoubleSide,
       });
       if (diritto) scenario.gemello(m, uniformi);         // è il diritto a fare ombra sulla parete
     }
@@ -421,11 +428,19 @@ export async function avviaCamicia(contenitore, o) {
   const mezzo = new Vector3().subVectors(ingombro.max, ingombro.min).multiplyScalar(0.5);
   perno.add(scenario.gruccia);
   scena.add(scenario.parete);
+  altalena.position.copy(scenario.ancora);
+  perno.position.copy(scenario.ancora).negate();
+  altalena.updateMatrixWorld(true);
 
   // --- stato del movimento -------------------------------------------------------------------------------
   const RIPOSO = dati.riposo;                          // appena girata, come quando la luce è stata calcolata
   let giro = RIPOSO - 0.14;                            // angolo attuale: arriva girandosi piano
   let base = 0, velBase = 0;                           // rotazione scelta trascinando, con la sua inerzia
+  // appesa al nastro, la camicia è un pendolo: dondola di lato e avanti-indietro, e si torce. Sono gli angoli (radianti)
+  // e le loro velocità; il vento li spinge, il peso li riporta, piano.
+  const pendolo = { lato: 0, fondo: 0, torce: 0, vLato: 0, vFondo: 0, vTorce: 0 };
+  const PENDOLO = 2.86, FRENO = 0.75, TORSIONE = 2.0, FRENO_TORSIONE = 1.3;    // 1/s: un'oscillazione ogni 2,2 secondi
+  const dondolo = new Float32Array(5);
   let trascina = null;
   let ultimoGesto = -10;
   let puntaX = 2, puntaY = 2;                          // puntatore in coordinate della tela (-1..1)
@@ -472,7 +487,12 @@ export async function avviaCamicia(contenitore, o) {
     const l = Math.hypot(dx, dy) || 1;
     versoVento.set(dx / l, (dy / l) * 0.5, -0.5).normalize().transformDirection(inversa);
     // se soffia già molto, la folata nuova è più debole: il tessuto non deve mai agitarsi
-    stoffa.folata(colpo[0], colpo[1], colpo[2], versoVento.x, versoVento.y, versoVento.z, forza / (1 + 3 * stoffa.carico()));
+    const spinta = forza / (1 + 1.6 * stoffa.carico());
+    // la stessa folata spinge tutta la camicia (dondola) e, se la prende di lato, la torce sul nastro
+    pendolo.vLato += 0.16 * spinta * (dx / l);
+    pendolo.vFondo += 0.11 * spinta;
+    pendolo.vTorce += 1.6 * spinta * (colpo[2] * versoVento.x - colpo[0] * versoVento.z);
+    stoffa.folata(colpo[0], colpo[1], colpo[2], versoVento.x, versoVento.y, versoVento.z, spinta);
     return true;
   }
 
@@ -490,12 +510,14 @@ export async function avviaCamicia(contenitore, o) {
       const passo = (e.clientX - trascina.x) * 0.0085;
       // la velocità con cui la si lascia andare: mai più di un giro in due secondi, o un gesto brusco la farebbe trottolare
       base += passo; velBase = Math.max(-3.2, Math.min(3.2, passo / Math.max(dt, 0.008)));
+      pendolo.vLato += passo * 0.08;                    // tirata di lato, dondola
       trascina.x = e.clientX; trascina.y = e.clientY; ultimoGesto = tempo;
     }
     // passando sopra la camicia si alza una folata, tanto più viva quanto più svelto è il gesto
-    if (!fuori && !trascina && corsa > 0.006 && tempo - ultimaFolata > 0.12) {
+    // (anche mentre la si trascina, più di rado: col dito è il solo modo di muoverla)
+    if (!fuori && corsa > 0.006 && tempo - ultimaFolata > (trascina ? 0.28 : 0.12)) {
       const svelto = Math.min(corsa / dt / 2.2, 1);     // 2,2 larghezze di tela al secondo: gesto deciso
-      if (soffia(x, y, dx, dy, 0.2 + 0.4 * svelto)) ultimaFolata = tempo;
+      if (soffia(x, y, dx, dy, (0.22 + 0.7 * svelto) * (trascina ? 0.6 : 1))) ultimaFolata = tempo;
     }
     puntaX = x; puntaY = y; ultimaMossa = ora;
   }
@@ -506,7 +528,7 @@ export async function avviaCamicia(contenitore, o) {
     tela.classList.add('camicia__tela--presa');
     [puntaX, puntaY] = inTela(e); ultimaMossa = performance.now();
     // toccata, cede appena sotto il dito: sul telefono è il solo modo di sentirla
-    if (soffia(puntaX, puntaY, 0, -0.2, 0.22)) ultimaFolata = tempo;
+    if (soffia(puntaX, puntaY, 0, -0.2, 0.4)) ultimaFolata = tempo;
   }
   function suSu() { trascina = null; tela.classList.remove('camicia__tela--presa'); }
   function suFuori() { if (!trascina) puntaX = puntaY = 2; }
@@ -522,7 +544,7 @@ export async function avviaCamicia(contenitore, o) {
     tempo += dt;
     const vivo = o.fermo ? 0 : 1;
     // appena compare, un soffio da sinistra: dice che è viva
-    if (vivo && !salutata && tempo > 0.7) { salutata = true; soffia(-0.2, 0.05, 1, 0.1, 0.36); }
+    if (vivo && !salutata && tempo > 0.7) { salutata = true; soffia(-0.2, 0.05, 1, 0.1, 0.55); }
 
     // rotazione: segue il trascinamento senza rimbalzi; lasciata andare scivola e poi, dopo un po', torna di tre quarti
     if (!trascina) {
@@ -532,16 +554,26 @@ export async function avviaCamicia(contenitore, o) {
     const segue = 1 - Math.exp(-dt * 11);
     giro += (base + RIPOSO - giro) * segue;
     // appesa al nastro, a riposo si torce appena di qua e di là
-    const angolo = giro + vivo * Math.sin(tempo * 0.37) * 0.03;
+    // il pendolo: il peso riporta, l'aria frena. Mai oltre una decina di gradi: dietro c'è la parete
+    for (const [a, v, w, f] of [['lato', 'vLato', PENDOLO, FRENO], ['fondo', 'vFondo', PENDOLO, FRENO], ['torce', 'vTorce', TORSIONE, FRENO_TORSIONE]]) {
+      pendolo[v] += (-w * w * pendolo[a] - f * pendolo[v]) * dt;
+      pendolo[a] = Math.max(-0.17, Math.min(0.17, pendolo[a] + pendolo[v] * dt * vivo));
+    }
+    const angolo = giro + pendolo.torce * 2.2 + vivo * Math.sin(tempo * 0.37) * 0.03;
     perno.rotation.set(0, angolo, 0);
-    perno.updateMatrixWorld(true);
+    altalena.rotation.set(pendolo.fondo, 0, pendolo.lato);
+    altalena.updateMatrixWorld(true);
     // le luci stanno ferme nella stanza: alla camicia serve sapere di quanto è girata rispetto alla posa del calcolo
     const c = Math.cos(angolo - RIPOSO), sn = Math.sin(angolo - RIPOSO);
     comuni.uGiro.value.set(c, 0, sn, 0, 1, 0, -sn, 0, c);
 
     if (vivo) {
       // girandola, la camicia attraversa l'aria ferma: il tessuto resta indietro, come quello di una camicia vera
-      stoffa.passo(dt, dt > 0 ? (angolo - giroPrima) / dt : 0);
+      // come dondola, vista dalla camicia (che intanto è girata): velocità intorno ai suoi assi X e Z, e dove è appesa
+      const c2 = Math.cos(angolo), s2 = Math.sin(angolo), A = scenario.ancora;
+      dondolo[0] = pendolo.vFondo * c2 - pendolo.vLato * s2; dondolo[1] = pendolo.vFondo * s2 + pendolo.vLato * c2;
+      dondolo[2] = A.x * c2 - A.z * s2; dondolo[3] = A.y; dondolo[4] = A.x * s2 + A.z * c2;
+      stoffa.passo(dt, dt > 0 ? (angolo - giroPrima) / dt : 0, dondolo);
       ossa.needsUpdate = true;
     }
     giroPrima = angolo;

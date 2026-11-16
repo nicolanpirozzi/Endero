@@ -198,6 +198,7 @@ export function creaScena({ renderer, dati, ossa, definizioni }) {
   return {
     parete, gruccia, uniformi, gemello,
     cima: cima.y,                       // l'altezza del punto più alto del gancio
+    ancora: new Vector3(0, cima.y + 0.75, cima.z),      // dove il nastro è fissato, fuori dall'inquadratura: da lì dondola tutto
     /** Da chiamare a ogni fotogramma, dopo aver mosso il perno: aggiorna e ridisegna l'ombra. */
     disegnaOmbra(perno) {
       uniformi.uPerno.value = perno.matrixWorld;

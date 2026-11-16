@@ -9,7 +9,7 @@ Il modello originale NON sta nel repository: è materiale comprato, va tenuto fu
 Cosa fa, nell'ordine:
   1. importa il modello in metri e riconosce il diritto, il rovescio e i bordini del tessuto;
   2. stacca il taschino (la camicia di base è senza) e ricuce il davanti che gli stava sotto;
-  3. abbassa le braccia, centra, riporta la mappa tra 0 e 1;
+  3. abbassa le braccia, stira le grinze del modello, centra, riporta la mappa tra 0 e 1;
   4. calcola la luce con Cycles, lo stesso motore dell'apertura: per il diritto un'immagine (`luce.webp`, stesa
      sulla mappa del cartamodello), per rovescio e bordini un valore per vertice. Ombre vere, luce che rimbalza
      tra le pieghe: il browser non le calcola, le riceve già fatte;
@@ -482,6 +482,50 @@ def tappa_buchi(ob, giri=6):
     print('petto: punti da cui si vede ancora attraverso', len(buchi_del_petto(ob)))
 
 
+def fodera_del_petto(ob, dietro=0.0012):
+    """Dove stava il taschino il davanti è fatto di pezzi ricuciti, e lungo il contorno restano forellini più
+    sottili di un capello: da fermi quasi non si vedono, ma quando il tessuto si muove si allargano e lasciano
+    vedere l'interno, più scuro (i "puntini neri" segnalati dal proprietario). Lì spuntano anche i bordini dei
+    pezzi ricuciti, che si tolgono. Dietro quella zona si stende una
+    fodera: una copia del diritto, saldata dove lui è scucito, poco più di un millimetro sotto. Ha la stessa mappa,
+    quindi la stessa luce, e attraverso un forellino si vede lei: tessuto dello stesso colore.
+    È segnata come toppa: non entra nel calcolo della luce e non fa parte del telaio."""
+    me = ob.data
+    bm = bmesh.new(); bm.from_mesh(me)
+    strato = bm.faces.layers.int['strato']
+    toppa = bm.faces.layers.int.get('toppa') or bm.faces.layers.int.new('toppa')
+    bm.faces.ensure_lookup_table()
+    nel_petto = lambda v: 0.02 < v.co.x < 0.20 and 0.02 < v.co.z < 0.23 and v.co.y < 0
+    # i bordini dei pezzi ricuciti (le strisce che uniscono diritto e rovescio) qui non servono più, e dove
+    # spuntano tra un pezzo e l'altro si vedono: prendono la luce dell'interno, più scura
+    bordini = [f for f in bm.faces if f[strato] == 0 and f.material_index == 4 and all(nel_petto(v) for v in f.verts)]
+    bmesh.ops.delete(bm, geom=bordini, context='FACES')
+    bm.faces.ensure_lookup_table()
+    facce = [f for f in bm.faces if f[strato] == 1 and not f[toppa] and all(nel_petto(v) for v in f.verts)]
+    copia = [g for g in bmesh.ops.duplicate(bm, geom=facce)['geom'] if isinstance(g, bmesh.types.BMFace)]
+    bmesh.ops.remove_doubles(bm, verts=list({v for f in copia for v in f.verts}), dist=0.003)
+    copia = [f for f in copia if f.is_valid]
+    orli = list({e for f in copia for e in f.edges if e.is_boundary})
+    chiuse = bmesh.ops.holes_fill(bm, edges=orli, sides=14)['faces']       # solo i fori piccoli: il contorno resta aperto
+    uvl = bm.loops.layers.uv.active
+    for f in chiuse:
+        vicina = next((g for e in f.edges for g in e.link_faces if g is not f and g in set(copia)), None)
+        f[strato] = 1; f.smooth = True
+        if vicina is not None:
+            f.material_index = vicina.material_index
+            for l in f.loops:
+                l[uvl].uv = vicina.loops[0][uvl].uv.copy()
+    bm.normal_update()
+    tutte = [f for f in copia + chiuse if f.is_valid]
+    for v in {v for f in tutte for v in f.verts}:
+        v.co -= v.normal * dietro
+    for f in tutte:
+        f[toppa] = 1
+    print('fodera del petto: facce', len(tutte), '· fori chiusi', len(chiuse), '· bordini tolti', len(bordini))
+    bm.to_mesh(me); bm.free()
+    me.update()
+
+
 def separa(ob, nome):
     """Stacca in un oggetto nuovo le facce segnate come taschino. Attributi, mappa e materiali restano su entrambi."""
     nuovo = bpy.data.objects.new(nome, ob.data.copy())
@@ -539,7 +583,7 @@ def abbassa_braccia(ob, gradi):
     me.vertices.foreach_set('co', co.ravel()); me.update()
 
 
-MATERIALI = ('tessuto', 'rovescio', 'bottone', 'filo')
+MATERIALI = ('tessuto', 'rovescio', 'bottone', 'filo', 'bordino')
 
 
 def parti(ob):
@@ -563,14 +607,16 @@ def parti(ob):
 
 
 def quattro_materiali(ob):
-    """Dai nove materiali del modello a quattro: tessuto (il diritto), rovescio (rovescio e bordini), bottone, filo.
+    """Dai nove materiali del modello a cinque: tessuto (il diritto), rovescio, bottone, filo, bordino.
     Restituisce il tipo di ogni faccia."""
     me = ob.data
     vecchi = [m.name for m in me.materials]
     idx = np.zeros(len(me.polygons), dtype=np.int32); me.polygons.foreach_get('material_index', idx)
     strato = np.zeros(len(me.polygons), dtype=np.int32); me.attributes['strato'].data.foreach_get('value', strato)
     di_stoffa = np.array([n in TESSUTO for n in vecchi])[idx]
-    tipo = np.where(di_stoffa, np.where(strato == 1, 0, 1), np.where(np.array([n in BOTTONE for n in vecchi])[idx], 2, 3))
+    # i bordini (le strisce che uniscono diritto e rovescio sui bordi liberi) si vedono da fuori: hanno un materiale
+    # loro, che il visualizzatore disegna con la luce del diritto e non con quella, più scura, dell'interno
+    tipo = np.where(di_stoffa, np.where(strato == 1, 0, np.where(strato == -1, 1, 4)), np.where(np.array([n in BOTTONE for n in vecchi])[idx], 2, 3))
     me.materials.clear()
     for nome in MATERIALI:
         me.materials.append(bpy.data.materials.get(nome) or bpy.data.materials.new(nome))
@@ -597,7 +643,7 @@ def mappa_in_scala(ob, tipo_faccia):
     # conta solo il tessuto: bottoni e fili hanno una mappa loro, lontana, che sprecherebbe metà dell'immagine
     di_stoffa = np.zeros(len(me.loops), bool)
     for p in me.polygons:
-        if tipo_faccia[p.index] < 2:
+        if tipo_faccia[p.index] not in (2, 3):
             di_stoffa[list(p.loop_indices)] = True
     minimo = uv[di_stoffa].min(0)
     ampiezza = float((uv[di_stoffa].max(0) - minimo).max()) * 1.012
@@ -616,18 +662,107 @@ def mappa_in_scala(ob, tipo_faccia):
     return float(np.median(rapporti))
 
 
+def _zone(co, alto=None):
+    """Le zone della camicia nella posa originale, da 0 a 1: collo e spalle alte, polsini, abbottonatura."""
+    def gradino(a, b, x):
+        t = np.clip((x - a) / (b - a), 0.0, 1.0)
+        return t * t * (3 - 2 * t)
+    z_alto = ALTO_DELLA_CAMICIA if alto is None else alto
+    appeso = gradino(z_alto - 0.17, z_alto - 0.07, co[:, 2])
+    polso = gradino(0.42, 0.52, np.abs(co[:, 0]))
+    bottoni = np.where((co[:, 1] < 0) & (np.abs(co[:, 0]) < 0.22), 1.0 - gradino(0.012, 0.05, np.abs(co[:, 0])), 0.0)
+    return appeso, polso, bottoni
+
+
+ALTO_DELLA_CAMICIA = 0.0            # la quota del punto più alto nella posa originale: la scrive `tenuta`
+
+
 def tenuta(co):
     """Come è tenuto ogni punto, sulla posa originale: `appeso` vale 1 su collo e spalle, da cui la camicia pende,
     e scende a 0 una spanna più sotto; `rigido` vale 1 sui polsini e mezzo lungo l'abbottonatura, che hanno più
     strati e si piegano meno."""
-    def gradino(a, b, x):
-        t = np.clip((x - a) / (b - a), 0.0, 1.0)
-        return t * t * (3 - 2 * t)
-    z_alto = co[:, 2].max()
-    appeso = gradino(z_alto - 0.17, z_alto - 0.07, co[:, 2])
-    polso = gradino(0.42, 0.52, np.abs(co[:, 0]))
-    bottoni = np.where((co[:, 1] < 0) & (np.abs(co[:, 0]) < 0.22), 1.0 - gradino(0.012, 0.05, np.abs(co[:, 0])), 0.0)
+    global ALTO_DELLA_CAMICIA
+    ALTO_DELLA_CAMICIA = float(co[:, 2].max())
+    appeso, polso, bottoni = _zone(co)
     return appeso, np.maximum(polso, 0.5 * bottoni)
+
+
+def stira(ob, co0, forza=700.0):
+    """Stira la camicia. Il modello è stropicciato, soprattutto sulle maniche e sui fianchi, e quelle grinze sono
+    nella forma: non cambiano mai, nemmeno quando il tessuto si muove, ed è ciò che la fa sembrare finta (il
+    proprietario, 16 novembre 2026: "continua ad avere delle pieghe anche quando è ferma").
+    Il diritto del tessuto si liscia tenendo la sua forma d'insieme: spariscono le pieghe più corte di una spanna,
+    restano la caduta, le spalle, il giro delle maniche. Collo, polsini, abbottonatura e tutti i bordi non si
+    toccano. Poi il rovescio, i bordini, i bottoni e i fili seguono il diritto, ciascuno col suo spostamento.
+    `co0` sono i punti nella posa originale, dove le zone si riconoscono dalla posizione."""
+    from scipy import sparse
+    from scipy.sparse.linalg import splu
+    from mathutils import kdtree
+    me = ob.data
+    n = len(me.vertices)
+    co = np.zeros((n, 3)); me.vertices.foreach_get('co', co.ravel())
+    strato = np.zeros(len(me.polygons), dtype=np.int32); me.attributes['strato'].data.foreach_get('value', strato)
+    # i lati del diritto, e quante facce del diritto li toccano (una sola: è un bordo)
+    conta = {}
+    for p in me.polygons:
+        if strato[p.index] != 1:
+            continue
+        v = list(p.vertices)
+        for k in range(len(v)):
+            a, b = v[k], v[(k + 1) % len(v)]
+            conta[(min(a, b), max(a, b))] = conta.get((min(a, b), max(a, b)), 0) + 1
+    lati = np.array(list(conta.keys())); quante = np.array(list(conta.values()))
+    fuori = np.unique(lati)                                   # i vertici del diritto
+    posto = -np.ones(n, dtype=np.int64); posto[fuori] = np.arange(len(fuori))
+    m = len(fuori)
+    a, b = posto[lati[:, 0]], posto[lati[:, 1]]
+    vicini = sparse.coo_matrix((np.ones(len(a) * 2), (np.concatenate([a, b]), np.concatenate([b, a]))), shape=(m, m)).tocsr()
+    grado = np.asarray(vicini.sum(axis=1)).ravel()
+    lap = sparse.diags(1.0 / np.maximum(grado, 1)) @ vicini - sparse.identity(m)        # media dei vicini meno il punto
+    # quanto ogni punto è libero di spostarsi: niente sui bordi (e poco lì accanto), su collo e spalle alte, polsini, bottoni
+    appeso, polso, bottoni = _zone(co0[fuori])
+    libero = (1 - appeso) * (1 - polso) * (1 - bottoni)
+    giri = np.full(m, 99); giri[np.unique(posto[lati[quante == 1]])] = 0
+    for g in range(1, 7):                                     # a quanti lati dal bordo sta ogni punto
+        tocca = (vicini @ (giri < g).astype(float)) > 0
+        giri[tocca & (giri == 99)] = g
+    libero *= np.clip(giri / 6.0, 0, 1) ** 2
+    # la superficie più liscia che resta vicina a quella di partenza: (P + forza·LᵀL) x = P x0, con P grande dove non ci si muove
+    peso = 1.0 + 3e4 * (1 - libero) ** 2
+    sistema = splu((sparse.diags(peso) + forza * (lap.T @ lap)).tocsc())
+    nuova = np.stack([sistema.solve(peso * co[fuori, k]) for k in range(3)], axis=1)
+    sposta = nuova - co[fuori]
+    # tutti gli altri punti seguono il punto del diritto più vicino; bottoni e fili si spostano interi
+    albero = kdtree.KDTree(m)
+    for k, i in enumerate(fuori):
+        albero.insert(co[i], k)
+    albero.balance()
+    tutto = np.zeros((n, 3)); tutto[fuori] = sposta
+    nomi = [mat.name for mat in me.materials]
+    rigidi = np.zeros(n, bool)
+    for p in me.polygons:
+        if nomi[p.material_index] not in TESSUTO:
+            rigidi[list(p.vertices)] = True
+    for i in np.nonzero((posto < 0) & ~rigidi)[0]:
+        tutto[i] = sposta[albero.find(co[i])[1]]
+    # i pezzi rigidi: ognuno (un bottone, un filo) prende lo spostamento del tessuto sotto il suo centro
+    capo = np.arange(n)
+    def trova(i):
+        while capo[i] != i:
+            capo[i] = capo[capo[i]]; i = capo[i]
+        return i
+    for e in me.edges:
+        u, w = e.vertices
+        if rigidi[u] and rigidi[w]:
+            capo[trova(u)] = trova(w)
+    gruppi = {}
+    for i in np.nonzero(rigidi)[0]:
+        gruppi.setdefault(trova(i), []).append(i)
+    for lista in gruppi.values():
+        tutto[lista] = sposta[albero.find(co[lista].mean(axis=0))[1]]
+    me.vertices.foreach_set('co', (co + tutto).ravel()); me.update()
+    lungo = np.linalg.norm(sposta, axis=1)
+    print('stirata: punti del diritto', m, '· spostamento medio', round(float(lungo.mean()) * 1000, 2), 'mm · massimo', round(float(lungo.max()) * 1000, 1), 'mm · pezzi rigidi', len(gruppi))
 
 
 def _prepara_cottura(sc, campioni):
@@ -860,7 +995,7 @@ def ripara_petto(immagine, petto):
     return esce.astype(np.float32)
 
 
-def telaio(camicia, facce=5200):
+def telaio(camicia, facce=7200):
     """Il telaio: una camicia semplificata, fatta col solo diritto, su cui il browser simula la stoffa.
     Ogni punto della camicia vera si aggancia poi al triangolo di telaio più vicino e lo segue.
     Restituisce punti, triangoli, la tenuta di ogni punto (appeso, rigido: vedi `tenuta`) e la sua parte."""
@@ -873,7 +1008,8 @@ def telaio(camicia, facce=5200):
     # nel telaio il petto dev'essere un pezzo solo: via il pezzo che stava sotto il taschino con tutte le sue toppe,
     # e il foro che lascia nel davanti si chiude con tessuto nuovo, a maglie regolari
     fondo = bm.faces.layers.int['fondo']
-    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f[strato] != 1 or f[fondo]], context='FACES')
+    toppa = bm.faces.layers.int.get('toppa')
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f[strato] != 1 or f[fondo] or (toppa and f[toppa])], context='FACES')
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0012)
     nel_petto = lambda v: 0.03 < v.co.x < 0.19 and 0.03 < v.co.z < 0.22 and v.co.y < 0
     bordo = [e for e in bm.edges if e.is_boundary and nel_petto(e.verts[0]) and nel_petto(e.verts[1])]
@@ -928,6 +1064,7 @@ def main():
     ap.add_argument('--campioni', type=int, default=256, help='campioni di Cycles per la luce')
     ap.add_argument('--lato', type=int, default=2048, help="lato in punti dell'immagine della luce")
     ap.add_argument('--braccia', type=float, default=0.0, help='di quanti gradi abbassare le braccia (0: come nel modello)')
+    ap.add_argument('--stropicciata', action='store_true', help='lascia le grinze del modello (di base la camicia si stira)')
     ap.add_argument('--riusa', action='store_true', help='se nella cartella di uscita c\'è già la luce calcolata (luce-cruda.npy) non la ricalcola')
     a = ap.parse_args()
     os.makedirs(a.uscita, exist_ok=True)
@@ -945,6 +1082,9 @@ def main():
     co0 -= np.array([0.0, 0.0, (co0[:, 2].max() + co0[:, 2].min()) / 2])
     parti(ob)
     abbassa_braccia(ob, a.braccia)
+    tenuta(co0)                      # fissa la quota del collo per riconoscere le zone
+    if not a.stropicciata:
+        stira(ob, co0)
     tipo_faccia = quattro_materiali(ob)
     co, centro = centra(ob)
     metri_per_uv = mappa_in_scala(ob, tipo_faccia)
@@ -954,6 +1094,7 @@ def main():
     ob.name = 'camicia'
     taschino = separa(ob, 'taschino')
     tappa_buchi(ob)
+    fodera_del_petto(ob)
     for o in (ob, taschino):
         for p in o.data.polygons:
             p.use_smooth = True
