@@ -60,6 +60,14 @@ export const icona = {
   sinistra: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   destra: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3.5L10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   freccia: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 11.5l7-7M6 4.5h5.5V10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // testata: la collezione, i rivenditori e la camicia su misura
+  gruccia: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 3.6a1.6 1.6 0 1 1 2.4 1.4c-.5.3-.8.6-.8 1.1v.4M8 6.5l-6 4.4c-.5.4-.3 1.2.4 1.2h11.2c.7 0 .9-.8.4-1.2L8 6.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  vetrina: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 2.5h10.4L14.5 6a1.63 1.63 0 0 1-3.25 0 1.63 1.63 0 0 1-3.25 0 1.63 1.63 0 0 1-3.25 0A1.63 1.63 0 0 1 1.5 6l1.3-3.5zM2.6 8.2v5.3h10.8V8.2M6.6 13.5v-3.3h2.8v3.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  camicia: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.6 2.2l-2.4.9-1.6 3.5 2.1 1 .9-1.3v7.5h6.8V6.3l.9 1.3 2.1-1-1.6-3.5-2.4-.9L8 4.6 5.6 2.2zM8 4.6v8.9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // finestra "La tua camicia": le due strade
+  schermo: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 2.8h10a1 1 0 0 1 1 1v6.4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.8a1 1 0 0 1 1-1zM5.5 13.5h5M8 11.2v2.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  metro: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 12.5a4.5 4.5 0 1 1 4.5-4.5v4.5H6.5zM6.5 9.3a1.3 1.3 0 1 0 0-2.6 1.3 1.3 0 0 0 0 2.6zM11 12.5h3.5V10M12.6 12.5v-1.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chiudi: '<svg class="icona" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
 };
 
 /** Prezzo in euro, all'italiana: 60 → "60,00 €". */

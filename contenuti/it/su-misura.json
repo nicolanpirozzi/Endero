@@ -12,9 +12,9 @@
     "foto": "Il sarto al lavoro su una camicia, foto orizzontale"
   },
   "configuratore": {
-    "attivo": false,
+    "attivo": true,
     "titolo": "Crea la tua camicia",
-    "testo": "[[Una riga sul configuratore: si scrive quando la pagina è pronta.]]",
+    "testo": "Da casa: guardi la camicia in 3D e scrivi le tue misure.",
     "invito": "Crea la tua camicia",
     "href": "/camicie-su-misura/configuratore/"
   },

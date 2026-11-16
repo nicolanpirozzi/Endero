@@ -1,4 +1,4 @@
-// Registra un video della camicia 3D del configuratore: riposo, mouse che la sfiora, trascinamento per girarla.
+// Registra un video della camicia 3D del configuratore: riposo, mouse che ci passa sopra e alza il vento, trascinamento per girarla.
 //   node tools/filma-camicia.js http://127.0.0.1:8766/camicie-su-misura/configuratore/ <cartella> [computer|telefono]
 // Nell'ambiente di lavoro il 3D gira sul processore: il tempo avanza a mano, un fotogramma alla volta
 // (la pagina si apre con ?manuale), e poi ffmpeg monta il video. Serve il sito in locale: `npm run anteprima`.
@@ -27,14 +27,15 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
   const px = (fx, fy) => [r.x + r.w * fx, r.y + r.h * fy];
   const scena = async (secondi, gesto) => { const tot = Math.round(secondi * fps); for (let i = 0; i < tot; i++) { if (gesto) await gesto(i / (tot - 1), i, tot); await avanza(); await scatta(); } };
 
-  await scena(1.6);
+  await scena(2.4);                                    // riposo: la brezza e il primo soffio
   if (!tel) {
-    // il mouse entra da sinistra, attraversa il petto, torna indietro più in basso ed esce
-    await scena(1.5, async (t) => { const [x, y] = px(0.12 + 0.72 * liscio(t), 0.40 - 0.05 * Math.sin(t * 3.14)); await p.mouse.move(x, y); });
-    await scena(0.5);
-    await scena(1.3, async (t) => { const [x, y] = px(0.84 - 0.6 * liscio(t), 0.56 + 0.06 * Math.sin(t * 3.14)); await p.mouse.move(x, y); });
-    await scena(1.4, async (t, i) => { if (i === 0) await p.mouse.move(...px(0.5, 1.2)); });
-    // la afferra e la gira fino a vederla da dietro
+    // il mouse attraversa il petto da sinistra a destra: una folata che corre nello stesso verso
+    await scena(1.1, async (t) => { const [x, y] = px(0.14 + 0.7 * liscio(t), 0.42 - 0.04 * Math.sin(t * 3.14)); await p.mouse.move(x, y); });
+    await scena(2.2);                                  // il mouse si ferma: il tessuto si calma da solo
+    // torna indietro più in basso, più piano
+    await scena(1.8, async (t) => { const [x, y] = px(0.84 - 0.62 * liscio(t), 0.6 + 0.05 * Math.sin(t * 3.14)); await p.mouse.move(x, y); });
+    await scena(2.2, async (t, i) => { if (i === 0) await p.mouse.move(...px(0.5, 1.3)); });
+    // la afferra e la gira fino a vederla da dietro, poi la riporta
     await p.mouse.move(...px(0.4, 0.5)); await p.mouse.down();
     await scena(1.8, async (t) => { await p.mouse.move(...px(0.4 + 0.38 * liscio(t), 0.5 - 0.03 * Math.sin(t * 3.14))); });
     await p.mouse.up();
@@ -42,19 +43,19 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
     await p.mouse.move(...px(0.7, 0.5)); await p.mouse.down();
     await scena(1.4, async (t) => { await p.mouse.move(...px(0.7 - 0.36 * liscio(t), 0.5)); });
     await p.mouse.up();
-    await scena(1.6);
+    await scena(1.8);
   } else {
-    // col dito: un tocco, poi la gira e la riporta
+    // col dito: la gira, e il gesto alza una folata; poi la riporta
     let [x0, y0] = px(0.3, 0.5);
     await tocco('touchStart', x0, y0);
     await scena(1.6, async (t) => { const [x, y] = px(0.3 + 0.5 * liscio(t), 0.5); await tocco('touchMove', x, y); });
     await tocco('touchEnd');
-    await scena(1.5);
+    await scena(2.0);
     [x0, y0] = px(0.8, 0.45);
     await tocco('touchStart', x0, y0);
     await scena(1.4, async (t) => { const [x, y] = px(0.8 - 0.48 * liscio(t), 0.45); await tocco('touchMove', x, y); });
     await tocco('touchEnd');
-    await scena(1.8);
+    await scena(2.2);
   }
   await b.close();
   const video = path.join(out, `camicia-${modo}.mp4`);

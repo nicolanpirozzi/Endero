@@ -2,28 +2,55 @@
 import { esc, t, piano, logo, foglioSimboli, icona } from './base.mjs';
 
 /**
- * La testata: scritta a sinistra; a destra Collezione e Rivenditori (solo su computer), l'azione principale
- * e, sul telefono, il pulsante Menu. Senza JavaScript "Menu" è un link al piè di pagina, che ha le stesse voci.
- * @param {object} azione  { testo, breve, href }: l'azione principale della pagina (di solito la presa misure)
+ * La testata, uguale in tutte le pagine: scritta a sinistra; a destra Collezione e Rivenditori (solo su computer),
+ * "La tua camicia" e, sul telefono, il pulsante Menu. Su computer i tre pulsanti mostrano un'icona e, al passaggio
+ * del mouse o con il fuoco, la scritta intera; la scritta c'è sempre, così è il nome letto dai lettori di schermo.
+ * Senza JavaScript "Menu" è un link al piè di pagina e "La tua camicia" un link alla pagina del su misura.
  */
-export function testata(sito, azione = {}) {
+export function testata(sito) {
   const s = sito.testata;
-  const testo = azione.testo || s.prenota;
-  const breve = azione.breve ?? (azione.testo ? '' : s.prenota_breve);
-  const href = azione.href || s.prenota_link;
-  // sul telefono si legge solo la parola breve; il resto resta per i lettori di schermo
-  const etichetta = breve && testo.startsWith(breve)
-    ? `<span>${esc(breve)}<span class="testata__resto">${esc(testo.slice(breve.length))}</span></span>`
-    : esc(testo);
+  // la scritta intera; sul telefono e sugli schermi a tocco si vede solo la parte breve, alla fine: il resto
+  // (.testata__prima) resta per i lettori di schermo, così il nome letto contiene sempre quello che si vede
+  const giro = (intera, breve = '') => {
+    const k = breve ? intera.toLowerCase().lastIndexOf(breve.toLowerCase()) : -1;
+    const dentro = k > 0 && k + breve.length === intera.length
+      ? `<span class="testata__prima">${esc(intera.slice(0, k))}</span>${esc(intera.slice(k))}`
+      : esc(intera);
+    return `<span class="testata__giro"><span class="testata__scritta">${dentro}</span></span>`;
+  };
   return `<header class="testata" data-testata>
   <a class="testata__marchio" href="/" aria-label="${esc(s.home)}">${logo('scritta')}</a>
   <nav class="testata__azioni" aria-label="Azioni principali">
-    <a class="pillola pillola--vetro testata__secondaria" href="/collezione/">${esc(s.collezione)}</a>
-    <a class="pillola pillola--vetro testata__secondaria" href="/diventa-rivenditore/">${esc(s.rivenditori)}</a>
-    <a class="pillola pillola--chiara testata__principale" href="${esc(href)}">${etichetta}</a>
+    <a class="pillola pillola--vetro testata__secondaria testata__icona" href="/collezione/">${icona.gruccia}${giro(s.collezione, s.collezione_breve)}</a>
+    <a class="pillola pillola--vetro testata__secondaria testata__icona" href="/diventa-rivenditore/">${icona.vetrina}${giro(s.rivenditori, s.rivenditori_breve)}</a>
+    <a class="pillola pillola--chiara testata__principale testata__icona" href="${esc(s.camicia_link)}" data-camicia-apri>${icona.camicia}${giro(s.camicia, s.camicia_breve)}</a>
     <a class="pillola pillola--vetro testata__menu" href="#dove-siamo" data-menu-apri>${esc(s.menu)}</a>
   </nav>
 </header>`;
+}
+
+/** La finestra "La tua camicia": due strade, configuratore online o presa misure in sede. Si apre solo con lo script. */
+export function finestraCamicia(sito) {
+  const c = sito.camicia;
+  return `<dialog class="finestra" id="finestra-camicia" aria-labelledby="finestra-camicia-titolo" data-camicia>
+  <div class="vetro finestra__corpo">
+    <div class="finestra__testa">
+      <div>
+        <h2 class="finestra__titolo" id="finestra-camicia-titolo">${esc(c.titolo)}</h2>
+        <p class="finestra__testo">${t(c.testo)}</p>
+      </div>
+      <button class="pillola pillola--vetro finestra__chiudi" type="button" data-camicia-chiudi autofocus aria-label="${esc(c.chiudi_etichetta)}">${icona.chiudi}<span>${esc(c.chiudi)}</span></button>
+    </div>
+    <ul class="finestra__strade">
+      ${c.strade.map((v) => `<li><a class="finestra__strada" href="${esc(v.href)}">
+        <span class="finestra__icona">${icona[v.icona] || ''}</span>
+        <span class="finestra__nome">${t(v.titolo)}</span>
+        <span class="finestra__riga">${t(v.testo)}</span>
+        <span class="finestra__vai">${icona.destra}</span>
+      </a></li>`).join('\n      ')}
+    </ul>
+  </div>
+</dialog>`;
 }
 
 /** Il pannello del menu sul telefono: si apre solo con lo script (src/sito.js), altrimenti resta chiuso. */
@@ -90,10 +117,9 @@ export function piede(sito, percorso = "") {
  * @param {object[]} o.dati     dati strutturati JSON-LD
  * @param {boolean} o.anteprima se vero, la pagina non va indicizzata
  * @param {string} o.classe     classe del <body>; `pagina-chiara` per le pagine senza foto in cima
- * @param {object} o.azione     azione principale della testata { testo, breve, href }; di solito la presa misure
  * @param {boolean} o.servizio  pagina di servizio (404, conferma): senza indirizzo canonico
  */
-export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', azione, servizio = false }) {
+export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', servizio = false }) {
   const url = sito.dominio + percorso;
   // in anteprima la scheda del link punta all'indirizzo provvisorio, così immagine e titolo si vedono; canonical resta su endero.it
   const origine = (anteprima && risorse.origineAnteprima) || sito.dominio;
@@ -130,11 +156,12 @@ ${ld}
 </head>
 <body class="${esc(classe)}">
 <a class="salta-al-contenuto" href="#contenuto">Vai al contenuto</a>
-${testata(sito, azione)}
+${testata(sito)}
 ${corpo}
 ${piede(sito, percorso)}
 ${pillolaFissa(sito)}
 ${menu(sito, percorso)}
+${finestraCamicia(sito)}
 ${foglioSimboli()}
 ${risorse.js.map((h) => `<script type="module" src="${h}"></script>`).join('\n')}
 </body>

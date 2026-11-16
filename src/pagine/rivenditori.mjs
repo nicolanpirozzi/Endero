@@ -52,6 +52,5 @@ export default function paginaRivenditori({ sito, testi: r, nastro: fatti, risor
       mainEntity: r.domande.voci.filter((v) => !/\[\[/.test(v.domanda + v.risposta)).map((v) => ({ '@type': 'Question', name: v.domanda, acceptedAnswer: { '@type': 'Answer', text: v.risposta } })),
     },
   ];
-  const azione = { testo: r.richiami.testata_pagina, breve: '', href: '#richiesta' };
-  return pagina({ sito, meta: r.meta, percorso: PERCORSO, corpo, risorse, anteprima, dati, classe: 'pagina-rivenditori', azione });
+  return pagina({ sito, meta: r.meta, percorso: PERCORSO, corpo, risorse, anteprima, dati, classe: 'pagina-rivenditori' });
 }

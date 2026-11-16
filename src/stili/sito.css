@@ -2694,13 +2694,6 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
   margin-top: 0;
 }
 
-/* "Salta l'introduzione" si tocca bene col dito: 44 px di altezza, stesso aspetto */
-.apertura__salta {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-
 /* le foto segnaposto chiare: la nota si legge a 4,5:1 */
 .attesa--chiaro {
   color: rgba(15, 40, 94, 0.8);
@@ -2715,6 +2708,357 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
   ::view-transition-new(root) {
     animation-duration: 220ms;
     animation-timing-function: ease-out;
+  }
+}
+
+/* ------------------------------------------------------------------ testata a icone */
+/* Ogni pulsante ha un'icona e la sua scritta. Di base (telefono, schermi a tocco) si vedono l'icona e la parte
+   breve della scritta; il resto (.testata__prima) lo leggono solo i lettori di schermo.
+   Con il mouse, da 810 px, a riposo c'è solo l'icona: al passaggio o con il fuoco l'icona si stringe e sparisce
+   mentre la scritta intera si apre. Qui si allarga il pulsante (colonne della griglia e margini interni): è
+   l'unico modo perché la scritta trovi posto, e gli altri pulsanti scivolano di lato con la stessa curva. */
+
+.testata__icona {
+  gap: 7px;
+}
+
+.testata__giro {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.testata__scritta {
+  display: block;
+  white-space: nowrap;
+}
+
+.testata__prima {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 810px) and (hover: hover) and (pointer: fine) {
+  .testata__icona {
+    display: inline-grid;
+    grid-template-columns: 16px 0fr;
+    align-items: center;
+    gap: 0;
+    min-width: 45px;
+    padding: 0 14.5px;
+    transition:
+      grid-template-columns 320ms var(--morbido),
+      padding 320ms var(--morbido),
+      transform 120ms ease-out,
+      background-color 120ms ease-out,
+      color 120ms ease-out;
+  }
+
+  .testata__icona > .icona {
+    width: 100%;
+    min-width: 0;
+    transition: opacity 160ms ease-out;
+  }
+
+  .testata__prima {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  .testata__icona .testata__scritta {
+    opacity: 0;
+    transition: opacity 140ms ease-out;
+  }
+
+  .testata__icona:hover,
+  .testata__icona:focus-visible,
+  .testata__icona[aria-expanded="true"] {
+    grid-template-columns: 0px 1fr;
+    padding: 0 24px;
+    /* lo strato di tocco accorcia tutte le durate al passaggio: l'apertura resta morbida */
+    transition-duration: 320ms, 320ms, 150ms, 150ms, 150ms;
+  }
+
+  .testata__icona:hover > .icona,
+  .testata__icona:focus-visible > .icona,
+  .testata__icona[aria-expanded="true"] > .icona {
+    opacity: 0;
+    transition-duration: 100ms;
+  }
+
+  .testata__icona:hover .testata__scritta,
+  .testata__icona:focus-visible .testata__scritta,
+  .testata__icona[aria-expanded="true"] .testata__scritta {
+    opacity: 1;
+    transition: opacity 220ms ease-out 90ms;
+  }
+}
+
+/* ------------------------------------------------------------------ finestra "La tua camicia" */
+/* Un <dialog> al centro dello schermo: lo stesso vetro del sito su fondo scurito, due strade affiancate
+   (una sotto l'altra sul telefono). Si chiude con il pulsante, con Esc e con un clic fuori. */
+
+.finestra {
+  position: fixed;
+  inset: 0;
+  width: min(780px, calc(100% - 2 * var(--margine)));
+  max-width: none;
+  max-height: calc(100% - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--filo);
+  overflow: visible;
+}
+
+.finestra::backdrop {
+  background: rgba(5, 15, 43, 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.finestra__corpo {
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px;
+  /* più pieno del vetro delle schede: sotto può esserci una pagina chiara e le scritte devono restare a 4,5:1 */
+  background: rgba(10, 27, 69, 0.7);
+  box-shadow: 0 30px 80px rgba(5, 15, 43, 0.45);
+}
+
+.finestra__testa {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.finestra__titolo {
+  font-size: 26px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.finestra__testo {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(251, 249, 244, 0.86);
+}
+
+.finestra__chiudi {
+  flex: none;
+  gap: 6px;
+  padding: 0 18px;
+}
+
+.finestra__chiudi .icona {
+  width: 14px;
+  height: 14px;
+}
+
+.finestra__strade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.finestra__strada {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  height: 100%;
+  min-height: 200px;
+  padding: 22px 22px 24px;
+  border-radius: 16px;
+  background: rgba(251, 249, 244, 0.08);
+  box-shadow: inset 0 0 0 1px var(--bordo-vetro);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease-out, background-color 150ms ease-out;
+}
+
+.finestra__icona {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: var(--filo);
+  color: var(--blu);
+}
+
+.finestra__icona .icona {
+  width: 22px;
+  height: 22px;
+}
+
+.finestra__nome {
+  padding-right: 28px;
+  font-size: 16px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.finestra__riga {
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(251, 249, 244, 0.86);
+}
+
+.finestra__vai {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  transition: transform 150ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .finestra__strada:hover {
+    transform: translate3d(0, -2px, 0);
+    background: rgba(251, 249, 244, 0.14);
+  }
+  .finestra__strada:hover .finestra__vai {
+    transform: translate3d(2px, 0, 0);
+  }
+}
+
+.finestra__strada:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 3px;
+  background: rgba(251, 249, 244, 0.14);
+}
+
+.finestra__strada:active {
+  transform: translate3d(0, 0, 0) scale(0.99);
+  transition-duration: 90ms;
+}
+
+html.dialogo-aperto {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .finestra[open] .finestra__corpo {
+    animation: finestra-entra 260ms var(--morbido);
+  }
+  .finestra[open]::backdrop {
+    animation: finestra-fondo 200ms ease-out;
+  }
+}
+
+@keyframes finestra-entra {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.975);
+  }
+}
+
+@keyframes finestra-fondo {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 809px) {
+  .finestra {
+    width: calc(100% - 2 * var(--margine));
+  }
+  .finestra__corpo {
+    padding: 20px 18px;
+  }
+  .finestra__titolo {
+    font-size: 21px;
+  }
+  .finestra__strade {
+    grid-template-columns: 1fr;
+    margin-top: 20px;
+  }
+  .finestra__strada {
+    min-height: 0;
+    padding: 18px;
+  }
+  .finestra__icona {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 4px;
+  }
+  .finestra__vai {
+    top: 30px;
+    right: 18px;
+  }
+}
+
+/* ------------------------------------------------------------------ selettore in vetro */
+/* Il selettore lascia vedere la pagina sotto. Lo script guarda cosa c'è dietro (src/sito.js, selettore) e
+   cambia tono: vetro chiaro con scritte blu sopra le sezioni chiare, vetro blu con scritte chiare sopra
+   quelle scure e sulle foto. Le scritte restano almeno a 4,5:1 in tutti e due i casi.
+   Senza script resta il fondo quasi pieno di prima, che si legge sopra tutto. */
+
+.js .selettore[data-tono] {
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  transition: top 420ms var(--morbido), background-color 260ms ease-out, color 260ms ease-out, box-shadow 260ms ease-out;
+}
+
+.js .selettore[data-tono="chiaro"] {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(15, 40, 94, 0.14), 0 6px 24px rgba(15, 40, 94, 0.08);
+  color: var(--blu);
+}
+
+.js .selettore[data-tono="scuro"],
+.js .selettore[data-tono="foto"] {
+  background: rgba(10, 27, 69, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+  color: var(--bianco);
+}
+
+/* sopra una foto vera non si sa quanto è chiara: il vetro è più pieno, così anche sul bianco si legge a 5:1 */
+.js .selettore[data-tono="foto"] {
+  background: rgba(10, 27, 69, 0.62);
+}
+
+/* la voce attiva resta sulla pillola blu con la scritta chiara, qualunque sia il tono */
+.js .selettore[data-tono] .selettore__voci a[aria-current="true"] {
+  color: var(--bianco);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .js .selettore[data-tono="chiaro"] .selettore__voci a:not([aria-current="true"]):hover {
+    background: rgba(15, 40, 94, 0.08);
+  }
+}
+
+.js .selettore[data-tono="chiaro"] :focus-visible {
+  outline-color: var(--blu);
+}
+
+/* sul telefono è una barra a tutta larghezza: solo il filo sotto */
+@media (max-width: 809px) {
+  .js .selettore[data-tono="chiaro"] {
+    box-shadow: inset 0 -1px 0 rgba(15, 40, 94, 0.14);
+  }
+  .js .selettore[data-tono="scuro"],
+  .js .selettore[data-tono="foto"] {
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.24);
   }
 }
 
@@ -2784,16 +3128,6 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
 
   .testata__menu {
     display: inline-flex;
-  }
-
-  /* sul telefono la pillola dice solo "Prenota": il resto lo leggono i lettori di schermo */
-  .testata__resto {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   .eroe__testo {
@@ -3364,7 +3698,7 @@ body:has([data-modulo]:focus-within) .pillola-fissa,
     font-size: 10px;
   }
 
-  /* "Salta l'introduzione", le parole lunghe dei capitoli e la testata stanno anche a 320 px */
+  /* le parole lunghe dei capitoli e la testata stanno anche a 320 px */
   .capitolo__etichetta {
     font-size: min(48px, 11vw);
   }

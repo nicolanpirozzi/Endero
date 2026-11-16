@@ -113,13 +113,16 @@ def rattoppa(ob, tasca, fondo, giri=30):
     for i in tasca:
         bm.faces[int(i)][segno] = 1
     del_fondo = {bm.faces[int(i)] for i in fondo}
+    # il taschino si scuce subito dal resto (i punti in comune si sdoppiano): così quello che segue non lo deforma
+    bmesh.ops.split(bm, geom=[bm.faces[int(i)] for i in tasca])
+    bm.faces.ensure_lookup_table(); bm.verts.ensure_lookup_table()
     zona = lambda v: 0.03 < v.co.x < 0.18 and 1.32 < v.co.z < 1.52 and v.co.y < 0
     camicia = lambda f: not f[segno]
     bm.normal_update()
 
-    # i lembi liberi: lati che, senza contare il taschino, hanno una faccia sola
-    liberi = {v for e in bm.edges if zona(e.verts[0]) and zona(e.verts[1])
-              and sum(1 for f in e.link_faces if camicia(f)) == 1 for v in e.verts}
+    # i lembi liberi: lati della camicia che, scucito il taschino, restano con una faccia sola
+    liberi = {v for e in bm.edges if zona(e.verts[0]) and zona(e.verts[1]) and e.is_boundary
+              and camicia(e.link_faces[0]) for v in e.verts}
     # i punti a cui saldarli: quelli dello strato di fuori, divisi tra fondo e resto del davanti
     fuori = lambda v: zona(v) and v not in liberi and any(camicia(f) and f.normal.y < -0.5 for f in v.link_faces)
     sul_fondo = lambda v: any(f in del_fondo for f in v.link_faces)
@@ -130,17 +133,50 @@ def rattoppa(ob, tasca, fondo, giri=30):
         for i, v in enumerate(vv):
             t.insert(v.co, i)
         t.balance(); alberi[k] = t
-    coppie = []
+    uvl = bm.loops.layers.uv.active
+    vicino = {}
     for v in liberi:
-        altro = not sul_fondo(v)                      # un punto del fondo si salda al davanti, e viceversa
+        altro = not sul_fondo(v)                      # un punto del fondo va verso il davanti, e viceversa
         pos, i, dist = alberi[altro].find(v.co)
-        if dist < 0.0075:
-            coppie.append((v, gruppi[altro][i], dist))
-    for v, meta, _ in coppie:
-        if v.is_valid and meta.is_valid and v is not meta:
-            v.co = meta.co
+        vicino[v] = (gruppi[altro][i], dist)
+    # 1 · dove i due lembi quasi si toccano si saldano
+    saldati = 0
+    for v, (meta, dist) in list(vicino.items()):
+        if dist < 0.003 and v.is_valid and meta.is_valid and v is not meta:
             bmesh.ops.pointmerge(bm, verts=[v, meta], merge_co=meta.co)
-    print('taschino: punti liberi', len(liberi), '· saldati', len(coppie), '· distanza massima mm', round(max((d for *_, d in coppie), default=0) * 1000, 1))
+            saldati += 1
+    # 2 · dove restano distanti la fessura si chiude con una striscia di facce nuove, senza spostare nulla
+    aggiunte = 0
+    for e in [e for e in bm.edges if e.is_valid and e.is_boundary and camicia(e.link_faces[0])]:
+        u, v = e.verts
+        if u not in vicino or v not in vicino or not (u.is_valid and v.is_valid):
+            continue
+        (pu, du), (pv, dv) = vicino[u], vicino[v]
+        if not (pu.is_valid and pv.is_valid) or max(du, dv) > 0.02:
+            continue
+        vecchia = next(f for f in e.link_faces if camicia(f))
+        giro = [u, v, pv, pu] if pu is not pv else [u, v, pu]
+        if len(set(giro)) < 3:
+            continue
+        try:
+            nuova = bm.faces.new(giro)
+        except ValueError:                            # la faccia c'è già
+            continue
+        nuova.normal_update()
+        # deve guardare in fuori, cioè in avanti (il petto guarda verso -Y): nel browser una faccia girata
+        # dall'altra parte non si disegna, e lascerebbe un puntino scuro
+        if nuova.normal.y > 0:
+            nuova.normal_flip()
+        nuova.material_index = vecchia.material_index
+        nuova.smooth = True
+        nuova[segno] = 0
+        for l in nuova.loops:                         # la mappa: quella di una faccia vicina in quel punto
+            g = next((m for f in l.vert.link_faces if f is not nuova and camicia(f) for m in f.loops if m.vert is l.vert), None)
+            if g is not None:
+                l[uvl].uv = g[uvl].uv.copy()
+        aggiunte += 1
+    print('taschino: punti liberi', len(liberi), '· saldati', saldati, '· facce aggiunte per chiudere le fessure', aggiunte,
+          '· lati ancora liberi', sum(1 for e in bm.edges if zona(e.verts[0]) and zona(e.verts[1]) and e.is_boundary and camicia(e.link_faces[0])))
 
     # il fondo e due dita di tessuto intorno si lisciano
     bm.verts.ensure_lookup_table(); bm.faces.ensure_lookup_table()
@@ -155,9 +191,102 @@ def rattoppa(ob, tasca, fondo, giri=30):
             nuove.append(sum(vic, Vector()) / len(vic) if vic else v.co.copy())
         for v, n in zip(da_lisciare, nuove):
             v.co = v.co.lerp(n, 0.5)
-    bmesh.ops.recalc_face_normals(bm, faces=[f for f in bm.faces])
+    # il verso delle facce non si ricalcola: quello dato all'inizio è giusto, e nel browser una faccia girata
+    # diventerebbe un buco (ogni strato si disegna da un lato solo)
     bm.to_mesh(me); bm.free()
     me.update()
+
+
+def buchi_del_petto(ob, passo=0.0005):
+    """Guarda il petto da davanti con una griglia fitta di raggi, nella zona dove stava il taschino, come lo
+    disegna il browser: le facce che guardano in dentro non si vedono (ogni strato si disegna da un lato solo).
+    C'è un buco dove la prima faccia che si vede sta molto più indietro della superficie: lì si vedrebbe l'interno
+    buio della schiena. Restituisce i punti (x, z, profondità della superficie) dei buchi."""
+    from mathutils.bvhtree import BVHTree
+    me = ob.data
+    albero = BVHTree.FromPolygons([v.co.copy() for v in me.vertices], [tuple(p.vertices) for p in me.polygons])
+    normali = [p.normal.y for p in me.polygons]
+    trovati = []
+    for x in np.arange(0.045, 0.172, passo):
+        for z in np.arange(0.045, 0.205, passo):
+            y, prima = -0.5, None
+            for _ in range(12):
+                pos, nor, idx, dist = albero.ray_cast(Vector((x, y, z)), Vector((0, 1, 0)))
+                if pos is None:
+                    break
+                if prima is None:
+                    prima = pos.y
+                if normali[idx] < 0:                      # guarda verso chi osserva: è questa che si vede
+                    if pos.y > prima + 0.006:
+                        trovati.append((x, z, prima))
+                    break
+                y = pos.y + 1e-5
+    return np.array(trovati).reshape(-1, 3)
+
+
+def tappa_buchi(ob, giri=6):
+    """Chiude le fessure rimaste dove era cucito il taschino. Sono larghe da mezzo millimetro a tre: per ognuna
+    si stende una piccola toppa tra i punti del diritto che le stanno intorno. La toppa passa per punti che ci
+    sono già, quindi prende la loro luce e la loro mappa e non si distingue dal tessuto."""
+    me = ob.data
+    for giro in range(giri):
+        b = buchi_del_petto(ob)
+        print('petto: punti da cui si vede attraverso', len(b))
+        if not len(b):
+            return
+        # i buchi vicini fanno una fessura sola
+        resto, gruppi = list(range(len(b))), []
+        while resto:
+            g = [resto.pop()]
+            cresce = True
+            while cresce:
+                cresce = False
+                for i in resto[:]:
+                    if np.min(np.linalg.norm(b[g, :2] - b[i, :2], axis=1)) < 0.003:
+                        g.append(i); resto.remove(i); cresce = True
+            gruppi.append(b[g])
+        bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table(); bm.normal_update()
+        uvl = bm.loops.layers.uv.active
+        margine = 0.004 + 0.002 * giro
+        for g in gruppi:
+            lo, hi = g[:, :2].min(0) - margine, g[:, :2].max(0) + margine
+            fondo_y = float(np.median(g[:, 2]))             # la profondità del tessuto in quel punto
+            intorno = [v for v in bm.verts if lo[0] <= v.co.x <= hi[0] and lo[1] <= v.co.z <= hi[1]
+                       and abs(v.co.y - fondo_y) < 0.006 and v.normal.y < -0.4]
+            if len(intorno) < 3:
+                continue
+            # contorno convesso dei punti, visto da davanti
+            punti = sorted(intorno, key=lambda v: (v.co.x, v.co.z))
+            giro_di = lambda o, a, c: (a.co.x - o.co.x) * (c.co.z - o.co.z) - (a.co.z - o.co.z) * (c.co.x - o.co.x)
+            sotto, sopra = [], []
+            for v in punti:
+                while len(sotto) >= 2 and giro_di(sotto[-2], sotto[-1], v) <= 0:
+                    sotto.pop()
+                sotto.append(v)
+            for v in reversed(punti):
+                while len(sopra) >= 2 and giro_di(sopra[-2], sopra[-1], v) <= 0:
+                    sopra.pop()
+                sopra.append(v)
+            contorno = sotto[:-1] + sopra[:-1]
+            if len(contorno) < 3:
+                continue
+            try:
+                toppa = bm.faces.new(contorno)
+            except ValueError:
+                continue
+            toppa.normal_update()
+            if toppa.normal.y > 0:
+                toppa.normal_flip()
+            toppa.smooth = True
+            vicina = next(f for f in contorno[0].link_faces if f is not toppa)
+            toppa.material_index = vicina.material_index
+            for l in toppa.loops:
+                m = next((m for f in l.vert.link_faces if f is not toppa and f.normal.y < -0.3 for m in f.loops if m.vert is l.vert), None)
+                if m is not None:
+                    l[uvl].uv = m[uvl].uv.copy()
+        bm.to_mesh(me); bm.free()
+        me.update()
+    print('petto: punti da cui si vede ancora attraverso', len(buchi_del_petto(ob)))
 
 
 def separa(ob, nome):
@@ -377,6 +506,7 @@ def main():
     att.data.foreach_set('value', liberta(co0, tipo_vertice).astype(np.float32))
     ob.name = 'camicia'
     taschino = separa(ob, 'taschino')
+    tappa_buchi(ob)
 
     def letta(o):
         v = np.zeros(len(o.data.vertices), dtype=np.float32)
@@ -387,6 +517,17 @@ def main():
     senza = liscia(occlusione(sc, ob, a.campioni, nascosti=(taschino,)), ob)
     con = liscia(occlusione(sc, ob, a.campioni), ob)
     del_taschino = liscia(occlusione(sc, taschino, a.campioni), taschino)
+    # senza taschino, lungo la vecchia cucitura le ombre calcolate restano scure (lì il tessuto ha bordini e
+    # strati sovrapposti): sul diritto, in quella zona, si riportano al valore del petto intorno
+    cz = np.zeros((len(ob.data.vertices), 3)); ob.data.vertices.foreach_get('co', cz.ravel())
+    nz = np.zeros((len(ob.data.vertices), 3)); ob.data.vertices.foreach_get('normal', nz.ravel())
+    petto = (cz[:, 0] > 0.04) & (cz[:, 0] < 0.175) & (cz[:, 2] > 0.04) & (cz[:, 2] < 0.21) & (cz[:, 1] < 0)
+    diritto = petto & (nz[:, 1] < -0.3)
+    if diritto.any():
+        riferimento = float(np.median(senza[diritto]))
+        # anche i bordini tra i due strati (che guardano di lato) si schiariscono: sono loro a fare i puntini
+        chiari = petto & (nz[:, 1] < 0.3)
+        senza[chiari] = np.maximum(senza[chiari], riferimento - 0.05)
     print('occlusione camicia: media senza taschino', round(float(senza.mean()), 3), 'con', round(float(con.mean()), 3),
           '| vertici che cambiano:', int((np.abs(senza - con) > 0.05).sum()))
     scrivi_dati(ob, letta(ob), senza, con)

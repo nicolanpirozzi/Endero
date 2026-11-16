@@ -16,14 +16,39 @@
     "mappa": "https://www.google.com/maps/search/?api=1&query=Endero%2C+Viale+del+Toro+22%2C+Giugliano+in+Campania"
   },
   "testata": {
+    "_nota": "Con il mouse i tre pulsanti mostrano un'icona e, al passaggio o con il fuoco, la scritta intera, che è anche il nome letto dai lettori di schermo. Sui telefoni e sugli schermi a tocco si vede solo la parte 'breve', che deve stare alla fine della scritta intera.",
     "home": "Endero, pagina iniziale",
-    "prenota": "Prenota la presa misure",
-    "prenota_breve": "Prenota",
     "prenota_link": "/camicie-su-misura/#prenota",
-    "collezione": "Collezione",
-    "rivenditori": "Rivenditori",
+    "collezione": "Scopri la Collezione",
+    "collezione_breve": "Collezione",
+    "rivenditori": "Diventa un Rivenditore",
+    "rivenditori_breve": "Rivenditore",
+    "camicia": "Ordina la tua camicia",
+    "camicia_breve": "la tua camicia",
+    "camicia_link": "/camicie-su-misura/",
     "menu": "Menu",
     "menu_chiudi": "Chiudi il menu"
+  },
+  "camicia": {
+    "_nota": "La finestra che si apre dal pulsante 'Ordina la tua camicia' della testata. Senza JavaScript il pulsante porta a /camicie-su-misura/, che in cima ha l'ingresso al configuratore.",
+    "titolo": "Ordina la tua camicia",
+    "testo": "Scegli da dove partire.",
+    "chiudi": "Chiudi",
+    "chiudi_etichetta": "Chiudi la finestra",
+    "strade": [
+      {
+        "icona": "schermo",
+        "titolo": "Configura la tua camicia online",
+        "testo": "Da casa: guardi la camicia in 3D e scrivi le tue misure.",
+        "href": "/camicie-su-misura/configuratore/"
+      },
+      {
+        "icona": "metro",
+        "titolo": "Prenota per prendere le misure in sede",
+        "testo": "Fissi un appuntamento in Viale del Toro 22, a Giugliano in Campania: le misure le prendiamo noi.",
+        "href": "/camicie-su-misura/#prenota"
+      }
+    ]
   },
   "menu": {
     "_nota": "Il pannello del menu sul telefono. Senza JavaScript il pulsante Menu porta al piè di pagina, che ha le stesse voci.",

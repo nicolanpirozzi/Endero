@@ -46,7 +46,7 @@ function vaiA(el, { subito = false } = {}) {
   if (subito) libera();
 }
 
-// I collegamenti a un punto della stessa pagina scorrono fin lì; "Salta" ci va di colpo.
+// I collegamenti a un punto della stessa pagina scorrono fin lì; "Vai al contenuto" ci va di colpo.
 function ancore() {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href*="#"]');
@@ -56,7 +56,7 @@ function ancore() {
     const meta = document.getElementById(decodeURIComponent(url.hash.slice(1)));
     if (!meta) return;
     e.preventDefault();
-    const salto = a.matches('.apertura__salta, .salta-al-contenuto');
+    const salto = a.matches('.salta-al-contenuto');
     vaiA(meta, { subito: salto });
     history.replaceState(null, '', url.hash);
     // il fuoco da tastiera segue la pagina: il prossimo Tab riparte dalla sezione raggiunta
@@ -115,36 +115,44 @@ function testata() {
   aggiorna();
 }
 
-// ---------------------------------------------------------------- menu del telefono
-// Senza script "Menu" è un link al piè di pagina. Con lo script diventa un pulsante che apre un <dialog> a tutto
-// schermo: il fuoco resta dentro, Esc lo chiude, la pagina sotto non scorre, scegliere una voce lo chiude.
-function menu() {
-  const dialogo = document.querySelector('[data-menu]');
-  const link = document.querySelector('[data-menu-apri]');
-  if (!dialogo || !link || typeof dialogo.showModal !== 'function') return;
+// ---------------------------------------------------------------- finestre: menu e "La tua camicia"
+// Senza script il pulsante è un link (al piè di pagina, alla pagina del su misura). Con lo script diventa un
+// pulsante che apre un <dialog>: il fuoco resta dentro, Esc lo chiude, la pagina sotto non scorre, scegliere
+// una voce lo chiude, e alla chiusura il fuoco torna sul pulsante.
+function finestra({ dialogo, link, classe, chiudiFuori = false }) {
+  if (!dialogo || !link || typeof dialogo.showModal !== 'function') return null;
   const pulsante = document.createElement('button');
   pulsante.type = 'button';
   pulsante.className = link.className;
-  pulsante.textContent = link.textContent;
+  pulsante.innerHTML = link.innerHTML;
   pulsante.setAttribute('aria-haspopup', 'dialog');
   pulsante.setAttribute('aria-expanded', 'false');
   pulsante.setAttribute('aria-controls', dialogo.id);
   link.replaceWith(pulsante);
 
-  const chiudi = () => { if (dialogo.open) dialogo.close(); };
+  let aperta = false;
+  // rimette a posto la pagina subito, senza aspettare l'evento "close" (che arriva dopo): così un link della
+  // finestra che porta più giù nella stessa pagina trova lo scorrimento già libero
+  const libera = () => {
+    if (!aperta) return;
+    aperta = false;
+    pulsante.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove(classe);
+    lenis?.start();
+  };
+  const chiudi = () => { libera(); if (dialogo.open) dialogo.close(); };
   pulsante.addEventListener('click', () => {
     dialogo.showModal();
+    aperta = true;
     pulsante.setAttribute('aria-expanded', 'true');
-    document.documentElement.classList.add('menu-aperto');
+    document.documentElement.classList.add(classe);
     lenis?.stop();
   });
-  // alla chiusura (pulsante, Esc o voce scelta) la pagina torna a scorrere e il fuoco torna su "Menu"
   dialogo.addEventListener('close', () => {
-    pulsante.setAttribute('aria-expanded', 'false');
-    document.documentElement.classList.remove('menu-aperto');
-    lenis?.start();
+    libera();
+    if (document.activeElement === document.body || dialogo.contains(document.activeElement)) pulsante.focus({ preventScroll: true });
   });
-  // il fuoco gira dentro il pannello: dall'ultima voce si torna alla prima, e viceversa
+  // il fuoco gira dentro la finestra: dall'ultima voce si torna alla prima, e viceversa
   dialogo.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;
     const tutti = [...dialogo.querySelectorAll('a[href], button:not([disabled])')];
@@ -152,10 +160,34 @@ function menu() {
     if (e.shiftKey && document.activeElement === primo) { e.preventDefault(); ultimo.focus(); }
     else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primo.focus(); }
   });
-  dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', chiudi);
-  dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', chiudi));
+  // una voce che porta più giù nella stessa pagina chiude la finestra subito; una che porta a un'altra pagina la
+  // lascia aperta fino al cambio di pagina (chiuderla proprio mentre parte la dissolvenza la interrompe)
+  dialogo.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || url.pathname === location.pathname) chiudi();
+  }));
+  // tornando indietro alla pagina tenuta in memoria dal browser, la finestra è già chiusa
+  addEventListener('pageshow', (e) => { if (e.persisted) chiudi(); });
+  // un clic sul fondo scurito, fuori dal riquadro, la chiude
+  if (chiudiFuori) dialogo.addEventListener('click', (e) => { if (e.target === dialogo) chiudi(); });
+  return { chiudi };
+}
+
+function menu() {
+  const dialogo = document.querySelector('[data-menu]');
+  const f = finestra({ dialogo, link: document.querySelector('[data-menu-apri]'), classe: 'menu-aperto' });
+  if (!f) return;
+  dialogo.querySelector('[data-menu-chiudi]')?.addEventListener('click', f.chiudi);
   // se lo schermo si allarga (telefono girato, finestra ingrandita) il menu non serve più
-  matchMedia('(min-width: 810px)').addEventListener('change', (e) => { if (e.matches) chiudi(); });
+  matchMedia('(min-width: 810px)').addEventListener('change', (e) => { if (e.matches) f.chiudi(); });
+}
+
+// "La tua camicia": due strade, il configuratore online o la presa misure in sede
+function camicia() {
+  const dialogo = document.querySelector('[data-camicia]');
+  const f = finestra({ dialogo, link: document.querySelector('[data-camicia-apri]'), classe: 'dialogo-aperto', chiudiFuori: true });
+  if (!f) return;
+  dialogo.querySelector('[data-camicia-chiudi]')?.addEventListener('click', f.chiudi);
 }
 
 // ---------------------------------------------------------------- selettore delle sezioni
@@ -202,8 +234,32 @@ function selettore() {
   }
   addEventListener('resize', () => posiziona(true), { passive: true });
 
+  // Il tono del vetro segue quello che c'è sotto: si guarda in tre punti lungo il selettore. Basta un punto
+  // chiaro per il tono chiaro (le scritte blu si leggono anche sopra il blu scuro, quelle chiare sul bianco no).
+  const ignora = '[data-selettore], [data-testata], [data-pillola-fissa], dialog';
+  function sotto(x, y) {
+    for (const el of document.elementsFromPoint(x, y)) {
+      if (el.closest(ignora)) continue;
+      if (/^(IMG|VIDEO|CANVAS|PICTURE)$/.test(el.tagName)) return 'foto';
+      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g);
+      if (!m || (m[3] !== undefined && +m[3] < 0.5)) continue;
+      const [r, g, b] = m.map(Number);
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140 ? 'chiaro' : 'scuro';
+    }
+    return 'chiaro';
+  }
+  function tono() {
+    const r = nav.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    const y = r.top + Math.min(r.height / 2, 22);
+    const toni = [0.12, 0.5, 0.88].map((f) => sotto(r.left + r.width * f, y));
+    const nuovo = toni.includes('chiaro') ? 'chiaro' : toni.includes('foto') ? 'foto' : 'scuro';
+    if (nav.dataset.tono !== nuovo) nav.dataset.tono = nuovo;
+  }
+
   function aggiorna() {
     richiesta = 0;
+    tono();
     if (!nav.classList.contains('selettore--chiuso') && Math.abs(scrollY - apertoA) > 48) chiudi();
     const soglia = nav.getBoundingClientRect().bottom + 60;
     let scelto = sezioni[0]?.dataset.gruppo;
@@ -466,6 +522,27 @@ function modulo(form) {
   });
 }
 
+// ---------------------------------------------------------------- misure del configuratore
+// Il riquadro del configuratore per ora non invia nulla (data-non-invia). Qui si controlla solo che ogni misura
+// sia un numero positivo dentro i suoi limiti (data-min, data-max), con la virgola o con il punto.
+function misure(form) {
+  form.addEventListener('submit', (e) => e.preventDefault());
+  form.querySelectorAll('input[data-min]').forEach((campo) => {
+    const errore = document.getElementById(campo.id + '-errore');
+    const controlla = (mostra) => {
+      const v = campo.value.trim();
+      const n = Number(v.replace(',', '.'));
+      const buono = !v || (/^\d{1,3}([.,]\d{1,2})?$/.test(v) && n >= +campo.dataset.min && n <= +campo.dataset.max);
+      campo.setCustomValidity(buono ? '' : campo.dataset.errore);
+      if (buono) { campo.removeAttribute('aria-invalid'); if (errore) errore.textContent = ''; }
+      else if (mostra) { campo.setAttribute('aria-invalid', 'true'); if (errore) errore.textContent = campo.dataset.errore; }
+    };
+    // mentre si scrive si toglie l'errore appena il numero torna buono; si segnala solo uscendo dal campo
+    campo.addEventListener('input', () => controlla(campo.hasAttribute('aria-invalid')));
+    campo.addEventListener('change', () => controlla(true));
+  });
+}
+
 // Ogni comodità parte per conto suo: se una si rompe, le altre funzionano lo stesso.
 // Se si rompono le comparse, la pagina torna tutta visibile.
 function avvia(nome, fn) {
@@ -481,8 +558,10 @@ avvia('scorrimento', scorrimento);
 avvia('ancore', ancore);
 avvia('testata', testata);
 avvia('menu', menu);
+avvia('camicia', camicia);
 avvia('selettore', selettore);
 avvia('mestiere', mestiere);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
-avvia('modulo', () => document.querySelectorAll('[data-modulo]').forEach(modulo));
+avvia('modulo', () => document.querySelectorAll('[data-modulo]:not([data-non-invia])').forEach(modulo));
+avvia('misure', () => document.querySelectorAll('[data-modulo][data-non-invia]').forEach(misure));

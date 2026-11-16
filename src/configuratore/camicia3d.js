@@ -91,7 +91,7 @@ const VENTO_DICHIARAZIONI = `
   float gOnda; vec3 gPendenza; vec3 gSposta;
   void vento(vec3 pm, float liberta) {
     float appeso = clamp((uSpalle - pm.y) / uAltezza, 0.0, 1.0);
-    float onda = 0.0; vec3 pend = vec3(0.0); vec3 spinta = vec3(0.0);
+    float onda = 0.0; vec3 pend = vec3(0.0); vec3 spinta = vec3(0.0); float somma = 0.0;
     for (int i = 0; i < ${RAFFICHE}; i++) {
       float eta = uTempo - uRaffiche[i].w;
       if (eta > 0.0 && eta < 4.5) {
@@ -110,8 +110,12 @@ const VENTO_DICHIARAZIONI = `
         pend += a * (cos(f1) * (24.0 * d + vec3(0.0, 5.0, 0.0)) + 0.33 * cos(f2) * (57.0 * d + vec3(8.0, 0.0, 0.0)))
               + w * a * (-2.0 * rel / (raggio * raggio));
         spinta += d * a;
+        somma += a;
       }
     }
+    // più folate nello stesso punto non si sommano all'infinito: il tessuto resta leggero
+    float misura = 1.0 / (1.0 + 0.9 * somma);
+    onda *= misura; pend *= misura; spinta *= misura;
     // brezza di fondo: sempre presente, appena visibile
     float sb = dot(pm, uBrezza.xyz);
     float b1 = sb * 16.0 - uTempo * 1.9 + pm.y * 4.0;
@@ -369,6 +373,7 @@ export async function avviaCamicia(contenitore, o) {
     }
     metaPiega.x += vivo * Math.sin(tempo * 0.5) * 0.003; metaPiega.z += vivo * Math.sin(tempo * 0.33 + 1) * 0.003;
     metaPiega.y *= 0.3;                                 // il vento non solleva la camicia
+    if (metaPiega.length() > 0.016) metaPiega.setLength(0.016);   // al più un dito e mezzo, anche con molte folate
     const cresce = metaPiega.lengthSq() > comuni.uPiega.value.lengthSq();
     comuni.uPiega.value.lerp(metaPiega, 1 - Math.exp(-dt * (cresce ? 5 : 1.6)));
 
