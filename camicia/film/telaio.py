@@ -1,7 +1,7 @@
 """La camicia del configuratore come film: ciò che serve alla fisica della stoffa.
 
 Dalla camicia comprata ricava il "telaio": la stessa camicia semplificata a qualche migliaio di punti, su cui
-`muovi.mjs` simula il vento (con la fisica di `stoffa.mjs`). Scrive anche dove stanno, a riposo,
+`muovi.mjs` simula il tocco di una mano (con la fisica di `stoffa.mjs`). Scrive anche dove stanno, a riposo,
 tutti i punti veri della camicia e dei bottoni: `muovi.mjs` li farà seguire il telaio, fotogramma per fotogramma.
 
     <venv>/bin/python camicia/film/telaio.py <file .blend comprato> <cartella di uscita>
@@ -62,7 +62,7 @@ def main():
     gradino = lambda a, b, x: np.clip((x - a) / (b - a), 0, 1) ** 2 * (3 - 2 * np.clip((x - a) / (b - a), 0, 1))
     # appeso: ciò che tocca la gruccia è fermo; il collo quasi; un palmo più giù il tessuto è libero
     appeso = np.maximum(1 - gradino(0.012, 0.07, dalla_gruccia), 0.93 * gradino(alto - 0.13, alto - 0.07, co[:, 2]))
-    # le spalle sporgono oltre la gruccia: lì il tessuto è libero ma tiene la forma, o col vento si gonfierebbero
+    # le spalle sporgono oltre la gruccia: lì il tessuto è libero ma tiene la forma, o muovendosi si gonfierebbero
     appeso = np.maximum(appeso, 0.55 * gradino(alto - 0.22, alto - 0.11, co[:, 2]))
 
     # --- il telaio: i pezzi si saldano lungo i bordi vicini, poi tutto si semplifica

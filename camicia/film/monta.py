@@ -3,7 +3,7 @@
 Prende i fotogrammi calcolati da `produci.py` e scrive in public/camicia/ ciò che la pagina usa:
   ferma.webp, ferma-2x.webp                        l'immagine a riposo (la seconda a grandezza doppia, se è stata calcolata)
   ferma-telefono.webp, ferma-telefono-2x.webp      la stessa, ritagliata in verticale intorno alla camicia
-  da-sinistra.mp4, da-destra.mp4                   le due scene di vento
+  da-sinistra.mp4, da-destra.mp4                   le due scene (la mano che tocca la camicia da sinistra e da destra)
   da-sinistra-telefono.mp4, da-destra-telefono.mp4 le stesse, ritagliate in verticale
 
     python3 camicia/film/monta.py <cartella dei fotogrammi> public/camicia

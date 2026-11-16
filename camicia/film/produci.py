@@ -1,6 +1,6 @@
 """La camicia del configuratore come film: i fotogrammi.
 
-Calcola con Cycles i fotogrammi di una scena di vento, mettendo a ogni fotogramma ogni punto della camicia dove
+Calcola con Cycles i fotogrammi di una scena (la mano che tocca la camicia), mettendo a ogni fotogramma ogni punto della camicia dove
 l'ha portato la fisica (`muovi.mjs`). Salta i fotogrammi già fatti: se si interrompe, si rilancia.
 
     <venv>/bin/python camicia/film/produci.py <file .blend comprato> <cartella di muovi.mjs> <cartella di uscita>

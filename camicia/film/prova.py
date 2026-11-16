@@ -1,6 +1,6 @@
 """Un'immagine sola della scena, per farla vedere al proprietario prima di calcolare il film.
 
-    <venv>/bin/python camicia/film/prova.py <file .blend comprato> <uscita.png> [--larga 1800 --alta 900 --campioni 128]
+    <venv>/bin/python camicia/film/prova.py <file .blend comprato> <uscita.png> [--larga 1800 --alta 1000 --campioni 128]
 """
 import argparse
 import os

@@ -26,10 +26,15 @@ PARETE = 0.52                          # la parete sta a 52 cm dietro l'asse del
 BLU_PARETE = (0.0048, 0.0300, 0.1700)  # il blu di Endero dove batte la luce (#1b3c7e sullo schermo)
 BLU_NASTRO = (0.0065, 0.0180, 0.0700)  # il blu scuro del nastro
 LARGO_NASTRO = 0.021
-# Il fotogramma: largo il doppio dell'altezza, perché le finestre dei browser sono larghe e basse (1920 x 950, 1440 x 790);
-# sugli schermi più stretti la pagina lo taglia ai lati. La camicia sta a sinistra (al 39,5% della larghezza): a destra
-# resta la parete in ombra, dove la pagina mette il riquadro in vetro.
-LARGA, ALTA, FUORI_ASSE = 1800, 900, -0.095
+# Il fotogramma. Sul computer la pagina ne mostra la fascia larga il doppio dell'altezza (le finestre dei browser sono
+# larghe e basse: 1920 x 950, 1440 x 790) e taglia l'8% in alto e il 2% in basso; sul telefono lo mostra intero,
+# ritagliato in verticale: lì in alto c'è la testata, e serve aria sopra il gancio.
+# La camicia sta a sinistra (al 39,5% della larghezza): a destra resta la parete in ombra, dove la pagina mette il
+# riquadro in vetro. Il proprietario l'ha voluta più vicina ("Avvicina un po', troppo lontano"): dal gancio all'orlo
+# prende il 78% dell'altezza del fotogramma, cioè l'87% di ciò che si vede sul computer.
+LARGA, ALTA, FUORI_ASSE = 1800, 1000, -0.095
+CAMICIA_NEL_FOTOGRAMMA = 0.783         # dal punto in cui il nastro regge il gancio all'orlo, in frazione dell'altezza
+ORLO_NEL_FOTOGRAMMA = 0.94             # dove sta l'orlo, dall'alto
 
 
 def apri(file_blend):
@@ -331,7 +336,10 @@ def costruisci(file_blend, larga=LARGA, alta=ALTA, campioni=128, fuori_asse=FUOR
     cade = centro - FINESTRA * (PARETE / -FINESTRA.y)
     muro = parete(); vano = finestra(Vector((cade.x + 0.05, PARETE, cade.z + 0.16)))
     sole, schiarita = luci(sc, centro)
-    cam = camera(sc, centro, larga, alta, (alto - basso) + 0.30, fuori_asse)
+    # l'inquadratura: quanto è alto il fotogramma, in metri, e dove guarda la camera
+    visto = (alto - basso) / CAMICIA_NEL_FOTOGRAMMA
+    mira = Vector((0.0, 0.0, basso + visto * (ORLO_NEL_FOTOGRAMMA - 0.5)))
+    cam = camera(sc, mira, larga, alta, visto, fuori_asse)
     prepara_resa(sc, campioni)
     return {'camicia': camicia, 'bottoni': bottoni, 'gruccia': gruccia, 'nastro': striscia, 'perno': perno, 'altalena': altalena, 'parete': muro,
             'finestra': vano, 'sole': sole, 'schiarita': schiarita, 'camera': cam, 'centro': centro, 'bottoni_tolti': tolti, 'a_riposo': a_riposo}

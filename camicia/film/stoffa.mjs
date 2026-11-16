@@ -6,9 +6,11 @@
 // ogni lembo solo per la parte che lo investe di piatto e lo frena quando si muove: è questo che fa nascere le
 // pieghe e le fa spegnere senza rimbalzi. La camicia vera segue il telaio punto per punto (vedi `lega` in muovi.mjs).
 //
-// È nata per il 3D in diretta nel browser, che il proprietario ha bocciato il 17 novembre 2026; ora serve a calcolare
+// È nata per il 3D in diretta nel browser, che il proprietario ha bocciato il 16 novembre 2026; ora serve a calcolare
 // il movimento del film (`muovi.mjs`). Non conosce Blender né il browser: gira con Node.
 // Il proprietario ha bocciato anche le onde ad anello e l'oscillazione a molla ("non è naturale"): qui non ci sono.
+// Sul film ha chiesto che il movimento non sia "proprio il vento" ma "come se io toccassi con la mano il tessuto in
+// modo leggero, ampio però e morbido": da qui la mano (`tocca`), un palmo largo e morbido che preme e accompagna.
 
 const PASSO = 1 / 300;            // passo di calcolo, in secondi: piccolo, così i fili restano inestensibili
 const PASSO_LENTO = 1 / 150;      // su un telefono lento: metà dei conti, i fili cedono appena di più
@@ -230,6 +232,36 @@ export function creaStoffa(dati, o = {}) {
     }
   }
 
+  // --- mano ------------------------------------------------------------------------------------------------
+  // Un palmo largo e morbido che tocca il tessuto: lo preme (di `fondo` metri al centro, sempre meno verso il bordo)
+  // e lo accompagna di lato mentre passa. Vale per tutto ciò che sta sotto il palmo, davanti e dietro: i due strati
+  // della camicia si spostano insieme e non si attraversano.
+  let mano = null;
+  /**
+   * Dice dove sta la mano in questo passo, o `null` se non tocca.
+   * @param {{c:number[], d:number[], t:number[], raggio:number, fondo:number, trascina:number}|null} stato
+   *   c: il centro del palmo sul tessuto a riposo; d: il verso in cui preme (lungo uno); t: il verso in cui passa
+   *   (lungo uno); fondo e trascina: di quanti metri, al centro del palmo, il tessuto cede e si lascia portare di lato
+   */
+  function tocca(stato) { mano = stato; }
+  function premi() {
+    const [cx, cy, cz] = mano.c, [dx, dy, dz] = mano.d, [tx, ty, tz] = mano.t, r2max = mano.raggio * mano.raggio;
+    for (let i = 0; i < n; i++) {
+      if (!libero[i]) continue;
+      const k = 3 * i, wx = x0[k] - cx, wy = x0[k + 1] - cy, wz = x0[k + 2] - cz;
+      const lungo = wx * dx + wy * dy + wz * dz;
+      const r2 = wx * wx + wy * wy + wz * wz - lungo * lungo;                 // quanto è lontano dall'asse del palmo
+      if (r2 >= r2max) continue;
+      const b = (1 - r2 / r2max) ** 2;
+      const ex = x[k] - x0[k], ey = x[k + 1] - x0[k + 1], ez = x[k + 2] - x0[k + 2];
+      // morbido: a ogni passo il palmo recupera solo una parte di ciò che manca, sia premendo sia portando di lato
+      const giu = mano.fondo * b - (ex * dx + ey * dy + ez * dz);
+      if (giu > 0) { x[k] += dx * giu * 0.3; x[k + 1] += dy * giu * 0.3; x[k + 2] += dz * giu * 0.3; }
+      const via = mano.trascina * b - (ex * tx + ey * ty + ez * tz);
+      if (via > 0) { x[k] += tx * via * 0.15; x[k + 1] += ty * via * 0.15; x[k + 2] += tz * via * 0.15; }
+    }
+  }
+
   /** Fa avanzare la stoffa di `dt` secondi. `gira` è la velocità con cui la camicia sta girando (radianti al secondo);
    *  `dondolo`, se c'è, è come sta dondolando appesa: velocità intorno a X e a Z, e il punto a cui è appesa (x, y, z). */
   function passo(dt, gira = 0, dondolo = null) {
@@ -252,6 +284,7 @@ export function creaStoffa(dati, o = {}) {
         xp[k] = x[k]; xp[k + 1] = x[k + 1]; xp[k + 2] = x[k + 2];
         x[k] += v[k] * h; x[k + 1] += v[k + 1] * h; x[k + 2] += v[k + 2] * h;
       }
+      if (mano) premi();
       for (let c = 0; c < nv; c++) {
         const ia = VA[c], ib = VB[c], a = 3 * ia, b = 3 * ib;
         const dx = x[a] - x[b], dy = x[a + 1] - x[b + 1], dz = x[a + 2] - x[b + 2];
@@ -318,6 +351,6 @@ export function creaStoffa(dati, o = {}) {
   return {
     punti: n, triangoli: tri, riposo: x0, normaliRiposo: nor0, adesso: x, parte: dati.parte, vincoli: nv, cuciture: nc, cucite: CP,
     ossa, larghezza: LARGHEZZA, righe,
-    passo, folata, carico, colpo,
+    passo, folata, carico, colpo, tocca,
   };
 }

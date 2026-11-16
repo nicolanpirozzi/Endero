@@ -1,14 +1,18 @@
 // La camicia del configuratore come film: il movimento.
 //
-// Simula il vento sul telaio (la camicia semplificata che scrive `telaio.py`) con la fisica della stoffa di
-// `stoffa.mjs`, nata per il 3D in diretta nel browser, e fa seguire al telaio tutti i punti veri della camicia
-// e i bottoni. Scrive, per ogni scena, dove sta ogni punto in ogni fotogramma: `produci.py` li calcola con Cycles.
+// Simula sul telaio (la camicia semplificata che scrive `telaio.py`) una mano che tocca il tessuto, con la fisica
+// della stoffa di `stoffa.mjs`, e fa seguire al telaio tutti i punti veri della camicia e i bottoni. Scrive, per ogni
+// scena, dove sta ogni punto in ogni fotogramma: `produci.py` li calcola con Cycles.
 //
 //   node camicia/film/muovi.mjs <cartella scritta da telaio.py> [curve.csv]
 //
-// Le scene sono due, scelte dal proprietario ("vento dove passo"): una folata che arriva da sinistra e una da
-// destra. Ognuna parte dalla camicia ferma e ci ritorna: sul sito, quando il mouse passa, parte quella del suo lato.
-// Appesa al nastro, la camicia è anche un pendolo: la folata la fa dondolare e torcere, e il tessuto resta indietro.
+// Le scene sono due: la mano che passa da sinistra verso destra e quella che passa da destra verso sinistra. Ognuna
+// parte dalla camicia ferma e ci ritorna: sul sito, quando il mouse passa, parte quella del suo lato.
+// Il proprietario, provata la prima versione (folate di vento): "il movimento non deve essere proprio il vento: deve
+// essere come se io toccassi con la mano il tessuto in modo leggero, ampio però e morbido. Mi piace, però, che quando
+// muovo sulla camicia si muova anche la gruccia e il cavo". Quindi: un palmo largo che preme appena e accompagna il
+// tessuto mentre attraversa il petto, e la camicia, appesa al nastro, che cede, dondola e si torce piano, con la
+// gruccia e il nastro. Niente increspature di vento.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { creaStoffa, sulTriangolo } from './stoffa.mjs';
@@ -20,8 +24,19 @@ const FOTOGRAMMI_AL_SECONDO = 24;
 const DURATA = 4.0;                    // secondi di ogni scena
 const RITORNO = 0.9;                   // negli ultimi secondi tutto torna, dolcemente, esattamente a riposo
 const PASSO = 1 / 120;                 // passo della fisica
-const SCENE = { 'da-sinistra': 1, 'da-destra': -1 };       // il verso in cui corre il vento sullo schermo
+const SCENE = { 'da-sinistra': 1, 'da-destra': -1 };       // il verso in cui passa la mano sullo schermo
 const SCIA = Number(process.env.SCIA) || 0.3;               // quanto il tessuto resta indietro quando la camicia dondola
+const num = (nome, base) => (process.env[nome] === undefined ? base : Number(process.env[nome]));
+// la mano: quando tocca e per quanto, quanto è largo il palmo, di quanto il tessuto cede e si lascia portare di lato
+const MANO = {
+  inizio: 0.05, durata: num('MANO_DURATA', 1.0),
+  raggio: num('MANO_RAGGIO', 0.21), fondo: num('MANO_FONDO', 0.026), trascina: num('MANO_TRASCINA', 0.01),
+  da: -0.27, a: 0.23,                  // da dove a dove attraversa il petto, in metri dall'asse della camicia
+  alta: -0.40, scende: 0.07,           // a che altezza passa (sotto il gancio) e di quanto scende lungo la passata
+  // quanto il tocco fa dondolare la camicia di lato e verso la parete, e quanto la torce sul nastro
+  lato: num('MANO_LATO', 0.9), versoParete: num('MANO_PARETE', 0.38), torce: num('MANO_TORCE', 4.2),
+};
+const gradino = (a, b, t) => { const u = Math.max(0, Math.min(1, (t - a) / (b - a))); return u * u * (3 - 2 * u); };
 
 const leggiJson = (nome) => JSON.parse(readFileSync(join(cartella, nome), 'utf8'));
 const leggiF32 = (nome) => { const b = readFileSync(join(cartella, nome)); return new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4); };
@@ -147,38 +162,34 @@ function scena(nome, verso) {
   const PENDOLO = 2.86, FRENO = 1.25, TORSIONE = 2.3, FRENO_TORSIONE = 1.7;
   const A = [misure.appiglio[0], misure.appiglio[1] + misure.ancora, misure.appiglio[2]];       // dove il nastro è fissato
   const dondolo = new Float32Array(5);
-  let tempo = 0, giroPrima = misure.riposo, folate = 0;
+  let tempo = 0, giroPrima = misure.riposo;
   const sonde = [];
+  // dove sta la mano sullo schermo (x a destra, y in alto) a un certo momento, e quanto preme (0-1)
+  const manoA = (t) => {
+    const tau = (t - MANO.inizio) / MANO.durata, u = gradino(0, 1, tau);
+    return { x: misure.appiglio[0] + verso * (MANO.da + (MANO.a - MANO.da) * u), y: misure.appiglio[1] + MANO.alta - MANO.scende * u,
+      preme: tau <= 0 || tau >= 1 ? 0 : gradino(0, 0.28, tau) * (1 - gradino(0.68, 1, tau)) };
+  };
   for (let k = 0; k < quanti; k++) {
     const fino = k / FOTOGRAMMI_AL_SECONDO;
     while (tempo < fino - 1e-9) {
       const angolo = misure.riposo + p.torce * 2.2, c = Math.cos(angolo), s = Math.sin(angolo);
-      // il mouse attraversa il petto in sette decimi di secondo: una folata ogni 0,12 s, come faceva la pagina
-      if (tempo >= 0.06 && folate < 6 && tempo >= 0.06 + folate * 0.12) {
-        const a = folate / 5;
-        // sullo schermo: un punto che corre sul petto, e il vento che lo segue premendo un po' sul tessuto
-        const vx = verso * (-0.24 + 0.48 * a), vy = -0.34, l = Math.hypot(1, 0.05, 0.5);
-        const dv = [verso / l, 0.05 / l, -0.5 / l];
-        // dallo schermo alla camicia, che è girata di `angolo` intorno alla verticale
-        const locale = (q) => [q[0] * c - q[2] * s, q[1], q[0] * s + q[2] * c];
-        const d = locale([0, 0, -1]), vento = locale(dv);
-        // la camicia è girata e non sta al centro esatto: se il punto cade fuori dal tessuto si prova più verso il
-        // centro, altrimenti la folata da un lato partirebbe in ritardo e con meno forza di quella dall'altro
-        let colpo = null;
-        for (let prova = 0; prova < 8 && !colpo; prova++) {
-          const o = locale([vx + (misure.appiglio[0] - vx) * prova / 8, vy, 3]);
-          colpo = stoffa.colpo(o[0], o[1], o[2], d[0], d[1], d[2]);
-        }
-        if (colpo) {
-          // il tessuto si increspa e le maniche volano, ma il grosso del movimento è il dondolio di tutta la camicia:
-          // con folate più forti il corpo si accartoccia intorno alla gruccia
-          const spinta = 0.5 / (1 + 1.6 * stoffa.carico());
-          p.vLato += 0.36 * spinta * verso; p.vFondo += 0.2 * spinta;
-          p.vTorce += 2.6 * spinta * (colpo[2] * vento[0] - colpo[0] * vento[2]);
-          stoffa.folata(colpo[0], colpo[1], colpo[2], vento[0], vento[1], vento[2], spinta);
-        }
-        folate++;
-      }
+      // dallo schermo alla camicia, che è girata di `angolo` intorno alla verticale
+      const locale = (q) => [q[0] * c - q[2] * s, q[1], q[0] * s + q[2] * c];
+      const m = manoA(tempo), poi = manoA(tempo + PASSO);
+      if (m.preme > 0) {
+        // dondolando la camicia si sposta sotto la mano: il palmo tocca il tessuto dove il tessuto è adesso
+        const spostata = p.lato * (misure.ancora + 0.45);
+        const lx = poi.x - m.x, ly = poi.y - m.y, l = Math.hypot(lx, ly) || 1;
+        stoffa.tocca({ c: locale([m.x - spostata, m.y, 0]), d: locale([0, 0, -1]), t: locale([lx / l, ly / l, 0]),
+          raggio: MANO.raggio, fondo: MANO.fondo * m.preme, trascina: MANO.trascina * m.preme });
+        // la camicia è appesa: la mano che preme la manda verso la parete, quella che accompagna la porta di lato,
+        // e premendo lontano dal nastro la fa girare
+        const corre = (poi.x - m.x) / PASSO;                                   // metri al secondo, col segno
+        p.vLato += MANO.lato * m.preme * corre * PASSO;
+        p.vFondo += MANO.versoParete * m.preme * PASSO;
+        p.vTorce += MANO.torce * m.preme * (m.x - spostata - misure.appiglio[0]) * PASSO;
+      } else stoffa.tocca(null);
       for (const [ang, vel, w, fr] of [['lato', 'vLato', PENDOLO, FRENO], ['fondo', 'vFondo', PENDOLO, FRENO], ['torce', 'vTorce', TORSIONE, FRENO_TORSIONE]]) {
         p[vel] += (-w * w * p[ang] - fr * p[vel]) * PASSO;
         p[ang] = Math.max(-0.17, Math.min(0.17, p[ang] + p[vel] * PASSO));

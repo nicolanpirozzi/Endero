@@ -1,11 +1,11 @@
 /* Configuratore, passo 1: la camicia appesa e il riquadro in vetro.
    La camicia è un film calcolato prima con Blender (camicia/film/): un'immagine ferma, sempre presente, e due
-   scene di vento che lo script fa partire quando il mouse le passa sopra. Senza JavaScript, con il movimento
+   scene (la mano che la tocca da sinistra e da destra) che lo script fa partire quando il mouse le passa sopra. Senza JavaScript, con il movimento
    ridotto o con il risparmio dati resta l'immagine ferma.
    Usa i colori e il vetro del sito (src/stili/sito.css). */
 
 .configura {
-  --blu-notte: #0a1b45;
+  --parete-in-ombra: #041036;          /* il blu della parete in ombra, misurato sul film */
   --filo: #fbf9f4;
   position: relative;
   display: grid;
@@ -14,40 +14,44 @@
   padding: 0 36px 0 0;
   min-height: 100svh;
   color: var(--filo);
-  background: var(--blu-notte);        /* il blu della parete in ombra: è il colore del film sul lato destro */
+  background: var(--parete-in-ombra);  /* dove il film finisce, a destra e in basso, sfuma in questo colore */
   overflow: clip;
 }
 
 /* la camicia resta ferma sullo schermo mentre il riquadro, se è lungo, scorre */
 .configura__palco {
-  /* Il fotogramma del film è largo il doppio dell'altezza (1800 x 900) e copre sempre tutta la pagina.
-     --camicia: dove sta la camicia nel fotogramma, in frazione della larghezza (lo stesso numero di camicia/film/monta.py);
-     --posto: dove deve cadere nella colonna. */
-  --alto: max(100svh, 420px, 50vw);
-  --largo: calc(var(--alto) * 2);
+  /* Il fotogramma del film è 1800 x 1000. Sul computer se ne vede la fascia larga il doppio dell'altezza, tra l'8%
+     e il 98% dall'alto: l'aria sopra il gancio serve al telefono, dove in alto c'è la testata.
+     --alto e --largo: quanto è grande il fotogramma sullo schermo; --su: di quanto sale oltre il bordo;
+     --camicia: dove sta la camicia nel fotogramma, in frazione della larghezza (lo stesso numero di
+     camicia/film/monta.py); --posto: dove deve cadere nella colonna. */
+  --alto: calc(max(100svh, 420px) / 0.9);
+  --largo: calc(var(--alto) * 1.8);
+  --su: calc(var(--alto) * -0.08);
   --camicia: 0.395;
   --posto: 54%;
   position: sticky;
   top: 0;
   height: 100svh;
   min-height: 420px;
-  touch-action: pan-y;                 /* col dito: di lato si soffia sulla camicia, in verticale scorre la pagina */
+  touch-action: pan-y;                 /* col dito: di lato si tocca la camicia, in verticale scorre la pagina */
 }
 
-/* Immagine ferma e film occupano lo stesso posto. Sono larghi quanto la pagina: la parete con la luce della finestra
-   fa da sfondo anche al riquadro in vetro. Sugli schermi larghi la camicia cade da sé nella colonna di sinistra;
-   su quelli più stretti il fotogramma è più largo della pagina e scorre a sinistra quanto basta perché la camicia
-   resti in mezzo alla sua colonna e non finisca sotto il riquadro. */
+/* Immagine ferma e film occupano lo stesso posto. La parete con la luce della finestra fa da sfondo anche al riquadro
+   in vetro. Sugli schermi più stretti del fotogramma, questo scorre a sinistra quanto basta perché la camicia resti in
+   mezzo alla sua colonna e non finisca sotto il riquadro; su quelli più larghi resta a sinistra e a destra sfuma nel
+   blu della pagina, che è quello della parete in ombra. */
 .configura__ferma,
 .configura__film {
   position: absolute;
-  top: 50%;
-  left: clamp(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia), 0px);
+  top: var(--su);
+  left: min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia)));
   width: var(--largo);
   max-width: none;
   height: var(--alto);
   object-fit: cover;
-  transform: translateY(-50%);
+  -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
 
 /* Una scena si vede solo mentre va e dopo, ferma sull'ultimo fotogramma, che è la camicia a riposo.
@@ -66,8 +70,8 @@
 
 .configura__invito {
   position: absolute;
-  left: 50%;
-  bottom: max(28px, env(safe-area-inset-bottom));
+  left: var(--posto);
+  bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 1;
   display: flex;
   align-items: center;
@@ -325,9 +329,11 @@
     padding: 0 0 96px;
   }
 
-  /* il fotogramma è alto quanto il palco e centrato sulla camicia; in basso sfuma nel blu della pagina */
+  /* il fotogramma si vede intero in altezza, centrato sulla camicia; in basso sfuma nel blu della pagina.
+     Se lo schermo è largo e basso il fotogramma è più alto del palco: si taglia più sotto che sopra. */
   .configura__palco {
-    --alto: max(62svh, 360px, 50vw);
+    --alto: max(62svh, 360px, 55.6vw);
+    --su: calc((100% - var(--alto)) * 0.3);
     --posto: 50%;
     position: relative;
     height: 62svh;
@@ -337,12 +343,12 @@
 
   .configura__ferma,
   .configura__film {
-    -webkit-mask-image: linear-gradient(to bottom, #000 93%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 93%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
   }
 
   .configura__invito {
-    bottom: 10px;
+    bottom: 6px;
   }
 
   .configura__scheda {
@@ -352,11 +358,11 @@
 }
 
 /* Sul telefono immagine e film sono già ritagliati in verticale intorno alla camicia (tre di base per quattro
-   d'altezza: si scarica meno). Il palco prende la loro forma, così la camicia si vede intera, dal gancio all'orlo,
-   e sotto spunta il riquadro. */
+   d'altezza: si scarica meno). Il palco prende la loro forma, così la camicia si vede intera, dal gancio (che resta
+   sotto la testata) all'orlo; sotto c'è una striscia per l'invito, e poi spunta il riquadro. */
 @media (max-width: 599px) {
   .configura__palco {
-    height: min(133.4vw, 82svh);
+    height: calc(min(133.4vw, 82svh) + 26px);
   }
 
   .configura__ferma,
@@ -364,10 +370,8 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    transform: none;
-    object-fit: cover;
-    object-position: center;
+    height: calc(100% - 26px);
+    object-position: center 85%;
   }
 
   /* a 320 px due colonne di misure non stanno comode: si passa a una */

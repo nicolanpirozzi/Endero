@@ -1,6 +1,6 @@
 // Pagina /camicie-su-misura/configuratore/. Passo 1: la camicia appesa e il riquadro in vetro
 // (docs/direzione-creativa.md, punto 12). La camicia è un film calcolato prima (camicia/film/): un'immagine ferma e
-// due scene di vento che src/configuratore/configuratore.js fa partire quando il mouse le passa sopra.
+// due scene, la mano che la tocca da sinistra e da destra, che src/configuratore/configuratore.js fa partire quando il mouse le passa sopra.
 // Senza script resta l'immagine ferma.
 import { esc, t } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
@@ -56,13 +56,13 @@ function gruppo(g, s) {
 
 /**
  * @param {object} o.camicia  { stile, script, ferma: { computer, computer2x, telefono, telefono2x }, scene: { 'da-sinistra': { computer, telefono }, 'da-destra': … } }:
- *   gli indirizzi dell'immagine ferma e delle scene di vento (scene vuoto se i file non ci sono)
+ *   gli indirizzi dell'immagine ferma e delle due scene del tocco (scene vuoto se i file non ci sono)
  */
 export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, anteprima }) {
   const p = c.palco, s = c.scheda;
   // l'immagine ferma c'è sempre, e per gli schermi fitti anche a grandezza doppia, se il file c'è
   const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');
-  // le due scene di vento solo se i loro file ci sono
+  // le due scene del tocco solo se i loro file ci sono
   const video = (nome) => camicia.scene[nome]
     ? `<video class="configura__film" data-scena="${nome}" data-computer="${esc(camicia.scene[nome].computer)}" data-telefono="${esc(camicia.scene[nome].telefono)}" muted playsinline preload="auto" tabindex="-1" aria-hidden="true"></video>`
     : '';
@@ -70,8 +70,8 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
 <section class="configura" id="contenuto" tabindex="-1">
   <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}>
     <picture>
-      <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 676, camicia.ferma.telefono2x))}" sizes="100vw" width="676" height="900">
-      <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 124vh, max(180vh, 90vw)" width="1800" height="900" alt="${esc(p.alt)}" fetchpriority="high">
+      <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 750, camicia.ferma.telefono2x))}" sizes="100vw" width="750" height="1000">
+      <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 112vh, max(180vh, 90vw)" width="1800" height="1000" alt="${esc(p.alt)}" fetchpriority="high">
     </picture>
     ${video('da-sinistra')}
     ${video('da-destra')}

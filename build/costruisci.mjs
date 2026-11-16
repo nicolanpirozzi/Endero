@@ -108,7 +108,7 @@ function genera(percorso, html) {
   pagine.push(percorso);
 }
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
-// configuratore: la camicia è un film calcolato prima (camicia/film/). L'immagine ferma c'è sempre; le scene di vento,
+// configuratore: la camicia è un film calcolato prima (camicia/film/). L'immagine ferma c'è sempre; le scene del tocco,
 // se i loro file mancano, la pagina ne fa a meno. Ogni file porta la sua versione nell'indirizzo: il browser li tiene
 // in memoria una settimana, e rifatti vanno riscaricati.
 const conVersione = (nome) => {
@@ -122,7 +122,7 @@ for (const nome of ['da-sinistra', 'da-destra']) {
   if (computer && telefono) camicia.scene[nome] = { computer, telefono };
 }
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
-if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene di vento, il configuratore mostra solo la camicia ferma');
+if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene del tocco, il configuratore mostra solo la camicia ferma');
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
 const visti = new Set();
