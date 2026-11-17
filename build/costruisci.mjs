@@ -121,6 +121,8 @@ for (const nome of ['da-sinistra', 'da-destra']) {
   const computer = conVersione(`${nome}.mp4`), telefono = conVersione(`${nome}-telefono.mp4`);
   if (computer && telefono) camicia.scene[nome] = { computer, telefono };
 }
+// la prova del movimento libero (?prova=libera): le pose di camicia/film/pose.py, se ci sono
+if (existsSync(join(RADICE, 'public/camicia/pose/pose.json'))) camicia.pose = '/camicia/pose/';
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene del tocco, il configuratore mostra solo la camicia ferma');
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));

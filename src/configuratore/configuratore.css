@@ -73,6 +73,26 @@
   transition-duration: 180ms;
 }
 
+/* PROVA del movimento libero (src/configuratore/libera.js): una tela sopra l'immagine ferma, solo sul riquadro in cui
+   la camicia e la sua ombra si muovono (--posa-x e --posa-w, in frazione del fotogramma, li mette lo script).
+   Si vede finché la camicia si muove; ferma, lascia il posto all'immagine, che è più nitida. */
+.configura__posa {
+  position: absolute;
+  top: var(--su);
+  left: calc(min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia))) + var(--largo) * var(--posa-x, 0));
+  width: calc(var(--largo) * var(--posa-w, 1));
+  max-width: none;
+  height: var(--alto);
+  opacity: 0;
+  transition: opacity 500ms ease-out;
+  pointer-events: none;
+}
+
+.configura__posa--viva {
+  opacity: 1;
+  transition-duration: 120ms;
+}
+
 /* ------------------------------------------------------------------ invito a passarci sopra */
 
 .configura__invito {
@@ -352,7 +372,8 @@
   }
 
   .configura__ferma,
-  .configura__film {
+  .configura__film,
+  .configura__posa {
     -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
   }
@@ -388,6 +409,14 @@
     left: 50%;
   }
 
+  /* la tela delle pose segue l'immagine verticale: larga quanto lo schermo per --posa-w-tel, alta quattro terzi */
+  .configura__posa {
+    top: calc((100% - 26px - 133.333vw) * 0.85);
+    left: calc(100vw * var(--posa-x-tel, 0));
+    width: calc(100vw * var(--posa-w-tel, 1));
+    height: 133.333vw;
+  }
+
   /* a 320 px due colonne di misure non stanno comode: si passa a una */
   @media (max-width: 359px) {
     .configura__campi {
@@ -398,6 +427,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .configura__film,
+  .configura__posa,
   .configura__invito {
     transition: none;
   }

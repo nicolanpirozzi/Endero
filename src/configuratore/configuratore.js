@@ -4,10 +4,15 @@
 // dalla camicia ferma e ci ritorna. Senza JavaScript, con il movimento ridotto o con il risparmio dati resta
 // l'immagine ferma, e il riquadro delle misure funziona lo stesso.
 
+import { libera } from './libera.js';
+
 const palco = document.querySelector('[data-film]');
 if (palco) avvia(palco);
 
 function avvia(palco) {
+  // PROVA (si decide col proprietario quale dei due modi tenere): con ?prova=libera nell'indirizzo la camicia non è
+  // un filmato che parte, ma segue il mouse in diretta (libera.js).
+  if (palco.dataset.pose && new URLSearchParams(location.search).get('prova') === 'libera') { libera(palco, palco.dataset.pose); return; }
   const scene = {};
   for (const v of palco.querySelectorAll('video[data-scena]')) scene[v.dataset.scena] = v;
   if (!scene['da-sinistra'] || !scene['da-destra']) return;

@@ -55,7 +55,7 @@ function gruppo(g, s) {
 }
 
 /**
- * @param {object} o.camicia  { stile, script, ferma: { computer, computer2x, telefono, telefono2x }, scene: { 'da-sinistra': { computer, telefono }, 'da-destra': … } }:
+ * @param {object} o.camicia  { stile, script, pose (la cartella delle pose per la prova del movimento libero, se c'è), ferma: { computer, computer2x, telefono, telefono2x }, scene: { 'da-sinistra': { computer, telefono }, 'da-destra': … } }:
  *   gli indirizzi dell'immagine ferma e delle due scene del tocco (scene vuoto se i file non ci sono)
  */
 export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, anteprima }) {
@@ -68,7 +68,7 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
     : '';
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
-  <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}>
+  <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}${camicia.pose ? ` data-pose="${esc(camicia.pose)}"` : ''}>
     <picture>
       <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 750, camicia.ferma.telefono2x))}" sizes="100vw" width="750" height="1000">
       <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 112vh, max(180vh, 90vw)" width="1800" height="1000" alt="${esc(p.alt)}" fetchpriority="high" draggable="false">
