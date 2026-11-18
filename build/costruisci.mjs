@@ -87,6 +87,17 @@ const turnstile = process.env.TURNSTILE_SITE_KEY || '';
 const origineAnteprima = (process.env.URL_ANTEPRIMA || '').replace(/\/$/, '');
 const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima };
 
+// le foto vere di Endero (tools/comprimi-foto.py): per ogni cartella, le grandezze di ogni foto e un'impronta,
+// così se una foto si rifà chi torna non vede quella vecchia rimasta nel browser
+sito.foto = {};
+for (const cartella of existsSync(join(RADICE, 'public/foto')) ? readdirSync(join(RADICE, 'public/foto')) : []) {
+  const dove = join(RADICE, 'public/foto', cartella);
+  if (!existsSync(join(dove, 'foto.json'))) continue;
+  const impronta = createHash('sha256');
+  for (const nome of readdirSync(dove).sort()) impronta.update(nome).update(readFileSync(join(dove, nome)));
+  sito.foto[cartella] = { cartella: `/foto/${cartella}/`, indice: JSON.parse(readFileSync(join(dove, 'foto.json'), 'utf8')), versione: impronta.digest('hex').slice(0, 10) };
+}
+
 // 3 · pagine
 scrivi('index.html', home({
   sito,
@@ -182,6 +193,9 @@ ${anteprima ? '  X-Robots-Tag: noindex, nofollow\n' : ''}
   Cache-Control: public, max-age=604800
 
 /camicia/*
+  Cache-Control: public, max-age=604800
+
+/foto/*
   Cache-Control: public, max-age=604800
 `);
 

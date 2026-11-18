@@ -11,7 +11,7 @@ const manifest = JSON.parse(manifestJSON);
 
 function durata(percorso) {
   if (percorso.startsWith('/risorse/') || percorso.startsWith('/font/')) return 'public, max-age=31536000, immutable';
-  if (percorso.startsWith('/film/') || percorso.startsWith('/camicia/')) return 'public, max-age=604800';
+  if (percorso.startsWith('/film/') || percorso.startsWith('/camicia/') || percorso.startsWith('/foto/')) return 'public, max-age=604800';
   return 'no-cache';
 }
 

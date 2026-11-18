@@ -36,6 +36,25 @@ export function attesa({ nota, tipo = 'foto', tono = 'chiaro', classe = '', etic
   </div>`;
 }
 
+/**
+ * Una foto vera di Endero, compressa da tools/comprimi-foto.py: il ritaglio orizzontale per gli schermi larghi e
+ * quello verticale per il telefono tenuto in piedi, ognuno in più grandezze, in AVIF e in WebP.
+ * @param {object} f        dal JSON dei testi: { file: 'coppole', alt, fuoco: 'alto' (se nel riquadro largo va tenuta la parte alta) }
+ * @param {object} archivio { cartella, indice, versione }: lo prepara il build da public/foto/<cartella>/foto.json
+ * @param {object} o        sizes: quanto è larga sullo schermo; verticale: usa anche il ritaglio verticale; pigra: si carica quando serve
+ */
+export function foto(f, archivio, { sizes = '100vw', verticale = true, pigra = true } = {}) {
+  const g = archivio?.indice?.[f?.file];
+  if (!g) return '';
+  const v = archivio.versione ? `?v=${archivio.versione}` : '';
+  const serie = (verso, tipo) => g[verso].map((w) => `${archivio.cartella}${f.file}-${verso}-${w}.${tipo}${v} ${w}w`).join(', ');
+  const media = g.o[Math.min(1, g.o.length - 1)];
+  const fonti = [];
+  if (verticale && g.v) for (const tipo of ['avif', 'webp']) fonti.push(`<source media="(max-width: 699px) and (orientation: portrait)" type="image/${tipo}" srcset="${esc(serie('v', tipo))}" sizes="100vw">`);
+  fonti.push(`<source type="image/avif" srcset="${esc(serie('o', 'avif'))}" sizes="${esc(sizes)}">`);
+  return `<picture class="foto"${f.fuoco ? ` data-fuoco="${esc(f.fuoco)}"` : ''}>${fonti.join('')}<img src="${archivio.cartella}${f.file}-o-${media}.webp${v}" srcset="${esc(serie('o', 'webp'))}" sizes="${esc(sizes)}" width="${media}" height="${Math.round(media / 1.5)}" alt="${esc(f.alt)}"${pigra ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async"></picture>`;
+}
+
 /** Disegno vettoriale del logo, preso dal foglio di simboli in fondo alla pagina. */
 export function logo(quale, { classe = '', etichetta = '' } = {}) {
   const viste = { scritta: '0 0 207.8 38.5', completo: '0 0 207.8 119.3', simbolo: '0 0 89.3 58.3' };

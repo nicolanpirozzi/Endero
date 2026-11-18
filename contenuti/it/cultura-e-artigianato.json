@@ -1,38 +1,82 @@
 {
-  "_nota": "Cultura e artigianato: prende il posto della storia (docs/direzione-creativa.md, punto 10). I capitoli nascono dalle foto: prima arrivano le foto vere, poi si scrive un capitolo per ogni foto buona, descrivendo solo quello che la foto mostra. Da tre a cinque capitoli. Gli stessi capitoli servono alla pagina /cultura-e-artigianato/ e alla sezione della pagina iniziale. Le parti tra [[ ]] sono segnaposto. Della produzione si dice solo 'fatto in Italia'.",
+  "_nota": "Cultura e artigianato: prende il posto della storia (docs/direzione-creativa.md, punto 10). I capitoli nascono dalle foto vere: un capitolo per foto, e il testo descrive solo quello che la foto mostra in tutti i suoi ritagli (sul computer la foto è tagliata in orizzontale, sul telefono in verticale: ciò che resta fuori da uno dei due non si nomina). Le sei foto sono quelle mandate dal proprietario il 2026-11-18 (Drive, cartella 'Foto Contesto'), compresse con tools/comprimi-foto.py in public/foto/artigianato/. Titoli e testi sono bozze nostre, da approvare. Gli stessi capitoli servono alla sezione della pagina iniziale e alla pagina /cultura-e-artigianato/, dove la foto di apertura non si ripete tra i capitoli. 'fuoco': 'alto' tiene la parte alta della foto nei riquadri larghi. Della produzione si dice solo 'fatto in Italia'.",
   "meta": {
     "titolo": "Cultura e artigianato · Endero, camicie e abbigliamento uomo",
-    "descrizione": "Cultura e artigianato Endero: il taglio, la cucitura e le rifiniture delle nostre camicie e dei capi uomo, fatti in Italia.",
-    "immagine": "/film/manifesto.jpg",
-    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+    "descrizione": "Cultura e artigianato Endero: i tessuti, i bottoni e i ricami dei nostri capi uomo, visti da vicino. Fatti in Italia.",
+    "immagine": "/foto/artigianato/coppole-anteprima.jpg",
+    "immagine_alt": "Due uomini sorridenti con coppola a quadri azzurri; uno indossa un gilet nello stesso tessuto"
   },
   "eroe": {
     "titolo": "Cultura e artigianato",
-    "sottotitolo": "Come nasce un capo Endero",
-    "foto": "Mani al lavoro su una camicia, foto orizzontale"
+    "sottotitolo": "I capi Endero, da vicino",
+    "foto": "Foto di apertura, orizzontale",
+    "immagine": {
+      "file": "coppole",
+      "alt": "Due uomini sorridono e si toccano la coppola a quadri azzurri; uno indossa un gilet nello stesso tessuto",
+      "fuoco": "alto"
+    }
   },
   "introduzione": {
     "titolo": "Il mestiere",
-    "testo": "[[Testo sul modo di lavorare di Endero. Si scrive quando arrivano le foto, raccontando solo quello che mostrano.]]"
+    "testo": "Lo stesso tessuto su più capi, e la E di Endero su bottoni e ricami: sono i dettagli che si vedono guardando da vicino."
   },
   "capitoli": [
     {
-      "etichetta": "01",
-      "titolo": "Il taglio",
-      "testo": "[[Due righe su quello che mostra la foto del taglio.]]",
-      "foto": "Il taglio del tessuto, foto orizzontale"
+      "titolo": "Lo stesso tessuto",
+      "testo": "Il quadro azzurro passa dal gilet alla coppola.",
+      "foto": "Due uomini con coppola e gilet a quadri",
+      "immagine": {
+        "file": "coppole",
+        "alt": "Due uomini sorridono e si toccano la coppola a quadri azzurri; uno indossa un gilet nello stesso tessuto",
+        "fuoco": "alto"
+      }
     },
     {
-      "etichetta": "02",
-      "titolo": "La cucitura",
-      "testo": "[[Due righe su quello che mostra la foto della cucitura.]]",
-      "foto": "La cucitura di una camicia, foto orizzontale"
+      "titolo": "Il cappello",
+      "testo": "La fascia è nello stesso tessuto a quadri.",
+      "foto": "Uomo con cappello dalla fascia a quadri",
+      "immagine": {
+        "file": "cappello",
+        "alt": "Uomo con cappello blu dalla fascia a quadri azzurri",
+        "fuoco": "alto"
+      }
     },
     {
-      "etichetta": "03",
-      "titolo": "Le rifiniture",
-      "testo": "[[Due righe su quello che mostra la foto delle rifiniture.]]",
-      "foto": "Rifiniture: asole, bottoni, stiro, foto orizzontale"
+      "titolo": "Il bottone con la E",
+      "testo": "Azzurro, con la E di Endero, sul tessuto a quadri.",
+      "foto": "Bottone con la E su tessuto a quadri",
+      "immagine": {
+        "file": "bottone-e",
+        "alt": "Bottone azzurro con la E di Endero su un tessuto a quadri azzurri e grigi"
+      }
+    },
+    {
+      "titolo": "I bottoni della manica",
+      "testo": "In fondo alla manica, accanto ai bottoni chiari a quattro fori, quello con la E.",
+      "foto": "Bottoni in fondo alla manica",
+      "immagine": {
+        "file": "bottoni-polso",
+        "alt": "Fondo di una manica a quadri: un bottone con la E di Endero accanto a bottoni chiari a quattro fori",
+        "fuoco": "alto"
+      }
+    },
+    {
+      "titolo": "La E ricamata",
+      "testo": "Ricamata in bianco e blu sul tessuto a quadri.",
+      "foto": "La E ricamata sul tessuto",
+      "immagine": {
+        "file": "ricamo",
+        "alt": "La E di Endero ricamata in bianco e blu su un tessuto a quadri"
+      }
+    },
+    {
+      "titolo": "La maglia",
+      "testo": "Blu, con il bordo e i polsi a coste, e la E ricamata piccola sul davanti.",
+      "foto": "Maglia blu con la E ricamata",
+      "immagine": {
+        "file": "maglia",
+        "alt": "Maglia blu tenuta per il bordo a coste, con una piccola E ricamata"
+      }
     }
   ],
   "fatti": {

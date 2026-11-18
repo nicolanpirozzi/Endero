@@ -1,6 +1,6 @@
 // Sezioni del sito, condivise tra la pagina iniziale e le altre pagine.
 // Ordine e proporzioni vengono dal riferimento (docs/direzione-creativa.md, punti 1 e 3).
-import { esc, t, tConLink, piano, attesa, logo, icona, euro, indirizzoCapo } from './base.mjs';
+import { esc, t, tConLink, piano, attesa, foto, logo, icona, euro, indirizzoCapo } from './base.mjs';
 
 const aid = (id) => (id ? ` id="${esc(id)}"` : '');
 const agr = (gruppo) => (gruppo ? ` data-gruppo="${esc(gruppo)}"` : '');
@@ -14,9 +14,11 @@ export function intesta({ titolo, testo, link, classe = '' }) {
 }
 
 /** In cima alle pagine interne: foto (o video) con il titolo della pagina, come il video della pagina iniziale. */
-export function eroePagina({ titolo, sottotitolo, foto }, sito) {
-  return `<section class="eroe eroe--pagina" id="contenuto" tabindex="-1">
-    <div class="eroe__fondo">${attesa({ nota: foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
+export function eroePagina({ titolo, sottotitolo, foto: nota, immagine }, sito) {
+  // la foto vera, se c'è (è la prima cosa che si vede: si carica subito), altrimenti il segnaposto
+  const fondo = foto(immagine, sito.foto?.artigianato, { pigra: false }) || attesa({ nota, tono: 'scuro', etichetta: sito.foto_in_arrivo });
+  return `<section class="eroe eroe--pagina${immagine ? ' eroe--foto' : ''}" id="contenuto" tabindex="-1">
+    <div class="eroe__fondo">${fondo}</div>
     <div class="eroe__testo">
       <h1 class="titolo eroe__titolo"><span>${t(titolo)}</span></h1>
       ${sottotitolo ? `<p class="eroe__sotto">${t(sottotitolo)}</p>` : ''}
@@ -297,7 +299,7 @@ export function mestiere(m, capitoli, sito, { id = 'artigianato', gruppo = 'arti
     <div class="mestiere__binario" style="--n: ${capitoli.length}">
       <ol class="mestiere__palco">
         ${capitoli.map((c, i) => `<li class="mestiere__capitolo"${i === 0 ? ' data-attivo' : ''}>
-          <div class="mestiere__foto">${attesa({ nota: c.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
+          <div class="mestiere__foto">${foto(c.immagine, sito.foto?.artigianato) || attesa({ nota: c.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
           <div class="vetro mestiere__scheda">
             <p class="mestiere__numero">${String(i + 1).padStart(2, '0')} / ${String(capitoli.length).padStart(2, '0')}</p>
             <h3 class="mestiere__titolo">${t(c.titolo)}</h3>
