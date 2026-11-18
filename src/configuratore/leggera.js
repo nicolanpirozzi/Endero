@@ -15,7 +15,9 @@ const PENDOLO = 2.86, FRENO = 1.25, TORSIONE = 2.3, FRENO_TORSIONE = 1.7;      /
 // Finché la mano la tocca, la camicia la segue, di poco: di lato per una piccola parte della strada che fa la mano
 // (`segue`), verso la parete di un niente (`fondo`, radianti), e si gira dalla parte in cui la si tocca (`torce`,
 // radianti a un palmo dal nastro). Quando la mano la lascia, dondola libera e si ferma. Circa un quarto di prima.
-const MANO = { segue: 0.05, fondo: 0.008, torce: 0.04, presa: 540, freno: 46, scivola: 1.5 };
+const MANO = { segue: 0.05, fondo: 0.006, torce: 0.04, presa: 540, freno: 46, scivola: 1.5 };
+// un tocco fermo (un clic, un dito appoggiato e tolto): la spinta che riceve, di lato, verso la parete e in torsione
+const COLPETTO = { lato: 0.04, fondo: 0.03, torce: 0.45 };
 const LIMITE = { lato: 0.03, fondo: 0.03, torce: 0.09 };                       // radianti: oltre non va, comunque la si muova
 const VIVA = 'configura__posa--viva';
 
@@ -38,11 +40,13 @@ const stringi = (v, a, b) => Math.max(a, Math.min(b, v));
  * @param {HTMLElement} palco  il palco della camicia, con l'immagine ferma dentro
  * @param {string} dove        la cartella dei file, per esempio "/camicia/leggera/"
  * @param {number} quanto      quanto si muove: 1 è la misura di mezzo
+ * @param {string} versione    l'impronta dei file, messa dal build: quando i pezzi si rifanno il browser non usa i vecchi
  */
-export async function leggera(palco, dove, quanto = 1) {
+export async function leggera(palco, dove, quanto = 1, versione = '') {
   const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
   if (ridotto.matches || navigator.connection?.saveData) return;
-  const D = await (await fetch(dove + 'leggera.json')).json();
+  const v = versione ? '?v=' + versione : '';
+  const D = await (await fetch(dove + 'leggera.json' + v)).json();
   const [FL, FA] = D.fotogramma, [rx, , rw] = D.pezzi.parete;
 
   // --- il riquadro del fotogramma in cui camicia e ombra si muovono, sopra l'immagine ferma (stesse misure della pagina)
@@ -61,19 +65,35 @@ export async function leggera(palco, dove, quanto = 1) {
   const misura = () => { const k = riquadro.getBoundingClientRect().height / FA; if (k > 0) piano.style.transform = `scale(${k})`; return k; };
 
   // --- i tre pezzi, nella grandezza più vicina a quella dello schermo
-  const punti = riquadro.clientHeight * (window.devicePixelRatio || 1) * 0.92;
-  const taglia = D.taglie.find((t) => t * FA >= punti) || D.taglie[D.taglie.length - 1];
-  const pezzo = (nome) => {
-    const [x, y, w, h] = D.pezzi[nome], im = new Image();
-    im.decoding = 'async'; im.alt = ''; im.draggable = false;
-    im.style.left = x - rx + 'px'; im.style.top = y + 'px'; im.style.width = w + 'px'; im.style.height = h + 'px';
-    im.src = `${dove}${nome}-${String(taglia).replace('.', '')}.webp?v=${D.versione}`;
-    return im;
+  const serve = () => { const punti = riquadro.getBoundingClientRect().height * (window.devicePixelRatio || 1) * 0.92; return D.taglie.find((t) => t * FA >= punti) || D.taglie[D.taglie.length - 1]; };
+  const file = (nome, t) => `${dove}${nome}-${String(t).replace('.', '')}.webp${v || '?v=' + D.versione}`;
+  /** Un'immagine pronta da mostrare (dove `decode` non c'è o si rifiuta, basta che sia caricata). */
+  const caricata = (indirizzo) => {
+    const im = new Image();
+    im.decoding = 'async'; im.src = indirizzo;
+    return im.decode().catch(() => new Promise((ok, no) => { if (im.complete && im.naturalWidth) ok(); else { im.onload = ok; im.onerror = no; } })).then(() => im);
   };
-  const parete = pezzo('parete'), ombra = pezzo('ombra'), camicia = pezzo('camicia');
-  try { await Promise.all([parete, ombra, camicia].map((im) => im.decode())); } catch { riquadro.remove(); return; }
+  let taglia = serve();
+  const NOMI = ['parete', 'ombra', 'camicia'];
+  let pezzi;
+  try { pezzi = await Promise.all(NOMI.map((nome) => caricata(file(nome, taglia)))); } catch { riquadro.remove(); return; }
+  pezzi.forEach((im, i) => {
+    const [x, y, w, h] = D.pezzi[NOMI[i]];
+    im.alt = ''; im.draggable = false;
+    im.style.left = x - rx + 'px'; im.style.top = y + 'px'; im.style.width = w + 'px'; im.style.height = h + 'px';
+  });
+  const [parete, ombra, camicia] = pezzi;
   piano.append(parete, ombra, camicia);
   misura();
+  // se la finestra cresce (o passa su uno schermo più fitto) servono pezzi più grandi, come fa da sé l'immagine ferma
+  let cambio = false;
+  const ingrandisci = async () => {
+    const t = serve();
+    if (cambio || t <= taglia) return;
+    cambio = true;
+    try { await Promise.all(NOMI.map((nome) => caricata(file(nome, t)))); NOMI.forEach((nome, i) => { pezzi[i].src = file(nome, t); }); taglia = t; } catch { /* restano quelli di prima */ }
+    cambio = false;
+  };
 
   // --- la scena, com'è in Blender: la camera, il piano della camicia, la parete, il sole
   const C = D.camera, G = D.gancio, ancora = [G[0], G[1] + D.ancora, G[2]], sole = D.sole;
@@ -115,8 +135,10 @@ export async function leggera(palco, dove, quanto = 1) {
       meta.lato = stringi(meta.lato + MANO.segue * quanto * mano.strada / 1.1, -tetto, tetto);
       meta.lato -= meta.lato * dt / MANO.scivola;                              // la mano non trattiene: il tessuto le scivola sotto
       mano.strada = 0;
-      meta.fondo = MANO.fondo * quanto;
-      meta.torce = MANO.torce * quanto * mano.fuoriAsse / 0.25;
+      // verso la parete e in torsione va quanto la mano è decisa: sfiorata pianissimo quasi non cede (e l'ombra non si muove da sola)
+      const decisa = Math.min(1, Math.hypot(mano.vx, mano.vy) / 0.5);
+      meta.fondo = MANO.fondo * quanto * decisa;
+      meta.torce = MANO.torce * quanto * decisa * mano.fuoriAsse / 0.25;
       // la presa della mano: una molla ben smorzata, così la camicia la segue subito ma senza strappi
       for (const [ang, vel] of [['lato', 'vLato'], ['fondo', 'vFondo'], ['torce', 'vTorce']]) p[vel] += (MANO.presa * (meta[ang] - p[ang]) - MANO.freno * p[vel]) * mano.preme * dt;
     } else { mano.tiene = false; mano.strada = 0; }
@@ -124,7 +146,9 @@ export async function leggera(palco, dove, quanto = 1) {
     const coda = mano.preme > 0.01 ? 1 : 1 + 5 * Math.max(0, 1 - energia() / (0.004 * quanto));
     for (const [ang, vel, w, fr] of [['lato', 'vLato', PENDOLO, FRENO], ['fondo', 'vFondo', PENDOLO, FRENO], ['torce', 'vTorce', TORSIONE, FRENO_TORSIONE]]) {
       p[vel] += (-w * w * p[ang] - fr * coda * p[vel]) * dt;
-      p[ang] = stringi(p[ang] + p[vel] * dt, -LIMITE[ang] * quanto, LIMITE[ang] * quanto);
+      // al limite si ferma lì, senza slancio: non ci resta appoggiata
+      const tetto = LIMITE[ang] * quanto, nuovo = p[ang] + p[vel] * dt;
+      if (Math.abs(nuovo) > tetto) { p[ang] = Math.sign(nuovo) * tetto; p[vel] = 0; } else p[ang] = nuovo;
     }
   };
   // per le prove il tempo si può far avanzare a comando (?manuale): allora niente va avanti da solo
@@ -149,6 +173,7 @@ export async function leggera(palco, dove, quanto = 1) {
     corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
     camicia.style.transform = ''; ombra.style.transform = '';
   };
+  let attiva = false;                                  // i pezzi sono in vista e la camicia risponde
   const sveglia = () => {
     quieta = 0;
     if (corre || ridotto.matches) return;
@@ -164,7 +189,7 @@ export async function leggera(palco, dove, quanto = 1) {
   };
   /** La mano è nel punto dello schermo dell'evento. */
   const tocca = (e) => {
-    if (ridotto.matches) return;
+    if (!attiva || ridotto.matches) return;
     const ora = adesso(), q = sulFotogramma(e);
     if (mano.sopra && q.sopra) {
       const dt = Math.max(0.004, (ora - mano.mossa) / 1000), vx = (e.clientX - mano.x) * q.metri / dt, vy = (e.clientY - mano.y) * q.metri / dt;
@@ -177,40 +202,66 @@ export async function leggera(palco, dove, quanto = 1) {
     mano.sopra = q.sopra; mano.x = e.clientX; mano.y = e.clientY; mano.mossa = ora;
     if (q.sopra) sveglia();
   };
-  /** Un tocco fermo (un clic, un dito appoggiato): un colpetto leggero dal lato in cui si tocca. */
+  /** Un tocco fermo (un clic, un dito appoggiato e tolto): un colpetto leggero. Toccata da un lato, va verso l'altro. */
+  let premuto = null;
   const colpetto = (e) => {
+    if (!attiva || ridotto.matches) return;
+    if (premuto && Math.hypot(e.clientX - premuto.x, e.clientY - premuto.y) > 6) return;     // era una passata, non un tocco
     const q = sulFotogramma(e);
-    if (!q.sopra || ridotto.matches) return;
-    const lato = stringi((q.x - asse) / alMetro, -0.3, 0.3);
-    p.vFondo += 0.035 * quanto; p.vLato -= 0.09 * lato * quanto; p.vTorce += 0.45 * lato * quanto;
+    if (!q.sopra) return;
+    const fuori = stringi((q.x - asse) / alMetro, -0.3, 0.3), verso = fuori > 0 ? -1 : 1;
+    // La spinta non si somma a quelle di prima: dieci tocchi di fila non la mandano più lontano di uno. Ogni tocco
+    // porta il dondolio, al più, all'ampiezza che avrebbe con un tocco solo da ferma (`quanta` diviso la frequenza)
+    const spingi = (ang, vel, frequenza, quanta) => {
+      const ampiezza = Math.abs(quanta) / frequenza, resta = Math.sqrt(Math.max(0, ampiezza * ampiezza - p[ang] * p[ang])) * frequenza;
+      p[vel] = quanta > 0 ? Math.max(p[vel], resta) : Math.min(p[vel], -resta);
+    };
+    spingi('lato', 'vLato', PENDOLO, verso * COLPETTO.lato * quanto);
+    spingi('fondo', 'vFondo', PENDOLO, COLPETTO.fondo * quanto);
+    spingi('torce', 'vTorce', TORSIONE, COLPETTO.torce * fuori * quanto);
     palco.dataset.toccata = '';
     sveglia();
   };
-  palco.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') tocca(e); });
+  // mouse e penna: la mano è dove sta il puntatore
+  palco.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') tocca(e); });
   palco.addEventListener('pointerleave', () => { mano.sopra = false; });
   palco.addEventListener('click', colpetto);
   // il dito: conta quando si muove di lato sulla camicia; in verticale è la pagina che scorre. Appoggiato e tolto, è un colpetto
   let dito = null;
-  palco.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') { dito = { x: e.clientX, y: e.clientY, verso: '' }; mano.sopra = false; } });
+  palco.addEventListener('pointerdown', (e) => {
+    premuto = { x: e.clientX, y: e.clientY };
+    if (e.pointerType === 'touch') { dito = { x: e.clientX, y: e.clientY, diLato: false }; mano.sopra = false; }
+  });
   palco.addEventListener('pointermove', (e) => {
-    if (e.pointerType === 'mouse' || !dito) return;
+    if (e.pointerType !== 'touch' || !dito) return;
     const dx = e.clientX - dito.x, dy = e.clientY - dito.y;
-    if (!dito.verso && Math.hypot(dx, dy) > 8) dito.verso = Math.abs(dx) > Math.abs(dy) ? 'lato' : 'su';
-    if (dito.verso === 'lato') tocca(e);
+    // di lato appena il dito ha fatto più strada in orizzontale che in verticale, anche se era partito un po' storto.
+    // Da lì la pagina non deve più scorrere sotto il dito (lo scorrimento morbido legge lo stesso gesto: glielo si dice)
+    if (!dito.diLato && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { dito.diLato = true; palco.setAttribute('data-lenis-prevent-touch', ''); }
+    if (dito.diLato) tocca(e);
   });
-  const alza = () => { dito = null; mano.sopra = false; };
+  const alza = () => { dito = null; mano.sopra = false; palco.removeAttribute('data-lenis-prevent-touch'); };
   palco.addEventListener('pointerup', alza); palco.addEventListener('pointercancel', alza);
+  // tenendo premuto col dito non deve aprirsi il menu dell'immagine
+  palco.addEventListener('contextmenu', (e) => { if (e.pointerType && e.pointerType !== 'mouse') e.preventDefault(); });
+  const STRATI = 'configura__palco--strati';
+  let comparsa = 0;
+  const mostra = () => {
+    riquadro.classList.add(VIVA); palco.classList.add(STRATI);
+    // risponde quando i pezzi hanno finito di comparire: prima, muovendosi, si vedrebbero due camicie
+    clearTimeout(comparsa);
+    comparsa = setTimeout(() => { attiva = true; palco.dataset.viva = ''; }, 520);
+  };
   ridotto.addEventListener('change', () => {
-    if (!ridotto.matches) { palco.dataset.viva = ''; riquadro.classList.add(VIVA); return; }
-    mano.sopra = false; delete palco.dataset.viva;
+    if (!ridotto.matches) { mostra(); return; }
+    clearTimeout(comparsa); attiva = false; mano.sopra = false; delete palco.dataset.viva;
     cancelAnimationFrame(corre); corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
-    camicia.style.transform = ''; ombra.style.transform = ''; riquadro.classList.remove(VIVA);
+    camicia.style.transform = ''; ombra.style.transform = ''; riquadro.classList.remove(VIVA); palco.classList.remove(STRATI);
   });
-  new ResizeObserver(misura).observe(riquadro);
+  new ResizeObserver(() => { misura(); ingrandisci(); }).observe(riquadro);
 
   // --- pronta: i pezzi prendono il posto dell'immagine ferma (sono gli stessi punti: non si nota) e ci restano, così
-  //     quando la si tocca non cambia niente se non il movimento; e compare l'invito a passarci sopra
-  riquadro.classList.add(VIVA);
-  palco.dataset.viva = '';
-  if (manuale) window.__camicia = { p, mano, taglia, sveglia, passo: (ms) => { finto += ms; if (corre) passo(finto); return !!corre; } };
+  //     quando la si tocca non cambia niente se non il movimento; poi compare l'invito a passarci sopra
+  mostra();
+  if (manuale) window.__camicia = { p, mano, sveglia, get taglia() { return taglia; }, passo: (ms) => { finto += ms; if (corre) passo(finto); return !!corre; } };
 }

@@ -30,6 +30,9 @@ const SCHERMI = [
   ['tavoletta 820 x 1180', { width: 820, height: 1180 }, 2],
   ['telefono 390 x 844', { width: 390, height: 844 }, 3, true],
   ['telefono piccolo 320 x 568', { width: 320, height: 568 }, 2, true],
+  // i telefoni veri hanno meno altezza dello schermo intero (barre del browser): l'immagine ferma lì è tagliata
+  ['telefono basso 375 x 548', { width: 375, height: 548 }, 2, true],
+  ['telefono di traverso 568 x 320', { width: 568, height: 320 }, 2, true],
 ];
 
 (async () => {
@@ -47,7 +50,8 @@ const SCHERMI = [
     const pronta = await page.waitForFunction(() => window.__camicia && document.querySelector('.configura__posa--strati.configura__posa--viva'), null, { timeout: 15000 }).then(() => true, () => false);
     vedi(pronta, 'i pezzi si caricano e compaiono', `${Math.round(peso / 1024)} KB`);
     if (!pronta) { await ctx.close(); continue; }
-    await page.waitForTimeout(700);                                                  // la comparsa dura mezzo secondo
+    await page.waitForFunction(() => 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(250);                                                  // la comparsa dura mezzo secondo, poi risponde
     const palco = page.locator('.configura__palco');
     const stato = () => page.evaluate(() => {
       const q = document.querySelector('.configura__posa--strati'), [, ombra, camicia] = q.querySelectorAll('img'), r = q.getBoundingClientRect(), c = camicia.getBoundingClientRect();
@@ -56,16 +60,29 @@ const SCHERMI = [
     });
     const s0 = await stato();
     vedi(s0.larga === vista.width, 'la pagina non si allarga', `${s0.larga} punti`);
-    // i pezzi contro l'immagine ferma che coprono
+    // i pezzi contro la pagina com'era prima di loro: l'immagine ferma da sola, con la sua sfumatura. L'invito a
+    // passarci sopra compare in un secondo momento: per il confronto si toglie
+    await page.evaluate(() => { for (const e of document.querySelectorAll('.configura__invito')) e.style.visibility = 'hidden'; });   // (non con un foglio di stile aggiunto: sull'anteprima le regole di sicurezza della pagina lo rifiutano)
     const coi = await palco.screenshot();
-    await page.evaluate(() => { document.querySelector('.configura__posa--strati').style.cssText += ';opacity:0;transition:none'; });
+    await page.evaluate(() => { document.querySelector('.configura__posa--strati').style.cssText += ';opacity:0;transition:none'; document.querySelector('.configura__palco').classList.remove('configura__palco--strati'); });
     const senza = await palco.screenshot();
-    await page.evaluate(() => { const q = document.querySelector('.configura__posa--strati'); q.style.opacity = ''; q.style.transition = ''; });
+    await page.evaluate(() => { const q = document.querySelector('.configura__posa--strati'); q.style.opacity = ''; q.style.transition = ''; document.querySelector('.configura__palco').classList.add('configura__palco--strati'); });
     const d = await differenza(page, coi, senza);
-    vedi(d < 2.5, 'i pezzi fermi non si distinguono dall\'immagine ferma', `in media ${d.toFixed(2)} livelli su 255, grandezza ${s0.taglia}`);
+    vedi(d < 2.2, 'i pezzi fermi non si distinguono dall\'immagine ferma', `in media ${d.toFixed(2)} livelli su 255, grandezza ${s0.taglia}`);
+    // e nella fascia in fondo all'immagine, dove (sotto i 960 punti) sfuma nella pagina, non deve restare né uno scalino né una riga
+    const fascia = await page.evaluate(() => { const f = document.querySelector('.configura__ferma').getBoundingClientRect(), q = document.querySelector('.configura__palco').getBoundingClientRect(); return [f.bottom - f.height * 0.045 - q.top, Math.min(q.height, f.bottom - q.top + 1)]; });
+    const fondo = await page.evaluate(async ([a, b, da, a2, k]) => {
+      const dati = async (s) => { const im = new Image(); im.src = 'data:image/png;base64,' + s; await im.decode(); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); return [g.getImageData(0, 0, c.width, c.height).data, c.width, c.height]; };
+      const [[x, w, h], [y]] = [await dati(a), await dati(b)];
+      let max = 0;
+      for (let r = Math.max(0, Math.floor(da * k)); r < Math.min(h, Math.ceil(a2 * k)); r++) { let somma = 0; for (let c = 0; c < w; c++) { const i = (r * w + c) * 4; somma += Math.abs(x[i + 2] - y[i + 2]); } max = Math.max(max, somma / w); }
+      return max;
+    }, [coi.toString('base64'), senza.toString('base64'), fascia[0], fascia[1], fitto]);
+    vedi(fondo < 2.5, 'in fondo all\'immagine nessuno scalino e nessuna riga', `la riga peggiore differisce di ${fondo.toFixed(2)} livelli`);
 
     // una passata sul petto, da un lato all'altro
-    const [rx, ry, rw, rh] = s0.riquadro, [cx, , cw] = s0.camicia, y = ry + rh * 0.55;
+    // all'altezza del petto; dove il palco è basso (telefono di traverso) si resta nella parte di camicia che si vede
+    const [rx, ry, rw, rh] = s0.riquadro, [cx, , cw] = s0.camicia, y = Math.min(vista.height - 70, Math.max(100, ry + rh * 0.55));
     const passata = async (da, a) => {
       if (dito) {
         const cdp = await ctx.newCDPSession(page);
@@ -103,6 +120,35 @@ const SCHERMI = [
       await page.mouse.move(rx + rw - 4, ry + rh * 0.3); await page.mouse.move(rx + rw - 30, ry + rh * 0.32);
       vedi(!(await page.evaluate(() => window.__camicia.passo(16.67))), 'sulla parete, fuori dalla camicia, non si muove niente');
     }
+    // un tocco fermo: si deve vedere, e dieci di fila non la mandano più lontano di uno
+    const ferma = () => page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
+    const picco = () => page.evaluate(() => { let max = 0, giro = 0, n = 0; while (window.__camicia.passo(16.67) && n++ < 3000) { max = Math.max(max, Math.abs(window.__camicia.p.lato)); giro = Math.max(giro, Math.abs(window.__camicia.p.torce)); } return { max, giro }; });
+    await ferma();
+    if (dito) await page.waitForTimeout(800);                                        // subito dopo una strisciata il browser si tiene il primo tocco
+    const fianco = [cx + cw * 0.3, y];
+    if (dito) await page.touchscreen.tap(...fianco); else await page.mouse.click(...fianco);
+    await page.waitForTimeout(200);                                                  // dopo un tocco col dito il clic arriva un attimo dopo
+    const uno = await picco();
+    vedi(uno.max > 0.004, 'un tocco fermo la fa dondolare quel tanto che si vede', orlo(uno.max));
+    for (let i = 0; i < 8; i++) { if (dito) await page.touchscreen.tap(...fianco); else await page.mouse.click(...fianco); await page.waitForTimeout(120); await page.evaluate(() => { for (let k = 0; k < 9; k++) window.__camicia.passo(16.67); }); }
+    const otto = await picco();
+    vedi(otto.max < uno.max * 1.6 + 0.001 && otto.giro < 0.085, 'otto tocchi di fila non la mandano più lontano di uno', `${orlo(otto.max)}, torsione ${otto.giro.toFixed(3)}`);
+    if (dito) {
+      // una strisciata di lato che parte un po' storta vale lo stesso, e non fa scorrere la pagina
+      const cdp = await ctx.newCDPSession(page);
+      const tocco = (tipo, x, yy) => cdp.send('Input.dispatchTouchEvent', { type: tipo, touchPoints: tipo === 'touchEnd' ? [] : [{ x, y: yy }] });
+      await ferma();
+      const scorsa = await page.evaluate(() => scrollY);
+      await tocco('touchStart', sinistra, y);
+      await tocco('touchMove', sinistra + 5, y + 8); await page.evaluate(() => window.__camicia.passo(25));
+      for (let i = 1; i <= 12; i++) { await tocco('touchMove', sinistra + 5 + (destra - sinistra) * i / 12, y + 8 - i * 3); await page.waitForTimeout(25); await page.evaluate(() => window.__camicia.passo(25)); }
+      await tocco('touchEnd');
+      const storta = await picco();
+      await page.waitForTimeout(400);
+      const mossa = Math.abs((await page.evaluate(() => scrollY)) - scorsa);
+      vedi(storta.max > 0.002, 'una strisciata di lato partita storta la muove lo stesso', orlo(storta.max));
+      vedi(mossa < 4, 'strisciando di lato sulla camicia la pagina non scorre', `${mossa.toFixed(0)} punti`);
+    }
     vedi(errori.length === 0, 'nessun errore', errori.join(' | '));
     await ctx.close();
   }
@@ -131,8 +177,8 @@ const SCHERMI = [
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 790 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
     await page.goto(PAGINA + '?prova=leggera', { waitUntil: 'networkidle' });
-    await page.waitForSelector('.configura__posa--strati.configura__posa--viva');
-    await page.waitForTimeout(700);
+    await page.waitForFunction(() => 'viva' in document.querySelector('.configura__palco').dataset);
+    await page.waitForTimeout(200);
     const c = await page.evaluate(() => { const r = document.querySelectorAll('.configura__posa--strati img')[2].getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });
     await page.evaluate(() => { window.__tempi = []; let prima = performance.now(); const giro = (ora) => { window.__tempi.push(ora - prima); prima = ora; requestAnimationFrame(giro); }; requestAnimationFrame(giro); });
     for (let giro = 0; giro < 8; giro++) for (let i = 0; i <= 10; i++) { await page.mouse.move(c[0] + c[2] * (giro % 2 ? 0.8 - 0.06 * i : 0.2 + 0.06 * i), c[1] + c[3] * 0.55); await page.waitForTimeout(16); }

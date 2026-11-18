@@ -7,7 +7,7 @@
 // URL_ANTEPRIMA (indirizzo provvisorio dell'anteprima, per esempio https://endero-anteprima.xxx.workers.dev).
 import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -126,7 +126,13 @@ if (existsSync(join(RADICE, 'public/camicia/pose/pose.json'))) camicia.pose = '/
 // la prova della camicia in diretta (?prova=viva): i file di camicia/viva/, se ci sono
 if (existsSync(join(RADICE, 'public/camicia/viva/viva.json'))) camicia.vera = '/camicia/viva/';
 // in prova: la camicia leggera, l'immagine di Blender in tre pezzi che dondola appena (src/configuratore/leggera.js). File da camicia/leggera/
-if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) camicia.leggera = '/camicia/leggera/';
+if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) {
+  camicia.leggera = '/camicia/leggera/';
+  // l'impronta di tutta la cartella: se i pezzi si rifanno, chi torna non si ritrova i vecchi rimasti nel browser
+  const impronta = createHash('sha256');
+  for (const nome of readdirSync(join(RADICE, 'public/camicia/leggera')).sort()) impronta.update(nome).update(readFileSync(join(RADICE, 'public/camicia/leggera', nome)));
+  camicia.leggeraV = impronta.digest('hex').slice(0, 10);
+}
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene del tocco, il configuratore mostra solo la camicia ferma');
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));

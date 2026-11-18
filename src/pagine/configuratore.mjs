@@ -68,7 +68,7 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
     : '';
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
-  <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}${camicia.pose ? ` data-pose="${esc(camicia.pose)}"` : ''}${camicia.vera ? ` data-vera="${esc(camicia.vera)}"` : ''}${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}"` : ''}>
+  <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}${camicia.pose ? ` data-pose="${esc(camicia.pose)}"` : ''}${camicia.vera ? ` data-vera="${esc(camicia.vera)}"` : ''}${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}>
     <picture>
       <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 750, camicia.ferma.telefono2x))}" sizes="100vw" width="750" height="1000">
       <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 112vh, max(180vh, 90vw)" width="1800" height="1000" alt="${esc(p.alt)}" fetchpriority="high" draggable="false">

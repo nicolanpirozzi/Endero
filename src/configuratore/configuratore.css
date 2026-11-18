@@ -417,6 +417,27 @@
     mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
   }
 
+  /* Con i tre pezzi della camicia leggera in vista, sfumare sia l'immagine ferma sia i pezzi sovrapposti darebbe una
+     fascia più chiara dove stanno i pezzi: la sfumatura la fa un velo solo, sopra tutti e due. */
+  .configura__palco--strati .configura__ferma,
+  .configura__palco--strati .configura__posa--strati {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .configura__palco--strati::after {
+    content: "";
+    position: absolute;
+    top: var(--su);
+    right: 0;
+    left: 0;
+    /* due punti oltre il fondo dell'immagine, già a colore pieno: se l'orlo cade a metà di un punto dello schermo
+       non resta una riga chiara */
+    height: calc(var(--alto) + 2px);
+    background: linear-gradient(to bottom, rgb(4 16 54 / 0) calc(var(--alto) * 0.95), var(--parete-in-ombra) var(--alto));
+    pointer-events: none;
+  }
+
   .configura__posa--tela {
     -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%), linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 95%, transparent 100%), linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
@@ -461,6 +482,19 @@
     left: calc(100vw * var(--posa-x-tel, 0));
     width: calc(100vw * var(--posa-w-tel, 1));
     height: 133.333vw;
+  }
+
+  .configura__palco--strati::after {
+    top: 0;
+    height: 100%;
+    background: linear-gradient(to bottom, rgb(4 16 54 / 0) calc((100% - 26px) * 0.95), var(--parete-in-ombra) calc(100% - 26px));
+  }
+
+  /* sui telefoni bassi l'immagine ferma è tagliata in altezza, e i pezzi (alti sempre quattro terzi della larghezza)
+     sporgerebbero sotto di lei, nella striscia dell'invito: si tagliano dove finisce lei */
+  .configura__posa--strati {
+    -webkit-clip-path: inset(0 0 max(0px, calc(0.15 * (133.333vw - min(133.4vw, 82svh)))) 0);
+    clip-path: inset(0 0 max(0px, calc(0.15 * (133.333vw - min(133.4vw, 82svh)))) 0);
   }
 
   /* a 320 px due colonne di misure non stanno comode: si passa a una */

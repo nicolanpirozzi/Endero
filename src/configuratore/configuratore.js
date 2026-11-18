@@ -22,7 +22,7 @@ function avvia(palco) {
   // deforma più. L'immagine di Blender, ritagliata, dondola appena con gruccia e nastro (leggera.js); "leggera-a" è
   // più lieve, "leggera-c" più ampia: sceglie lui provandole.
   const prova = new URLSearchParams(location.search).get('prova') || '';
-  if (palco.dataset.leggera && prova.startsWith('leggera')) { leggera(palco, palco.dataset.leggera, { 'leggera-a': 0.55, 'leggera-c': 1.7 }[prova] || 1).catch((e) => console.error(e)); return; }
+  if (palco.dataset.leggera && prova.startsWith('leggera')) { leggera(palco, palco.dataset.leggera, { 'leggera-a': 0.55, 'leggera-c': 1.7 }[prova] || 1, palco.dataset.leggeraV).catch((e) => console.error(e)); return; }
   const scene = {};
   for (const v of palco.querySelectorAll('video[data-scena]')) scene[v.dataset.scena] = v;
   if (!scene['da-sinistra'] || !scene['da-destra']) return;
