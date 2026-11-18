@@ -11,6 +11,8 @@
 // Provate tre misure, ha scelto lui quanto si muove ("porta a 6 cm": tanto si sposta l'orlo con una passata decisa)
 // e ha chiesto che "quando apro configuratore la camicia parte con un movimento".
 
+import { creaOnda } from './onda.js';
+
 const RITMO = 0.6;          // il dondolio va più piano del vero: il proprietario ha voluto il movimento "molto più lento"
 const PENDOLO = 2.86, FRENO = 1.25, TORSIONE = 2.3, FRENO_TORSIONE = 1.7;      // gli stessi del film e della camicia in diretta
 // Finché la mano la tocca, la camicia la segue, di poco: di lato per una piccola parte della strada che fa la mano
@@ -43,8 +45,10 @@ const stringi = (v, a, b) => Math.max(a, Math.min(b, v));
  * @param {HTMLElement} palco  il palco della camicia, con l'immagine ferma dentro
  * @param {string} dove        la cartella dei file, per esempio "/camicia/leggera/"
  * @param {string} versione    l'impronta dei file, messa dal build: quando i pezzi si rifanno il browser non usa i vecchi
+ * @param {object} prova       in prova: { onda: quanto ondeggia il tessuto (0 no, 1 la misura di mezzo; vedi onda.js),
+ *                             comunque: anche senza accelerazione grafica (per i controlli) }
  */
-export async function leggera(palco, dove, versione = '') {
+export async function leggera(palco, dove, versione = '', { onda = 0, comunque = false } = {}) {
   const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
   if (ridotto.matches || navigator.connection?.saveData) return;
   const v = versione ? '?v=' + versione : '';
@@ -64,7 +68,12 @@ export async function leggera(palco, dove, versione = '') {
   riquadro.append(piano);
   palco.querySelector('.configura__ferma').closest('picture').after(riquadro);
   // (l'altezza vera, con i decimali: arrotondata, in fondo al fotogramma i pezzi sarebbero fuori posto di un quarto di punto)
-  const misura = () => { const k = riquadro.getBoundingClientRect().height / FA; if (k > 0) piano.style.transform = `scale(${k})`; return k; };
+  let stoffa = null;                                   // in prova: il tessuto che ondeggia (onda.js), se c'è
+  const misura = () => {
+    const k = riquadro.getBoundingClientRect().height / FA;
+    if (k > 0) { piano.style.transform = `scale(${k})`; if (stoffa && stoffa.misura(k) && !corre) stoffa.disegna(null); }
+    return k;
+  };
 
   // --- i tre pezzi, nella grandezza più vicina a quella dello schermo
   const serve = () => { const punti = riquadro.getBoundingClientRect().height * (window.devicePixelRatio || 1) * 0.92; return D.taglie.find((t) => t * FA >= punti) || D.taglie[D.taglie.length - 1]; };
@@ -93,7 +102,12 @@ export async function leggera(palco, dove, versione = '') {
     const t = serve();
     if (cambio || t <= taglia) return;
     cambio = true;
-    try { await Promise.all(NOMI.map((nome) => caricata(file(nome, t)))); NOMI.forEach((nome, i) => { pezzi[i].src = file(nome, t); }); taglia = t; } catch { /* restano quelli di prima */ }
+    try {
+      const nuovi = await Promise.all(NOMI.map((nome) => caricata(file(nome, t))));
+      NOMI.forEach((nome, i) => { pezzi[i].src = file(nome, t); });
+      taglia = t;
+      if (stoffa) { stoffa.cambiaFoto(nuovi[2]); if (!corre) stoffa.disegna(null); }
+    } catch { /* restano quelli di prima */ }
     cambio = false;
   };
 
@@ -119,13 +133,13 @@ export async function leggera(palco, dove, versione = '') {
   };
   const p = { lato: 0, fondo: 0, torce: 0, vLato: 0, vFondo: 0, vTorce: 0 };
   const disegna = () => {
-    const mossa = per(pendolo(p.torce, p.lato, p.fondo), sulPiano);
-    camicia.style.transform = css(per(per(camera, mossa), daFerma), D.pezzi.camicia);
+    const appesa = pendolo(p.torce, p.lato, p.fondo), mossa = per(appesa, sulPiano);
+    // con la stoffa la camicia la disegna lei (appesa alla gruccia che dondola); senza, è l'immagine spostata tutta insieme
+    if (stoffa) stoffa.disegna(appesa); else camicia.style.transform = css(per(per(camera, mossa), daFerma), D.pezzi.camicia);
     ombra.style.transform = css(per(per(cameraOmbra, mossa), daFermaOmbra), D.pezzi.ombra);
   };
-
   // --- la mano e il dondolio
-  const mano = { sopra: false, x: 0, y: 0, vx: 0, vy: 0, mossa: 0, preme: 0, fuoriAsse: 0, strada: 0, tiene: false };
+  const mano = { sopra: false, x: 0, y: 0, vx: 0, vy: 0, mossa: 0, preme: 0, fuoriAsse: 0, strada: 0, tiene: false, px: 0, py: 0 };
   const energia = () => Math.abs(p.lato) + Math.abs(p.fondo) + Math.abs(p.torce) * 0.3 + (Math.abs(p.vLato) + Math.abs(p.vFondo) + Math.abs(p.vTorce) * 0.3) * 0.5;
   // dove la mano vorrebbe la camicia, finché la tocca
   const meta = { lato: 0, fondo: 0, torce: 0 };
@@ -158,8 +172,14 @@ export async function leggera(palco, dove, versione = '') {
   const prossimo = () => (manuale ? -1 : requestAnimationFrame(passo));
   let finto = 0;
   const adesso = () => (manuale ? finto : performance.now());
-  let corre = 0, prima = 0, quieta = 0;
+  let corre = 0, prima = 0, quieta = 0, lenti = 0, contati = 0;
   const passo = (ora) => {
+    // La stoffa deve andare liscia o non andare: se su questo computer i fotogrammi arrivano a meno di trenta al
+    // secondo (trenta lenti su sessanta), si rinuncia da soli e resta la camicia rigida
+    if (stoffa && !manuale && prima) {
+      if (ora - prima > 34) lenti++;
+      if (++contati >= 60) { if (lenti >= 30) rinuncia(); lenti = contati = 0; }
+    }
     const vero = stringi((ora - prima) / 1000, 0.001, 0.034);
     prima = ora;
     // la mano: tocca finché si muove sulla camicia; ferma o uscita, lascia
@@ -167,20 +187,47 @@ export async function leggera(palco, dove, versione = '') {
     const vuole = mano.sopra && !manoFerma ? Math.min(1, Math.hypot(mano.vx, mano.vy) / 0.18) : 0;
     mano.preme += (vuole - mano.preme) * Math.min(1, vero * (vuole > mano.preme ? 12 : 5));
     if (manoFerma) { mano.vx *= 0.8; mano.vy *= 0.8; }
+    // con la stoffa: l'aria la muove finché il mouse le sta sopra (e si è mosso da poco), e la mano la fa cedere dove passa
+    const soffia = mano.sopra && ora - mano.mossa < 2500 ? 1 : 0;
+    const laMano = stoffa && mano.preme > 0.02 ? { x: mano.px, y: mano.py, vx: mano.vx, vy: -mano.vy, preme: mano.preme } : null;
     let resta = vero * RITMO;
-    while (resta > 1e-5) { const dt = Math.min(resta, 1 / 120); fisica(dt); resta -= dt; }
-    quieta = energia() + mano.preme * 0.01 < 0.00015 ? quieta + vero : 0;
+    while (resta > 1e-5) {
+      const dt = Math.min(resta, 1 / 120);
+      fisica(dt);
+      if (stoffa) stoffa.passo(dt, pendolo(p.torce, p.lato, p.fondo), soffia, laMano);
+      resta -= dt;
+    }
+    quieta = energia() + mano.preme * 0.01 + (stoffa ? stoffa.energia() : 0) < 0.00015 ? quieta + vero : 0;
     if (quieta < 0.3) { disegna(); corre = prossimo(); return; }
     // ferma: i pezzi tornano esattamente al loro posto e non si calcola più niente
     corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
     camicia.style.transform = ''; ombra.style.transform = '';
+    if (stoffa) { stoffa.stendi(null); stoffa.disegna(null); }
   };
   let attiva = false;                                  // i pezzi sono in vista e la camicia risponde
   const sveglia = () => {
     quieta = 0;
     if (corre || ridotto.matches) return;
-    prima = adesso(); corre = prossimo();
+    prima = adesso(); corre = prossimo(); lenti = contati = 0;
   };
+
+  /** Via la stoffa: torna la camicia rigida, quella approvata. */
+  function rinuncia() {
+    if (!stoffa) return;
+    stoffa.tela.remove(); stoffa = null; camicia.style.visibility = '';
+    if (corre) disegna();
+  }
+  // PROVA: il tessuto che ondeggia. Se qui non si può fare (il browser non ha l'accelerazione grafica) resta la camicia rigida
+  if (onda) {
+    stoffa = creaOnda({ piano, dopo: ombra, foto: camicia, riquadro: D.pezzi.camicia, rx, camera, daFerma, zPiano: G[2], sole, forza: onda, comunque });
+    if (stoffa) {
+      stoffa.misura(misura()); stoffa.disegna(null);
+      camicia.style.visibility = 'hidden';
+      // se la scheda grafica si perde per strada, torna la camicia rigida
+      stoffa.tela.addEventListener('ondapersa', rinuncia);
+    }
+  }
+
 
   /** Dove sta un punto dello schermo nel fotogramma, e se lì c'è la camicia (la sagoma a caselle di ritaglia.py). */
   const sulFotogramma = (e) => {
@@ -201,6 +248,8 @@ export async function leggera(palco, dove, versione = '') {
     }
     // quanto lontano dal nastro tocca, in metri: da lì viene la torsione
     if (q.sopra) mano.fuoriAsse = stringi((q.x - asse) / alMetro, -0.3, 0.3);
+    // e dove tocca sul piano della camicia: lì il tessuto cede
+    if (q.sopra && stoffa) { const w = daFerma[2][0] * q.x + daFerma[2][1] * q.y + daFerma[2][2]; mano.px = (daFerma[0][0] * q.x + daFerma[0][1] * q.y + daFerma[0][2]) / w; mano.py = (daFerma[1][0] * q.x + daFerma[1][1] * q.y + daFerma[1][2]) / w; }
     mano.sopra = q.sopra; mano.x = e.clientX; mano.y = e.clientY; mano.mossa = ora;
     if (q.sopra) sveglia();
   };
@@ -272,11 +321,12 @@ export async function leggera(palco, dove, versione = '') {
     clearTimeout(comparsa); attiva = false; mano.sopra = false; delete palco.dataset.viva;
     cancelAnimationFrame(corre); corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
     camicia.style.transform = ''; ombra.style.transform = ''; riquadro.classList.remove(VIVA); palco.classList.remove(STRATI);
+    if (stoffa) { stoffa.stendi(null); stoffa.disegna(null); }
   });
   new ResizeObserver(() => { misura(); ingrandisci(); }).observe(riquadro);
 
   // --- pronta: i pezzi prendono il posto dell'immagine ferma (sono gli stessi punti: non si nota) e ci restano, così
   //     quando la si tocca non cambia niente se non il movimento; poi compare l'invito a passarci sopra
   mostra();
-  if (manuale) window.__camicia = { p, mano, sveglia, get taglia() { return taglia; }, passo: (ms) => { finto += ms; if (corre) passo(finto); return !!corre; } };
+  if (manuale) window.__camicia = { p, mano, sveglia, get taglia() { return taglia; }, get onda() { return stoffa ? stoffa.energia() : null; }, get scarto() { return stoffa ? stoffa.scarto() : null; }, passo: (ms) => { finto += ms; if (corre) passo(finto); return !!corre; } };
 }

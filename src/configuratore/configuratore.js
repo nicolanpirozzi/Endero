@@ -4,4 +4,8 @@
 import { leggera } from './leggera.js';
 
 const palco = document.querySelector('[data-leggera]');
-if (palco) leggera(palco, palco.dataset.leggera, palco.dataset.leggeraV).catch((e) => console.error(e));
+// PROVA (2026-11-18): con ?prova=onda il tessuto ondeggia come un telo (onda.js), come nel sito che il proprietario
+// ha mandato per riferimento; "onda-a" è più lieve, "onda-c" più mossa. Senza, la pagina è quella approvata.
+const cerca = new URLSearchParams(location.search), prova = cerca.get('prova') || '';
+const onda = prova.startsWith('onda') ? ({ 'onda-a': 0.6, 'onda-c': 1.6 }[prova] || 1) : 0;
+if (palco) leggera(palco, palco.dataset.leggera, palco.dataset.leggeraV, { onda, comunque: cerca.has('comunque') }).catch((e) => console.error(e));

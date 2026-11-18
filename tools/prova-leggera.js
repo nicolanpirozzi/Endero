@@ -36,7 +36,8 @@ const SCHERMI = [
 ];
 
 (async () => {
-  const browser = await chromium.launch();
+  // (le tre opzioni servono solo alla prova del tessuto che ondeggia, più sotto: il browser di prova non ha scheda grafica)
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   for (const [nome, vista, fitto, dito] of SCHERMI) {
     console.log(nome);
     const ctx = await browser.newContext({ viewport: vista, deviceScaleFactor: fitto, hasTouch: !!dito, isMobile: !!dito });
@@ -154,6 +155,37 @@ const SCHERMI = [
       vedi(mossa < 4, 'strisciando di lato sulla camicia la pagina non scorre', `${mossa.toFixed(0)} punti`);
     }
     vedi(errori.length === 0, 'nessun errore', errori.join(' | '));
+    await ctx.close();
+  }
+
+  console.log('in prova: il tessuto che ondeggia (?prova=onda)');
+  for (const [nome, vista, fitto] of [['computer 1440 x 790', { width: 1440, height: 790 }, 1], ['telefono 390 x 760', { width: 390, height: 760 }, 2]]) {
+    const ctx = await browser.newContext({ viewport: vista, deviceScaleFactor: fitto });
+    const page = await ctx.newPage();
+    const errori = [];
+    page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
+    page.on('pageerror', (e) => errori.push(String(e)));
+    await page.goto(PAGINA + '?prova=onda&comunque&manuale', { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => window.__camicia && 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
+    const ferma = () => page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 4000); return n * 16.67 / 1000; });
+    const c = await page.evaluate(() => { const t = document.querySelector('canvas.configura__onda'), r = document.querySelectorAll('.configura__strati img')[2].getBoundingClientRect(); return { tela: !!t, nascosta: getComputedStyle(document.querySelectorAll('.configura__strati img')[2]).visibility === 'hidden', onda: window.__camicia.onda, r: [r.left, r.top, r.width, r.height], larga: document.documentElement.scrollWidth }; });
+    vedi(c.tela && c.nascosta && c.onda !== null, `${nome}: la camicia la disegna la stoffa`);
+    vedi(c.larga === vista.width, `${nome}: la pagina non si allarga`, `${c.larga} punti`);
+    await ferma();
+    await page.evaluate(() => { for (const e of document.querySelectorAll('.configura__invito')) e.style.visibility = 'hidden'; });
+    const palco = page.locator('.configura__palco'), prima = await palco.screenshot();
+    // il mouse resta sopra muovendosi appena: il tessuto ondeggia, poco
+    const y = Math.min(vista.height - 70, Math.max(100, c.r[1] + c.r[3] * 0.5));
+    let max = 0;
+    await page.mouse.move(c.r[0] + c.r[2] * 0.5, y);
+    for (let i = 0; i < 120; i++) { await page.mouse.move(c.r[0] + c.r[2] * 0.5 + (i % 2), y + i * 0.3); max = Math.max(max, await page.evaluate(() => { window.__camicia.passo(25); return window.__camicia.scarto; })); }
+    vedi(max > 0.003 && max < 0.03, `${nome}: col mouse sopra il tessuto ondeggia, poco`, `fino a ${(max * 100).toFixed(1)} cm`);
+    await page.mouse.move(1, 300);                       // fuori dalla camicia, e lontano dalla testata (che al passaggio cambia colore)
+    const secondi = await ferma();
+    // (non "identica al punto": sotto la testata in vetro il browser di prova cambia qualche punto di un livello da una schermata all'altra)
+    const resto = await differenza(page, await palco.screenshot(), prima);
+    vedi(secondi < 20 && resto < 0.02, `${nome}: uscito il mouse torna piatta, com'era prima`, `dopo ${secondi.toFixed(1)} s, differenza media ${resto.toFixed(4)} livelli`);
+    vedi(errori.length === 0, `${nome}: nessun errore`, errori.join(' | '));
     await ctx.close();
   }
 
