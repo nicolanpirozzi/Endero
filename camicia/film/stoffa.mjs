@@ -63,13 +63,14 @@ export function sulTriangolo(px, py, pz, x, a, b, c, esce) {
 
 /**
  * @param {{punti:number[], triangoli:number[], appeso:number[], rigido:number[], parte:number[]}} dati  il telaio
- * @param {Partial<typeof TESSUTO>} [o]
+ * @param {Partial<typeof TESSUTO> & {adatta?: boolean}} [o]  `adatta: false`: il passo di calcolo non si allunga quando
+ *   il calcolo pesa (serve dove il risultato deve essere sempre lo stesso, come nel film)
  */
 export function creaStoffa(dati, o = {}) {
   const P = { ...TESSUTO, ...o };
   const n = dati.punti.length / 3, nt = dati.triangoli.length / 3;
   const tri = Uint32Array.from(dati.triangoli);
-  const x0 = Float32Array.from(dati.punti), x = Float32Array.from(dati.punti);
+  const x0 = Float32Array.from(dati.punti), x = Float32Array.from(dati.punti), adesso = x;
   const xp = new Float32Array(n * 3), v = new Float32Array(n * 3);
   const aria = new Float32Array(n * 3);            // il vento su ogni punto, in questo fotogramma
   const nor = new Float32Array(n * 3);
@@ -239,7 +240,7 @@ export function creaStoffa(dati, o = {}) {
   let mano = null;
   /**
    * Dice dove sta la mano in questo passo, o `null` se non tocca.
-   * @param {{c:number[], d:number[], t:number[], raggio:number, fondo:number, trascina:number}|null} stato
+   * @param {{c:number[], d:number[], t:number[], raggio:number, fondo:number, trascina:number, maniche?:number}|null} stato
    *   c: il centro del palmo sul tessuto a riposo; d: il verso in cui preme (lungo uno); t: il verso in cui passa
    *   (lungo uno); fondo e trascina: di quanti metri, al centro del palmo, il tessuto cede e si lascia portare di lato
    */
@@ -252,12 +253,14 @@ export function creaStoffa(dati, o = {}) {
       const lungo = wx * dx + wy * dy + wz * dz;
       const r2 = wx * wx + wy * wy + wz * wz - lungo * lungo;                 // quanto è lontano dall'asse del palmo
       if (r2 >= r2max) continue;
-      const b = (1 - r2 / r2max) ** 2;
+      // le maniche pendono libere: sotto il palmo cedono meno della metà e non si lasciano portare di lato, o si
+      // accartocciano (`maniche` nello stato della mano: 1 = come il corpo)
+      const manica = dati.parte[i] > 0, b = (1 - r2 / r2max) ** 2 * (manica ? mano.maniche ?? 1 : 1);
       const ex = x[k] - x0[k], ey = x[k + 1] - x0[k + 1], ez = x[k + 2] - x0[k + 2];
       // morbido: a ogni passo il palmo recupera solo una parte di ciò che manca, sia premendo sia portando di lato
       const giu = mano.fondo * b - (ex * dx + ey * dy + ez * dz);
       if (giu > 0) { x[k] += dx * giu * 0.3; x[k + 1] += dy * giu * 0.3; x[k + 2] += dz * giu * 0.3; }
-      const via = mano.trascina * b - (ex * tx + ey * ty + ez * tz);
+      const via = (manica && mano.maniche !== undefined ? 0 : mano.trascina * b) - (ex * tx + ey * ty + ez * tz);
       if (via > 0) { x[k] += tx * via * 0.15; x[k + 1] += ty * via * 0.15; x[k + 2] += tz * via * 0.15; }
     }
   }
@@ -323,11 +326,14 @@ export function creaStoffa(dati, o = {}) {
     scriviOssa();
     // se il calcolo pesa troppo (più di 6 millesimi di secondo a fotogramma, in media) si dimezzano i passi
     spesa += (orologio() - inizio - spesa) * 0.05;
-    if (spesa > 6 && passoDiCalcolo === PASSO) passoDiCalcolo = PASSO_LENTO;
+    if (o.adatta !== false && spesa > 6 && passoDiCalcolo === PASSO) passoDiCalcolo = PASSO_LENTO;
   }
 
-  /** Dove un raggio (origine e direzione, nello spazio della camicia) incontra il tessuto com'è adesso. */
-  function colpo(ox, oy, oz, dx, dy, dz) {
+  /** Dove un raggio (origine e direzione, nello spazio della camicia) incontra il tessuto com'è adesso, o, con
+   *  `daFermo`, com'era a riposo: la mano si misura sul tessuto fermo, altrimenti il tessuto che cede sotto di lei le
+   *  sfugge, lei lo perde e lo ritrova, e la manica si accartoccia. */
+  function colpo(ox, oy, oz, dx, dy, dz, daFermo = false) {
+    const x = daFermo ? x0 : adesso;
     let vicino = Infinity;
     for (let t = 0; t < nt; t++) {
       const a = tri[3 * t] * 3, b = tri[3 * t + 1] * 3, c = tri[3 * t + 2] * 3;

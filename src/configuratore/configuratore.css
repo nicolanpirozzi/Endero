@@ -93,6 +93,14 @@
   transition-duration: 120ms;
 }
 
+/* PROVA della camicia in diretta (src/configuratore/viva.js): la tela resta sempre in vista sopra l'immagine ferma,
+   e ai lati sfuma in lei, così dove finisce non si vede. */
+.configura__posa--tela {
+  transition-duration: 400ms;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
+
 /* ------------------------------------------------------------------ invito a passarci sopra */
 
 .configura__invito {
@@ -376,6 +384,13 @@
   .configura__posa {
     -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
+  }
+
+  .configura__posa--tela {
+    -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%), linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 95%, transparent 100%), linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   .configura__invito {

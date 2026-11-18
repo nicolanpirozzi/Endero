@@ -5,6 +5,7 @@
 // l'immagine ferma, e il riquadro delle misure funziona lo stesso.
 
 import { libera } from './libera.js';
+import { viva } from './viva.js';
 
 const palco = document.querySelector('[data-film]');
 if (palco) avvia(palco);
@@ -13,6 +14,9 @@ function avvia(palco) {
   // PROVA (si decide col proprietario quale dei due modi tenere): con ?prova=libera nell'indirizzo la camicia non è
   // un filmato che parte, ma segue il mouse in diretta (libera.js).
   if (palco.dataset.pose && new URLSearchParams(location.search).get('prova') === 'libera') { libera(palco, palco.dataset.pose); return; }
+  // PROVA: con ?prova=viva la camicia è in diretta: la forma si muove con la fisica della stoffa e sopra ci stanno
+  // proiettate le immagini di Blender (viva.js). Se qualcosa va storto resta l'immagine ferma.
+  if (palco.dataset.vera && new URLSearchParams(location.search).get('prova') === 'viva') { viva(palco, palco.dataset.vera).catch((e) => console.error(e)); return; }
   const scene = {};
   for (const v of palco.querySelectorAll('video[data-scena]')) scene[v.dataset.scena] = v;
   if (!scene['da-sinistra'] || !scene['da-destra']) return;
