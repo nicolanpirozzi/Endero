@@ -6,6 +6,7 @@
 
 import { libera } from './libera.js';
 import { viva } from './viva.js';
+import { leggera } from './leggera.js';
 
 const palco = document.querySelector('[data-film]');
 if (palco) avvia(palco);
@@ -17,6 +18,11 @@ function avvia(palco) {
   // PROVA: con ?prova=viva la camicia è in diretta: la forma si muove con la fisica della stoffa e sopra ci stanno
   // proiettate le immagini di Blender (viva.js). Se qualcosa va storto resta l'immagine ferma.
   if (palco.dataset.vera && new URLSearchParams(location.search).get('prova') === 'viva') { viva(palco, palco.dataset.vera).catch((e) => console.error(e)); return; }
+  // PROVA (2026-11-18, la chiede il proprietario dopo la camicia in diretta): con ?prova=leggera il tessuto non si
+  // deforma più. L'immagine di Blender, ritagliata, dondola appena con gruccia e nastro (leggera.js); "leggera-a" è
+  // più lieve, "leggera-c" più ampia: sceglie lui provandole.
+  const prova = new URLSearchParams(location.search).get('prova') || '';
+  if (palco.dataset.leggera && prova.startsWith('leggera')) { leggera(palco, palco.dataset.leggera, { 'leggera-a': 0.55, 'leggera-c': 1.7 }[prova] || 1).catch((e) => console.error(e)); return; }
   const scene = {};
   for (const v of palco.querySelectorAll('video[data-scena]')) scene[v.dataset.scena] = v;
   if (!scene['da-sinistra'] || !scene['da-destra']) return;

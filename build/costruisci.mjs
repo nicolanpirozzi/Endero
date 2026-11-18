@@ -125,6 +125,8 @@ for (const nome of ['da-sinistra', 'da-destra']) {
 if (existsSync(join(RADICE, 'public/camicia/pose/pose.json'))) camicia.pose = '/camicia/pose/';
 // la prova della camicia in diretta (?prova=viva): i file di camicia/viva/, se ci sono
 if (existsSync(join(RADICE, 'public/camicia/viva/viva.json'))) camicia.vera = '/camicia/viva/';
+// in prova: la camicia leggera, l'immagine di Blender in tre pezzi che dondola appena (src/configuratore/leggera.js). File da camicia/leggera/
+if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) camicia.leggera = '/camicia/leggera/';
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene del tocco, il configuratore mostra solo la camicia ferma');
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));

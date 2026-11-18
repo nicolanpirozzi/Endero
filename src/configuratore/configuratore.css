@@ -105,6 +105,33 @@
   transition-duration: 140ms;
 }
 
+/* PROVA della camicia leggera (src/configuratore/leggera.js): sopra l'immagine ferma, gli stessi punti divisi in tre
+   pezzi (parete, ombra, camicia). Il piano interno misura in punti del fotogramma e lo script lo rimpicciolisce;
+   camicia e ombra si spostano con una trasformazione, il resto sta fermo. Appena pronti i pezzi prendono il posto
+   dell'immagine ferma, piano, e ci restano: toccando la camicia non cambia niente se non il movimento. */
+.configura__posa--strati,
+.configura__posa--strati.configura__posa--viva {
+  overflow: hidden;
+  transition-duration: 500ms;
+}
+
+.configura__strati {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.configura__strati img {
+  position: absolute;
+  max-width: none;
+  transform-origin: 0 0;
+}
+
+.configura__strati img + img {
+  will-change: transform;
+}
+
 /* ------------------------------------------------------------------ invito a passarci sopra */
 
 .configura__invito {
