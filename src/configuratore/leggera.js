@@ -1,24 +1,27 @@
-// La camicia leggera: l'immagine di Blender, ritagliata, che dondola appena con gruccia e nastro.
-// PROVA (2026-11-18): si apre con ?prova=leggera nell'indirizzo (anche leggera-a, più lieve, e leggera-c, più ampia).
+// La camicia del configuratore: l'immagine di Blender, ritagliata, che dondola con gruccia e nastro.
 //
-// Il proprietario, provata la camicia in diretta (viva.js): "rendiamoci più semplice. Rendi il movimento molto più
+// Il proprietario, provata la camicia in 3D in diretta: "rendiamoci più semplice. Rendi il movimento molto più
 // leggero, la gruccia si muove. Non far muovere così tanto il tessuto perché sembra finto e poco naturale", e sul suo
 // computer andava a scatti. Qui non c'è 3D e non c'è fisica della stoffa: il tessuto non si deforma affatto.
 // L'immagine ferma di Blender è divisa in tre pezzi (camicia/leggera/ritaglia.py): la parete, l'ombra della camicia e
 // la camicia con gruccia e nastro. Quando il mouse le passa sopra, la camicia fa quello che fa una camicia appesa
-// sfiorata con la mano: dondola appena sul nastro, di lato e verso la parete, e si gira di un niente; la sua ombra
-// la segue sulla parete. Sono due immagini spostate dal browser (trasformazioni CSS): non pesa e non può andare a scatti.
+// sfiorata con la mano: dondola sul nastro, di lato e verso la parete, e si gira di poco; la sua ombra la segue sulla
+// parete. Sono due immagini spostate dal browser (trasformazioni CSS): non pesa e non va a scatti.
 // Ferma, è l'immagine di Blender punto per punto.
+// Provate tre misure, ha scelto lui quanto si muove ("porta a 6 cm": tanto si sposta l'orlo con una passata decisa)
+// e ha chiesto che "quando apro configuratore la camicia parte con un movimento".
 
 const RITMO = 0.6;          // il dondolio va più piano del vero: il proprietario ha voluto il movimento "molto più lento"
 const PENDOLO = 2.86, FRENO = 1.25, TORSIONE = 2.3, FRENO_TORSIONE = 1.7;      // gli stessi del film e della camicia in diretta
 // Finché la mano la tocca, la camicia la segue, di poco: di lato per una piccola parte della strada che fa la mano
 // (`segue`), verso la parete di un niente (`fondo`, radianti), e si gira dalla parte in cui la si tocca (`torce`,
 // radianti a un palmo dal nastro). Quando la mano la lascia, dondola libera e si ferma. Circa un quarto di prima.
-const MANO = { segue: 0.05, fondo: 0.006, torce: 0.04, presa: 540, freno: 46, scivola: 1.5 };
+const MANO = { segue: 0.136, fondo: 0.012, torce: 0.07, presa: 540, freno: 46, scivola: 1.5 };
 // un tocco fermo (un clic, un dito appoggiato e tolto): la spinta che riceve, di lato, verso la parete e in torsione
-const COLPETTO = { lato: 0.04, fondo: 0.03, torce: 0.45 };
-const LIMITE = { lato: 0.03, fondo: 0.03, torce: 0.09 };                       // radianti: oltre non va, comunque la si muova
+const COLPETTO = { lato: 0.085, fondo: 0.05, torce: 0.7 };
+// il movimento con cui la camicia si presenta quando la pagina si apre: come se qualcuno l'avesse appena sfiorata
+const SALUTO = { lato: 0.092, fondo: 0.04, torce: 0.07 };
+const LIMITE = { lato: 0.065, fondo: 0.04, torce: 0.12 };                       // radianti: oltre non va, comunque la si muova
 const VIVA = 'configura__posa--viva';
 
 // ---------------------------------------------------------------------------------------------- conti
@@ -39,10 +42,9 @@ const stringi = (v, a, b) => Math.max(a, Math.min(b, v));
 /**
  * @param {HTMLElement} palco  il palco della camicia, con l'immagine ferma dentro
  * @param {string} dove        la cartella dei file, per esempio "/camicia/leggera/"
- * @param {number} quanto      quanto si muove: 1 è la misura di mezzo
  * @param {string} versione    l'impronta dei file, messa dal build: quando i pezzi si rifanno il browser non usa i vecchi
  */
-export async function leggera(palco, dove, quanto = 1, versione = '') {
+export async function leggera(palco, dove, versione = '') {
   const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
   if (ridotto.matches || navigator.connection?.saveData) return;
   const v = versione ? '?v=' + versione : '';
@@ -131,23 +133,23 @@ export async function leggera(palco, dove, quanto = 1, versione = '') {
     if (mano.preme > 0.02) {
       if (!mano.tiene) { mano.tiene = true; meta.lato = p.lato; }               // un tocco nuovo parte da dove la camicia si trova
       // la strada fatta dalla mano dall'ultimo conto, vista dal punto in cui il nastro è fissato (il petto sta un metro sotto)
-      const tetto = LIMITE.lato * quanto * 0.8;
-      meta.lato = stringi(meta.lato + MANO.segue * quanto * mano.strada / 1.1, -tetto, tetto);
+      const tetto = LIMITE.lato * 0.8;
+      meta.lato = stringi(meta.lato + MANO.segue * mano.strada / 1.1, -tetto, tetto);
       meta.lato -= meta.lato * dt / MANO.scivola;                              // la mano non trattiene: il tessuto le scivola sotto
       mano.strada = 0;
       // verso la parete e in torsione va quanto la mano è decisa: sfiorata pianissimo quasi non cede (e l'ombra non si muove da sola)
       const decisa = Math.min(1, Math.hypot(mano.vx, mano.vy) / 0.5);
-      meta.fondo = MANO.fondo * quanto * decisa;
-      meta.torce = MANO.torce * quanto * decisa * mano.fuoriAsse / 0.25;
+      meta.fondo = MANO.fondo * decisa;
+      meta.torce = MANO.torce * decisa * mano.fuoriAsse / 0.25;
       // la presa della mano: una molla ben smorzata, così la camicia la segue subito ma senza strappi
       for (const [ang, vel] of [['lato', 'vLato'], ['fondo', 'vFondo'], ['torce', 'vTorce']]) p[vel] += (MANO.presa * (meta[ang] - p[ang]) - MANO.freno * p[vel]) * mano.preme * dt;
     } else { mano.tiene = false; mano.strada = 0; }
     // quando il dondolio è ormai di un millimetro si spegne più in fretta, così si ferma senza scatto e senza strascichi
-    const coda = mano.preme > 0.01 ? 1 : 1 + 5 * Math.max(0, 1 - energia() / (0.004 * quanto));
+    const coda = mano.preme > 0.01 ? 1 : 1 + 5 * Math.max(0, 1 - energia() / (0.01));
     for (const [ang, vel, w, fr] of [['lato', 'vLato', PENDOLO, FRENO], ['fondo', 'vFondo', PENDOLO, FRENO], ['torce', 'vTorce', TORSIONE, FRENO_TORSIONE]]) {
       p[vel] += (-w * w * p[ang] - fr * coda * p[vel]) * dt;
       // al limite si ferma lì, senza slancio: non ci resta appoggiata
-      const tetto = LIMITE[ang] * quanto, nuovo = p[ang] + p[vel] * dt;
+      const tetto = LIMITE[ang], nuovo = p[ang] + p[vel] * dt;
       if (Math.abs(nuovo) > tetto) { p[ang] = Math.sign(nuovo) * tetto; p[vel] = 0; } else p[ang] = nuovo;
     }
   };
@@ -216,9 +218,9 @@ export async function leggera(palco, dove, quanto = 1, versione = '') {
       const ampiezza = Math.abs(quanta) / frequenza, resta = Math.sqrt(Math.max(0, ampiezza * ampiezza - p[ang] * p[ang])) * frequenza;
       p[vel] = quanta > 0 ? Math.max(p[vel], resta) : Math.min(p[vel], -resta);
     };
-    spingi('lato', 'vLato', PENDOLO, verso * COLPETTO.lato * quanto);
-    spingi('fondo', 'vFondo', PENDOLO, COLPETTO.fondo * quanto);
-    spingi('torce', 'vTorce', TORSIONE, COLPETTO.torce * fuori * quanto);
+    spingi('lato', 'vLato', PENDOLO, verso * COLPETTO.lato);
+    spingi('fondo', 'vFondo', PENDOLO, COLPETTO.fondo);
+    spingi('torce', 'vTorce', TORSIONE, COLPETTO.torce * fuori);
     palco.dataset.toccata = '';
     sveglia();
   };
@@ -250,8 +252,21 @@ export async function leggera(palco, dove, quanto = 1, versione = '') {
     riquadro.classList.add(VIVA); palco.classList.add(STRATI);
     // risponde quando i pezzi hanno finito di comparire: prima, muovendosi, si vedrebbero due camicie
     clearTimeout(comparsa);
-    comparsa = setTimeout(() => { attiva = true; palco.dataset.viva = ''; }, 520);
+    comparsa = setTimeout(() => { attiva = true; palco.dataset.viva = ''; saluta(); }, 520);
   };
+  // Appena pronta la camicia si muove una volta da sola, così chi apre la pagina la trova che dondola. Solo se la si
+  // sta guardando: se la scheda è nascosta o il palco è fuori dallo schermo, quando torna in vista.
+  let salutata = false;
+  const saluta = () => {
+    if (salutata || !attiva || document.hidden || ridotto.matches) return;
+    const r = riquadro.getBoundingClientRect();
+    if (r.bottom < 80 || r.top > innerHeight - 80) return;
+    salutata = true;
+    p.vLato = SALUTO.lato; p.vFondo = SALUTO.fondo; p.vTorce = SALUTO.torce;
+    sveglia();
+  };
+  document.addEventListener('visibilitychange', saluta);
+  new IntersectionObserver(saluta).observe(riquadro);
   ridotto.addEventListener('change', () => {
     if (!ridotto.matches) { mostra(); return; }
     clearTimeout(comparsa); attiva = false; mano.sopra = false; delete palco.dataset.viva;

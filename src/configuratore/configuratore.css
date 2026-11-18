@@ -1,11 +1,11 @@
 /* Configuratore, passo 1: la camicia appesa e il riquadro in vetro.
-   La camicia è un film calcolato prima con Blender (camicia/film/): un'immagine ferma, sempre presente, e due
-   scene (la mano che la tocca da sinistra e da destra) che lo script fa partire quando il mouse le passa sopra. Senza JavaScript, con il movimento
-   ridotto o con il risparmio dati resta l'immagine ferma.
+   La camicia è un'immagine calcolata con Blender, sempre presente; lo script le sovrappone gli stessi punti divisi
+   in tre pezzi (parete, ombra, camicia) e fa dondolare la camicia quando il mouse le passa sopra. Senza JavaScript,
+   con il movimento ridotto o con il risparmio dati resta l'immagine ferma.
    Usa i colori e il vetro del sito (src/stili/sito.css). */
 
 .configura {
-  --parete-in-ombra: #041036;          /* il blu della parete in ombra, misurato sul film */
+  --parete-in-ombra: #041036;          /* il blu della parete in ombra, misurato sull'immagine */
   --filo: #fbf9f4;
   position: relative;
   display: grid;
@@ -14,13 +14,13 @@
   padding: 0 36px 0 0;
   min-height: 100svh;
   color: var(--filo);
-  background: var(--parete-in-ombra);  /* dove il film finisce, a destra e in basso, sfuma in questo colore */
+  background: var(--parete-in-ombra);  /* dove l'immagine finisce, a destra e in basso, sfuma in questo colore */
   overflow: clip;
 }
 
 /* la camicia resta ferma sullo schermo mentre il riquadro, se è lungo, scorre */
 .configura__palco {
-  /* Il fotogramma del film è 1800 x 1000. Sul computer se ne vede la fascia larga il doppio dell'altezza, tra l'8%
+  /* Il fotogramma dell'immagine è 1800 x 1000. Sul computer se ne vede la fascia larga il doppio dell'altezza, tra l'8%
      e il 98% dall'alto: l'aria sopra il gancio serve al telefono, dove in alto c'è la testata.
      --alto e --largo: quanto è grande il fotogramma sullo schermo; --su: di quanto sale oltre il bordo;
      --camicia: dove sta la camicia nel fotogramma, in frazione della larghezza (lo stesso numero di
@@ -42,12 +42,11 @@
   user-select: none;
 }
 
-/* Immagine ferma e film occupano lo stesso posto. La parete con la luce della finestra fa da sfondo anche al riquadro
-   in vetro. Sugli schermi più stretti del fotogramma, questo scorre a sinistra quanto basta perché la camicia resti in
-   mezzo alla sua colonna e non finisca sotto il riquadro; su quelli più larghi resta a sinistra e a destra sfuma nel
-   blu della pagina, che è quello della parete in ombra. */
-.configura__ferma,
-.configura__film {
+/* L'immagine ferma della camicia. La parete con la luce della finestra fa da sfondo anche al riquadro in vetro.
+   Sugli schermi più stretti del fotogramma, questo scorre a sinistra quanto basta perché la camicia resti in mezzo
+   alla sua colonna e non finisca sotto il riquadro; su quelli più larghi resta a sinistra e a destra sfuma nel blu
+   della pagina, che è quello della parete in ombra. */
+.configura__ferma {
   position: absolute;
   top: var(--su);
   left: min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia)));
@@ -59,23 +58,11 @@
   mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
 
-/* Una scena si vede solo mentre va. Compare in un attimo, così un'eventuale differenza di colore tra l'immagine e il
-   video non fa scalino; a scena finita lascia il posto all'immagine ferma più piano, perché sugli schermi fitti
-   l'immagine è più nitida del film e il passaggio non deve notarsi. */
-.configura__film {
-  opacity: 0;
-  transition: opacity 600ms ease-out;
-  pointer-events: none;
-}
-
-.configura__film--vivo {
-  opacity: 1;
-  transition-duration: 180ms;
-}
-
-/* PROVA del movimento libero (src/configuratore/libera.js): una tela sopra l'immagine ferma, solo sul riquadro in cui
-   la camicia e la sua ombra si muovono (--posa-x e --posa-w, in frazione del fotogramma, li mette lo script).
-   Si vede finché la camicia si muove; ferma, lascia il posto all'immagine, che è più nitida. */
+/* La camicia che si muove (src/configuratore/leggera.js): sopra l'immagine ferma, gli stessi punti divisi in tre pezzi
+   (parete, ombra, camicia), solo sul riquadro del fotogramma in cui camicia e ombra si muovono (--posa-x e --posa-w,
+   in frazione del fotogramma, li mette lo script). Il piano interno misura in punti del fotogramma e lo script lo
+   rimpicciolisce; camicia e ombra si spostano con una trasformazione, la parete sta ferma. Appena pronti i pezzi
+   prendono il posto dell'immagine ferma, piano, e ci restano. */
 .configura__posa {
   position: absolute;
   top: var(--su);
@@ -83,6 +70,7 @@
   width: calc(var(--largo) * var(--posa-w, 1));
   max-width: none;
   height: var(--alto);
+  overflow: hidden;
   opacity: 0;
   transition: opacity 500ms ease-out;
   pointer-events: none;
@@ -90,29 +78,6 @@
 
 .configura__posa--viva {
   opacity: 1;
-  transition-duration: 120ms;
-}
-
-/* PROVA della camicia in diretta (src/configuratore/viva.js): la tela resta sempre in vista sopra l'immagine ferma,
-   e ai lati sfuma in lei, così dove finisce non si vede. */
-.configura__posa--tela {
-  transition-duration: 500ms;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
-}
-
-.configura__posa--tela.configura__posa--viva {
-  transition-duration: 140ms;
-}
-
-/* PROVA della camicia leggera (src/configuratore/leggera.js): sopra l'immagine ferma, gli stessi punti divisi in tre
-   pezzi (parete, ombra, camicia). Il piano interno misura in punti del fotogramma e lo script lo rimpicciolisce;
-   camicia e ombra si spostano con una trasformazione, il resto sta fermo. Appena pronti i pezzi prendono il posto
-   dell'immagine ferma, piano, e ci restano: toccando la camicia non cambia niente se non il movimento. */
-.configura__posa--strati,
-.configura__posa--strati.configura__posa--viva {
-  overflow: hidden;
-  transition-duration: 500ms;
 }
 
 .configura__strati {
@@ -411,13 +376,12 @@
   }
 
   .configura__ferma,
-  .configura__film,
   .configura__posa {
     -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
   }
 
-  /* Con i tre pezzi della camicia leggera in vista, sfumare sia l'immagine ferma sia i pezzi sovrapposti darebbe una
+  /* Con i tre pezzi della camicia in vista, sfumare sia l'immagine ferma sia i pezzi sovrapposti darebbe una
      fascia più chiara dove stanno i pezzi: la sfumatura la fa un velo solo, sopra tutti e due. */
   .configura__palco--strati .configura__ferma,
   .configura__palco--strati .configura__posa--strati {
@@ -438,13 +402,6 @@
     pointer-events: none;
   }
 
-  .configura__posa--tela {
-    -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%), linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 95%, transparent 100%), linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-  }
-
   .configura__invito {
     bottom: 6px;
   }
@@ -455,16 +412,15 @@
   }
 }
 
-/* Sul telefono immagine e film sono già ritagliati in verticale intorno alla camicia (tre di base per quattro
-   d'altezza: si scarica meno). Il palco prende la loro forma, così la camicia si vede intera, dal gancio (che resta
+/* Sul telefono l'immagine è già ritagliata in verticale intorno alla camicia (tre di base per quattro
+   d'altezza: si scarica meno). Il palco prende la sua forma, così la camicia si vede intera, dal gancio (che resta
    sotto la testata) all'orlo; sotto c'è una striscia per l'invito, e poi spunta il riquadro. */
 @media (max-width: 599px) {
   .configura__palco {
     height: calc(min(133.4vw, 82svh) + 26px);
   }
 
-  .configura__ferma,
-  .configura__film {
+  .configura__ferma {
     top: 0;
     left: 0;
     width: 100%;
@@ -476,7 +432,7 @@
     left: 50%;
   }
 
-  /* la tela delle pose segue l'immagine verticale: larga quanto lo schermo per --posa-w-tel, alta quattro terzi */
+  /* i pezzi seguono l'immagine verticale: larghi quanto lo schermo per --posa-w-tel, alti quattro terzi */
   .configura__posa {
     top: calc((100% - 26px - 133.333vw) * 0.85);
     left: calc(100vw * var(--posa-x-tel, 0));
@@ -506,7 +462,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .configura__film,
   .configura__posa,
   .configura__invito {
     transition: none;

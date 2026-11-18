@@ -55,26 +55,20 @@ function gruppo(g, s) {
 }
 
 /**
- * @param {object} o.camicia  { stile, script, pose (la cartella delle pose per la prova del movimento libero, se c'è), ferma: { computer, computer2x, telefono, telefono2x }, scene: { 'da-sinistra': { computer, telefono }, 'da-destra': … } }:
- *   gli indirizzi dell'immagine ferma e delle due scene del tocco (scene vuoto se i file non ci sono)
+ * @param {object} o.camicia  { stile, script, ferma: { computer, computer2x, telefono, telefono2x }, leggera, leggeraV }:
+ *   gli indirizzi dell'immagine ferma, la cartella dei tre pezzi che si muovono (se ci sono) e la loro impronta
  */
 export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, anteprima }) {
   const p = c.palco, s = c.scheda;
   // l'immagine ferma c'è sempre, e per gli schermi fitti anche a grandezza doppia, se il file c'è
   const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');
-  // le due scene del tocco solo se i loro file ci sono
-  const video = (nome) => camicia.scene[nome]
-    ? `<video class="configura__film" data-scena="${nome}" data-computer="${esc(camicia.scene[nome].computer)}" data-telefono="${esc(camicia.scene[nome].telefono)}" muted playsinline preload="auto" tabindex="-1" aria-hidden="true"></video>`
-    : '';
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
-  <div class="configura__palco"${camicia.scene['da-sinistra'] ? ' data-film' : ''}${camicia.pose ? ` data-pose="${esc(camicia.pose)}"` : ''}${camicia.vera ? ` data-vera="${esc(camicia.vera)}"` : ''}${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}>
+  <div class="configura__palco"${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}>
     <picture>
       <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 750, camicia.ferma.telefono2x))}" sizes="100vw" width="750" height="1000">
       <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 112vh, max(180vh, 90vw)" width="1800" height="1000" alt="${esc(p.alt)}" fetchpriority="high" draggable="false">
     </picture>
-    ${video('da-sinistra')}
-    ${video('da-destra')}
     <p class="configura__invito" aria-hidden="true"><svg viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3 2 7l4 4M20 3l4 4-4 4M2 7h22"/></svg><span class="configura__invito-mouse">${esc(p.invito)}</span><span class="configura__invito-dito">${esc(p.invito_dito)}</span></p>
   </div>
   <form class="vetro configura__scheda" aria-labelledby="configura-titolo" data-modulo data-non-invia novalidate>

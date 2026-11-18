@@ -1,4 +1,4 @@
-// Controllo della camicia leggera del configuratore (src/configuratore/leggera.js, in prova a ?prova=leggera).
+// Controllo della camicia del configuratore (src/configuratore/leggera.js).
 //
 //   node tools/prova-leggera.js [indirizzo di base, per esempio http://localhost:8766]
 //
@@ -46,7 +46,7 @@ const SCHERMI = [
     page.on('pageerror', (e) => errori.push(String(e)));
     let peso = 0;
     page.on('response', async (r) => { if (r.url().includes('/camicia/leggera/')) { try { peso += (await r.body()).length; } catch { /* la pagina si è chiusa */ } } });
-    await page.goto(PAGINA + '?prova=leggera&manuale', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '?manuale', { waitUntil: 'networkidle' });
     const pronta = await page.waitForFunction(() => window.__camicia && document.querySelector('.configura__posa--strati.configura__posa--viva'), null, { timeout: 15000 }).then(() => true, () => false);
     vedi(pronta, 'i pezzi si caricano e compaiono', `${Math.round(peso / 1024)} KB`);
     if (!pronta) { await ctx.close(); continue; }
@@ -80,6 +80,12 @@ const SCHERMI = [
     }, [coi.toString('base64'), senza.toString('base64'), fascia[0], fascia[1], fitto]);
     vedi(fondo < 2.5, 'in fondo all\'immagine nessuno scalino e nessuna riga', `la riga peggiore differisce di ${fondo.toFixed(2)} livelli`);
 
+    // aprendo la pagina la camicia parte con un movimento, da sola, e poi si ferma
+    const ferma = () => page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
+    const picco = () => page.evaluate(() => { let max = 0, giro = 0, n = 0; while (window.__camicia.passo(16.67) && n++ < 3000) { max = Math.max(max, Math.abs(window.__camicia.p.lato)); giro = Math.max(giro, Math.abs(window.__camicia.p.torce)); } return { max, giro, secondi: n * 16.67 / 1000 }; });
+    const orlo = (l) => `${(Math.abs(l) * 1.55 * 100).toFixed(1)} cm all'orlo`;
+    const saluto = await picco();
+    vedi(saluto.max > 0.015 && saluto.max < 0.05 && saluto.secondi < 20, 'aprendo la pagina la camicia parte con un movimento e poi si ferma', `${orlo(saluto.max)}, ${saluto.secondi.toFixed(1)} s`);
     // una passata sul petto, da un lato all'altro
     // all'altezza del petto; dove il palco è basso (telefono di traverso) si resta nella parte di camicia che si vede
     const [rx, ry, rw, rh] = s0.riquadro, [cx, , cw] = s0.camicia, y = Math.min(vista.height - 70, Math.max(100, ry + rh * 0.55));
@@ -100,13 +106,13 @@ const SCHERMI = [
     const sinistra = cx + cw * 0.2, destra = cx + cw * 0.8;
     const versoDestra = await passata(sinistra, destra);
     const dopo = await stato();
-    const orlo = (l) => `${(Math.abs(l) * 1.55 * 100).toFixed(1)} cm all'orlo`;
-    vedi(versoDestra.max > 0.002 && versoDestra.max < 0.031, 'passando verso destra la camicia va a destra, poco', orlo(versoDestra.max));
+    // il proprietario ha chiesto 6 cm all'orlo con una passata decisa; col dito, che fa meno strada, è di meno
+    vedi(dito ? versoDestra.max > 0.01 && versoDestra.max < 0.05 : versoDestra.max > 0.032 && versoDestra.max < 0.047, 'passando verso destra la camicia va a destra, di circa 6 cm all\'orlo', orlo(versoDestra.max));
     vedi(versoDestra.mossa.startsWith('matrix3d('), 'mentre si muove la camicia ha la sua trasformazione');
     vedi(dopo.mossa === '' && dopo.ombra === '' && versoDestra.secondi < 20, 'poi si ferma esattamente al suo posto', `dopo ${versoDestra.secondi.toFixed(1)} s`);
     vedi(dopo.invito, 'toccata, l\'invito a passarci sopra se ne va');
     const versoSinistra = await passata(destra, sinistra);
-    vedi(versoSinistra.max < -0.002 && versoSinistra.max > -0.031, 'passando verso sinistra va a sinistra', orlo(versoSinistra.max));
+    vedi(versoSinistra.max < -0.01 && versoSinistra.max > -0.05, 'passando verso sinistra va a sinistra', orlo(versoSinistra.max));
     // la si può muovere di continuo: avanti e indietro senza aspettare, e resta entro il limite
     if (!dito) {
       let max = 0;
@@ -114,25 +120,23 @@ const SCHERMI = [
         const [da, a] = giro % 2 ? [destra, sinistra] : [sinistra, destra];
         for (let i = 0; i <= 10; i++) { await page.mouse.move(da + (a - da) * i / 10, y); await page.waitForTimeout(20); max = Math.max(max, await page.evaluate(() => { window.__camicia.passo(20); return Math.abs(window.__camicia.p.lato); })); }
       }
-      vedi(max > 0.004 && max <= 0.0301, 'mossa avanti e indietro di continuo risponde sempre e non esagera', orlo(max));
+      vedi(max > 0.01 && max <= 0.0651, 'mossa avanti e indietro di continuo risponde sempre e non esagera', orlo(max));
       // fuori dalla camicia non succede niente
       await page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
       await page.mouse.move(rx + rw - 4, ry + rh * 0.3); await page.mouse.move(rx + rw - 30, ry + rh * 0.32);
       vedi(!(await page.evaluate(() => window.__camicia.passo(16.67))), 'sulla parete, fuori dalla camicia, non si muove niente');
     }
     // un tocco fermo: si deve vedere, e dieci di fila non la mandano più lontano di uno
-    const ferma = () => page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
-    const picco = () => page.evaluate(() => { let max = 0, giro = 0, n = 0; while (window.__camicia.passo(16.67) && n++ < 3000) { max = Math.max(max, Math.abs(window.__camicia.p.lato)); giro = Math.max(giro, Math.abs(window.__camicia.p.torce)); } return { max, giro }; });
     await ferma();
     if (dito) await page.waitForTimeout(800);                                        // subito dopo una strisciata il browser si tiene il primo tocco
     const fianco = [cx + cw * 0.3, y];
     if (dito) await page.touchscreen.tap(...fianco); else await page.mouse.click(...fianco);
     await page.waitForTimeout(200);                                                  // dopo un tocco col dito il clic arriva un attimo dopo
     const uno = await picco();
-    vedi(uno.max > 0.004, 'un tocco fermo la fa dondolare quel tanto che si vede', orlo(uno.max));
+    vedi(uno.max > 0.012, 'un tocco fermo la fa dondolare quel tanto che si vede', orlo(uno.max));
     for (let i = 0; i < 8; i++) { if (dito) await page.touchscreen.tap(...fianco); else await page.mouse.click(...fianco); await page.waitForTimeout(120); await page.evaluate(() => { for (let k = 0; k < 9; k++) window.__camicia.passo(16.67); }); }
     const otto = await picco();
-    vedi(otto.max < uno.max * 1.6 + 0.001 && otto.giro < 0.085, 'otto tocchi di fila non la mandano più lontano di uno', `${orlo(otto.max)}, torsione ${otto.giro.toFixed(3)}`);
+    vedi(otto.max < uno.max * 1.6 + 0.001 && otto.giro < 0.115, 'otto tocchi di fila non la mandano più lontano di uno', `${orlo(otto.max)}, torsione ${otto.giro.toFixed(3)}`);
     if (dito) {
       // una strisciata di lato che parte un po' storta vale lo stesso, e non fa scorrere la pagina
       const cdp = await ctx.newCDPSession(page);
@@ -146,7 +150,7 @@ const SCHERMI = [
       const storta = await picco();
       await page.waitForTimeout(400);
       const mossa = Math.abs((await page.evaluate(() => scrollY)) - scorsa);
-      vedi(storta.max > 0.002, 'una strisciata di lato partita storta la muove lo stesso', orlo(storta.max));
+      vedi(storta.max > 0.008, 'una strisciata di lato partita storta la muove lo stesso', orlo(storta.max));
       vedi(mossa < 4, 'strisciando di lato sulla camicia la pagina non scorre', `${mossa.toFixed(0)} punti`);
     }
     vedi(errori.length === 0, 'nessun errore', errori.join(' | '));
@@ -159,7 +163,7 @@ const SCHERMI = [
     const page = await ctx.newPage();
     let chiesti = 0;
     page.on('request', (r) => { if (r.url().includes('/camicia/leggera/')) chiesti++; });
-    await page.goto(PAGINA + '?prova=leggera', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA, { waitUntil: 'networkidle' });
     vedi(await page.locator('.configura__ferma').isVisible() && !(await page.locator('.configura__posa--strati').count()) && chiesti === 0, 'resta l\'immagine ferma e i pezzi non si scaricano');
     vedi(!(await page.evaluate(() => 'viva' in document.querySelector('.configura__palco').dataset)), 'nessun invito a passarci sopra');
     await ctx.close();
@@ -168,7 +172,7 @@ const SCHERMI = [
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 790 }, javaScriptEnabled: false });
     const page = await ctx.newPage();
-    await page.goto(PAGINA + '?prova=leggera', { waitUntil: 'load' });
+    await page.goto(PAGINA, { waitUntil: 'load' });
     vedi(await page.locator('.configura__ferma').isVisible(), 'resta l\'immagine ferma');
     await ctx.close();
   }
@@ -176,7 +180,7 @@ const SCHERMI = [
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 790 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
-    await page.goto(PAGINA + '?prova=leggera', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => 'viva' in document.querySelector('.configura__palco').dataset);
     await page.waitForTimeout(200);
     const c = await page.evaluate(() => { const r = document.querySelectorAll('.configura__posa--strati img')[2].getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });

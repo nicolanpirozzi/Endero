@@ -116,16 +116,8 @@ const conVersione = (nome) => {
   return existsSync(file) ? `/camicia/${nome}?v=${createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 10)}` : '';
 };
 const camicia = { stile: risorsa['stile-configuratore'], script: risorsa.configuratore,
-  ferma: { computer: conVersione('ferma.webp'), computer2x: conVersione('ferma-2x.webp'), telefono: conVersione('ferma-telefono.webp'), telefono2x: conVersione('ferma-telefono-2x.webp') }, scene: {} };
-for (const nome of ['da-sinistra', 'da-destra']) {
-  const computer = conVersione(`${nome}.mp4`), telefono = conVersione(`${nome}-telefono.mp4`);
-  if (computer && telefono) camicia.scene[nome] = { computer, telefono };
-}
-// la prova del movimento libero (?prova=libera): le pose di camicia/film/pose.py, se ci sono
-if (existsSync(join(RADICE, 'public/camicia/pose/pose.json'))) camicia.pose = '/camicia/pose/';
-// la prova della camicia in diretta (?prova=viva): i file di camicia/viva/, se ci sono
-if (existsSync(join(RADICE, 'public/camicia/viva/viva.json'))) camicia.vera = '/camicia/viva/';
-// in prova: la camicia leggera, l'immagine di Blender in tre pezzi che dondola appena (src/configuratore/leggera.js). File da camicia/leggera/
+  ferma: { computer: conVersione('ferma.webp'), computer2x: conVersione('ferma-2x.webp'), telefono: conVersione('ferma-telefono.webp'), telefono2x: conVersione('ferma-telefono-2x.webp') } };
+// i tre pezzi della camicia che si muove (src/configuratore/leggera.js), fatti da camicia/leggera/
 if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) {
   camicia.leggera = '/camicia/leggera/';
   // l'impronta di tutta la cartella: se i pezzi si rifanno, chi torna non si ritrova i vecchi rimasti nel browser
@@ -134,7 +126,7 @@ if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) {
   camicia.leggeraV = impronta.digest('hex').slice(0, 10);
 }
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
-if (!camicia.scene['da-destra']) console.warn('  attenzione: in public/camicia/ mancano le scene del tocco, il configuratore mostra solo la camicia ferma');
+if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/, il configuratore mostra solo la camicia ferma');
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
 const visti = new Set();
