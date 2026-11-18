@@ -20,8 +20,8 @@ const MANO = {
   raggio: 0.21,             // metri: un palmo largo
   fondo: 0.026,             // di quanto il tessuto cede sotto il palmo
   trascina: 0.01,           // e di quanto si lascia portare di lato (i tre numeri approvati sul film)
-  maniche: 0.4,             // le maniche, che pendono libere, cedono meno: premute come il corpo si accartocciano
-  lato: 0.9, parete: 0.38, torce: 4.2,     // quanto il tocco fa dondolare la camicia e la torce sul nastro (come nel film)
+  maniche: 0.85,            // le maniche cedono quasi come il corpo (così manica e fianco si muovono insieme), ma non si lasciano portare di lato
+  lato: 0.9, parete: 0.38, torce: 2.2,     // quanto il tocco fa dondolare la camicia e la torce sul nastro
 };
 const PENDOLO = 2.86, FRENO = 1.25, TORSIONE = 2.3, FRENO_TORSIONE = 1.7;
 const VIVA = 'configura__posa--viva';
@@ -62,11 +62,13 @@ uniform float uParete;        // la parete e' il piano z = uParete
 uniform int uOmbra;           // 1: si disegna la sagoma vista dal sole, schiacciata sulla parete
 out vec4 vFoto; out vec3 vMondo; out vec3 vN; out vec3 vN0;
 vec3 unita(vec3 v, vec3 riserva) { float l = length(v); return l > 1e-7 ? v / l : riserva; }
-void posa(vec3 p, vec3 n, vec3 n0, vec4 foto) {
+// davanti: di quanti metri il punto va considerato piu' vicino a chi guarda quando si decide cosa copre cosa
+void posa(vec3 p, vec3 n, vec3 n0, vec4 foto, float davanti) {
   vec4 m = uPendolo * vec4(p, 1.0);
   if (uOmbra == 1) m.xyz -= uSole * ((m.z - uParete) / uSole.z);
   vMondo = m.xyz; vN = mat3(uPendolo) * n; vN0 = n0; vFoto = foto;
   gl_Position = uCamera * m;
+  if (uOmbra == 0 && davanti > 0.0) { vec4 q = uCamera * vec4(m.xy, m.z + davanti, 1.0); gl_Position.z = q.z / q.w * gl_Position.w; }
 }
 `;
 // camicia e bottoni: ogni punto sta su un triangolo del telaio, di cui legge i tre vertici (le "ossa")
@@ -75,19 +77,21 @@ uniform sampler2D uOssa;      // due punti per osso: dove sta, dove guarda
 uniform int uLarga;
 uniform float uScarto;
 in uvec3 aOsso; in vec3 aPeso; in vec3 aScarto; in vec3 aNorma; in vec3 aNorma0; in vec4 aFoto;
+in float aManica;             // 1 sulle maniche: la stoffa non sa di non potersi attraversare, e dove una manica entra di
+                              // poco nel fianco deve vedersi la manica (che da ferma gli sta davanti), non il fianco
 vec3 osso(uint i, int quale) { int k = int(i) * 2 + quale; return texelFetch(uOssa, ivec2(k % uLarga, k / uLarga), 0).xyz; }
 void main() {
   vec3 pa = osso(aOsso.x, 0), pb = osso(aOsso.y, 0), pc = osso(aOsso.z, 0);
   vec3 su = unita(aPeso.x * osso(aOsso.x, 1) + aPeso.y * osso(aOsso.y, 1) + aPeso.z * osso(aOsso.z, 1), vec3(0.0, 0.0, 1.0));
   vec3 l = pb - pa; l = unita(l - dot(l, su) * su, vec3(1.0, 0.0, 0.0));
   vec3 t = cross(su, l), s = aScarto * uScarto;
-  posa(aPeso.x * pa + aPeso.y * pb + aPeso.z * pc + s.x * l + s.y * t + s.z * su, aNorma.x * l + aNorma.y * t + aNorma.z * su, aNorma0, aFoto);
+  posa(aPeso.x * pa + aPeso.y * pb + aPeso.z * pc + s.x * l + s.y * t + s.z * su, aNorma.x * l + aNorma.y * t + aNorma.z * su, aNorma0, aFoto, aManica * 0.02);
 }
 `;
 // gruccia e nastro: non si deformano
 const VS_RIGIDO = COMUNE + /* glsl */`
 in vec3 aPunto; in vec3 aNorma; in vec3 aNorma0; in vec4 aFoto;
-void main() { posa(aPunto, aNorma, aNorma0, aFoto); }
+void main() { posa(aPunto, aNorma, aNorma0, aFoto, 0.0); }
 `;
 const CURVE = /* glsl */`
 vec3 luce(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
@@ -197,7 +201,8 @@ export async function viva(palco, dove) {
   const pezzo = (nome) => { const q = dati.parti[nome]; return new TIPI[q.tipo](forma, q.da, q.quanti); };
 
   // --- la scena
-  const stoffa = creaStoffa(telaio);
+  // le maniche tornano al loro posto con la stessa forza del corpo: più molli, in diretta svolazzano e gli entrano dentro
+  const stoffa = creaStoffa(telaio, { maniche: 4 });
   const G = S.gancio, ancora = [G[0], G[1] + S.ancora, G[2]];
   /** Dove sta la camicia appesa: girata di `giro` sul nastro, e spostata dal dondolio di lato e verso la parete. */
   const pendolo = (giro, lato, fondo) => per(per(per(sposta(...ancora), per(giraZ(lato), giraX(fondo))), sposta(-ancora[0], -ancora[1], -ancora[2])),
@@ -289,6 +294,8 @@ export async function viva(palco, dove) {
     const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
     attributo(pStoffa, 'aOsso', osso, 3, gl.UNSIGNED_SHORT, true); attributo(pStoffa, 'aPeso', peso, 3, gl.UNSIGNED_BYTE, false, true);
     attributo(pStoffa, 'aScarto', scarto, 3, gl.SHORT); attributo(pStoffa, 'aNorma', sugliAssi, 3, gl.FLOAT);
+    if (nome === 'camicia') attributo(pStoffa, 'aManica', pezzo('camicia.manica'), 1, gl.UNSIGNED_BYTE, false, true);
+    else { const dove = pStoffa.a('aManica'); if (dove >= 0) { gl.disableVertexAttribArray(dove); gl.vertexAttrib1f(dove, 0.2); } }      // i bottoni stanno sopra il tessuto
     comuni(pStoffa, punti, norme);
     cose.push({ p: pStoffa, vao, quanti: indici(tri), ombra: nome === 'camicia' });
   }
@@ -372,7 +379,7 @@ export async function viva(palco, dove) {
   const p = { lato: 0, fondo: 0, torce: 0, vLato: 0, vFondo: 0, vTorce: 0 };
   const mano = { sopra: false, x: 0, y: 0, vx: 0, vy: 0, preme: 0, mossa: 0, colpo: null };
   const dondolo = new Float32Array(5);
-  let giroPrima = S.riposo, prima = 0, quieta = 0, corre = 0;
+  let giroPrima = S.riposo, prima = 0, quieta = 0, lunga = 0, corre = 0, giri = 0, fuoriPosto = 1;
   /** Dal punto dello schermo al raggio nello spazio della stoffa (a camicia com'è adesso). */
   const raggio = (fx, fy) => {
     const M = inversa(per(camera, pendolo(stato.giro, stato.lato, stato.fondo)));
@@ -401,7 +408,7 @@ export async function viva(palco, dove) {
     // dondolando la camicia attraversa l'aria ferma e il tessuto resta indietro (vedi camicia/film/muovi.mjs)
     dondolo[0] = 0.3 * (p.vFondo * c2 - p.vLato * s2); dondolo[1] = 0.3 * (p.vFondo * s2 + p.vLato * c2);
     dondolo[2] = ancora[0] * c2 - ancora[2] * s2; dondolo[3] = ancora[1]; dondolo[4] = ancora[0] * s2 + ancora[2] * c2;
-    stoffa.passo(dt, (adesso - giroPrima) / dt, dondolo);
+    stoffa.passo(dt, (adesso - giroPrima) / dt * 0.3, dondolo);      // girando, le maniche si aprono appena: meno del vero
     giroPrima = adesso;
     stato.giro = adesso; stato.lato = p.lato; stato.fondo = p.fondo;
   };
@@ -417,12 +424,19 @@ export async function viva(palco, dove) {
     while (resta > 1e-5) { const dt = Math.min(resta, 1 / 120); fisica(dt); resta -= dt; }
     disegna();
     const energia = Math.abs(p.lato) + Math.abs(p.fondo) + Math.abs(p.torce) + (Math.abs(p.vLato) + Math.abs(p.vFondo) + Math.abs(p.vTorce)) * 0.5 + mano.preme;
-    quieta = energia < 0.0015 ? quieta + vero : 0;
-    // ferma da un po': si smette di calcolare, e torna in vista l'immagine di Blender, che e' la stessa
-    if (quieta < 2.5) corre = requestAnimationFrame(passo); else { corre = 0; tela.classList.remove(VIVA); }
+    // ferma: il dondolio è finito e nessun punto del tessuto è più lontano di un millimetro e mezzo da dove sta da fermo
+    if (++giri % 12 === 0) {
+      const ora0 = stoffa.adesso, fermo = stoffa.riposo;
+      fuoriPosto = 0;
+      for (let i = 0; i < ora0.length; i += 3) fuoriPosto = Math.max(fuoriPosto, Math.abs(ora0[i] - fermo[i]) + Math.abs(ora0[i + 1] - fermo[i + 1]) + Math.abs(ora0[i + 2] - fermo[i + 2]));
+    }
+    quieta = energia < 0.0015 && fuoriPosto < 0.0015 ? quieta + vero : 0;
+    lunga = energia < 0.0015 ? lunga + vero : 0;
+    // ferma da un po' (o quasi ferma da molto): si smette di calcolare, e torna in vista l'immagine di Blender, che è la stessa
+    if (quieta < 0.6 && lunga < 9) corre = requestAnimationFrame(passo); else { corre = 0; tela.classList.remove(VIVA); }
   };
   const sveglia = () => {
-    quieta = 0;
+    quieta = 0; lunga = 0;
     if (corre) return;
     disegna(); tela.classList.add(VIVA);
     prima = performance.now(); corre = requestAnimationFrame(passo);

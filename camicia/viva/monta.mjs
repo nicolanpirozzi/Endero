@@ -66,9 +66,22 @@ for (let i = 0; i < parte.length; i++) {
 const bottoni = f32(lavoro, 'bottoni.f32'), gruppi = i32(moto, 'bottoni-gruppi.i32');
 if (gruppi.length !== bottoni.length / 3) throw new Error(`i bottoni di scatta.py (${bottoni.length / 3}) non sono quelli di telaio.py (${gruppi.length})`);
 
+/** Dove guarda ogni punto di una forma: la media dei triangoli che lo toccano. */
+function versi(punti, tri) {
+  const n = new Float32Array(punti.length);
+  for (let q = 0; q < tri.length; q += 3) {
+    const a = tri[q] * 3, b = tri[q + 1] * 3, c = tri[q + 2] * 3;
+    const ux = punti[b] - punti[a], uy = punti[b + 1] - punti[a + 1], uz = punti[b + 2] - punti[a + 2], wx = punti[c] - punti[a], wy = punti[c + 1] - punti[a + 1], wz = punti[c + 2] - punti[a + 2];
+    const nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx;
+    for (const i of [a, b, c]) { n[i] += nx; n[i + 1] += ny; n[i + 2] += nz; }
+  }
+  for (let i = 0; i < n.length; i += 3) { const l = Math.hypot(n[i], n[i + 1], n[i + 2]) || 1; n[i] /= l; n[i + 1] /= l; n[i + 2] /= l; }
+  return n;
+}
+
 /** Lega dei punti al telaio e controlla che, a telaio fermo, tornino dove stavano. */
-function lega(nome, punti, parti, gruppo) {
-  const l = legatura(stoffa, punti, parti, gruppo, true);
+function lega(nome, punti, parti, gruppo, guarda = null) {
+  const l = legatura(stoffa, punti, parti, gruppo, true, guarda);
   const scarto = new Int16Array(punti.length), peso = new Uint8Array(punti.length), osso = new Uint16Array(punti.length);
   for (let k = 0; k < punti.length; k++) {
     const s = Math.round(l.scarto[k] * SCARTO);
@@ -87,7 +100,13 @@ function lega(nome, punti, parti, gruppo) {
   console.log(`${nome}: ${punti.length / 3} punti legati · a telaio fermo tornano al loro posto entro ${(errore * 1000).toFixed(3)} mm`);
   return { osso, peso, scarto };
 }
-const lCamicia = lega('camicia', camicia, parte, null), lBottoni = lega('bottoni', bottoni, null, gruppi);
+const senzaVerso = legatura(stoffa, camicia, parte, null, true);
+const lCamicia = lega('camicia', camicia, parte, null, versi(camicia, i32(lavoro, 'camicia-tri.i32'))), lBottoni = lega('bottoni', bottoni, null, gruppi);
+{
+  let altri = 0;
+  for (let i = 0; i < camicia.length / 3; i++) if (senzaVerso.osso[3 * i] !== lCamicia.osso[3 * i] || senzaVerso.osso[3 * i + 1] !== lCamicia.osso[3 * i + 1] || senzaVerso.osso[3 * i + 2] !== lCamicia.osso[3 * i + 2]) altri++;
+  console.log(`camicia: guardando il verso, ${altri} punti si legano a un altro triangolo (prima erano sullo strato sbagliato)`);
+}
 
 // --- tutto in un file: ogni pezzo allineato a quattro byte
 const pezzi = [], parti = {};
@@ -107,6 +126,14 @@ const tri16 = (nome, quantiPunti) => {
 for (const [nome, l, punti] of [['camicia', lCamicia, camicia], ['bottoni', lBottoni, bottoni]]) {
   aggiungi(`${nome}.osso`, l.osso); aggiungi(`${nome}.peso`, l.peso); aggiungi(`${nome}.scarto`, l.scarto);
   aggiungi(`${nome}.tri`, tri16(nome, punti.length / 3));
+}
+// Quanto ogni punto è "manica" (0-255): nel disegno le maniche stanno davanti al fianco, perché la stoffa non sa di
+// non potersi attraversare. Vicino alla spalla no: lì manica e corpo sono lo stesso tessuto che fa una piega, e
+// l'ordine vero è quello giusto. Si passa da 0 a 255 tra cinque e venticinque centimetri sotto la cima della manica.
+{
+  let cima = -Infinity;
+  for (let i = 0; i < parte.length; i++) if (parte[i] > 0) cima = Math.max(cima, camicia[3 * i + 1]);
+  aggiungi('camicia.manica', Uint8Array.from(parte, (q, i) => (q > 0 ? Math.round(255 * Math.max(0, Math.min(1, (cima - camicia[3 * i + 1] - 0.05) / 0.2))) : 0)));
 }
 for (const nome of ['gruccia', 'nastro']) {
   const punti = f32(lavoro, `${nome}.f32`);

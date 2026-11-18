@@ -96,9 +96,13 @@
 /* PROVA della camicia in diretta (src/configuratore/viva.js): la tela resta sempre in vista sopra l'immagine ferma,
    e ai lati sfuma in lei, così dove finisce non si vede. */
 .configura__posa--tela {
-  transition-duration: 400ms;
+  transition-duration: 500ms;
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
+
+.configura__posa--tela.configura__posa--viva {
+  transition-duration: 140ms;
 }
 
 /* ------------------------------------------------------------------ invito a passarci sopra */

@@ -4,14 +4,19 @@
 import { sulTriangolo } from './stoffa.mjs';
 
 /** Cerca, per un punto, il triangolo del telaio più vicino tra quelli della sua parte (una manica non deve
- *  attaccarsi al fianco che le sta accanto). */
+ *  attaccarsi al fianco che le sta accanto). Se del punto si sa dove guarda (`nx, ny, nz`), si scartano i triangoli
+ *  che guardano dall'altra parte: una manica appesa è un tubo schiacciato, il davanti e il dietro stanno a pochi
+ *  millimetri, e un punto del davanti legato al dietro si strappa appena i due strati scorrono uno sull'altro. */
 export function cercatore(stoffa) {
   const x = stoffa.riposo, tri = stoffa.triangoli, nt = tri.length / 3, LATO = 0.03;
-  const parti = new Uint8Array(nt), celle = new Map();
+  const parti = new Uint8Array(nt), celle = new Map(), guarda = new Float32Array(nt * 3);
   const chiave = (i, j, k) => (i + 512) + (j + 512) * 1024 + (k + 512) * 1048576;
   for (let t = 0; t < nt; t++) {
     const a = tri[3 * t] * 3, b = tri[3 * t + 1] * 3, c = tri[3 * t + 2] * 3;
     parti[t] = (1 << stoffa.parte[a / 3]) | (1 << stoffa.parte[b / 3]) | (1 << stoffa.parte[c / 3]);
+    const ux = x[b] - x[a], uy = x[b + 1] - x[a + 1], uz = x[b + 2] - x[a + 2], wx = x[c] - x[a], wy = x[c + 1] - x[a + 1], wz = x[c + 2] - x[a + 2];
+    const gx = uy * wz - uz * wy, gy = uz * wx - ux * wz, gz = ux * wy - uy * wx, gl = Math.hypot(gx, gy, gz) || 1;
+    guarda[3 * t] = gx / gl; guarda[3 * t + 1] = gy / gl; guarda[3 * t + 2] = gz / gl;
     const lo = [0, 1, 2].map((e) => Math.floor(Math.min(x[a + e], x[b + e], x[c + e]) / LATO));
     const hi = [0, 1, 2].map((e) => Math.floor(Math.max(x[a + e], x[b + e], x[c + e]) / LATO));
     for (let i = lo[0]; i <= hi[0]; i++) for (let j = lo[1]; j <= hi[1]; j++) for (let k = lo[2]; k <= hi[2]; k++) {
@@ -19,21 +24,29 @@ export function cercatore(stoffa) {
     }
   }
   const pesi = [0, 0, 0];
-  return (px, py, pz, parte) => {
+  return (px, py, pz, parte, nx, ny, nz) => {
     const ci = Math.floor(px / LATO), cj = Math.floor(py / LATO), ck = Math.floor(pz / LATO), bit = 1 << parte;
-    let meglio = -1, vicino = Infinity, w = [1, 0, 0];
-    const prova = (t) => {
-      if (!(parti[t] & bit)) return;
-      const d = sulTriangolo(px, py, pz, x, tri[3 * t] * 3, tri[3 * t + 1] * 3, tri[3 * t + 2] * 3, pesi);
-      if (d < vicino) { vicino = d; meglio = t; w = [pesi[0], pesi[1], pesi[2]]; }
-    };
-    for (let giro = 1; giro <= 4 && (meglio < 0 || vicino > ((giro - 1) * LATO) ** 2); giro++) {
-      for (let i = -giro; i <= giro; i++) for (let j = -giro; j <= giro; j++) for (let k = -giro; k <= giro; k++) {
-        if (Math.max(Math.abs(i), Math.abs(j), Math.abs(k)) !== giro && giro > 1) continue;
-        for (const t of celle.get(chiave(ci + i, cj + j, ck + k)) || []) prova(t);
+    let meglio, vicino, w;
+    /** Il triangolo più vicino; con `verso`, solo tra quelli che guardano dalla stessa parte del punto. */
+    const trova = (verso) => {
+      meglio = -1; vicino = Infinity; w = [1, 0, 0];
+      const prova = (t) => {
+        if (!(parti[t] & bit)) return;
+        if (verso && guarda[3 * t] * nx + guarda[3 * t + 1] * ny + guarda[3 * t + 2] * nz < 0.15) return;
+        const d = sulTriangolo(px, py, pz, x, tri[3 * t] * 3, tri[3 * t + 1] * 3, tri[3 * t + 2] * 3, pesi);
+        if (d < vicino) { vicino = d; meglio = t; w = [pesi[0], pesi[1], pesi[2]]; }
+      };
+      for (let giro = 1; giro <= 4 && (meglio < 0 || vicino > ((giro - 1) * LATO) ** 2); giro++) {
+        for (let i = -giro; i <= giro; i++) for (let j = -giro; j <= giro; j++) for (let k = -giro; k <= giro; k++) {
+          if (Math.max(Math.abs(i), Math.abs(j), Math.abs(k)) !== giro && giro > 1) continue;
+          for (const t of celle.get(chiave(ci + i, cj + j, ck + k)) || []) prova(t);
+        }
       }
-    }
-    if (meglio < 0) for (let t = 0; t < nt; t++) prova(t);
+      if (meglio < 0 && !verso) for (let t = 0; t < nt; t++) prova(t);
+    };
+    if (nx !== undefined) trova(true);
+    // senza verso, o se dalla stessa parte non c'è nulla entro due centimetri: il più vicino e basta
+    if (nx === undefined || meglio < 0 || vicino > 0.02 * 0.02) trova(false);
     return [tri[3 * meglio], tri[3 * meglio + 1], tri[3 * meglio + 2], w[0], w[1], w[2]];
   };
 }
@@ -54,8 +67,9 @@ export function assi(pos, nor, a, b, c, wa, wb, wc, esce) {
 /** Lega i punti veri al telaio: per ogni punto, i tre vertici del triangolo del telaio su cui sta (`osso`), il punto
  *  del triangolo che gli sta sotto (`peso`) e lo scarto da lì, sui tre assi che seguono il tessuto (`scarto`, metri).
  *  `gruppo` (per i bottoni): i punti dello stesso gruppo si muovono interi, col tessuto che sta sotto il loro centro.
- *  `tondi`: i pesi si arrotondano a 255esimi prima di misurare lo scarto (così si possono scrivere in un byte). */
-export function legatura(stoffa, punti, parteDi, gruppo, tondi = false) {
+ *  `tondi`: i pesi si arrotondano a 255esimi prima di misurare lo scarto (così si possono scrivere in un byte).
+ *  `guarda`: dove guarda ogni punto (tre numeri per punto), per non legarlo allo strato sbagliato (vedi `cercatore`). */
+export function legatura(stoffa, punti, parteDi, gruppo, tondi = false, guarda = null) {
   const n = punti.length / 3, cerca = cercatore(stoffa), x0 = stoffa.riposo, n0 = stoffa.normaliRiposo;
   const osso = new Uint32Array(n * 3), peso = new Float32Array(n * 3), scarto = new Float32Array(n * 3), f = new Float64Array(12);
   const scrivi = (i, a, b, c, wa, wb, wc) => {
@@ -74,7 +88,10 @@ export function legatura(stoffa, punti, parteDi, gruppo, tondi = false) {
     scarto.set([dx * f[3] + dy * f[4] + dz * f[5], dx * f[6] + dy * f[7] + dz * f[8], dx * f[9] + dy * f[10] + dz * f[11]], 3 * i);
   };
   if (!gruppo) {
-    for (let i = 0; i < n; i++) scrivi(i, ...cerca(punti[3 * i], punti[3 * i + 1], punti[3 * i + 2], parteDi ? parteDi[i] : 0));
+    for (let i = 0; i < n; i++) {
+      scrivi(i, ...(guarda ? cerca(punti[3 * i], punti[3 * i + 1], punti[3 * i + 2], parteDi ? parteDi[i] : 0, guarda[3 * i], guarda[3 * i + 1], guarda[3 * i + 2])
+        : cerca(punti[3 * i], punti[3 * i + 1], punti[3 * i + 2], parteDi ? parteDi[i] : 0)));
+    }
   } else {
     const liste = new Map();
     for (let i = 0; i < n; i++) (liste.get(gruppo[i]) || liste.set(gruppo[i], []).get(gruppo[i])).push(i);
