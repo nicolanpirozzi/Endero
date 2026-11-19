@@ -172,17 +172,18 @@ Comandi: `npm run anteprima` (sito in locale su http://127.0.0.1:8766, modulo sp
 
 ## 8. Materiali da ricevere
 
-Aggiornato il 19 novembre 2026, dopo le foto della collezione (punto 13) e di cultura e artigianato. Quello che è arrivato sono capi indossati: maglieria, giacche e cappotti, abiti, felpe. Non c'è nessuna foto di camicie da vicino, del laboratorio, della sede o di un negozio: per questo i riquadri qui sotto restano segnaposto ("lascia il segnaposto", proprietario).
+Aggiornato il 19 novembre 2026, dopo le foto della collezione (punto 13), quelle di cultura e artigianato e il secondo giro sulla pagina iniziale (punto 14). Quello che è arrivato sono capi indossati: maglieria, giacche e cappotti, abiti, felpe. Non c'è nessuna foto di camicie da vicino, del laboratorio, della sede o di un negozio: per questo i riquadri qui sotto restano segnaposto ("lascia il segnaposto", proprietario). La pagina iniziale non ne ha più.
 
-- Pagina iniziale: il video del laboratorio per l'apertura (10–20 secondi, orizzontale, più un taglio verticale per il telefono) e la foto orizzontale della presa misure in sede, con la piccola foto del capo nella sua scheda.
 - Camicie su misura, dieci riquadri: il sarto al lavoro su una camicia (orizzontale, apertura della pagina); sei foto per i dettagli (colletto in primo piano, camicia indossata, polsino e bottone, un capo della collezione, tessuto da vicino, camicia indossata di spalle); la presa misure in sede (orizzontale) con la foto del capo nella scheda; una camicia su misura indossata (orizzontale) accanto al prezzo.
-- Diventa rivenditore, sei riquadri: capi Endero in un negozio (orizzontale, apertura); etichetta cucita nel collo, in primo piano; presa misure in un negozio; e i tre capitoli: la collezione in un negozio (orizzontale), l'etichetta di un cliente cucita su una camicia, una camicia su misura consegnata in negozio.
+- Diventa rivenditore, quattro riquadri: capi Endero in un negozio (orizzontale, apertura) e i tre capitoli: la collezione in un negozio (orizzontale), l'etichetta di un cliente cucita su una camicia, una camicia su misura consegnata in negozio.
 - Dove siamo, due riquadri: l'ingresso della sede e la sede di Viale del Toro, tutte e due orizzontali.
 - Nomi, descrizioni e prezzi dei capi della collezione: oggi il lookbook mostra le foto senza schede.
-- I tre video della cartella "Foto da caricare" (un reel dell'abito gessato, due riprese al ristorante) restano fuori: "nessuno per ora" (proprietario).
+- Un video orizzontale per l'apertura sugli schermi larghi: quello di oggi è girato in verticale e se ne vede una fascia ingrandita (punto 14).
 - Orari della sede, prezzo "a partire da", testi delle domande frequenti.
 
 ## 9. Diventa rivenditore
+
+> Superato in parte dal punto 14 (19 novembre 2026): le strade sono due, "Rivenditore Endero" e "Conto terzi", con il su misura per i clienti del negozio come servizio in più; in cima alla pagina e in pagina iniziale c'è il pezzo delle due strade al posto dei tre riquadri e della fascia; i capitoli si chiamano `rivenditore-endero`, `conto-terzi`, `su-misura`.
 
 Progetto del 15 novembre 2026, sulle scelte del proprietario (in `CLAUDE.md`, "Diventa rivenditore"). Da costruire con Opus 5.5. Testi in bozza già scritti in `contenuti/it/diventa-rivenditore.json`: la pagina si monta con quelli.
 
@@ -252,6 +253,8 @@ Niente sezione prezzo e niente selettore.
 **Da ricevere.** Loghi dei negozi clienti che danno il permesso (a un colore, SVG o PNG); foto per la testa della pagina, i tre riquadri e i tre capitoli; conferma dei testi.
 
 ## 10. Nuova struttura: più pagine, non una pagina unica
+
+> Dal 19 novembre 2026 "Cultura e artigianato" si chiama "Chi siamo": la pagina è `/chi-siamo/` e la sezione della pagina iniziale ha `id="chi-siamo"` (punto 14). Qui sotto restano i nomi di allora.
 
 Deciso dal proprietario il 15 novembre 2026, dopo che il fondatore ha visto l'anteprima ("gli piace e si aspetta un lavoro di alto livello"): la pagina unica era diventata troppo carica. Il su misura e i rivenditori hanno ciascuno la propria pagina; la pagina iniziale mostra i prodotti e, sotto, "Cultura e artigianato". Aspetto, proporzioni e movimento restano quelli del riferimento: cambiano l'ordine e la distribuzione dei pezzi, non i pezzi.
 
@@ -443,3 +446,27 @@ node build/costruisci.mjs && node tools/prova-lookbook.js
 ```
 
 Il primo comando rifà tutta la cartella `public/foto/collezione/` (quattro minuti), quindi servono tutti gli originali, non solo quello nuovo: si riscaricano dal Drive. La prova fa 119 controlli, in locale o sull'anteprima passando il suo indirizzo.
+
+## 14. Pagina iniziale, secondo giro del 19 novembre
+
+Cinque richieste del proprietario dopo aver visto il lookbook sull'anteprima, con le sue risposte alle nostre domande. Controllo: `node tools/prova-pagine.js` (92 controlli, in locale o sull'anteprima) e, per il visore, `tools/prova-lookbook.js`.
+
+**Il video sotto il titolo.** "Nella sezione Camicie e abbigliamento uomo inserisci il video", e poi: "Per PC e tablet utilizza il video IMG_3394. No audio e migliora colori e luci". Quindi due video, senza audio: sui telefoni (fino a 699 punti) il reel dell'abito gessato blu, su tablet e computer i due modelli a tavola. Tutti e due sono girati in verticale: quello del tavolo, sugli schermi larghi, mostra la fascia con i due modelli (la pagina lo ritaglia, tenendo il tavolo al centro), ed è ingrandito di una volta e mezza: un po' di morbidezza si vede. Li prepara `tools/prepara-video.py` in `public/video/`:
+
+- il reel perde l'audio e il cartello finale con il logo (gira in tondo sotto il titolo, e il logo è già in testata): 15,9 secondi, 2,6 MB;
+- il video del tavolo è girato in HDR dall'iPhone: si porta ai colori normali, poi un po' di contrasto, colori appena più pieni, ombre un filo più fredde perché il blu dei capi resti blu, via la grana; gli ultimi istanti sfumano nei primi, così il giro non si nota: 6,5 secondi, 1,6 MB;
+- c'è anche lo stesso video a metà velocità (è girato a 60 fotogrammi al secondo, quindi resta fluido): si prova con `/?video=lento`. Scelta ancora da fare con il proprietario, dal vivo.
+
+Nella pagina c'è il primo fotogramma, fermo. Il video lo aggiunge lo script quando al telo dell'apertura manca meno di uno schermo per sollevarsi, e solo dopo che l'apertura ha deciso se parte il film (prima è ancora bassa, e il video partirebbe in cima alla pagina); si ferma quando esce dallo schermo. Con il movimento ridotto, con il risparmio dati o senza script resta la foto.
+
+**Le foto della vetrina si aprono in pagina iniziale.** "Quando clicco su una foto in questa sezione, diventa grande ma resto sempre in home." Il visore del lookbook è un pezzo condiviso (`visore` in `src/parti/sezioni.mjs`, lo stesso script): in pagina iniziale sfoglia i dodici look della vetrina. Senza script quei riquadri portano ancora alla foto nella pagina della collezione, ed è quell'indirizzo che il tasto manda su WhatsApp. Il tasto dice "Richiedi disponibilità" (parole sue), anche nella collezione.
+
+**Chi siamo.** "La sezione Artigianato diventa Chi siamo (alla fine in quella sezione parliamo di come lavora Endero e dei suoi valori)." Scelta sua: ovunque. Voce del selettore e del menu, titolo della sezione, titolo e indirizzo della pagina (`/chi-siamo/`, con i vecchi `/cultura-e-artigianato/` e `/storia/` che rimandano). "Cultura e artigianato", parole sue del 15 novembre, resta come riga piccola sopra il titolo (`.occhiello`). Testi in `contenuti/it/chi-siamo.json`; le foto restano in `public/foto/artigianato/`.
+
+**La camicia su misura.** "Ha un'anteprima ancora bozza, rendila definitiva." Scelta sua tra tre: la camicia del configuratore, ferma (scartate: la stessa che dondola, una foto del lookbook). La sezione mostra l'immagine ferma del configuratore e, sul lato in ombra della parete, la scheda in vetro con le dodici misure che il configuratore chiede: i nomi vengono da `configuratore.json`, quindi quando lì "Taglia" diventerà "Giro collo" cambia anche qui. Tasto "Crea la tua camicia" e, più piccolo, "Oppure prenota in sede". Sotto gli 810 punti la camicia sta in piedi e la scheda sotto.
+
+**I rivenditori.** "La sezione Rivenditore in Home è troppo piccola, dagli più importanza", con due scelte: "Rivenditore Endero (che quindi rivende i prodotti con il brand Endero in concessione) oppure Rivenditore White Label", per cui voleva una parola italiana. Tra quattro ha scelto "Conto terzi" (scartate: a marchio proprio, con il tuo marchio, marchio privato); il su misura per i clienti del negozio "resta come servizio in più".
+
+- Il pezzo `strade` (titolo grande a sinistra, due schede con la foto a destra) ha preso il posto della fascia in pagina iniziale e dei tre riquadri in cima alla pagina dei rivenditori. Le foto, scelte da noi: l'etichetta Endero cucita in un girocollo per chi vende a marchio Endero, un rever dell'abito gessato, senza marchi in vista, per il conto terzi.
+- Nella pagina i capitoli sono tre: le due strade e, con l'etichetta "In più", il su misura. Il "Fai richiesta" di ogni capitolo porta al modulo con la sua voce già segnata. Le voci del modulo: Rivenditore Endero, Produzione conto terzi, Su misura per i miei clienti.
+- "In concessione" nei testi non c'è: è un termine con un significato contrattuale preciso, e va confermato prima di scriverlo.

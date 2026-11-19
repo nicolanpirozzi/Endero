@@ -7,9 +7,11 @@ export const REINDIRIZZAMENTI = [
   ['/3-camicia-su-misura', '/camicie-su-misura/'],
   ['/home/1-43-camicione-in-flanella-camicia-su-misura.html', '/collezione/'],
   ['/contact-us', '/dove-siamo/'],
-  // la storia è diventata Cultura e artigianato (punto 10): il fondatore ha già visto il vecchio indirizzo
-  ['/storia/', '/cultura-e-artigianato/'],
-  ['/storia', '/cultura-e-artigianato/'],
+  // la storia è diventata Cultura e artigianato (punto 10) e poi Chi siamo: il fondatore ha già visto i vecchi indirizzi
+  ['/storia/', '/chi-siamo/'],
+  ['/storia', '/chi-siamo/'],
+  ['/cultura-e-artigianato/', '/chi-siamo/'],
+  ['/cultura-e-artigianato', '/chi-siamo/'],
 ];
 
 /** Dove porta un percorso, oppure null. La ricerca (?…) resta attaccata. */

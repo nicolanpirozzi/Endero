@@ -1,17 +1,19 @@
-// Server locale per guardare dist/ senza Cloudflare: node build/servi.mjs [porta]
+// Server locale per guardare dist/ senza Cloudflare: node build/servi.mjs [porta] [cartella]
+// (la cartella, se data, è una copia di dist/ messa da parte: serve alle revisioni, mentre dist/ si ricostruisce)
 // Il modulo di contatto qui non salva nulla: per provarlo davvero si usa `npm run worker` (Wrangler con D1 locale).
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { destinazione } from '../worker/reindirizzamenti.mjs';
 
-const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
+const DIST = process.argv[3] ? resolve(process.argv[3]) + '/' : fileURLToPath(new URL('../dist/', import.meta.url));
 const porta = Number(process.argv[2] || process.env.PORT || 8766);
 const tipi = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png',
   '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml',
+  '.avif': 'image/avif', '.mp4': 'video/mp4', '.webm': 'video/webm',
 };
 
 createServer((req, res) => {

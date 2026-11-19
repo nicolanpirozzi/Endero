@@ -1,7 +1,8 @@
 // Controlla il lookbook della pagina /collezione/ e le foto messe in pagina iniziale: tutte le foto si caricano,
 // il filtro lascia un tipo solo, la foto si apre a tutto schermo e si chiude in ogni modo (tasto, Esc, fondo, dito,
 // Indietro del browser), le frecce e la tastiera cambiano foto, il tasto di WhatsApp porta l'indirizzo della foto,
-// e senza JavaScript resta tutto raggiungibile.
+// e senza JavaScript resta tutto raggiungibile. In pagina iniziale i look della vetrina si aprono nello stesso
+// visore senza lasciare la pagina.
 //
 //   node tools/prova-lookbook.js [indirizzo del sito, senza barra finale] [cartella per le schermate]
 //
@@ -117,7 +118,7 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
   const scritte = await page.evaluate(() => { const d = document.getElementById('visore'); return { alt: d.querySelector('[data-visore-img]').alt, chiedi: d.querySelector('[data-visore-chiedi]').href, letto: d.querySelector('.visore__conta').textContent.replace(/\s+/g, ' ').trim(), vivo: d.querySelector('.visore__conta').getAttribute('aria-live') }; });
   controlla('ha la descrizione, e chi usa un lettore di schermo la sente insieme al numero', scritte.alt.length > 8 && scritte.vivo === 'polite' && scritte.letto.includes(scritte.alt) && /3\D+\d+/.test(scritte.letto), scritte.letto);
   const testo = decodeURIComponent((scritte.chiedi.split('text=')[1] || ''));
-  controlla('«Chiedi di questo capo» scrive su WhatsApp cosa si vede e l\'indirizzo della foto', /wa\.me\/39\d+/.test(scritte.chiedi) && testo.includes(scritte.alt) && testo.includes(`/collezione/#${conta.nomi[2]}`) && !/\/collezione\/#[a-z0-9-]+#/.test(testo), testo.slice(0, 220));
+  controlla('«Richiedi disponibilità» scrive su WhatsApp cosa si vede e l\'indirizzo della foto', /wa\.me\/39\d+/.test(scritte.chiedi) && testo.includes(scritte.alt) && testo.includes(`/collezione/#${conta.nomi[2]}`) && !/\/collezione\/#[a-z0-9-]+#/.test(testo), testo.slice(0, 220));
   await foto(page, 'computer-visore');
   await page.keyboard.press('ArrowRight');
   controlla('freccia destra: la foto dopo', (await a.stato()).numero === '4' && await a.pronta() && (await a.stato()).ancora === conta.nomi[3]);
@@ -386,6 +387,7 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
 
   // ---------------------------------------------------------------- 8. la pagina iniziale
   console.log('La pagina iniziale');
+  const innerAltezza = (o) => (o.viewport ? o.viewport.height : 900);
   for (const [nome, opzioni] of [['computer', {}], ['telefono', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }]]) {
     a = await nuovo(opzioni); page = a.page;
     await page.goto(base + '/', { waitUntil: 'networkidle' });
@@ -398,18 +400,37 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
       ingressi: [...document.querySelectorAll('.riquadri .riquadro')].map((x) => [x.querySelector('.riquadro__titolo').textContent.trim(), x.getAttribute('href'), x.classList.contains('riquadro--foto')]),
       tutti: (document.querySelector('.vetrina__tutti a') || {}).href || '',
     }));
-    controlla(`${nome}: dodici look in vetrina, ognuno porta alla sua foto nella collezione`, hm.look.length === 12 && hm.look.every((x) => /^\/collezione\/#[a-z0-9-]+$/.test(x)) && hm.look.every((x) => conta.nomi.includes(x.split('#')[1])), JSON.stringify(hm.look.slice(0, 2)));
+    controlla(`${nome}: dodici look in vetrina; senza script ognuno porta alla sua foto nella collezione`, hm.look.length === 12 && hm.look.every((x) => /^\/collezione\/#[a-z0-9-]+$/.test(x)) && hm.look.every((x) => conta.nomi.includes(x.split('#')[1])), JSON.stringify(hm.look.slice(0, 2)));
     controlla(`${nome}: tre ingressi con la foto: Maglieria, Giacche e cappotti, Su misura`, JSON.stringify(hm.ingressi) === JSON.stringify([['Maglieria', '/collezione/#maglieria', true], ['Giacche e cappotti', '/collezione/#giacche-e-cappotti', true], ['Su misura', '/camicie-su-misura/', true]]), JSON.stringify(hm.ingressi));
     controlla(`${nome}: le foto si caricano, niente manca, niente esce dallo schermo`, hm.caricate === 0 && a.rotte.length === 0 && await a.stretta(), `${hm.caricate} non caricate, ${a.rotte.join(', ')}`);
     controlla(`${nome}: c'è il link a tutta la collezione`, hm.tutti.endsWith('/collezione/'), hm.tutti);
-    if (nome === 'computer') {
-      await page.evaluate(() => document.querySelector('.griglia__voce--look a').scrollIntoView({ block: 'center' }));
-      await page.waitForTimeout(600);
-      await Promise.all([page.waitForURL(/\/collezione\//), page.locator('.griglia__voce--look a').first().click()]);
-      await page.waitForLoadState('networkidle');
-      s = await a.stato();
-      controlla('dalla vetrina, un clic porta alla collezione con quella foto aperta', s.aperto && s.ancora === hm.look[0].split('#')[1] && await a.pronta(), JSON.stringify(s));
-    }
+    // toccando un look la foto si apre grande e si resta in pagina iniziale
+    const terzo = page.locator('.griglia__voce--look a').nth(2), nomeTerzo = hm.look[2].split('#')[1];
+    await terzo.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(700);
+    const yPrima = await page.evaluate(() => Math.round(scrollY));
+    if (nome === 'telefono') await terzo.tap(); else await terzo.click();
+    s = await a.stato();
+    controlla(`${nome}: toccando un look la foto si apre grande restando in pagina iniziale`, s.aperto && s.percorso === '/' && s.ancora === nomeTerzo && s.numero === '3' && s.quanti === '12' && s.tipo.length > 2 && await a.pronta(), JSON.stringify(s));
+    const gh = await a.vista();
+    controlla(`${nome}: la foto è la sua, intera, con la copia piccola sotto`, gh.riempie && gh.sua && gh.fondo && gh.larga >= 800, JSON.stringify(gh));
+    const scritteHome = await page.evaluate(() => { const d = document.getElementById('visore'), t = d.querySelector('[data-visore-chiedi]'); return { testo: t.textContent.trim(), href: t.href }; });
+    const messaggio = decodeURIComponent(scritteHome.href.split('text=')[1] || '');
+    controlla(`${nome}: il tasto dice «Richiedi disponibilità» e manda su WhatsApp l'indirizzo della foto nella collezione`, /^richiedi disponibilit/i.test(scritteHome.testo) && messaggio.includes(`/collezione/#${nomeTerzo}`) && /disponibilit/.test(messaggio), `${scritteHome.testo} | ${messaggio}`);
+    if (nome === 'computer') { await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); } else { await page.locator('[data-visore-dopo]').tap(); await page.locator('[data-visore-dopo]').tap(); }
+    s = await a.stato();
+    controlla(`${nome}: le frecce passano agli altri look della vetrina`, s.numero === '5' && s.ancora === hm.look[4].split('#')[1] && s.percorso === '/' && await a.pronta(), JSON.stringify(s));
+    if (nome === 'computer') await page.keyboard.press('Escape'); else await page.locator('[data-visore-chiudi]').tap();
+    await page.waitForTimeout(500);
+    s = await a.stato();
+    const tornata = await page.evaluate((n) => { const x = document.querySelector(`[data-look="${n}"]`), r = x.getBoundingClientRect(); return { fuoco: document.activeElement === x, inVista: r.top >= 0 && r.bottom <= innerHeight + 1, y: Math.round(scrollY), indirizzo: location.pathname + location.hash }; }, hm.look[4].split('#')[1]);
+    controlla(`${nome}: chiusa, si è ancora in pagina iniziale, sulla vetrina, con l'indirizzo pulito`, !s.aperto && !s.blocco && tornata.indirizzo === '/' && tornata.fuoco && tornata.inVista && Math.abs(tornata.y - yPrima) < innerAltezza(opzioni), JSON.stringify({ ...tornata, yPrima }));
+    await terzo.scrollIntoViewIfNeeded();
+    if (nome === 'telefono') await terzo.tap(); else await terzo.click();
+    await a.pronta();
+    await page.goBack(); await page.waitForTimeout(500);
+    s = await a.stato();
+    controlla(`${nome}: Indietro chiude la foto e non lascia la pagina iniziale`, !s.aperto && s.percorso === '/' && s.ancora === '', JSON.stringify(s));
     controlla(`${nome}: nessun errore in pagina`, a.errori.length === 0, a.errori.join(' | ').slice(0, 300));
     await a.contesto.close();
   }

@@ -1,8 +1,8 @@
 {
-  "_nota": "Pagina /diventa-rivenditore/: progetto del 2026-11-15, ancora da costruire (docs/direzione-creativa.md, punto 9). Testi in bozza, scritti solo con le scelte del proprietario e i fatti confermati. Listino, ordine minimo e condizioni NON vanno sul sito: Endero li manda per email dopo la richiesta. Le parti tra [[ ]] sono segnaposto.",
+  "_nota": "Pagina /diventa-rivenditore/ (docs/direzione-creativa.md, punto 9). Dal 2026-11-19 le strade sono due, per scelta del proprietario: 'Rivenditore Endero' (rivende i capi con il marchio Endero) e 'Conto terzi' (capi che Endero produce e su cui va il marchio del rivenditore, non di Endero; 'conto terzi' è la parola italiana che ha scelto al posto di white label). Il su misura per i clienti del negozio resta come servizio in più. Testi in bozza, scritti solo con le scelte del proprietario e i fatti confermati: lui ha detto 'in concessione', ma è un termine con un significato contrattuale preciso e nei testi non c'è finché non lo conferma. Listino, ordine minimo e condizioni NON vanno sul sito: Endero li manda per email dopo la richiesta. Le parti tra [[ ]] sono segnaposto.",
   "meta": {
-    "titolo": "Diventa rivenditore Endero · Camicie uomo all'ingrosso",
-    "descrizione": "Endero per negozi e marchi, in Italia e all'estero: collezione all'ingrosso, camicie con il tuo marchio e su misura per i tuoi clienti. Capi fatti in Italia.",
+    "titolo": "Diventa rivenditore Endero · Camicie uomo all'ingrosso e conto terzi",
+    "descrizione": "Endero per negozi e marchi, in Italia e all'estero: vendi i capi a marchio Endero, oppure li produciamo per te con il tuo marchio, in conto terzi. Capi fatti in Italia.",
     "immagine": "/film/manifesto.jpg",
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
   },
@@ -17,51 +17,61 @@
     "voci": []
   },
   "offerta": {
-    "titolo": "Tre modi di lavorare con Endero",
-    "testo": "Vendi la nostra collezione, fai cucire camicie con il tuo marchio, oppure offri il su misura ai tuoi clienti.",
-    "riquadri": [
+    "occhiello": "Rivenditori",
+    "titolo": "Due modi di lavorare con Endero",
+    "testo": "Vendi i capi con il marchio Endero, oppure li produciamo per te con il tuo. In più, puoi offrire il su misura ai tuoi clienti.",
+    "link": {
+      "testo": "Fai richiesta",
+      "href": "#richiesta"
+    }
+  },
+  "strade": {
+    "_nota": "Le due strade, con una foto vera per ciascuna: l'etichetta Endero cucita in un girocollo per chi vende a marchio Endero, un rever dell'abito gessato (nessun marchio in vista) per il conto terzi. Scelta delle foto nostra.",
+    "voci": [
       {
-        "titolo": "All'ingrosso",
-        "href": "#ingrosso",
-        "foto": "Capi della collezione piegati o appesi",
+        "id": "rivenditore-endero",
+        "nome": "Rivenditore Endero",
+        "riga": "Vendi nel tuo negozio i capi con il marchio Endero.",
         "immagine": {
-          "file": "maglieria-dolcevita-trecce-blu-notte",
-          "alt": "Uomo con dolcevita a trecce blu notte, un capo della collezione Endero",
-          "fuoco": "alto"
+          "file": "maglieria-girocollo-blu-etichetta",
+          "alt": "L'etichetta Endero cucita nel collo di un girocollo blu"
         }
       },
       {
-        "titolo": "Con il tuo marchio",
-        "href": "#marchio",
-        "foto": "Etichetta cucita nel collo, primo piano"
-      },
-      {
-        "titolo": "Su misura per i tuoi clienti",
-        "href": "#su-misura",
-        "foto": "Presa misure in un negozio"
+        "id": "conto-terzi",
+        "nome": "Conto terzi",
+        "riga": "I capi li produciamo noi. Il marchio è il tuo.",
+        "immagine": {
+          "file": "abiti-gessato-blu-rever",
+          "alt": "Il rever di una giacca gessata blu, da vicino"
+        }
       }
-    ]
+    ],
+    "vai": "Scopri"
   },
   "capitoli": [
     {
-      "id": "ingrosso",
-      "etichetta": "Ingrosso",
-      "titolo": "Camicie uomo all'ingrosso",
-      "testo": "Porta nel tuo negozio la collezione Endero: camicie e capi uomo fatti in Italia. Listino e condizioni te li mandiamo per email dopo la richiesta.",
+      "id": "rivenditore-endero",
+      "etichetta": "Rivenditore Endero",
+      "interesse": "Rivenditore Endero",
+      "titolo": "Camicie e capi uomo all'ingrosso, a marchio Endero",
+      "testo": "Porta nel tuo negozio la collezione Endero: camicie e capi uomo fatti in Italia, con il nostro marchio. Listino e condizioni te li mandiamo per email dopo la richiesta.",
       "foto": "La collezione in un negozio, foto orizzontale"
     },
     {
-      "id": "marchio",
-      "etichetta": "Il tuo marchio",
-      "titolo": "Camicie con il tuo marchio",
-      "testo": "Camicie cucite da Endero con l'etichetta del tuo negozio o del tuo marchio. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto.",
+      "id": "conto-terzi",
+      "etichetta": "Conto terzi",
+      "interesse": "Produzione conto terzi",
+      "titolo": "Produzione conto terzi, con il tuo marchio",
+      "testo": "I capi li produce Endero, ma portano il marchio del tuo negozio o della tua azienda, non il nostro. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto.",
       "foto": "Etichetta di un cliente cucita su una camicia"
     },
     {
       "id": "su-misura",
-      "etichetta": "Su misura",
+      "etichetta": "In più",
+      "interesse": "Su misura per i miei clienti",
       "titolo": "Su misura per i tuoi clienti",
-      "testo": "Tu prendi le misure ai tuoi clienti, noi cuciamo la camicia. Offri il su misura nel tuo negozio senza avere un laboratorio.",
+      "testo": "Un servizio in più, qualunque strada tu scelga: tu prendi le misure ai tuoi clienti, noi cuciamo la camicia. Offri il su misura nel tuo negozio senza avere un laboratorio.",
       "foto": "Una camicia su misura consegnata in negozio"
     }
   ],
@@ -145,8 +155,8 @@
         "obbligatorio": true,
         "largo": true,
         "opzioni": [
-          "Collezione all'ingrosso",
-          "Camicie con il mio marchio",
+          "Rivenditore Endero",
+          "Produzione conto terzi",
           "Su misura per i miei clienti"
         ],
         "errore": "Scegli almeno una voce."
@@ -212,8 +222,12 @@
         "risposta": "Sì: in sede su appuntamento, in Viale del Toro 22 a Giugliano in Campania, oppure con foto, catalogo e un campionario spedito."
       },
       {
-        "domanda": "Posso avere camicie con il mio marchio?",
-        "risposta": "Sì. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto."
+        "domanda": "Che differenza c'è tra Rivenditore Endero e conto terzi?",
+        "risposta": "Come Rivenditore Endero vendi i capi con il marchio Endero. In conto terzi i capi li produciamo noi, ma portano il tuo marchio."
+      },
+      {
+        "domanda": "Posso avere capi con il mio marchio?",
+        "risposta": "Sì, è la produzione conto terzi. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto."
       },
       {
         "domanda": "Lavorate anche con l'estero?",
@@ -236,15 +250,16 @@
     "testata": "Rivenditori",
     "piede": "Diventa rivenditore",
     "home": {
+      "occhiello": "Rivenditori",
       "titolo": "Hai un negozio o un marchio?",
-      "testo": "Vendi la collezione Endero, falla cucire con il tuo marchio o offri il su misura ai tuoi clienti.",
+      "testo": "Puoi vendere i capi con il marchio Endero, oppure farli produrre da noi con il tuo.",
       "link": {
         "testo": "Diventa rivenditore",
         "href": "/diventa-rivenditore/"
       }
     },
     "cultura": {
-      "_nota": "Sotto '2.500 negozi serviti' nel nastro fermo di /cultura-e-artigianato/.",
+      "_nota": "Sotto '2.500 negozi serviti' nel nastro fermo di /chi-siamo/.",
       "testo": "Diventa rivenditore",
       "href": "/diventa-rivenditore/"
     },
@@ -256,12 +271,12 @@
   },
   "servizi": [
     {
-      "nome": "Camicie uomo all'ingrosso",
-      "descrizione": "La collezione Endero per i negozi: camicie e capi uomo fatti in Italia."
+      "nome": "Camicie e capi uomo all'ingrosso a marchio Endero",
+      "descrizione": "La collezione Endero per i negozi: camicie e capi uomo fatti in Italia, venduti con il marchio Endero."
     },
     {
-      "nome": "Camicie con il marchio del cliente",
-      "descrizione": "Camicie cucite da Endero con l'etichetta del negozio o del marchio del cliente."
+      "nome": "Produzione conto terzi di camicie e capi uomo",
+      "descrizione": "Capi prodotti da Endero con il marchio del negozio o dell'azienda cliente."
     },
     {
       "nome": "Camicie su misura per i clienti dei negozi",

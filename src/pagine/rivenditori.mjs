@@ -1,9 +1,11 @@
 // Pagina /diventa-rivenditore/ (punto 9 della direzione creativa): per chi compra da Endero per rivendere.
-// Una pagina sola con tre sezioni ancorate; si dividerà in tre pagine quando ci saranno foto e contenuti veri.
-// Tutti pezzi già approvati: eroe, nastro, tre riquadri, capitoli alternati, come funziona con il modulo, domande, chiusura.
+// Dal 2026-11-19 le strade sono due, "Rivenditore Endero" e "Conto terzi" (proprietario); il su misura per i clienti
+// del negozio resta come servizio in più. Una pagina sola: le due strade in cima, poi un capitolo per strada e uno
+// per il su misura, come funziona con il modulo, domande, chiusura. Il link "Fai richiesta" di ogni capitolo porta
+// al modulo con la sua voce già segnata (src/sito.js, "interesse").
 import { esc, t, piano, attesa, icona } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
-import { eroePagina, nastro, collezione, comeFunziona, domande, chiusura, datiBase } from '../parti/sezioni.mjs';
+import { eroePagina, nastro, strade, comeFunziona, domande, chiusura, datiBase } from '../parti/sezioni.mjs';
 
 export const PERCORSO = '/diventa-rivenditore/';
 
@@ -22,14 +24,14 @@ export default function paginaRivenditori({ sito, testi: r, nastro: fatti, risor
         <p class="capitolo__etichetta">${esc(c.etichetta)}</p>
         <h2 class="titolo">${t(c.titolo)}</h2>
         <p class="testo">${t(c.testo)}</p>
-        <a class="collegamento" href="#richiesta">${esc(r.capitolo_invito)}${icona.freccia}</a>
+        <a class="collegamento" href="#richiesta"${c.interesse ? ` data-interesse="${esc(c.interesse)}"` : ''}>${esc(r.capitolo_invito)}${icona.freccia}</a>
       </div>
     </article>`).join('\n    ');
   const corpo = `<main>
   ${eroePagina(r.eroe, sito)}
   ${r.loghi.voci.length ? loghi(r.loghi) : nastro(fatti)}
   <div class="corpo">
-    ${collezione(r.offerta, sito, { id: 'offerta', gruppo: '' })}
+    ${strade(r.offerta, r.strade, sito, { id: 'offerta' })}
     <section class="capitoli capitoli--rivenditori" aria-label="${esc(piano(r.offerta.titolo))}">
     ${capitoli}
     </section>

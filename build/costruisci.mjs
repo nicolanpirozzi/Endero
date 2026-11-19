@@ -15,7 +15,7 @@ import home from '../src/pagine/home.mjs';
 import paginaSuMisura from '../src/pagine/su-misura.mjs';
 import paginaConfiguratore from '../src/pagine/configuratore.mjs';
 import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
-import paginaCultura, { PERCORSO as PERCORSO_CULTURA } from '../src/pagine/cultura.mjs';
+import paginaCultura, { PERCORSO as PERCORSO_CULTURA } from '../src/pagine/chi-siamo.mjs';
 import paginaRivenditori, { PERCORSO as PERCORSO_RIVENDITORI } from '../src/pagine/rivenditori.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
 import paginaLegale from '../src/pagine/legale.mjs';
@@ -35,7 +35,7 @@ const testiHome = leggi('home.json');
 const servizio = leggi('servizio.json');
 const testi = {
   suMisura: leggi('su-misura.json'),
-  cultura: leggi('cultura-e-artigianato.json'),
+  cultura: leggi('chi-siamo.json'),
   rivenditori: leggi('diventa-rivenditore.json'),
   collezione: leggi('collezione.json'),
   doveSiamo: leggi('dove-siamo.json'),
@@ -97,30 +97,16 @@ for (const cartella of existsSync(join(RADICE, 'public/foto')) ? readdirSync(joi
   for (const nome of readdirSync(dove).sort()) impronta.update(nome).update(readFileSync(join(dove, nome)));
   sito.foto[cartella] = { cartella: `/foto/${cartella}/`, indice: JSON.parse(readFileSync(join(dove, 'foto.json'), 'utf8')), versione: impronta.digest('hex').slice(0, 10) };
 }
-
-// 3 · pagine
-scrivi('index.html', home({
-  sito,
-  testi: testiHome,
-  cultura: testi.cultura,
-  suMisura: testi.suMisura,
-  rivenditori: testi.rivenditori,
-  prodotti,
-  collezione: testi.collezione,
-  anteprima,
-  risorse: {
-    ...base,
-    js: [risorsa.sito, risorsa.apertura],
-    precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
-  },
-}));
-const pagine = ['/'];
-function genera(percorso, html) {
-  scrivi(percorso.slice(1) + 'index.html', html);
-  pagine.push(percorso);
+// i video dell'apertura (tools/prepara-video.py): la stessa impronta, per lo stesso motivo
+sito.video = {};
+if (existsSync(join(RADICE, 'public/video'))) {
+  const dove = join(RADICE, 'public/video');
+  const impronta = createHash('sha256');
+  for (const nome of readdirSync(dove).sort()) impronta.update(nome).update(readFileSync(join(dove, nome)));
+  sito.video = { cartella: '/video/', file: readdirSync(dove), versione: impronta.digest('hex').slice(0, 10) };
 }
-genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
-// configuratore: la camicia è un film calcolato prima (camicia/film/). L'immagine ferma c'è sempre; le scene del tocco,
+
+// la camicia del configuratore (serve anche alla pagina iniziale, che ne mostra l'immagine ferma). L'immagine ferma c'è sempre; i pezzi che si muovono,
 // se i loro file mancano, la pagina ne fa a meno. Ogni file porta la sua versione nell'indirizzo: il browser li tiene
 // in memoria una settimana, e rifatti vanno riscaricati.
 const conVersione = (nome) => {
@@ -139,7 +125,33 @@ if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) {
 }
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/, il configuratore mostra solo la camicia ferma');
-genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: leggi('configuratore.json'), camicia, risorse: base, anteprima }));
+const testiConfiguratore = leggi('configuratore.json');
+
+// 3 · pagine
+scrivi('index.html', home({
+  sito,
+  testi: testiHome,
+  cultura: testi.cultura,
+  suMisura: testi.suMisura,
+  configuratore: testiConfiguratore,
+  camicia: camicia.ferma,
+  rivenditori: testi.rivenditori,
+  prodotti,
+  collezione: testi.collezione,
+  anteprima,
+  risorse: {
+    ...base,
+    js: [risorsa.sito, risorsa.apertura],
+    precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
+  },
+}));
+const pagine = ['/'];
+function genera(percorso, html) {
+  scrivi(percorso.slice(1) + 'index.html', html);
+  pagine.push(percorso);
+}
+genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
+genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, camicia, risorse: base, anteprima }));
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
 const visti = new Set();
 for (const capo of prodotti) {
@@ -194,6 +206,9 @@ ${anteprima ? '  X-Robots-Tag: noindex, nofollow\n' : ''}
   Cache-Control: public, max-age=604800
 
 /camicia/*
+  Cache-Control: public, max-age=604800
+
+/video/*
   Cache-Control: public, max-age=604800
 
 /foto/*

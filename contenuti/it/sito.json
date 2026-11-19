@@ -57,7 +57,7 @@
     "voci": [
       { "testo": "Collezione", "link": "/collezione/" },
       { "testo": "Su misura", "link": "/camicie-su-misura/" },
-      { "testo": "Cultura e artigianato", "link": "/cultura-e-artigianato/" },
+      { "testo": "Chi siamo", "link": "/chi-siamo/" },
       { "testo": "Rivenditori", "link": "/diventa-rivenditore/" },
       { "testo": "Dove siamo", "link": "/dove-siamo/" }
     ],
@@ -76,7 +76,7 @@
         "voci": [
           { "testo": "Collezione", "link": "/collezione/" },
           { "testo": "Su misura", "link": "/camicie-su-misura/" },
-          { "testo": "Cultura e artigianato", "link": "/cultura-e-artigianato/" },
+          { "testo": "Chi siamo", "link": "/chi-siamo/" },
           { "testo": "Dove siamo", "link": "/dove-siamo/" },
           { "testo": "Diventa rivenditore", "link": "/diventa-rivenditore/" }
         ]

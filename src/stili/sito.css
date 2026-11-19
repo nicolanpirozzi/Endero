@@ -796,6 +796,22 @@ body[data-barra] .selettore {
   padding-top: var(--spazio-sezione);
 }
 
+/* la riga piccola sopra un titolo: dice di cosa si parla, il titolo dice come si chiama */
+.occhiello {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.eroe__testo .occhiello {
+  opacity: 0.86;
+}
+
 .intesta {
   display: grid;
   justify-items: center;
@@ -964,6 +980,60 @@ body[data-barra] .selettore {
 }
 
 /* foto grande con pannello a destra: la sede */
+/* la porta sul su misura in pagina iniziale: la camicia del configuratore, intera, e la scheda sul lato in ombra */
+.grande--camicia {
+  /* nove per cinque, come l'immagine; sugli schermi meno larghi resta alta abbastanza per la scheda
+     (la foto si ritaglia ai lati, la camicia resta). L'altezza è scritta, non ricavata dalla forma:
+     con una forma e un'altezza minima il riquadro si allargherebbe oltre la pagina */
+  aspect-ratio: auto;
+  height: max(620px, calc((100vw - 2 * var(--margine)) * 5 / 9));
+  background: #0a1b45;
+}
+
+.grande__foto,
+.grande__foto img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* al centro in altezza con i margini, non con una trasformazione: quella la usa già la comparsa */
+.scheda-misure--camicia {
+  left: auto;
+  right: clamp(20px, 3.4vw, 54px);
+  top: 0;
+  bottom: 0;
+  height: fit-content;
+  margin: auto 0;
+  width: min(340px, 36%);
+  gap: 16px;
+}
+
+/* una misura per riga, come su un foglio delle misure */
+.scheda-misure--camicia .scheda-misure__gruppi {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.scheda-misure--camicia dd {
+  white-space: nowrap;
+}
+
+.scheda-misure__azioni {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+.scheda-misure__azioni .collegamento {
+  color: inherit;
+  font-size: 10px;
+}
+
 .grande--pannello {
   aspect-ratio: 1368 / 587;
 }
@@ -2039,6 +2109,46 @@ body[data-barra] .selettore {
 .eroe--foto .eroe__testo {
   align-content: end;
   padding-bottom: 9vh;
+}
+
+/* il video della pagina iniziale: sotto c'è il suo primo fotogramma, fermo; il video gli compare sopra quando parte */
+.eroe--video .eroe__fondo img,
+.eroe--video .eroe__fondo video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* il video degli schermi larghi è girato in verticale: si tiene in vista la fascia con i due modelli e il tavolo */
+  object-position: 50% 58%;
+}
+
+.eroe--video .eroe__fondo video {
+  opacity: 0;
+  transition: opacity 700ms ease-out;
+}
+
+.eroe--video .eroe__fondo video[data-parte] {
+  opacity: 1;
+}
+
+.eroe--video .eroe__fondo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* un velo su tutto, più fitto dietro al titolo: il video ha scaffali, piante e bicchieri proprio al centro */
+  background:
+    radial-gradient(ellipse 46% 34% at 50% 47%, rgba(4, 16, 54, 0.4), rgba(4, 16, 54, 0) 72%),
+    linear-gradient(to bottom, rgba(4, 16, 54, 0.46), rgba(4, 16, 54, 0.38) 45%, rgba(4, 16, 54, 0.6));
+  pointer-events: none;
+}
+
+@media (max-width: 699px) {
+  /* sui telefoni c'è il reel, che è già verticale: resta al centro */
+  .eroe--video .eroe__fondo img,
+  .eroe--video .eroe__fondo video {
+    object-position: 50% 40%;
+  }
 }
 
 /* il velo */
@@ -3334,6 +3444,26 @@ html.dialogo-aperto {
     aspect-ratio: 371 / 402;
   }
 
+  /* la camicia in piedi, intera, e la scheda appena sotto: sopra la coprirebbe */
+  .grande--camicia {
+    height: auto;
+    background: none;
+  }
+
+  .grande__foto {
+    position: relative;
+    inset: auto;
+    aspect-ratio: 3 / 4;
+    grid-area: 1 / 1;
+  }
+
+  .scheda-misure--camicia {
+    top: auto;
+    bottom: auto;
+    height: auto;
+    margin: -28px 10px 0;
+  }
+
   .pannello-sede {
     margin-top: -170px;
     gap: 20px;
@@ -3888,6 +4018,214 @@ html.dialogo-aperto {
   right: auto;
   left: 10px;
   bottom: 10px;
+}
+
+/* ------------------------------------------------------------------ le due strade dei rivenditori */
+
+/* A sinistra il titolo grande, a destra le due schede con la foto: in pagina iniziale e in cima alla pagina
+   dei rivenditori. Fondo chiaro caldo, da un bordo all'altro: sotto, in pagina iniziale, c'è il piè di pagina blu. */
+.strade {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 110px);
+  margin-top: var(--spazio-sezione);
+  padding: clamp(72px, 8.4vw, 124px) var(--margine);
+  background: var(--carta);
+  scroll-margin-top: 40px;
+}
+
+.strade__testo {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  max-width: 560px;
+}
+
+/* grande, ma su tre righe: quattro sarebbero un paragrafo scritto in caratteri da titolo */
+.strade__titolo {
+  font-size: clamp(32px, 3.7vw, 54px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+}
+
+.strade__testo .testo {
+  max-width: 44ch;
+  font-size: 16px;
+}
+
+.strade__testo .pillola {
+  margin-top: 10px;
+}
+
+.strade__voci {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.strada {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--blu-notte);
+  color: var(--filo);
+  text-decoration: none;
+}
+
+.strada .foto,
+.strada .foto img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.strada .foto img {
+  transition: transform 600ms var(--morbido);
+}
+
+/* il velo: più fitto in basso, dove c'è il testo */
+.strada::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(4, 16, 54, 0.3), rgba(4, 16, 54, 0.12) 38%, rgba(4, 16, 54, 0.82));
+  pointer-events: none;
+}
+
+.strada__vai,
+.strada__testo {
+  position: absolute;
+  z-index: 1;
+}
+
+/* il numero sta in basso con il nome, dove il velo è fitto: in alto, sulle foto chiare, non si leggerebbe */
+.strada__numero {
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 125%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.strada__vai {
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--vetro-chiaro);
+  box-shadow: inset 0 0 0 1px var(--bordo-vetro);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.strada__vai .icona {
+  width: 14px;
+  height: 14px;
+}
+
+.strada__testo {
+  left: 22px;
+  right: 22px;
+  bottom: 22px;
+  display: grid;
+  gap: 8px;
+}
+
+.strada__nome {
+  font-size: clamp(20px, 2.1vw, 30px);
+  line-height: 1;
+}
+
+.strada__riga {
+  max-width: 30ch;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .strada:hover .foto img {
+    transform: scale(1.04);
+  }
+
+  .strada:hover .strada__vai {
+    background: var(--filo);
+    color: var(--blu);
+  }
+}
+
+.strada:focus-visible {
+  outline: 3px solid var(--blu);
+  outline-offset: 3px;
+}
+
+.strada:focus-visible .strada__vai {
+  background: var(--filo);
+  color: var(--blu);
+}
+
+.strada:active .foto img {
+  transform: scale(1.02);
+  transition-duration: 160ms;
+}
+
+/* i capitoli dei rivenditori portano il nome della strada, che è una parola lunga ("Rivenditore"): la scritta
+   grande è più piccola che negli altri capitoli, e in nessun caso allarga la colonna oltre lo schermo */
+.capitoli--rivenditori .capitolo__etichetta {
+  font-size: clamp(30px, 4vw, 58px);
+  overflow-wrap: anywhere;
+}
+
+.capitoli--rivenditori .capitolo__testo {
+  min-width: 0;
+}
+
+/* nella pagina dei rivenditori il pezzo apre il corpo della pagina: lo spazio sopra lo dà già il nastro */
+.pagina-rivenditori .strade {
+  margin-top: 0;
+}
+
+@media (max-width: 809px) {
+  .strade {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 64px 16px;
+  }
+
+  .strade__testo {
+    justify-items: center;
+    max-width: none;
+    text-align: center;
+  }
+
+  .strade__titolo {
+    font-size: clamp(30px, 9vw, 44px);
+  }
+
+  .strade__voci {
+    grid-template-columns: 1fr;
+  }
+
+  /* sul telefono le schede stanno una sotto l'altra, più basse: due foto in piedi sarebbero due schermi */
+  .strada {
+    aspect-ratio: 5 / 4;
+  }
+
+  /* una colonna sola: la scritta grande del capitolo può crescere con lo schermo */
+  .capitoli--rivenditori .capitolo__etichetta {
+    font-size: min(9.4vw, 44px);
+  }
 }
 
 /* ------------------------------------------------------------------ lookbook (pagina della collezione) */

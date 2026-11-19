@@ -286,11 +286,11 @@ function selettore() {
 // Una volta sola per elemento: titoli parola per parola, testi e foto che salgono, foto grandi che si aprono.
 const COMPARSE = [
   // [selettore, tipo, ritardo in ms o 'gruppo' per scalare gli elementi che entrano insieme]
-  ['.intesta .titolo, .funziona__testo > .titolo, .domande > .titolo, .prezzo__testo .titolo', 'parole', 0],
-  ['.intesta .testo, .funziona__testo > .testo, .prezzo__testo .testo', 'su', 160],
-  ['.intesta .collegamento', 'su', 260],
+  ['.intesta .titolo, .funziona__testo > .titolo, .domande > .titolo, .prezzo__testo .titolo, .strade__titolo', 'parole', 0],
+  ['.intesta .testo, .funziona__testo > .testo, .prezzo__testo .testo, .strade__testo > .testo', 'su', 160],
+  ['.intesta .collegamento, .strade__testo > .pillola', 'su', 260],
   ['.nastro', 'su', 0],
-  ['.griglia__voce, .passi li, .riquadri li, .domanda, .capo, .contatti li', 'su', 'gruppo'],
+  ['.griglia__voce, .passi li, .riquadri li, .strade__voci li, .domanda, .capo, .contatti li', 'su', 'gruppo'],
   ['.capitolo__foto', 'tenda', 0],
   ['.capitolo__testo', 'su', 200],
   ['.chiusura__azioni', 'su', 260],
@@ -548,15 +548,19 @@ function misure(form) {
 // un link alla sua versione grande. Qui il filtro lascia in vista un tipo solo, e toccando una foto si apre il visore:
 // la foto a tutto schermo, le frecce (anche da tastiera), il dito che striscia, Esc o Indietro per chiudere, e il
 // tasto che scrive a Endero su WhatsApp di quale foto si parla. /collezione/#<nome della foto> la apre subito.
+// Lo stesso visore apre i look della vetrina in pagina iniziale ([data-look-elenco]): lì non c'è filtro, le foto
+// sono quelle dodici, e si resta in pagina iniziale; senza script quei riquadri portano alla collezione.
 function lookbook() {
-  const sez = document.querySelector('[data-lookbook]');
+  const sez = document.querySelector('[data-lookbook], [data-look-elenco]');
   if (!sez) return;
   const tipi = [...sez.querySelectorAll('[data-tipo]')];
   const tasti = [...sez.querySelectorAll('[data-filtro]')];
   const tutte = [...sez.querySelectorAll('[data-look]')];
-  const barra = sez.querySelector('.lookbook__filtro');
-  const fila = barra.querySelector('ul');
-  const visibili = () => tutte.filter((a) => !a.closest('[data-tipo]').hidden);
+  const barra = sez.querySelector('.lookbook__filtro');      // manca in pagina iniziale
+  const fila = barra?.querySelector('ul');
+  const visibili = () => tutte.filter((a) => !a.closest('[data-tipo]')?.hidden);
+  // la pagina in cui ogni foto ha il suo indirizzo: è quello che si manda su WhatsApp
+  const paginaFoto = sez.dataset.pagina || location.pathname;
   const pulito = () => location.pathname + location.search;
   const ancora = () => decodeURIComponent(location.hash.slice(1));
   // Safari accetta solo un certo numero di riscritture dell'indirizzo al minuto: se ne rifiuta una si va avanti lo stesso
@@ -565,13 +569,15 @@ function lookbook() {
 
   // sul telefono le voci del filtro possono non starci tutte: dove ce ne sono altre, il bordo sfuma
   const sfuma = () => {
+    if (!fila) return;
     fila.toggleAttribute('data-prima', fila.scrollLeft > 4);
     fila.toggleAttribute('data-dopo', fila.scrollLeft + fila.clientWidth < fila.scrollWidth - 4);
   };
-  fila.addEventListener('scroll', sfuma, { passive: true });
-  addEventListener('resize', sfuma, { passive: true });
+  fila?.addEventListener('scroll', sfuma, { passive: true });
+  if (fila) addEventListener('resize', sfuma, { passive: true });
 
   function filtra(tipo, { scorri = true } = {}) {
+    if (!barra) return;
     const nuova = tipi.some((t) => t.dataset.tipo === tipo) ? tipo : '';
     const cambia = nuova !== vista;
     vista = nuova;
@@ -633,15 +639,15 @@ function lookbook() {
     avif.sizes = img.sizes = larga(a);
     avif.srcset = serie(a, a.dataset.v, 'avif');
     img.srcset = serie(a, a.dataset.webp, 'webp');
-    img.src = a.href;
+    img.src = a.dataset.grande || a.href;
     img.alt = piccola.alt;
     // se era già scaricata non arriva nessun avviso: lo si guarda al fotogramma dopo, quando il browser ha scelto
     requestAnimationFrame(() => { if (elenco[qui] === a && img.complete && img.naturalWidth && eLaSua(a)) img.removeAttribute('data-attesa'); });
     dialogo.querySelector('[data-visore-numero]').textContent = qui + 1;
     dialogo.querySelector('[data-visore-quanti]').textContent = elenco.length;
-    dialogo.querySelector('[data-visore-tipo]').textContent = a.closest('[data-tipo]').dataset.nome;
+    dialogo.querySelector('[data-visore-tipo]').textContent = a.dataset.nomeTipo || a.closest('[data-tipo]')?.dataset.nome || '';
     dialogo.querySelector('[data-visore-descrizione]').textContent = `. ${piccola.alt}`;
-    const indirizzo = `${location.origin}${location.pathname}#${a.dataset.look}`;
+    const indirizzo = `${location.origin}${paginaFoto}#${a.dataset.look}`;
     dialogo.querySelector('[data-visore-chiedi]').href = `${sez.dataset.whatsapp}?text=${encodeURIComponent(`${sez.dataset.messaggio}${piccola.alt}\n${indirizzo}`)}`;
     scrivi(`#${a.dataset.look}`);
     // la foto dopo si scarica intanto, così la freccia non fa aspettare
@@ -661,7 +667,7 @@ function lookbook() {
     if (chiusura) { chiusura.poi = a; return; }      // si sta ancora chiudendo: si apre appena la cronologia è a posto
     if (aperto) return;
     aperto = true;
-    if (a.closest('[data-tipo]').hidden) filtra('', { scorri: false });
+    if (a.closest('[data-tipo]')?.hidden) filtra('', { scorri: false });
     elenco = visibili();
     if (spingi) {
       prima = location.href;
@@ -800,6 +806,71 @@ function lookbook() {
 }
 
 
+// ---------------------------------------------------------------- il video dell'apertura
+// Nella pagina c'è il primo fotogramma, fermo. Il video (il reel sui telefoni, i due modelli a tavola sugli schermi
+// larghi) si aggiunge qui quando l'apertura sta per scoprirlo, parte da solo senza audio e gira in tondo; si ferma
+// quando esce dallo schermo. Con il movimento ridotto, o se chi guarda ha chiesto di risparmiare dati, resta la foto.
+// /?video=lento prova sugli schermi larghi lo stesso video a metà velocità.
+function videoEroe() {
+  const fondo = document.querySelector('[data-video-eroe]');
+  if (!fondo || ridotto || navigator.connection?.saveData) return;
+  const stretto = matchMedia('(max-width: 699px)').matches;
+  const lento = new URLSearchParams(location.search).get('video') === 'lento' && fondo.dataset.lento;
+  const indirizzo = stretto ? fondo.dataset.telefono : lento || fondo.dataset.computer;
+  const apertura = document.querySelector('.apertura');
+  const eroe = fondo.closest('.eroe');
+  let video = null, inVista = false;
+
+  const suona = () => { if (video && inVista && !document.hidden) video.play().catch(() => { /* il browser non lo fa partire da solo: resta la foto */ }); };
+  function crea() {
+    if (video) return;
+    video = Object.assign(document.createElement('video'), { muted: true, loop: true, playsInline: true, preload: 'auto', src: indirizzo });
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('aria-hidden', 'true');
+    video.tabIndex = -1;
+    video.addEventListener('playing', () => video.setAttribute('data-parte', ''), { once: true });
+    fondo.append(video);
+    suona();
+  }
+  new IntersectionObserver(([voce]) => {
+    inVista = voce.isIntersecting;
+    if (!video) return;
+    if (inVista) suona(); else video.pause();
+  }).observe(eroe);
+  document.addEventListener('visibilitychange', () => { if (video) { if (document.hidden) video.pause(); else suona(); } });
+
+  // il video sta sotto l'apertura: si comincia a scaricarlo quando al telo manca meno di uno schermo per sollevarsi.
+  // Finché l'apertura non ha deciso se parte il film o resta ferma è ancora bassa, e sembrerebbe già finita: si aspetta
+  const decisa = () => !apertura || apertura.classList.contains('apertura--viva') || apertura.classList.contains('apertura--ferma');
+  let richiesta = 0;
+  const controlla = () => {
+    richiesta = 0;
+    if (video || !decisa()) return;
+    if (apertura && apertura.getBoundingClientRect().bottom > innerHeight * 2) return;
+    removeEventListener('scroll', aScorrimento);
+    crea();
+  };
+  const aScorrimento = () => { if (!richiesta) richiesta = requestAnimationFrame(controlla); };
+  addEventListener('scroll', aScorrimento, { passive: true });
+  if (decisa()) controlla();
+  else new MutationObserver((_, osservatore) => { if (decisa()) { osservatore.disconnect(); aScorrimento(); } }).observe(apertura, { attributes: true, attributeFilter: ['class'] });
+}
+
+// ---------------------------------------------------------------- rivenditori: la voce già segnata nel modulo
+// Nella pagina dei rivenditori il "Fai richiesta" di ogni capitolo porta al modulo: qui si segna intanto la voce
+// di quel capitolo tra "Cosa ti interessa", così chi arriva non deve ritrovarla. Senza script resta solo il link.
+function interesse() {
+  for (const a of document.querySelectorAll('a[data-interesse]')) {
+    a.addEventListener('click', () => {
+      const voce = [...document.querySelectorAll('input[name="interesse"]')].find((x) => x.value === a.dataset.interesse);
+      if (!voce || voce.checked) return;
+      voce.checked = true;
+      voce.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+}
+
 // Ogni comodità parte per conto suo: se una si rompe, le altre funzionano lo stesso.
 // Se si rompono le comparse, la pagina torna tutta visibile.
 function avvia(nome, fn) {
@@ -819,6 +890,8 @@ avvia('camicia', camicia);
 avvia('selettore', selettore);
 avvia('mestiere', mestiere);
 avvia('lookbook', lookbook);
+avvia('video', videoEroe);
+avvia('interesse', interesse);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
 avvia('modulo', () => document.querySelectorAll('[data-modulo]:not([data-non-invia])').forEach(modulo));

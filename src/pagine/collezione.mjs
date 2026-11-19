@@ -2,7 +2,7 @@
 // nome e prezzo in contenuti/it/prodotti.json) i capi, ognuno con la sua pagina. Niente carrello: si chiede su WhatsApp.
 import { esc, t, piano, attesa, fotoIntera, fotoGrande, icona, euro, indirizzoCapo } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
-import { eroePagina, intesta, datiBase } from '../parti/sezioni.mjs';
+import { eroePagina, intesta, datiBase, datiLook, datiVisore, visore, larga } from '../parti/sezioni.mjs';
 
 export { euro, indirizzoCapo };
 
@@ -22,7 +22,7 @@ function schedaCapo(capo, sito) {
 /**
  * Il lookbook. Senza script è già tutto lì: i tasti del filtro sono link alle quattro parti della pagina e ogni foto
  * è un link alla sua versione grande. Lo script (src/sito.js, "lookbook") fa del filtro un filtro vero e apre le
- * foto a tutto schermo nel <dialog> in fondo, con le frecce, il dito e il tasto «Chiedi di questo capo».
+ * foto a tutto schermo nel visore in fondo, con le frecce, il dito e il tasto «Richiedi disponibilità».
  * Ogni foto ha per id il proprio nome: /collezione/#<nome> porta lì e, con lo script, la apre grande.
  */
 function lookbook(c, sito) {
@@ -32,15 +32,15 @@ function lookbook(c, sito) {
   const gruppi = l.tipi.map((tipo) => ({ ...tipo, look: look.filter((k) => k.tipo === tipo.id) })).filter((g) => g.look.length);
   const tasto = (href, filtro, nome, quanti, attivo) => `<li><a class="lookbook__tasto" href="${esc(href)}" data-filtro="${esc(filtro)}"${attivo ? ' aria-current="true"' : ''}>${esc(nome)}<span class="lookbook__quanti">${quanti}</span></a></li>`;
   const voce = (k) => {
-    const g = archivio.indice[k.file];
     // la foto grande occupa due colonne: le serve una grandezza in più
-    const sizes = k.grande ? '(max-width: 699px) 100vw, (max-width: 959px) 67vw, (max-width: 1299px) 50vw, 40vw' : '(max-width: 699px) 50vw, (max-width: 959px) 34vw, (max-width: 1299px) 25vw, 20vw';
+    const w = (riquadro) => `${larga(k, archivio, riquadro)}vw`;
+    const sizes = k.grande ? `(max-width: 699px) ${w(100)}, (max-width: 959px) ${w(67)}, (max-width: 1299px) ${w(50)}, ${w(40)}` : `(max-width: 699px) ${w(50)}, (max-width: 959px) ${w(34)}, (max-width: 1299px) ${w(25)}, ${w(20)}`;
     return `<li class="look${k.grande ? ' look--grande' : ''}" id="${esc(k.file)}">
-          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" data-look="${esc(k.file)}" data-v="${g.v.join(',')}" data-webp="${(g.vWebp || g.v).join(',')}" data-forma="${g.forma}">${fotoIntera(k, archivio, { sizes })}</a>
+          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" ${datiLook(k, archivio)}>${fotoIntera(k, archivio, { sizes })}</a>
         </li>`;
   };
   const v = l.visore;
-  return `<section class="sezione lookbook" id="lookbook" data-lookbook data-cartella="${esc(archivio.cartella)}" data-versione="${esc(archivio.versione || '')}" data-messaggio="${esc(v.messaggio)}" data-whatsapp="${esc(sito.contatti.whatsapp_link)}">
+  return `<section class="sezione lookbook" id="lookbook" data-lookbook ${datiVisore(v, sito)}>
       ${intesta({ titolo: l.titolo, testo: l.testo })}
       <nav class="lookbook__filtro" aria-label="${esc(l.filtro)}">
         <ul>
@@ -55,14 +55,7 @@ function lookbook(c, sito) {
         </ul>
       </section>`).join('\n      ')}
     </section>
-    <dialog class="visore" id="visore" aria-label="${esc(v.titolo)}" data-lenis-prevent>
-      <p class="visore__conta" aria-live="polite" aria-atomic="true"><span class="nascosto">${esc(v.foto)} </span><span data-visore-numero>1</span> ${esc(v.di)} <span data-visore-quanti>${look.length}</span><span class="visore__tipo" data-visore-tipo></span><span class="nascosto" data-visore-descrizione></span></p>
-      <button type="button" class="visore__tasto visore__chiudi" data-visore-chiudi aria-label="${esc(v.chiudi)}">${icona.chiudi}</button>
-      <figure class="visore__foto" data-visore-foto><picture><source type="image/avif" data-visore-avif><img data-visore-img alt="" decoding="async"></picture></figure>
-      <button type="button" class="visore__tasto visore__freccia visore__freccia--prima" data-visore-prima aria-label="${esc(v.prima)}">${icona.sinistra}</button>
-      <button type="button" class="visore__tasto visore__freccia visore__freccia--dopo" data-visore-dopo aria-label="${esc(v.dopo)}">${icona.destra}</button>
-      <a class="pillola pillola--chiara pillola--grande visore__chiedi" data-visore-chiedi href="${esc(sito.contatti.whatsapp_link)}" target="_blank" rel="noopener">${esc(v.chiedi)}</a>
-    </dialog>`;
+    ${visore(v, sito, look.length)}`;
 }
 
 export default function paginaCollezione({ sito, testi: c, prodotti, risorse, anteprima }) {

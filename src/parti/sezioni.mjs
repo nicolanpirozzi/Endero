@@ -1,12 +1,13 @@
 // Sezioni del sito, condivise tra la pagina iniziale e le altre pagine.
 // Ordine e proporzioni vengono dal riferimento (docs/direzione-creativa.md, punti 1 e 3).
-import { esc, t, tConLink, piano, attesa, foto, fotoIntera, logo, icona, euro, indirizzoCapo } from './base.mjs';
+import { esc, t, tConLink, piano, attesa, foto, fotoIntera, fotoGrande, logo, icona, euro, indirizzoCapo } from './base.mjs';
 
 const aid = (id) => (id ? ` id="${esc(id)}"` : '');
 const agr = (gruppo) => (gruppo ? ` data-gruppo="${esc(gruppo)}"` : '');
 
-export function intesta({ titolo, testo, link, classe = '' }) {
+export function intesta({ titolo, testo, link, occhiello, classe = '' }) {
   return `<header class="intesta ${classe}">
+      ${occhiello ? `<p class="occhiello">${t(occhiello)}</p>` : ''}
       <h2 class="titolo">${t(titolo)}</h2>
       ${testo ? `<p class="testo">${t(testo)}</p>` : ''}
       ${link ? `<a class="collegamento" href="${esc(link.href)}">${esc(link.testo)}${icona.freccia}</a>` : ''}
@@ -14,12 +15,13 @@ export function intesta({ titolo, testo, link, classe = '' }) {
 }
 
 /** In cima alle pagine interne: foto (o video) con il titolo della pagina, come il video della pagina iniziale. */
-export function eroePagina({ titolo, sottotitolo, foto: nota, immagine }, sito, { archivio = sito.foto?.artigianato } = {}) {
+export function eroePagina({ titolo, sottotitolo, occhiello, foto: nota, immagine }, sito, { archivio = sito.foto?.artigianato } = {}) {
   // la foto vera, se c'è (è la prima cosa che si vede: si carica subito), altrimenti il segnaposto
   const fondo = foto(immagine, archivio, { pigra: false }) || attesa({ nota, tono: 'scuro', etichetta: sito.foto_in_arrivo });
   return `<section class="eroe eroe--pagina${immagine ? ' eroe--foto' : ''}" id="contenuto" tabindex="-1">
     <div class="eroe__fondo">${fondo}</div>
     <div class="eroe__testo">
+      ${occhiello ? `<p class="occhiello">${t(occhiello)}</p>` : ''}
       <h1 class="titolo eroe__titolo"><span>${t(titolo)}</span></h1>
       ${sottotitolo ? `<p class="eroe__sotto">${t(sottotitolo)}</p>` : ''}
     </div>
@@ -86,6 +88,42 @@ export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } =
           <div class="scheda-misure__capo">${attesa({ nota: s.foto, etichetta: sito.foto_in_arrivo })}</div>
         </div>
         <a class="pillola pillola--chiara" href="${esc(pillola.href)}">${esc(pillola.testo)}</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+/**
+ * La porta sul su misura in pagina iniziale: la camicia appesa del configuratore, ferma, e sul lato in ombra della
+ * parete la scheda in vetro con le misure che il configuratore chiede, una riga per misura. Porta al configuratore
+ * e, con un link più piccolo, alla prenotazione in sede.
+ * @param {object} o.camicia  gli indirizzi dell'immagine ferma: { computer, computer2x, telefono, telefono2x }
+ * @param {string[]} o.misure i nomi delle misure, presi da configuratore.json
+ */
+export function portaSuMisura(p, sito, { id = 'su-misura', gruppo = 'su-misura', camicia, misure = [], alt = '', invito } = {}) {
+  const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');
+  const meta = Math.ceil(misure.length / 2);
+  const colonna = (voci) => `<dl>${voci.map((v) => `<div><dt>${esc(v)}</dt><dd>${esc(p.unita)}</dd></div>`).join('')}</dl>`;
+  return `<section class="sezione"${aid(id)}${agr(gruppo)}>
+    ${intesta(p)}
+    <div class="grande grande--camicia">
+      <picture class="grande__foto">
+        <source media="(max-width: 809px)" srcset="${esc(serie(camicia.telefono, 750, camicia.telefono2x))}" sizes="100vw" width="750" height="1000">
+        <img src="${esc(camicia.computer)}" srcset="${esc(serie(camicia.computer, 1800, camicia.computer2x))}" sizes="(max-width: 809px) 100vw, calc(100vw - 72px)" width="1800" height="1000" alt="${esc(alt)}" loading="lazy" decoding="async">
+      </picture>
+      <div class="vetro scheda-misure scheda-misure--camicia" data-pillola-via>
+        <div class="vetro__testa">
+          <h3 class="vetro__titolo">${esc(p.scheda_titolo)}</h3>
+          <span class="chip chip--vetro">cm</span>
+        </div>
+        <div class="scheda-misure__gruppi">
+          ${colonna(misure.slice(0, meta))}
+          ${colonna(misure.slice(meta))}
+        </div>
+        <div class="scheda-misure__azioni">
+          <a class="pillola pillola--chiara" href="${esc(invito.href)}">${esc(invito.testo)}</a>
+          ${p.in_sede ? `<a class="collegamento" href="${esc(p.in_sede.href)}">${esc(p.in_sede.testo)}${icona.freccia}</a>` : ''}
+        </div>
       </div>
     </div>
   </section>`;
@@ -252,12 +290,55 @@ export function prezzo(p, sito, { gruppo = 'su-misura' } = {}) {
 // ------------------------------------------------------------------ pezzi della struttura a più pagine (punto 10)
 
 /**
+ * Quanto è larga davvero una foto dentro un riquadro due per tre, in centesimi dello schermo: le foto meno alte
+ * (quattro per cinque, quelle prese da Instagram) riempiono il riquadro in altezza e sporgono ai lati, quindi al
+ * browser va chiesta una versione più larga del riquadro, o le sceglie troppo piccola e la ingrandisce.
+ */
+export function larga(k, archivio, riquadro) {
+  const forma = archivio?.indice?.[k.file]?.forma || 2 / 3;
+  return Math.round(riquadro * Math.max(1, forma / (2 / 3)));
+}
+
+/**
+ * Ciò che lo script (src/sito.js, "lookbook") deve sapere di una foto per aprirla grande: nome, grandezze, forma.
+ * Va sul link della foto, che senza script porta alla foto stessa o alla sua pagina.
+ */
+export function datiLook(k, archivio) {
+  const g = archivio.indice[k.file];
+  return `data-look="${esc(k.file)}" data-v="${g.v.join(',')}" data-webp="${(g.vWebp || g.v).join(',')}" data-forma="${g.forma}"`;
+}
+
+/** Ciò che serve una volta sola, sull'elemento che contiene le foto: dove stanno i file e cosa scrivere su WhatsApp. */
+export function datiVisore(v, sito) {
+  const archivio = sito.foto.collezione;
+  return `data-cartella="${esc(archivio.cartella)}" data-versione="${esc(archivio.versione || '')}" data-messaggio="${esc(v.messaggio)}" data-whatsapp="${esc(sito.contatti.whatsapp_link)}"`;
+}
+
+/**
+ * Il visore: la finestra a tutto schermo in cui si apre una foto della collezione, con le frecce, il numero,
+ * e il tasto che chiede di quel capo su WhatsApp. È uno per pagina (collezione e pagina iniziale) e resta chiuso
+ * finché lo script non lo apre: senza script non serve.
+ */
+export function visore(v, sito, quante) {
+  return `<dialog class="visore" id="visore" aria-label="${esc(v.titolo)}" data-lenis-prevent>
+      <p class="visore__conta" aria-live="polite" aria-atomic="true"><span class="nascosto">${esc(v.foto)} </span><span data-visore-numero>1</span> ${esc(v.di)} <span data-visore-quanti>${quante}</span><span class="visore__tipo" data-visore-tipo></span><span class="nascosto" data-visore-descrizione></span></p>
+      <button type="button" class="visore__tasto visore__chiudi" data-visore-chiudi aria-label="${esc(v.chiudi)}">${icona.chiudi}</button>
+      <figure class="visore__foto" data-visore-foto><picture><source type="image/avif" data-visore-avif><img data-visore-img alt="" decoding="async"></picture></figure>
+      <button type="button" class="visore__tasto visore__freccia visore__freccia--prima" data-visore-prima aria-label="${esc(v.prima)}">${icona.sinistra}</button>
+      <button type="button" class="visore__tasto visore__freccia visore__freccia--dopo" data-visore-dopo aria-label="${esc(v.dopo)}">${icona.destra}</button>
+      <a class="pillola pillola--chiara pillola--grande visore__chiedi" data-visore-chiedi href="${esc(sito.contatti.whatsapp_link)}" target="_blank" rel="noopener">${esc(v.chiedi)}</a>
+    </dialog>`;
+}
+
+/**
  * Vetrina: la griglia di foto a 6 colonne (2 sul telefono). Con i capi di prodotti.json ogni riquadro porta al capo
  * e al passaggio compare la scheda in vetro con nome, tessuto e prezzo. Finché i capi non hanno nome e prezzo si
- * vedono i look scelti in `v.look` tra quelli del lookbook (`look`, da collezione.json): ogni riquadro porta alla
- * sua foto nella pagina della collezione, con l'etichetta del tipo. Senza né gli uni né gli altri, segnaposto.
+ * vedono i look scelti in `v.look` tra quelli del lookbook (`look`, da collezione.json), con l'etichetta del tipo:
+ * toccandone uno la foto si apre grande restando in pagina iniziale (proprietario, 2026-11-19: "diventa grande ma
+ * resto sempre in home"); senza script il riquadro porta alla sua foto nella pagina della collezione.
+ * Senza né capi né look, segnaposto.
  */
-export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione', look = [], tipi = [] } = {}) {
+export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione', look = [], tipi = [], visore: testiVisore } = {}) {
   const quanti = v.quanti || 12;
   const capi = prodotti.slice(0, quanti);
   const voce = (capo) => {
@@ -283,31 +364,35 @@ export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collez
           <p class="griglia__dettaglio">${t(a.tessuto)} · ${t(a.prezzo)}</p>
         </div>
       </li>`;
-  const scelti = (v.look || []).map((file) => look.find((k) => k.file === file)).filter(Boolean).slice(0, quanti);
+  const sceltiTutti = (v.look || []).map((file) => look.find((k) => k.file === file)).filter(Boolean).slice(0, quanti);
   const nomeTipo = (idTipo) => tipi.find((x) => x.id === idTipo)?.nome || '';
-  const unLook = (k) => `<li class="griglia__voce griglia__voce--look"><a class="griglia__link" href="${esc(v.tutti.href)}#${esc(k.file)}">
-        <span class="griglia__cornice">${fotoIntera(k, sito.foto?.collezione, { sizes: '(max-width: 809px) 50vw, 17vw' })}</span>
+  const archivio = sito.foto?.collezione;
+  const unLook = (k) => `<li class="griglia__voce griglia__voce--look"><a class="griglia__link" href="${esc(v.tutti.href)}#${esc(k.file)}" ${datiLook(k, archivio)} data-grande="${esc(fotoGrande(k, archivio))}" data-nome-tipo="${esc(nomeTipo(k.tipo))}">
+        <span class="griglia__cornice">${fotoIntera(k, archivio, { sizes: `(max-width: 809px) ${larga(k, archivio, 50)}vw, ${larga(k, archivio, 17)}vw` })}</span>
         <span class="etichetta">${esc(nomeTipo(k.tipo))}</span>
       </a></li>`;
+  const scelti = capi.length ? [] : sceltiTutti.filter((k) => archivio?.indice?.[k.file]);
   const voci = capi.length ? capi.map(voce) : scelti.length ? scelti.map(unLook) : Array.from({ length: quanti }, inAttesa);
+  // con i look in vetrina la sezione porta ciò che serve al visore, che sta subito dopo
+  const conVisore = scelti.length && testiVisore;
   const tutti = (prodotti.length > quanti || (!capi.length && scelti.length)) && v.tutti ? `<p class="vetrina__tutti"><a class="collegamento" href="${esc(v.tutti.href)}">${esc(v.tutti.testo)}${icona.freccia}</a></p>` : '';
-  return `<section class="sezione sezione--griglia vetrina"${aid(id)}${agr(gruppo)}>
+  return `<section class="sezione sezione--griglia vetrina"${aid(id)}${agr(gruppo)}${conVisore ? ` data-look-elenco data-pagina="${esc(v.tutti.href)}" ${datiVisore(testiVisore, sito)}` : ''}>
     ${intesta({ titolo: v.titolo, testo: v.testo })}
     <ul class="griglia">
       ${voci.join('\n      ')}
     </ul>
     ${tutti}
-  </section>`;
+  </section>${conVisore ? `\n    ${visore(testiVisore, sito, scelti.length)}` : ''}`;
 }
 
 /**
- * Cultura e artigianato in pagina iniziale: capitoli a foto intera che restano fermi sullo schermo mentre si scorre.
+ * "Chi siamo" (cultura e artigianato) in pagina iniziale: capitoli a foto intera che restano fermi sullo schermo mentre si scorre.
  * Senza script o con movimento ridotto i capitoli stanno uno sotto l'altro, ogni foto con il suo testo:
  * lo script (src/sito.js, "mestiere") aggiunge .mestiere--vivo e solo allora le foto si scoprono una sull'altra.
  */
-export function mestiere(m, capitoli, sito, { id = 'artigianato', gruppo = 'artigianato' } = {}) {
+export function mestiere(m, capitoli, sito, { id = 'chi-siamo', gruppo = 'chi-siamo' } = {}) {
   return `<section class="sezione mestiere"${aid(id)}${agr(gruppo)} data-mestiere>
-    ${intesta({ titolo: m.titolo, testo: m.testo })}
+    ${intesta({ titolo: m.titolo, testo: m.testo, occhiello: m.occhiello })}
     <div class="mestiere__binario" style="--n: ${capitoli.length}">
       <ol class="mestiere__palco">
         ${capitoli.map((c, i) => `<li class="mestiere__capitolo"${i === 0 ? ' data-attivo' : ''}>
@@ -324,10 +409,42 @@ export function mestiere(m, capitoli, sito, { id = 'artigianato', gruppo = 'arti
   </section>`;
 }
 
-/** Fascia su fondo chiaro caldo con titolo, una riga e un link: i rivenditori in pagina iniziale. */
+/** Fascia su fondo chiaro caldo con titolo, una riga e un link. */
 export function fascia(f, { id = '', gruppo = '' } = {}) {
   return `<section class="collezione fascia"${aid(id)}${agr(gruppo)}>
     ${intesta(f)}
+  </section>`;
+}
+
+/**
+ * Le due strade dei rivenditori, "Rivenditore Endero" e "Conto terzi": a sinistra il titolo grande con una riga e
+ * il tasto, a destra due schede con la foto, ognuna porta alla sua parte della pagina dei rivenditori.
+ * È il pezzo che in pagina iniziale ha preso il posto della fascia (proprietario, 2026-11-19: "è troppo piccola,
+ * dagli più importanza") e che apre la pagina dei rivenditori.
+ * @param {object} testa   { occhiello, titolo, testo, link: { testo, href } }
+ * @param {object} strade  diventa-rivenditore.json, "strade": { voci: [{ id, nome, riga, immagine }], vai }
+ * @param {string} o.pagina  l'indirizzo della pagina dei rivenditori, o '' se ci si è già
+ */
+export function strade(testa, strade, sito, { id = '', gruppo = '', pagina = '' } = {}) {
+  const archivio = sito.foto?.collezione;
+  return `<section class="strade"${aid(id)}${agr(gruppo)}>
+    <div class="strade__testo">
+      ${testa.occhiello ? `<p class="occhiello">${t(testa.occhiello)}</p>` : ''}
+      <h2 class="titolo strade__titolo">${t(testa.titolo)}</h2>
+      ${testa.testo ? `<p class="testo">${t(testa.testo)}</p>` : ''}
+      ${testa.link ? `<a class="pillola pillola--blu pillola--grande" href="${esc(testa.link.href)}">${esc(testa.link.testo)}</a>` : ''}
+    </div>
+    <ul class="strade__voci">
+      ${strade.voci.map((v, i) => `<li><a class="strada" href="${esc(pagina)}#${esc(v.id)}">
+        ${fotoIntera(v.immagine, archivio, { sizes: '(max-width: 809px) 100vw, 30vw' })}
+        <span class="strada__vai" aria-hidden="true">${icona.freccia}</span>
+        <span class="strada__testo">
+          <span class="strada__numero" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+          <span class="titolo strada__nome">${t(v.nome)}</span>
+          <span class="strada__riga">${t(v.riga)}</span>
+        </span>
+      </a></li>`).join('\n      ')}
+    </ul>
   </section>`;
 }
 

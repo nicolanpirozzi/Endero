@@ -1,8 +1,8 @@
 // Pagina iniziale. Struttura del punto 10 della direzione creativa: apertura, eroe, nastro, selettore, vetrina,
-// cultura e artigianato, porta sul su misura, fascia dei rivenditori. Pezzi e proporzioni restano quelli del riferimento.
+// chi siamo (cultura e artigianato), porta sul su misura, rivenditori. Pezzi e proporzioni restano quelli del riferimento.
 import { esc, attesa, logo, icona } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
-import { nastro, vetrina, collezione, mestiere, presaMisure, fascia, datiBase } from '../parti/sezioni.mjs';
+import { nastro, vetrina, collezione, mestiere, portaSuMisura, strade, datiBase } from '../parti/sezioni.mjs';
 
 // 0 · Apertura "La cucitura": il film è in src/apertura/, qui solo la struttura che lo script arricchisce.
 function apertura(a) {
@@ -34,9 +34,25 @@ function apertura(a) {
 }
 
 // 1 · Il video a tutto schermo con il titolo della pagina. Resta fermo sotto l'apertura, che si solleva come un telo.
+// Nella pagina c'è l'immagine ferma del primo fotogramma, una per i telefoni e una per gli schermi larghi: il video
+// lo aggiunge lo script (src/sito.js, "video"), quello giusto per lo schermo, quando l'apertura sta per finire.
+// Con il movimento ridotto, o senza script, resta l'immagine.
 function eroe(e, sito) {
-  return `<section class="eroe" id="contenuto" tabindex="-1">
-    <div class="eroe__fondo">${attesa({ nota: e.video, tono: 'scuro', etichetta: sito.video_in_arrivo, classe: 'attesa--video' })}</div>
+  const f = e.filmato, v = sito.video || {};
+  const ce = (nome) => f && v.file?.includes(nome + '.mp4');
+  const indirizzo = (nome, est) => `${v.cartella}${nome}.${est}?v=${v.versione}`;
+  const fondo = ce(f?.telefono) && ce(f?.computer)
+    ? `<div class="eroe__fondo" data-video-eroe data-telefono="${esc(indirizzo(f.telefono, 'mp4'))}" data-computer="${esc(indirizzo(f.computer, 'mp4'))}"${ce(f.lento) ? ` data-lento="${esc(indirizzo(f.lento, 'mp4'))}"` : ''}>
+      <picture>
+        <source media="(max-width: 699px)" type="image/avif" srcset="${esc(indirizzo(f.telefono, 'avif'))}" width="720" height="1280">
+        <source media="(max-width: 699px)" type="image/webp" srcset="${esc(indirizzo(f.telefono, 'webp'))}" width="720" height="1280">
+        <source type="image/avif" srcset="${esc(indirizzo(f.computer, 'avif'))}" width="1080" height="1440">
+        <img src="${esc(indirizzo(f.computer, 'webp'))}" alt="${esc(f.alt)}" width="1080" height="1440" decoding="async">
+      </picture>
+    </div>`
+    : `<div class="eroe__fondo">${attesa({ nota: e.video, tono: 'scuro', etichetta: sito.video_in_arrivo, classe: 'attesa--video' })}</div>`;
+  return `<section class="eroe${fondo.includes('data-video-eroe') ? ' eroe--video' : ''}" id="contenuto" tabindex="-1">
+    ${fondo}
     <div class="eroe__testo">
       <h1 class="titolo eroe__titolo">${e.titolo.map((r) => `<span>${esc(r)}</span>`).join(' ')}</h1>
       <p class="eroe__sotto">${esc(e.sottotitolo)}</p>
@@ -57,28 +73,31 @@ function selettore(s) {
 
 /**
  * @param {object} o.testi        home.json
- * @param {object} o.cultura      cultura-e-artigianato.json (i capitoli)
- * @param {object} o.suMisura     su-misura.json (scheda misure e interruttore del configuratore)
- * @param {object} o.rivenditori  diventa-rivenditore.json (la fascia, in richiami.home)
+ * @param {object} o.cultura      chi-siamo.json (i capitoli)
+ * @param {object} o.suMisura     su-misura.json (interruttore del configuratore)
+ * @param {object} o.configuratore configuratore.json (i nomi delle misure e la descrizione della camicia)
+ * @param {object} o.camicia      gli indirizzi dell'immagine ferma della camicia del configuratore
+ * @param {object} o.rivenditori  diventa-rivenditore.json (le due strade, e il loro titolo in richiami.home)
  * @param {object[]} o.prodotti   i capi di prodotti.json
  * @param {object} o.collezione   collezione.json (i look della vetrina, finché i capi non hanno nome e prezzo)
  */
-export default function home({ sito, testi: h, cultura, suMisura, rivenditori, prodotti, collezione: collezioneTesti = {}, risorse, anteprima }) {
+export default function home({ sito, testi: h, cultura, suMisura, configuratore = {}, camicia, rivenditori, prodotti, collezione: collezioneTesti = {}, risorse, anteprima }) {
   const conf = suMisura.configuratore || {};
-  const porta = { ...h.porta_su_misura, scheda: suMisura.presa_misure.scheda };
+  const porta = h.porta_su_misura;
   // finché il configuratore non è acceso la pillola porta alla pagina del su misura
   const invito = conf.attivo ? { testo: conf.invito, href: conf.href } : porta.invito;
+  const misure = (configuratore.scheda?.gruppi || []).find((g) => g.tipo === 'misure')?.campi.map((c) => c.etichetta) || [];
   const corpo = `${apertura(h.apertura)}
 <main>
   ${eroe(h.eroe, sito)}
   ${nastro(h.nastro)}
   <div class="corpo corpo--a-filo">
     ${selettore(h.selettore)}
-    ${vetrina(h.vetrina, prodotti, sito, { look: collezioneTesti.look, tipi: collezioneTesti.lookbook?.tipi })}
+    ${vetrina(h.vetrina, prodotti, sito, { look: collezioneTesti.look, tipi: collezioneTesti.lookbook?.tipi, visore: collezioneTesti.lookbook?.visore })}
     ${collezione(h.categorie, sito, { id: '', gruppo: 'collezione' })}
-    ${mestiere(h.artigianato, cultura.capitoli, sito)}
-    ${presaMisure(porta, sito, { id: 'su-misura', gruppo: 'su-misura', invito })}
-    ${fascia(rivenditori.richiami.home, { id: 'rivenditori', gruppo: 'rivenditori' })}
+    ${mestiere(h.chi_siamo, cultura.capitoli, sito)}
+    ${portaSuMisura(porta, sito, { camicia, misure, alt: configuratore.palco?.alt, invito })}
+    ${strade(rivenditori.richiami.home, rivenditori.strade, sito, { id: 'rivenditori', gruppo: 'rivenditori', pagina: rivenditori.richiami.home.link.href })}
   </div>
 </main>`;
   return pagina({ sito, meta: h.meta, percorso: '/', corpo, risorse, anteprima, dati: datiBase(sito, h.meta), classe: 'pagina-home' });

@@ -1,13 +1,14 @@
 {
-  "_nota": "Cultura e artigianato: prende il posto della storia (docs/direzione-creativa.md, punto 10). Un capitolo per foto. Le frasi non descrivono la foto: il proprietario le ha volute così il 2026-11-19 (\"devono essere frasi che richiamano alla bellezza delle cose fatte a mano, dell'alta moda italiana, dell'importanza del lavoro umano. Devono avere una correlazione con l'immagine dietro ma non parlare solo di quello\"); titoli e frasi dei sei capitoli li ha scelti lui tra due versioni. Parlano di valori: niente numeri, tempi, persone o lavorazioni precise che non abbia confermato. Sottotitolo, introduzione e descrizione li abbiamo scritti noi nello stesso tono e li ha approvati lo stesso giorno (\"ok va bene, pubblica\"). Le foto sono le sei mandate dal proprietario il 2026-11-18 (Drive, cartella 'Foto Contesto'), compresse con tools/comprimi-foto.py in public/foto/artigianato/. Gli stessi capitoli servono alla sezione della pagina iniziale e alla pagina /cultura-e-artigianato/, dove la foto di apertura non si ripete tra i capitoli. 'fuoco': 'alto' tiene la parte alta della foto nei riquadri larghi. Della produzione si dice solo 'fatto in Italia'.",
+  "_nota": "Pagina /chi-siamo/. Nata come Cultura e artigianato al posto della storia (docs/direzione-creativa.md, punto 10); dal 2026-11-19 il proprietario la chiama Chi siamo, e 'Cultura e artigianato' resta come riga piccola sopra il titolo. Un capitolo per foto. Le frasi non descrivono la foto: il proprietario le ha volute così il 2026-11-19 (\"devono essere frasi che richiamano alla bellezza delle cose fatte a mano, dell'alta moda italiana, dell'importanza del lavoro umano. Devono avere una correlazione con l'immagine dietro ma non parlare solo di quello\"); titoli e frasi dei sei capitoli li ha scelti lui tra due versioni. Parlano di valori: niente numeri, tempi, persone o lavorazioni precise che non abbia confermato. Sottotitolo, introduzione e descrizione li abbiamo scritti noi nello stesso tono e li ha approvati lo stesso giorno (\"ok va bene, pubblica\"). Le foto sono le sei mandate dal proprietario il 2026-11-18 (Drive, cartella 'Foto Contesto'), compresse con tools/comprimi-foto.py in public/foto/artigianato/. Gli stessi capitoli servono alla sezione della pagina iniziale e alla pagina /cultura-e-artigianato/, dove la foto di apertura non si ripete tra i capitoli. 'fuoco': 'alto' tiene la parte alta della foto nei riquadri larghi. Della produzione si dice solo 'fatto in Italia'.",
   "meta": {
-    "titolo": "Cultura e artigianato · Endero, camicie e abbigliamento uomo",
-    "descrizione": "Cultura e artigianato Endero: la bellezza delle cose fatte a mano, la cura dei dettagli e il valore del lavoro delle persone. Fatto in Italia.",
+    "titolo": "Chi siamo · Endero, camicie e abbigliamento uomo",
+    "descrizione": "Chi siamo: cultura e artigianato Endero. La bellezza delle cose fatte a mano, la cura dei dettagli e il valore del lavoro delle persone. Fatto in Italia.",
     "immagine": "/foto/artigianato/coppole-anteprima.jpg",
     "immagine_alt": "Due uomini sorridenti con coppola a quadri azzurri; uno indossa un gilet nello stesso tessuto"
   },
   "eroe": {
-    "titolo": "Cultura e artigianato",
+    "occhiello": "Cultura e artigianato",
+    "titolo": "Chi siamo",
     "sottotitolo": "La bellezza delle cose fatte a mano",
     "foto": "Foto di apertura, orizzontale",
     "immagine": {

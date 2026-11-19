@@ -8,11 +8,11 @@ Gli originali non stanno nel repository: sono sul Drive del proprietario, nelle 
 (artigianato) e "Endero / Foto da caricare" (collezione).
 
 ARTIGIANATO. Ogni foto esce in due ritagli, perché sul sito riempie riquadri di forma diversa:
-  -o   orizzontale, tre di base per due d'altezza: schermi larghi e pagina "Cultura e artigianato"
+  -o   orizzontale, tre di base per due d'altezza: schermi larghi e pagina "Chi siamo"
   -v   verticale, due di base per tre d'altezza: il telefono tenuto in piedi
 e ogni ritaglio in più grandezze e in due formati (AVIF, più leggero, e WebP per i browser che non lo leggono).
 Per aggiungere una foto: una riga in ARTIGIANATO (nome del file originale, nome sul sito, i due ritagli in punti
-dell'originale: sinistra, alto, destra, basso) e l'immagine in contenuti/it/cultura-e-artigianato.json.
+dell'originale: sinistra, alto, destra, basso) e l'immagine in contenuti/it/chi-siamo.json.
 
 COLLEZIONE. L'elenco sta in contenuti/it/collezione.json, voce "look": per ogni foto il nome nuovo ("file"), il nome
 del file com'era ("originale"), il tipo, il testo che la descrive. Le foto sono verticali e restano intere, nella
@@ -133,7 +133,7 @@ def collezione(originali):
 def registro(originali=None):
     """docs/registro-foto.md: ogni foto del sito, da dove viene e dove sta."""
     testi = {n: open(os.path.join(CONTENUTI, n)).read() for n in sorted(os.listdir(CONTENUTI)) if n.endswith('.json')}
-    pagine = {'home.json': 'pagina iniziale', 'collezione.json': 'collezione', 'cultura-e-artigianato.json': 'cultura e artigianato',
+    pagine = {'home.json': 'pagina iniziale', 'collezione.json': 'collezione', 'chi-siamo.json': 'chi siamo',
               'su-misura.json': 'su misura', 'diventa-rivenditore.json': 'diventa rivenditore', 'dove-siamo.json': 'dove siamo'}
 
     def dove_sta(nome, di_casa):
@@ -168,14 +168,14 @@ def registro(originali=None):
         misure, peso = di_partenza(k['originale'])
         su_drive = 'nome di partenza' if k['file'] in vecchi else 'nome nuovo'
         righe.append(f"| {i + 1} | `{k['file']}` | `{k['originale']}` | {su_drive} | {nomi[k['tipo']]} | {misure} | {peso} | {sul_sito('collezione', k['file']) // 1024} KB | {dove_sta(k['file'], 'collezione.json')} |")
-    for titolo, voce in (('Doppioni, rimasti su Drive', 'doppioni'), ('Video, non ancora nel sito', 'video')):
+    for titolo, voce in (('Doppioni, rimasti su Drive', 'doppioni'), ('Video', 'video')):
         if dati.get('fuori', {}).get(voce):
-            righe += ['', f'### {titolo}', '', '| File su Drive | Nome proposto | Nota |', '| --- | --- | --- |']
-            righe += [f"| `{d['originale']}` | {'`' + d['proposto'] + '`' if d.get('proposto') else 'da togliere'} | {d['nota']} |" for d in dati['fuori'][voce]]
-    righe += ['', '## Cultura e artigianato', '', 'Cartella sul Drive: "Foto Contesto". Sul sito: `public/foto/artigianato/`.', '',
+            righe += ['', f'### {titolo}', '', '| File su Drive | Nome proposto | Sul sito | Nota |', '| --- | --- | --- | --- |']
+            righe += [f"| `{d['originale']}` | {'`' + d['proposto'] + '`' if d.get('proposto') else 'da togliere'} | {d.get('sul_sito', 'no')} | {d['nota']} |" for d in dati['fuori'][voce]]
+    righe += ['', '## Chi siamo (cultura e artigianato)', '', 'Cartella sul Drive: "Foto Contesto". Sul sito: `public/foto/artigianato/`.', '',
               '| Nome nuovo | File originale | Sul sito | Dove sta |', '| --- | --- | --- | --- |']
     for file, nome, _, _ in ARTIGIANATO:
-        righe.append(f"| `{nome}` | `{file}` | {sul_sito('artigianato', nome) // 1024} KB | {dove_sta(nome, 'cultura-e-artigianato.json')} |")
+        righe.append(f"| `{nome}` | `{file}` | {sul_sito('artigianato', nome) // 1024} KB | {dove_sta(nome, 'chi-siamo.json')} |")
     with open(os.path.join(RADICE, 'docs', 'registro-foto.md'), 'w') as f:
         f.write('\n'.join(righe) + '\n')
     print(f"registro scritto: {len(dati['look'])} foto della collezione, {len(ARTIGIANATO)} di cultura e artigianato")

@@ -45,8 +45,8 @@
       "prima": "Foto precedente",
       "dopo": "Foto successiva",
       "di": "di",
-      "chiedi": "Chiedi di questo capo",
-      "messaggio": "Buongiorno, vorrei informazioni su questo capo della collezione: ",
+      "chiedi": "Richiedi disponibilità",
+      "messaggio": "Buongiorno, vorrei sapere la disponibilità di questo capo: ",
       "foto": "Foto"
     }
   },
@@ -405,7 +405,7 @@
     ]
   },
   "fuori": {
-    "_nota": "File della cartella 'Foto da caricare' che non stanno nel sito: i doppioni (stesso file, o stessa foto esportata due volte) e i video, che il proprietario per ora non vuole (2026-11-19). Su Drive sono rimasti com'erano: 'proposto' è il nome che avrebbero preso.",
+    "_nota": "File della cartella 'Foto da caricare' che non stanno nel sito: i doppioni (stesso file, o stessa foto esportata due volte) e i video. Due video il proprietario li ha poi voluti nell'apertura della pagina iniziale (2026-11-19, 'sul_sito' dice dove; li prepara tools/prepara-video.py); il terzo resta fuori. Su Drive sono rimasti com'erano: 'proposto' è il nome che avrebbero preso.",
     "doppioni": [
       {
         "originale": "snapgram.io_download-file-10fh9i4c.jpg",
@@ -437,7 +437,8 @@
       {
         "originale": "snapgram.io_download-file-wyfj07vm.mp4",
         "proposto": "video-abito-gessato-blu.mp4",
-        "nota": "reel dell'abito gessato blu con il logo Endero alla fine: verticale, 720 × 1280, 19 secondi"
+        "nota": "reel dell'abito gessato blu con il logo Endero alla fine: verticale, 720 × 1280, 19 secondi",
+        "sul_sito": "apertura della pagina iniziale, sui telefoni (`eroe-telefono.mp4`): senza audio e senza il cartello finale con il logo"
       },
       {
         "originale": "IMG_3393.mov",
@@ -447,7 +448,8 @@
       {
         "originale": "IMG_3394.mov",
         "proposto": "video-ristorante-2.mov",
-        "nota": "come sopra, 7 secondi"
+        "nota": "i due modelli a tavola al ristorante, ripresa da telefono: verticale, 1080 × 1920, 7 secondi, con audio",
+        "sul_sito": "apertura della pagina iniziale, su computer e tablet (`eroe-computer.mp4`): senza audio, colori e luci corretti, se ne vede la fascia con il tavolo"
       }
     ]
   }

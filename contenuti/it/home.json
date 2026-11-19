@@ -35,6 +35,13 @@
     ],
     "sottotitolo": "Sartoria italiana contemporanea · Giugliano in Campania",
     "video": "Video del laboratorio, 10–20 secondi",
+    "filmato": {
+      "_nota": "I due video scelti dal proprietario il 2026-11-19, senza audio: sui telefoni il reel dell'abito gessato, su computer e tablet i due modelli a tavola (di quel video verticale si vede la fascia con il tavolo). Li prepara tools/prepara-video.py in public/video/. 'alt' descrive l'immagine ferma che si vede prima del video e al suo posto.",
+      "telefono": "eroe-telefono",
+      "computer": "eroe-computer",
+      "lento": "eroe-computer-lento",
+      "alt": "Uomini che indossano capi Endero"
+    },
     "pillole": [
       {
         "testo": "Vedi la collezione",
@@ -60,8 +67,8 @@
         "testo": "Collezione"
       },
       {
-        "id": "artigianato",
-        "testo": "Artigianato"
+        "id": "chi-siamo",
+        "testo": "Chi siamo"
       },
       {
         "id": "su-misura",
@@ -144,16 +151,21 @@
       }
     ]
   },
-  "artigianato": {
-    "titolo": "Cultura e artigianato",
+  "chi_siamo": {
+    "_nota": "La sezione si chiama 'Chi siamo' dal 2026-11-19 (proprietario: 'alla fine in quella sezione parliamo di come lavora Endero e dei suoi valori'). 'Cultura e artigianato', parole sue, resta come riga piccola sopra il titolo.",
+    "occhiello": "Cultura e artigianato",
+    "titolo": "Chi siamo",
     "testo": "La bellezza delle cose fatte a mano, e il valore delle persone che le fanno.",
     "link": {
       "testo": "Scopri come lavoriamo",
-      "href": "/cultura-e-artigianato/"
+      "href": "/chi-siamo/"
     }
   },
   "porta_su_misura": {
-    "_nota": "Porta verso /camicie-su-misura/. Quando il configuratore è acceso (su-misura.json, configuratore.attivo) la pillola diventa quella del configuratore.",
+    "_nota": "Porta verso il su misura. Dal 2026-11-19 è definitiva (proprietario: 'ha un'anteprima ancora bozza, rendila definitiva', scelta: 'Camicia del configuratore'): la camicia appesa del configuratore, ferma, e accanto la scheda con le misure che il configuratore chiede davvero (i nomi vengono da configuratore.json). Quando il configuratore è acceso (su-misura.json, configuratore.attivo) la pillola è la sua; 'in_sede' è la seconda strada.",
+    "scheda_titolo": "La tua scheda misure",
+    "unita": "— cm",
+    "in_sede": { "testo": "Oppure prenota in sede", "href": "/camicie-su-misura/#prenota" },
     "titolo": "La camicia su misura",
     "testo": "Cucita sulle tue misure, con il tessuto e i dettagli che scegli. Presa misure su appuntamento a Giugliano in Campania.",
     "foto": "Presa misure in sede, foto orizzontale",

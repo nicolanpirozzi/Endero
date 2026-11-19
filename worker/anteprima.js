@@ -11,7 +11,7 @@ const manifest = JSON.parse(manifestJSON);
 
 function durata(percorso) {
   if (percorso.startsWith('/risorse/') || percorso.startsWith('/font/')) return 'public, max-age=31536000, immutable';
-  if (percorso.startsWith('/film/') || percorso.startsWith('/camicia/') || percorso.startsWith('/foto/')) return 'public, max-age=604800';
+  if (['/film/', '/camicia/', '/foto/', '/video/'].some((c) => percorso.startsWith(c))) return 'public, max-age=604800';
   return 'no-cache';
 }
 
@@ -26,7 +26,7 @@ function conIntestazioni(risposta, percorso, stato) {
 /**
  * Safari chiede i video a pezzi (intestazione Range) e non li fa partire se il server risponde con il file intero.
  * L'archivio KV risponde a pezzi solo quando il file è già nella cache di Cloudflare: la prima volta no. Qui si
- * ritaglia a mano il pezzo chiesto. I file sono piccoli (un video pesa meno di un megabyte), si possono leggere interi.
+ * ritaglia a mano il pezzo chiesto. I file sono piccoli (un video pesa al massimo due o tre megabyte), si possono leggere interi.
  */
 async function aPezzi(request, risposta) {
   const chiesto = /^bytes=(\d*)-(\d*)$/.exec((request.headers.get('Range') || '').trim());

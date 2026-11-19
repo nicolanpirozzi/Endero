@@ -1,11 +1,12 @@
-// Pagina /cultura-e-artigianato/: prende il posto di /storia/ (punto 10 della direzione creativa).
-// Gli stessi capitoli della pagina iniziale, qui a foto e testo alternati; il nastro dei fatti, fermo,
-// con il richiamo ai rivenditori sotto "2.500 negozi serviti".
+// Pagina /chi-siamo/: come lavora Endero e i suoi valori. È nata come /storia/, poi /cultura-e-artigianato/
+// (punto 10 della direzione creativa); dal 2026-11-19 il proprietario la chiama "Chi siamo", e "Cultura e artigianato"
+// resta come riga piccola sopra il titolo. Gli stessi capitoli della pagina iniziale, qui a foto e testo alternati;
+// il nastro dei fatti, fermo, con il richiamo ai rivenditori sotto "2.500 negozi serviti".
 import { esc, t, attesa, foto } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 import { eroePagina, intesta, nastroFermo, chiusura, datiBase } from '../parti/sezioni.mjs';
 
-export const PERCORSO = '/cultura-e-artigianato/';
+export const PERCORSO = '/chi-siamo/';
 
 export default function paginaCultura({ sito, testi: c, nastro, richiamo, risorse, anteprima }) {
   // la foto che fa da apertura alla pagina non si ripete tra i capitoli; i numeri si contano su quelli che restano.
