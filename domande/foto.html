@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Endero · le foto che mancano</title>
+<style nonce="__CASUALE__">
+  @font-face { font-family: "Archivo"; src: url("/_/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f2f4f8; color: #0f1f45; font: 400 17px/1.5 "Archivo", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 80px; }
+  h1 { margin: 0 0 6px; font-size: 26px; font-weight: 600; font-stretch: 120%; text-transform: uppercase; line-height: 1.05; }
+  .conta { margin: 0 0 6px; font-weight: 600; }
+  .nota { margin: 0 0 26px; color: #4a5676; }
+  h2 { margin: 34px 0 12px; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #4a5676; }
+  .voce { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; margin-bottom: 12px; padding: 14px; background: #fff; border: 1px solid #d8ddea; border-radius: 16px; }
+  .voce[data-fatta] { border-color: #1b7a4b; }
+  .mini { width: 96px; height: 96px; border-radius: 10px; background: #e6e9f2 center / cover no-repeat; display: grid; place-items: center; color: #7b86a3; font-weight: 600; font-size: 22px; }
+  .voce h3 { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.25; }
+  .voce p { margin: 2px 0 10px; color: #4a5676; font-size: 15px; }
+  .stato { margin: 8px 0 0; font-size: 15px; font-weight: 600; min-height: 22px; }
+  .stato[data-ok] { color: #1b7a4b; } .stato[data-no] { color: #b3261e; }
+  label.tasto { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 12px; background: #1b3a7c; color: #fff; font-weight: 600; cursor: pointer; }
+  .voce[data-fatta] label.tasto { background: #fff; color: #1b3a7c; box-shadow: inset 0 0 0 2px #1b3a7c; }
+  label.tasto:focus-within { outline: 3px solid #7aa2ff; outline-offset: 2px; }
+  input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  @media (max-width: 480px) { .voce { grid-template-columns: 72px 1fr; } .mini { width: 72px; height: 72px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Le foto che mancano</h1>
+  <p class="conta" id="conta"></p>
+  <p class="nota">Scegli la foto per ogni riquadro: si carica da sola. Puoi sostituirla quando vuoi. Le foto arrivano sul sito dopo che sono state ritagliate e compresse.</p>
+  <div id="elenco"></div>
+</main>
+<script nonce="__CASUALE__">
+(async () => {
+  const crea = (tag, classe, testo) => { const e = document.createElement(tag); if (classe) e.className = classe; if (testo != null) e.textContent = testo; return e; };
+  const dati = await (await fetch('foto.json', { cache: 'no-store' })).json();
+  const elenco = document.getElementById('elenco'), conta = document.getElementById('conta');
+  const fatte = new Set(Object.keys(dati.caricate));
+  const aggiorna = () => { conta.textContent = `${fatte.size} caricate su ${dati.voci.length}`; };
+  let pagina = '';
+  for (const v of dati.voci) {
+    if (v.pagina !== pagina) { pagina = v.pagina; elenco.append(crea('h2', '', pagina)); }
+    const riga = crea('div', 'voce'), mini = crea('div', 'mini', String(v.numero)), corpo = crea('div');
+    const stato = crea('p', 'stato'); stato.setAttribute('aria-live', 'polite');
+    const tasto = crea('label', 'tasto'), scritta = crea('span', '', 'Scegli la foto'), campo = crea('input');
+    campo.type = 'file'; campo.accept = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
+    tasto.append(scritta, campo);
+    corpo.append(crea('h3', '', `${v.numero} · ${v.titolo}`), crea('p', '', `${v.dove} · ${v.formato}`), tasto, stato);
+    riga.append(mini, corpo); elenco.append(riga);
+    const segna = (quando) => { riga.setAttribute('data-fatta', ''); scritta.textContent = 'Sostituisci'; stato.textContent = 'Caricata' + (quando ? ' il ' + new Date(quando).toLocaleString('it-IT', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''); stato.setAttribute('data-ok', ''); stato.removeAttribute('data-no'); };
+    if (dati.caricate[v.id]) { segna(dati.caricate[v.id].quando); mini.textContent = ''; mini.style.backgroundImage = `url("foto/${v.id}?t=${Date.parse(dati.caricate[v.id].quando)}")`; }
+    campo.addEventListener('change', async () => {
+      const file = campo.files[0];
+      if (!file) return;
+      if (file.size > 20e6) { stato.textContent = 'La foto pesa più di 20 MB: scegline una più leggera.'; stato.setAttribute('data-no', ''); return; }
+      stato.removeAttribute('data-ok'); stato.removeAttribute('data-no'); stato.textContent = 'Carico…';
+      try {
+        const r = await fetch(`foto/${v.id}`, { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-Nome': encodeURIComponent(file.name) }, body: file });
+        const esito = await r.json();
+        if (!r.ok || !esito.ok) throw new Error(esito.errore || 'errore');
+        fatte.add(v.id); aggiorna(); segna(esito.quando);
+        mini.textContent = ''; mini.style.backgroundImage = `url("${URL.createObjectURL(file)}")`;
+      } catch (e) { stato.textContent = 'Non sono riuscito a caricarla. Riprova.'; stato.setAttribute('data-no', ''); }
+      campo.value = '';
+    });
+  }
+  aggiorna();
+})();
+</script>
+</body>
+</html>

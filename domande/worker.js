@@ -9,8 +9,12 @@
 //   q/<chiave>/domande            il questionario (JSON, vedi domande/carica.mjs)
 //   q/<chiave>/ritagli/<nome>     le immagini
 //   q/<chiave>/risposte/<id>      una risposta per domanda
+// Con lo stesso sistema, una pagina per caricare le foto che mancano al sito (domande/foto.mjs):
+//   f/<chiave>/elenco             i riquadri da riempire (JSON)
+//   f/<chiave>/foto/<id>          la foto caricata, con tipo, nome e data nei metadati
 // La chiave è un indirizzo lungo e casuale: chi non ha il link non trova niente, e nessuna pagina si indicizza.
 import pagina from './pagina.html';
+import paginaFoto from './foto.html';
 import carattere from '../public/font/archivo-var.woff2';
 
 const CHIAVE = /^[a-z0-9]{20,40}$/;
@@ -48,7 +52,7 @@ export default {
     if (!chiave || !CHIAVE.test(chiave) || resto.length > 2) return nonTrovata();
     const base = `q/${chiave}/`;
     const testo = await env.DOMANDE.get(base + 'domande');
-    if (!testo) return nonTrovata();
+    if (!testo) return foto(request, env, url, chiave, resto);
     const percorso = resto.join('/');
 
     if (request.method === 'POST') {
@@ -112,4 +116,59 @@ async function risposta(request, env, base, questionario) {
     return json({ ok: false, errore: 'Non sono riuscito a salvare.' }, 503);
   }
   return json({ ok: true, quando: r.quando });
+}
+
+const TIPI_FOTO = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const PESO_FOTO = 20e6;
+
+/** La pagina per caricare le foto che mancano: l'elenco dei riquadri, le foto già caricate, il caricamento. */
+async function foto(request, env, url, chiave, resto) {
+  const base = `f/${chiave}/`;
+  const elenco = await env.DOMANDE.get(base + 'elenco', 'json');
+  if (!elenco) return nonTrovata();
+  const percorso = resto.join('/');
+  const voce = resto[0] === 'foto' && resto.length === 2 && elenco.voci.find((v) => v.id === resto[1]);
+
+  if (request.method === 'POST') {
+    if (!voce) return nonTrovata();
+    const origine = request.headers.get('Origin');
+    if (origine && origine !== url.origin) return json({ ok: false, errore: 'Richiesta non valida.' }, 403);
+    const tipo = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+    if (!TIPI_FOTO.includes(tipo)) return json({ ok: false, errore: 'Serve una foto (JPEG, PNG, WebP o HEIC).' }, 415);
+    if (Number(request.headers.get('Content-Length') || 0) > PESO_FOTO) return json({ ok: false, errore: 'Foto troppo pesante.' }, 413);
+    const corpo = await request.arrayBuffer();
+    if (!corpo.byteLength || corpo.byteLength > PESO_FOTO) return json({ ok: false, errore: 'Foto vuota o troppo pesante.' }, 413);
+    let nome = '';
+    try { nome = pulito(decodeURIComponent(request.headers.get('X-Nome') || ''), 120); } catch { /* resta senza nome */ }
+    const quando = new Date().toISOString();
+    try {
+      await env.DOMANDE.put(`${base}foto/${voce.id}`, corpo, { metadata: { tipo, nome, quando, peso: corpo.byteLength } });
+    } catch (errore) {
+      console.error('foto non salvata', errore);
+      return json({ ok: false, errore: 'Non sono riuscito a salvare.' }, 503);
+    }
+    return json({ ok: true, quando });
+  }
+  if (request.method !== 'GET' && request.method !== 'HEAD') return rispondi('Metodo non consentito', 405, { Allow: 'GET, HEAD, POST' });
+
+  if (percorso === '') {
+    if (!url.pathname.endsWith('/')) return rispondi(null, 308, { Location: url.pathname + '/' });
+    const casuale = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(18))));
+    return rispondi(paginaFoto.replaceAll('__CASUALE__', casuale), 200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Security-Policy': `default-src 'none'; script-src 'nonce-${casuale}'; style-src 'nonce-${casuale}' 'unsafe-inline'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
+    });
+  }
+  if (percorso === 'foto.json') {
+    const lette = await Promise.all(elenco.voci.map((v) => env.DOMANDE.getWithMetadata(`${base}foto/${v.id}`, 'stream')));
+    const caricate = {};
+    elenco.voci.forEach((v, i) => { lette[i].value?.cancel(); if (lette[i].metadata) caricate[v.id] = lette[i].metadata; });
+    return json({ voci: elenco.voci, caricate });
+  }
+  if (voce) {
+    const f = await env.DOMANDE.getWithMetadata(`${base}foto/${voce.id}`, 'stream');
+    if (!f.value) return nonTrovata();
+    return rispondi(f.value, 200, { 'Content-Type': f.metadata?.tipo || 'application/octet-stream', 'Cache-Control': 'private, max-age=3600' });
+  }
+  return nonTrovata();
 }
