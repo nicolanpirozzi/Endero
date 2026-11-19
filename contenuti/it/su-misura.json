@@ -98,6 +98,7 @@
       ],
       "unita": "— cm",
       "foto": "Foto del capo",
+      "immagine": { "file": "camicia-piegata", "alt": "Camicia bianca piegata, con il logo Endero ricamato all'interno del collo" },
       "invito": "Prenota la presa misure"
     }
   },

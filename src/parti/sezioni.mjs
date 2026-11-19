@@ -85,7 +85,7 @@ export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } =
               <dl>${g.voci.map((v) => `<div><dt>${esc(v)}</dt><dd>${esc(s.unita)}</dd></div>`).join('')}</dl>
             </div>`).join('\n            ')}
           </div>
-          <div class="scheda-misure__capo">${attesa({ nota: s.foto, etichetta: sito.foto_in_arrivo })}</div>
+          <div class="scheda-misure__capo">${fotoIntera(s.immagine, sito.foto?.['su-misura'], { sizes: '150px' }) || attesa({ nota: s.foto, etichetta: sito.foto_in_arrivo })}</div>
         </div>
         <a class="pillola pillola--chiara" href="${esc(pillola.href)}">${esc(pillola.testo)}</a>
       </div>

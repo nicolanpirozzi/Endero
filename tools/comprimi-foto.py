@@ -71,6 +71,8 @@ DETTAGLI = [
     ('capo-collezione.jpg', 'capo-collezione', (50, 0, 1250, 2000)),
     ('tessuto.jpg', 'tessuto', (680, 0, 1350, 1116)),
     ('camicia-giacca.jpg', 'camicia-giacca', (0, 140, 1116, 2000)),
+    # la foto piccola dentro la scheda delle misure (tre per quattro): colletto e ricamo
+    ('camicia-piegata.jpg', 'camicia-piegata', (640, 50, 1400, 1063)),
 ]
 # la collezione: le foto intere, in verticale; l'AVIF in tutte le grandezze, il WebP solo nelle prime due
 COLLEZIONE = {'v': (400, 800, 1400), 'webp': 800, 'o': (960, 1600, 2400)}

@@ -850,6 +850,11 @@ body[data-barra] .selettore {
   overflow: hidden;
 }
 
+.scheda-misure__capo > .foto {
+  width: 100%;
+  height: 100%;
+}
+
 /* la foto vera riempie il riquadro come il segnaposto */
 .griglia__voce > .foto {
   position: absolute;
