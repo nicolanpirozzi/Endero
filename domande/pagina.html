@@ -6,20 +6,21 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Domande · Endero</title>
 <style nonce="__CASUALE__">
-  /* Una domanda per schermata. In alto il ritaglio del foglio fotografato, sotto due colonne (quello che c'è sul
-     foglio e quello che pensiamo noi), poi la risposta, poi Indietro e Avanti. */
+  /* Chi risponde non è pratico di tecnologia: si apre e c'è già la prima domanda. Una domanda per schermata, letta
+     dall'alto in basso: il pezzo del foglio, due righe, la risposta con tasti grandi. Niente da scegliere prima,
+     niente da scorrere di lato, niente da mandare alla fine. */
   @font-face { font-family: "Archivo"; src: url("/_/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
   :root {
-    --carta: #f2f4f8; --foglio: #ffffff; --inchiostro: #101f3f; --tenue: #5a6682; --riga: #d6dce8;
-    --blu: #1b3c7e; --su-blu: #ffffff; --azzurro: #a9e6f6;
+    --carta: #f2f4f8; --foglio: #ffffff; --inchiostro: #101f3f; --tenue: #55617d; --riga: #d6dce8;
+    --blu: #1b3c7e; --su-blu: #ffffff; --velo: #eaf0fb;
     --verde: #1f7a4d; --verde-fondo: #dff3e7; --ambra: #8a5a00; --ambra-fondo: #fff1cf; --rosso: #a3261c; --rosso-fondo: #fde8e5;
     --testo: "Archivo", "Helvetica Neue", Arial, sans-serif;
     --cifre: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --carta: #0b1221; --foglio: #121b2f; --inchiostro: #e8edf8; --tenue: #9aa8c2; --riga: #27334d;
-      --blu: #9bbcff; --su-blu: #0b1221; --azzurro: #1d6a80;
+      --carta: #0b1221; --foglio: #121b2f; --inchiostro: #e8edf8; --tenue: #a3b0c9; --riga: #2b3854;
+      --blu: #9bbcff; --su-blu: #0b1221; --velo: #18243d;
       --verde: #7fd6a6; --verde-fondo: #14352a; --ambra: #ffd27a; --ambra-fondo: #3a2c08; --rosso: #ff9a8f; --rosso-fondo: #3b1512;
       color-scheme: dark;
     }
@@ -29,95 +30,87 @@
   html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0; background: var(--carta); color: var(--inchiostro);
-    font-family: var(--testo); font-size: 16px; line-height: 1.5;
-    padding-block: 22px 64px;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    font-family: var(--testo); font-size: 18px; line-height: 1.5;
+    padding-block: 18px 72px;
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
   }
-  .pagina { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .pagina { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
   p { margin: 0; }
   [hidden] { display: none !important; }
 
   /* in cima: a che punto si è */
   .cima { display: flex; flex-direction: column; gap: 8px; }
-  .dove { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
-  .occhiello { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tenue); font-weight: 600; }
-  .conta { font-family: var(--cifre); font-size: 14px; font-variant-numeric: tabular-nums; }
-  .barra { height: 6px; border-radius: 3px; background: var(--riga); overflow: hidden; }
+  .dove { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+  .occhiello { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tenue); font-weight: 700; }
+  .conta { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .barra { height: 8px; border-radius: 4px; background: var(--riga); overflow: hidden; }
   .barra span { display: block; height: 100%; width: 0; background: var(--blu); transition: width 250ms ease; }
-  .salvataggio { font-size: 14px; color: var(--tenue); min-height: 21px; }
-  .salvataggio[data-tipo="errore"] { color: var(--rosso); font-weight: 600; }
+  .prova { padding: 10px 14px; border-radius: 8px; background: var(--ambra-fondo); color: var(--ambra); font-size: 16px; font-weight: 600; }
 
   /* la domanda */
-  .passo { background: var(--foglio); border: 1px solid var(--riga); border-radius: 8px; padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 18px; }
-  .testa { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 14px; }
-  h1 { font-stretch: 116%; font-weight: 700; font-size: clamp(22px, 3.6vw, 30px); line-height: 1.15; margin: 0; text-wrap: balance; text-transform: uppercase; letter-spacing: 0.01em; }
+  .passo { background: var(--foglio); border: 1px solid var(--riga); border-radius: 12px; padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+  h1 { font-stretch: 114%; font-weight: 700; font-size: clamp(24px, 6vw, 32px); line-height: 1.12; margin: 0; text-wrap: balance; text-transform: uppercase; letter-spacing: 0.01em; }
   h1:focus { outline: none; }
-  h2 { font-stretch: 115%; font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.04em; margin: 8px 0 0; }
-  .stato { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--ambra-fondo); color: var(--ambra); }
-  .stato[data-stato="confermato"], .stato[data-stato="risposto"] { background: var(--verde-fondo); color: var(--verde); }
-  .stato[data-stato="modificato"] { background: var(--azzurro); color: var(--inchiostro); }
+  h2 { font-stretch: 112%; font-weight: 700; font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em; margin: 10px 0 0; }
+  .gia { align-self: flex-start; font-size: 15px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--verde-fondo); color: var(--verde); }
 
-  /* il ritaglio del foglio: sugli schermi stretti scorre di lato, così la scrittura resta leggibile */
-  .ritagli { display: flex; flex-direction: column; gap: 12px; }
-  figure { margin: 0; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-  figcaption { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tenue); }
-  .scorri { overflow-x: auto; border: 1px solid var(--riga); border-radius: 4px; background: #e9edf3; }
-  .scorri img { display: block; width: 100%; height: auto; max-width: none; }
-  .scorri img.largo { min-width: 760px; }
-  .scorri img.medio { min-width: 320px; }
-  .scorri.piccolo { max-width: 520px; }
+  /* il pezzo del foglio: se è troppo largo per lo schermo va a capo in due o tre strisce, come una riga di testo */
+  figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  figcaption { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tenue); }
+  .pezzo { display: flex; flex-direction: column; gap: 4px; min-height: 40px; }
+  .striscia { overflow: hidden; border: 1px solid var(--riga); border-radius: 6px; background: #e9edf3; }
+  .striscia img { display: block; max-width: none; height: auto; }
 
-  .due { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 26px; }
-  .due.una { grid-template-columns: minmax(0, 1fr); }
-  .due > div { min-width: 0; }
-  .etichetta { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tenue); margin-bottom: 4px; }
-  .ipotesi p { border-left: 3px solid var(--blu); padding-left: 12px; }
+  .etichetta { display: block; font-size: 15px; font-weight: 600; color: var(--tenue); margin-bottom: -8px; }
+  .proposta { font-size: 20px; line-height: 1.4; font-weight: 500; padding: 14px 16px; border-radius: 10px; background: var(--velo); border-left: 5px solid var(--blu); overflow-wrap: anywhere; white-space: pre-line; }
+  .nota { font-size: 16px; color: var(--tenue); }
+  .domanda { display: block; font-size: 21px; font-weight: 700; line-height: 1.3; margin-top: 4px; }
 
-  fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-  legend { padding: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tenue); margin-bottom: 8px; }
-  .scelte { display: flex; flex-direction: column; gap: 8px; }
-  .scelta { position: relative; display: flex; min-width: 0; }
-  .scelta input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-  .scelta span { display: block; width: 100%; padding: 11px 16px; border: 1.5px solid var(--riga); border-radius: 8px; font-size: 16px; line-height: 1.3; background: var(--foglio); }
-  .scelta input:hover + span { border-color: var(--blu); }
-  .scelta input:focus-visible + span { outline: 2px solid var(--blu); outline-offset: 2px; }
-  .scelta input:checked + span { background: var(--blu); border-color: var(--blu); color: var(--su-blu); font-weight: 600; }
-  .scelta.prima span { border-color: var(--blu); font-weight: 600; }
-  .altro { display: flex; flex-direction: column; gap: 8px; }
-  textarea, input[type="text"] { width: 100%; font: 400 16px/1.45 var(--testo); color: var(--inchiostro); background: var(--carta); border: 1.5px solid var(--riga); border-radius: 6px; padding: 10px 12px; }
-  textarea { min-height: 84px; resize: vertical; }
-  textarea:focus-visible, input[type="text"]:focus-visible { outline: 2px solid var(--blu); outline-offset: 1px; }
-  .domanda { font-size: 17px; font-weight: 600; line-height: 1.35; }
-  .quanto { display: flex; align-items: center; gap: 10px; }
-  input[type="text"].numero { width: 140px; font: 500 24px/1.2 var(--cifre); text-align: right; }
-  .quanto .unita { font: 500 20px/1 var(--cifre); color: var(--tenue); }
-  .esempio { font-size: 15px; color: var(--tenue); min-height: 23px; }
-  button { font: 600 15px/1.2 var(--testo); padding: 11px 20px; border-radius: 999px; border: 1.5px solid var(--blu); background: var(--blu); color: var(--su-blu); cursor: pointer; }
-  button.secondo { background: transparent; color: var(--blu); }
-  button:focus-visible { outline: 2px solid var(--blu); outline-offset: 2px; }
-  button:disabled { opacity: 0.45; cursor: default; }
-  .riga-tasto { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  /* le risposte: tasti grandi, uno sotto l'altro */
+  .scelte { display: flex; flex-direction: column; gap: 10px; }
+  button { font: 700 19px/1.25 var(--testo); cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--blu); outline-offset: 2px; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .scelta { width: 100%; min-height: 60px; padding: 14px 18px; text-align: left; border: 2px solid var(--blu); border-radius: 12px; background: var(--foglio); color: var(--blu); }
+  .scelta:hover { background: var(--velo); }
+  .scelta--presa, .scelta--presa:hover { background: var(--blu); color: var(--su-blu); }
+  .scelta--presa::before { content: "✓  "; }
+  .conferma { align-self: flex-start; min-height: 60px; min-width: 190px; padding: 14px 28px; border: 2px solid var(--blu); border-radius: 12px; background: var(--blu); color: var(--su-blu); }
+  .secondo { align-self: flex-start; min-height: 52px; padding: 12px 18px; border: 2px solid var(--riga); border-radius: 12px; background: transparent; color: var(--blu); font-weight: 600; font-size: 17px; }
+  .altro { display: flex; flex-direction: column; gap: 12px; }
+  .altro label { font-size: 17px; font-weight: 600; }
+  textarea, input[type="text"] { width: 100%; font: 400 19px/1.45 var(--testo); color: var(--inchiostro); background: var(--carta); border: 2px solid var(--blu); border-radius: 10px; padding: 12px 14px; }
+  textarea { min-height: 150px; resize: vertical; }
+  textarea:focus-visible, input[type="text"]:focus-visible { outline: 3px solid var(--blu); outline-offset: 1px; }
+  .quanto { display: flex; align-items: center; gap: 12px; }
+  input[type="text"].numero { width: 150px; font: 600 30px/1.2 var(--cifre); text-align: right; padding: 10px 14px; }
+  .quanto .unita { font: 600 24px/1 var(--testo); }
+  .esempio { font-size: 17px; color: var(--tenue); min-height: 26px; }
+  .errore { font-size: 17px; font-weight: 700; color: var(--rosso); }
+
+  .salvataggio { font-size: 16px; color: var(--tenue); min-height: 24px; text-align: center; }
+  .salvataggio[data-tipo="fatto"] { color: var(--verde); font-weight: 700; }
+  .salvataggio[data-tipo="errore"] { color: var(--rosso); font-weight: 700; }
   .passi { display: flex; justify-content: space-between; gap: 12px; }
-  .piccolo-testo { font-size: 14px; color: var(--tenue); }
+  .quieto { min-height: 52px; padding: 10px 16px; border: 0; border-radius: 10px; background: transparent; color: var(--blu); font-weight: 600; font-size: 18px; }
+  .quieto:hover { background: var(--velo); }
 
   /* la fine */
-  .riepilogo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-  .riepilogo li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--riga); }
-  .riepilogo li:last-child { border-bottom: 0; }
-  .riepilogo .nome { font-weight: 600; }
-  .riepilogo .data { grid-column: 1; font-size: 15px; color: var(--tenue); overflow-wrap: anywhere; white-space: pre-line; }
-  .riepilogo button { grid-row: 1 / span 2; grid-column: 2; padding: 7px 14px; font-size: 14px; }
-  .esito { padding: 14px 16px; border-radius: 8px; background: var(--verde-fondo); color: var(--verde); font-weight: 600; }
+  .esito { padding: 16px 18px; border-radius: 10px; background: var(--verde-fondo); color: var(--verde); font-size: 20px; font-weight: 700; }
   .esito[data-tipo="errore"] { background: var(--rosso-fondo); color: var(--rosso); }
   .esito[data-tipo="neutro"] { background: var(--ambra-fondo); color: var(--ambra); }
-  .copia { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--rosso); border-radius: 8px; }
-  .copia textarea { min-height: 150px; font: 400 13px/1.45 var(--cifre); }
+  .riepilogo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .riepilogo li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--riga); }
+  .riepilogo li:last-child { border-bottom: 0; }
+  .riepilogo .nome { font-weight: 700; }
+  .riepilogo .data { grid-column: 1; font-size: 17px; color: var(--tenue); overflow-wrap: anywhere; white-space: pre-line; }
+  .riepilogo .manca { color: var(--ambra); font-weight: 600; }
+  .riepilogo button { grid-row: 1 / span 2; grid-column: 2; }
+  .copia { display: flex; flex-direction: column; gap: 10px; }
+  .copia textarea { min-height: 150px; font-size: 14px; }
 
-  @media (max-width: 640px) {
-    .due { grid-template-columns: minmax(0, 1fr); }
-    .passo { padding: 18px 14px 16px; }
-  }
+  @media (max-width: 640px) { .passo { padding: 18px 14px 20px; } }
   @media (prefers-reduced-motion: reduce) { .barra span { transition: none; } }
 </style>
 </head>
@@ -129,14 +122,15 @@
       <p class="conta" id="conta"></p>
     </div>
     <div class="barra" aria-hidden="true"><span id="barra"></span></div>
-    <p class="salvataggio" id="salvataggio" role="status" aria-live="polite">Carico le domande…</p>
   </header>
-  <section class="passo" id="passo"></section>
+  <p class="prova" id="prova" hidden>Prova: qui le risposte non vengono salvate.</p>
+  <section class="passo" id="passo"><p>Un attimo…</p></section>
+  <p class="salvataggio" id="salvataggio" role="status" aria-live="polite"></p>
   <nav class="passi" id="passi" aria-label="Domande" hidden>
-    <button type="button" class="secondo" id="indietro">Indietro</button>
-    <button type="button" class="secondo" id="avanti">Salta</button>
+    <button type="button" class="quieto" id="indietro">‹ Indietro</button>
+    <button type="button" class="quieto" id="avanti">Salta ›</button>
   </nav>
-  <noscript><p>Questa pagina ha bisogno di JavaScript: aprila con il browser del telefono o del computer (Chrome, Safari, Edge, Firefox).</p></noscript>
+  <noscript><p>Questa pagina non si apre con questo programma: aprila con Chrome o Safari.</p></noscript>
 </main>
 
 <script nonce="__CASUALE__">
@@ -144,29 +138,30 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
   const crea = (tag, classe, testo) => { const e = document.createElement(tag); if (classe) e.className = classe; if (testo != null) e.textContent = testo; return e; };
+  const tasto = (testo, classe, id) => { const b = crea('button', classe, testo); b.type = 'button'; if (id) b.id = id; return b; };
   const cifra = (n) => String(n).replace('.', ',');
   const avviso = (testo, tipo = '') => { const el = $('salvataggio'); el.textContent = testo; el.dataset.tipo = tipo; };
-  const adesso = () => new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  const righe = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 
   // ------------------------------------------------------------------ stato
   let Q = null, PASSI = [], N = 0, POSTO = '';
   const risposte = {};        // id -> la risposta che si vede
   const daMandare = {};       // id -> risposta non ancora arrivata al server
   const mandate = {};         // id -> quando è arrivata: per un paio di minuti il server può ancora rileggere quella vecchia
-  let modo = '';              // '' non ancora scelto · 'vero' si salva · 'prova' si guarda soltanto
-  let qui = -1;               // -1 introduzione · da 0 a N-1 le domande · N il riepilogo
+  // con ?prova in fondo all'indirizzo si guarda la pagina senza salvare niente (per chi la controlla, non per chi risponde)
+  const prova = new URLSearchParams(location.search).has('prova');
+  let qui = 0;                // da 0 a N-1 le domande · N la fine
+  let figure = [];            // i pezzi di foglio della schermata, da risistemare se lo schermo cambia larghezza
 
-  const NOMI = { ipotesi: { aperto: 'Da confermare', confermato: 'Confermato', modificato: 'Modificato' }, numero: { aperto: 'Da scrivere', risposto: 'Scritto' } };
-  const statoDi = (id) => (risposte[id] && risposte[id].stato) || 'aperto';
-  const nomeStato = (p) => (NOMI[p.tipo] || NOMI.ipotesi)[statoDi(p.id)] || 'Risposto';
-  const fatti = () => PASSI.filter((p) => statoDi(p.id) !== 'aperto').length;
-  const primaAperta = () => { const k = PASSI.findIndex((p) => statoDi(p.id) === 'aperto'); return k < 0 ? N : k; };
-  const barra = () => { $('barra').style.width = `${N ? Math.round(fatti() / N * 100) : 0}%`; };
+  const fatta = (id) => Boolean(risposte[id] && risposte[id].stato);
+  const fatte = () => PASSI.filter((p) => fatta(p.id)).length;
+  const primaAperta = () => { const k = PASSI.findIndex((p) => !fatta(p.id)); return k < 0 ? N : k; };
+  const barra = () => { $('barra').style.width = `${N ? Math.round(fatte() / N * 100) : 0}%`; };
 
   // sul dispositivo resta una copia delle risposte date da qui: se la rete cade non si perde niente
   function tieni() {
-    if (modo !== 'vero') return;
-    try { localStorage.setItem(POSTO, JSON.stringify({ modo, risposte, daMandare: Object.keys(daMandare), mandate })); } catch { /* resta in memoria finché la pagina è aperta */ }
+    if (prova) return;
+    try { localStorage.setItem(POSTO, JSON.stringify({ risposte, daMandare: Object.keys(daMandare), mandate })); } catch { /* resta in memoria finché la pagina è aperta */ }
   }
   function tenute() { try { return JSON.parse(localStorage.getItem(POSTO) || 'null') || {}; } catch { return {}; } }
 
@@ -177,203 +172,214 @@
     return n >= min && n <= max ? n : null;
   }
 
-  function figura([file, dida, largo]) {
-    const f = crea('figure'), s = crea('div', 'scorri' + (largo === 'piccolo' ? ' piccolo' : '')), im = crea('img', largo === 'piccolo' ? 'medio' : largo || 'largo');
-    const sotto = crea('figcaption', '', dida);
-    // sul telefono il ritaglio largo non ci sta intero: lo si dice, altrimenti metà della riga resta nascosta
-    im.addEventListener('load', () => { if (s.scrollWidth > s.clientWidth + 4) sotto.textContent = `${dida} · scorri di lato`; });
-    im.src = `ritagli/${file}.jpg`; im.alt = dida;
-    s.append(im); f.append(sotto, s);
+  // Il pezzo del foglio. La scrittura a mano deve restare leggibile: se l'immagine è troppo larga per lo schermo
+  // non si rimpicciolisce e non si fa scorrere di lato, ma va a capo in due o tre strisce che si sovrappongono un po'.
+  const SOPRA = 0.12;                                           // quanto una striscia ripete della precedente
+  const parte = (k) => 1 / (k - (k - 1) * SOPRA);               // quanta parte dell'immagine sta in una striscia
+  function figura([file, dida]) {
+    const f = crea('figure'), pezzo = crea('div', 'pezzo'), im = new Image();
+    im.alt = dida;
+    const sistema = () => {
+      const spazio = f.clientWidth, larga = im.naturalWidth;
+      if (!spazio || !larga) return;
+      let k = 1;
+      while (k < 3 && spazio / (parte(k) * larga) < 0.42) k++;
+      pezzo.style.maxWidth = k === 1 ? `${Math.round(larga * 0.8)}px` : '';
+      if (pezzo.dataset.strisce === String(k)) return;
+      pezzo.dataset.strisce = String(k);
+      pezzo.replaceChildren();
+      for (let i = 0; i < k; i++) {
+        const s = crea('div', 'striscia'), copia = i === 0 ? im : im.cloneNode();
+        if (i) copia.alt = '';
+        copia.style.width = `${100 / parte(k)}%`;
+        copia.style.marginLeft = `${-i * (1 - SOPRA) * 100}%`;
+        s.append(copia); pezzo.append(s);
+      }
+    };
+    im.addEventListener('load', sistema);
+    figure.push(sistema);
+    im.src = `ritagli/${file}.jpg`;
+    f.append(crea('figcaption', '', dida), pezzo);
     return f;
   }
-
-  // ------------------------------------------------------------------ l'inizio: chi sta rispondendo
-  function introduzione(el, fuoco) {
-    $('gruppo').textContent = Q.occhiello || 'Endero';
-    $('conta').textContent = `${N} domande`;
-    const h = crea('h1', '', Q.titolo); h.tabIndex = -1;
-    el.append(h);
-    for (const riga of Q.introduzione || []) el.append(crea('p', '', riga));
-    const vero = crea('button', '', fatti() ? 'Rispondo per Endero: continua' : 'Rispondo per Endero: comincia'), prova = crea('button', 'secondo', 'Sto solo guardando la pagina');
-    vero.type = prova.type = 'button'; vero.id = 'comincia'; prova.id = 'guarda';
-    vero.addEventListener('click', () => { modo = 'vero'; tieni(); avviso('Ogni risposta si salva da sola.'); mostra(primaAperta()); svuota(); });
-    prova.addEventListener('click', () => { modo = 'prova'; avviso('Stai solo guardando: niente viene salvato. Per rispondere davvero ricarica la pagina.'); mostra(0); });
-    const riga = crea('div', 'riga-tasto'); riga.append(vero, prova);
-    el.append(riga, crea('p', 'piccolo-testo', 'Se stai solo guardando, le risposte che dai non vengono salvate.'));
-    if (fuoco) h.focus({ preventScroll: true });
-  }
+  window.addEventListener('resize', () => figure.forEach((s) => s()));
 
   // ------------------------------------------------------------------ una schermata
   function mostra(i, fuoco = true) {
-    qui = Math.max(-1, Math.min(N, i));
+    qui = Math.max(0, Math.min(N, i));
     const el = $('passo');
     el.replaceChildren();
-    $('passi').hidden = qui < 0;
-    $('indietro').disabled = qui <= 0;
+    figure = [];
+    $('passi').hidden = false;
+    $('indietro').disabled = qui === 0;
     $('avanti').hidden = qui === N;
     barra();
-    if (qui < 0) { introduzione(el, fuoco); return; }
     if (qui === N) { fine(el); if (fuoco) { el.querySelector('h1').focus({ preventScroll: true }); window.scrollTo({ top: 0 }); } return; }
     const p = PASSI[qui], r = risposte[p.id] || {};
     $('gruppo').textContent = p.gruppo;
     $('conta').textContent = `Domanda ${qui + 1} di ${N}`;
-    $('avanti').textContent = statoDi(p.id) === 'aperto' ? 'Salta' : 'Avanti';
+    $('avanti').textContent = fatta(p.id) ? 'Avanti ›' : 'Salta ›';
 
-    const testa = crea('div', 'testa'), h = crea('h1', '', p.titolo), pill = crea('span', 'stato', nomeStato(p));
-    h.tabIndex = -1; pill.dataset.stato = statoDi(p.id); pill.id = 'pill';
-    testa.append(h, pill); el.append(testa);
+    const h = crea('h1', '', p.titolo); h.tabIndex = -1;
+    el.append(h);
+    if (fatta(p.id)) el.append(crea('p', 'gia', 'Hai già risposto: puoi cambiare'));
+    for (const rit of p.ritagli || []) el.append(figura(rit));
+    for (const riga of righe(p.testo)) el.append(crea('p', '', riga));
 
-    if (p.ritagli && p.ritagli.length) {
-      const g = crea('div', 'ritagli');
-      for (const rit of p.ritagli) g.append(figura(rit));
-      el.append(g);
-    }
-
-    // due colonne: a sinistra quello che c'è sul foglio (o il dubbio), a destra quello che pensiamo noi
-    const destra = p.tipo === 'numero' ? ripresa(p) : p.ipotesi;
-    const nomi = p.etichette || (p.tipo === 'numero' ? ['Sul foglio', 'Il cliente si misura così'] : ['Non ho capito', 'Penso che']);
-    const due = crea('div', 'due' + (p.dubbio && destra ? '' : ' una'));
-    if (p.dubbio) { const a = crea('div', 'dubbio'); a.append(crea('span', 'etichetta', nomi[0]), crea('p', '', p.dubbio)); due.append(a); }
-    if (destra) { const b = crea('div', 'ipotesi'); b.append(crea('span', 'etichetta', nomi[1]), crea('p', '', destra)); due.append(b); }
-    if (due.children.length) el.append(due);
-    // una riga in più su come la risposta entra nel calcolo: chi conferma, conferma anche questa
-    if (p.nota) { const n = crea('div', 'nota'); n.append(crea('span', 'etichetta', p.etichettaNota || 'Nel calcolo'), crea('p', '', p.nota)); el.append(n); }
-
-    if (p.tipo === 'numero') quanto(el, p, r); else conferma(el, p, r);
+    if (p.tipo === 'numero') quanto(el, p, r); else if (p.tipo === 'scelta') scegli(el, p, r); else conferma(el, p, r);
     if (fuoco) { h.focus({ preventScroll: true }); window.scrollTo({ top: 0 }); }
   }
 
-  /** Il testo che il cliente leggerà per misurarsi: quello confermato, o quello riscritto nella domanda prima. */
-  function ripresa(p) {
-    const da = PASSI.find((x) => x.id === p.riprende);
-    if (!da) return p.ipotesi || '';
-    const r = risposte[da.id];
-    return r && r.scelta === 'altro' && r.testo ? r.testo : (da.aiuto || da.ipotesi);
-  }
-
-  // conferma di un'ipotesi: la prima scelta conferma, le altre correggono, l'ultima lascia scrivere
-  function conferma(el, p, r) {
-    const scelte = [['conferma', p.conferma || 'Confermo'], ...(p.altre || []), ['altro', p.altro || 'Non è così: lo scrivo io']];
-    const campo = crea('fieldset'), gruppo = crea('div', 'scelte');
-    campo.append(crea('legend', '', 'La tua risposta'));
+  /** Il riquadro per scrivere a mano, con il suo tasto. Resta chiuso finché non serve. */
+  function scriviQui(p, r, etichetta, partenza, quando) {
     const altro = crea('div', 'altro'); altro.hidden = true;
     const scritto = crea('textarea'); scritto.id = `t-${p.id}`; scritto.maxLength = 1500;
-    const etichetta = crea('label', 'etichetta', p.scrivi || 'Scrivi com\'è'); etichetta.htmlFor = scritto.id;
-    const tasto = crea('button', '', 'Salva e vai avanti'); tasto.type = 'button'; tasto.id = `b-${p.id}`;
-    const riga = crea('div', 'riga-tasto'); riga.append(tasto);
-    altro.append(etichetta, scritto, riga);
-    scelte.forEach(([id, testo], k) => {
-      const l = crea('label', 'scelta' + (k === 0 ? ' prima' : '')), radio = crea('input'), s = crea('span', '', testo);
-      radio.type = 'radio'; radio.name = `r-${p.id}`; radio.id = `r-${p.id}-${id}`; radio.value = id; radio.checked = r.scelta === id;
-      radio.addEventListener('change', () => {
-        if (id === 'altro') { altro.hidden = false; scritto.focus(); return; }
-        altro.hidden = true;
+    const nome = crea('label', '', etichetta); nome.htmlFor = scritto.id;
+    const ok = tasto('Conferma', 'conferma', `b-${p.id}`);
+    altro.append(nome, scritto, ok);
+    const apri = (conFuoco = true) => {
+      altro.hidden = false;
+      if (!scritto.value) scritto.value = (r.scelta === 'altro' && r.testo) || partenza || '';
+      if (conFuoco) { scritto.focus(); altro.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    };
+    ok.addEventListener('click', () => { const t = scritto.value.trim(); if (!t) { scritto.focus(); return; } quando(t); });
+    if (r.scelta === 'altro') apri(false);
+    return { altro, apri };
+  }
+
+  // una proposta da approvare: «Sì, va bene» oppure «No, la cambio» (e allora la si corregge, senza riscriverla da capo)
+  function conferma(el, p, r) {
+    if (p.etichetta) el.append(crea('p', 'etichetta', p.etichetta));
+    el.append(crea('p', 'proposta', p.ipotesi));
+    if (p.nota) el.append(crea('p', 'nota', p.nota));
+    el.append(crea('p', 'domanda', p.domanda || 'È giusto?'));
+    const scelte = crea('div', 'scelte');
+    const { altro, apri } = scriviQui(p, r, p.scrivi || 'Scrivi qui com\'è giusto:', p.modifica ? p.ipotesi : '', (t) => {
+      // chi apre il riquadro e lo lascia com'era ha confermato
+      if (p.modifica && t === p.ipotesi) salva(p, { stato: 'confermato', scelta: 'conferma', testo: '' }, 'Confermo: ' + p.ipotesi);
+      else salva(p, { stato: 'modificato', scelta: 'altro', testo: t }, t);
+    });
+    const tutte = [['conferma', p.conferma || 'Sì, è giusto'], ...(p.altre || []), ['altro', p.altro || 'No, lo scrivo io']];
+    for (const [id, testo] of tutte) {
+      const b = tasto(testo, 'scelta' + (r.scelta === id ? ' scelta--presa' : ''), `r-${p.id}-${id}`);
+      b.addEventListener('click', () => {
+        if (id === 'altro') { apri(); return; }
+        segna(scelte, b);
         salva(p, { stato: id === 'conferma' ? 'confermato' : 'modificato', scelta: id, testo: '' }, id === 'conferma' ? 'Confermo: ' + p.ipotesi : testo);
       });
-      l.append(radio, s); gruppo.append(l);
-    });
-    if (r.scelta === 'altro') { altro.hidden = false; scritto.value = r.testo || ''; }
-    tasto.addEventListener('click', () => {
-      const t = scritto.value.trim();
-      if (!t) { scritto.focus(); return; }
-      salva(p, { stato: 'modificato', scelta: 'altro', testo: t }, t);
-    });
-    campo.append(gruppo); el.append(campo, altro);
+      scelte.append(b);
+    }
+    el.append(scelte, altro);
   }
 
-  // un numero da scrivere (i centimetri di agio), oppure due righe se un numero fisso non c'è
+  // una domanda con le risposte già scritte: se ne tocca una
+  function scegli(el, p, r) {
+    el.append(crea('p', 'domanda', p.domanda));
+    const scelte = crea('div', 'scelte');
+    const { altro, apri } = scriviQui(p, r, p.scrivi || 'Scrivi qui:', '', (t) => salva(p, { stato: 'risposto', scelta: 'altro', testo: t }, t));
+    const tutte = [...p.scelte, ...(p.altro === false ? [] : [['altro', p.altro || 'Altro: lo scrivo io']])];
+    for (const [id, testo] of tutte) {
+      const b = tasto(testo, 'scelta' + (r.scelta === id ? ' scelta--presa' : ''), `r-${p.id}-${id}`);
+      b.addEventListener('click', () => {
+        if (id === 'altro') { apri(); return; }
+        segna(scelte, b);
+        salva(p, { stato: 'risposto', scelta: id, testo: '' }, testo);
+      });
+      scelte.append(b);
+    }
+    el.append(scelte, altro);
+  }
+  function segna(gruppo, scelto) { for (const b of gruppo.children) b.classList.toggle('scelta--presa', b === scelto); }
+
+  /** Il testo che il cliente leggerà per misurarsi: quello approvato, o quello corretto nella domanda prima. */
+  function ripresa(p) {
+    const da = PASSI.find((x) => x.id === p.riprende);
+    if (!da) return '';
+    const r = risposte[da.id];
+    return r && r.scelta === 'altro' && r.testo ? r.testo : da.ipotesi;
+  }
+
+  // un numero da scrivere (i centimetri), oppure due righe se un numero fisso non c'è
   function quanto(el, p, r) {
-    const min = p.min ?? 0, max = p.max ?? 60;
-    const campo = crea('fieldset');
-    campo.append(crea('legend', '', 'La tua risposta'));
+    const min = p.min ?? 0, max = p.max ?? 60, unita = p.unita || 'cm';
+    const citato = ripresa(p);
+    if (citato) el.append(crea('p', 'etichetta', p.etichettaRiprende || 'Il cliente si misura così:'), crea('p', 'proposta', citato));
     const cifre = crea('input', 'numero'); cifre.type = 'text'; cifre.inputMode = 'decimal'; cifre.autocomplete = 'off'; cifre.maxLength = 6; cifre.id = `n-${p.id}`;
     const domanda = crea('label', 'domanda', p.domanda); domanda.htmlFor = cifre.id;
-    const riga = crea('div', 'quanto'); riga.append(cifre, crea('span', 'unita', p.unita || 'cm'));
+    const riga = crea('div', 'quanto'); riga.append(cifre, crea('span', 'unita', unita));
     const esempio = crea('p', 'esempio'); esempio.id = `e-${p.id}`;
-    const tasto = crea('button', '', 'Salva e vai avanti'); tasto.type = 'button'; tasto.id = `b-${p.id}`;
-    const apri = crea('button', 'secondo', p.altro || 'Non è un numero fisso: lo spiego io'); apri.type = 'button'; apri.id = `a-${p.id}`;
-    const tasti = crea('div', 'riga-tasto'); tasti.append(tasto, apri);
-    const altro = crea('div', 'altro'); altro.hidden = true;
-    const scritto = crea('textarea'); scritto.id = `t-${p.id}`; scritto.maxLength = 1500;
-    const etichetta = crea('label', 'etichetta', p.scrivi || 'Spiega come si decide'); etichetta.htmlFor = scritto.id;
-    const tasto2 = crea('button', '', 'Salva e vai avanti'); tasto2.type = 'button'; tasto2.id = `c-${p.id}`;
-    const riga2 = crea('div', 'riga-tasto'); riga2.append(tasto2);
-    altro.append(etichetta, scritto, riga2);
+    const errore = crea('p', 'errore'); errore.id = `x-${p.id}`; errore.hidden = true; errore.setAttribute('role', 'alert');
+    const ok = tasto('Conferma', 'conferma', `b-${p.id}`);
+    const { altro, apri } = scriviQui({ id: p.id + '-a' }, r, p.scrivi || 'Spiega qui come si decide:', '', (t) => salva(p, { stato: 'risposto', scelta: 'altro', testo: t }, t));
+    const dipende = tasto(p.altro || 'Dipende: lo spiego io', 'secondo', `a-${p.id}`);
 
     const conta = () => {
+      errore.hidden = true;
       if (!p.esempio) return;
       const n = numero(cifre.value, min, max);
-      esempio.textContent = n === null ? (p.esempio.vuota || '') : p.esempio.frase.replace('{n}', cifra(n)).replace('{r}', cifra(Math.round((p.esempio.da - n) * 10) / 10));
+      esempio.textContent = n === null ? (p.esempio.vuota || '') : p.esempio.frase.replaceAll('{n}', cifra(n)).replaceAll('{r}', cifra(Math.round(((p.esempio.da || 0) - n) * 10) / 10));
     };
     const scrivi = () => {
       const n = numero(cifre.value, min, max);
-      if (n === null) { cifre.focus(); avviso(`Scrivi un numero tra ${cifra(min)} e ${cifra(max)}, per esempio 8 oppure 1,5.`, 'errore'); return; }
-      salva(p, { stato: 'risposto', scelta: 'numero', valore: n, testo: '' }, `${cifra(n)} ${p.unita || 'cm'}`);
+      if (n === null) { errore.textContent = `Scrivi un numero da ${cifra(min)} a ${cifra(max)}. Per esempio 8, oppure 1,5.`; errore.hidden = false; cifre.focus(); return; }
+      salva(p, { stato: 'risposto', scelta: 'numero', valore: n, testo: '' }, `${cifra(n)} ${unita}`);
     };
     cifre.addEventListener('input', conta);
     cifre.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); scrivi(); } });
-    tasto.addEventListener('click', scrivi);
-    apri.addEventListener('click', () => { altro.hidden = false; scritto.focus(); });
-    tasto2.addEventListener('click', () => {
-      const t = scritto.value.trim();
-      if (!t) { scritto.focus(); return; }
-      salva(p, { stato: 'risposto', scelta: 'altro', testo: t }, t);
-    });
+    ok.addEventListener('click', scrivi);
+    dipende.addEventListener('click', () => apri());
     if (r.scelta === 'numero' && r.valore != null) cifre.value = cifra(r.valore);
-    if (r.scelta === 'altro') { altro.hidden = false; scritto.value = r.testo || ''; }
     conta();
-    campo.append(domanda, riga, esempio, tasti); el.append(campo, altro);
+    el.append(domanda, riga, esempio, errore, ok, dipende, altro);
   }
 
-  // ------------------------------------------------------------------ la fine: tutte le risposte in fila
+  // ------------------------------------------------------------------ la fine
   function fine(el) {
-    $('gruppo').textContent = 'Riepilogo';
-    $('conta').textContent = `${fatti()} risposte su ${N}`;
-    const tutte = fatti() === N, inCoda = Object.keys(daMandare).length;
-    const h = crea('h1', '', tutte ? 'Hai risposto a tutto' : 'Mancano ancora delle risposte'); h.tabIndex = -1;
+    $('gruppo').textContent = 'Fine';
+    $('conta').textContent = `${fatte()} risposte su ${N}`;
+    const mancano = N - fatte(), inCoda = Object.keys(daMandare).length;
+    const h = crea('h1', '', mancano ? (mancano === 1 ? 'Manca una risposta' : `Mancano ${mancano} risposte`) : 'Fatto, grazie!'); h.tabIndex = -1;
     el.append(h);
     const esito = crea('p', 'esito'); esito.id = 'esito';
-    if (modo !== 'vero') { esito.dataset.tipo = 'neutro'; esito.textContent = 'Stavi solo guardando: niente è stato salvato. Per rispondere davvero ricarica la pagina e scegli «Rispondo per Endero».'; }
-    else if (inCoda) { esito.dataset.tipo = 'errore'; esito.textContent = inCoda === 1 ? 'Una risposta non è ancora arrivata. Controlla la connessione e premi «Riprova».' : `${inCoda} risposte non sono ancora arrivate. Controlla la connessione e premi «Riprova».`; }
-    else if (tutte) esito.textContent = 'Tutte le risposte sono salvate: non devi mandare niente. Avvisa chi ti ha girato il link che hai finito.';
-    else { esito.dataset.tipo = 'neutro'; esito.textContent = 'Le risposte date fin qui sono salvate. Quelle che mancano sono segnate qui sotto: premi «Rivedi» per tornarci, anche in un altro momento, da questo stesso link.'; }
+    if (prova) { esito.dataset.tipo = 'neutro'; esito.textContent = 'Era una prova: niente è stato salvato.'; }
+    else if (inCoda) { esito.dataset.tipo = 'errore'; esito.textContent = inCoda === 1 ? 'Una risposta non è ancora arrivata. Controlla che il telefono sia collegato a internet e premi «Riprova».' : `${inCoda} risposte non sono ancora arrivate. Controlla che il telefono sia collegato a internet e premi «Riprova».`; }
+    else if (mancano) { esito.dataset.tipo = 'neutro'; esito.textContent = 'Le risposte date fin qui sono salvate. Puoi finire anche più tardi, riaprendo lo stesso link.'; }
+    else esito.textContent = 'Tutte le risposte sono arrivate. Puoi chiudere la pagina.';
     el.append(esito);
-    if (modo === 'vero' && inCoda) {
+    if (!prova && inCoda) {
       // se la rete proprio non va, le risposte si possono copiare e mandare a mano
-      const righe = [`RISPOSTE (${fatti()} su ${N}) · ${Q.titolo}`];
-      for (const p of PASSI) righe.push(`[${p.id}] ${p.titolo} → ${statoDi(p.id) === 'aperto' ? '(senza risposta)' : risposte[p.id].risposta}`);
-      const riquadro = crea('div', 'copia'), testo = crea('textarea'), ancora = crea('button', '', 'Riprova'), copia = crea('button', 'secondo', 'Copia le risposte'), detto = crea('span', 'piccolo-testo', '');
-      testo.readOnly = true; testo.value = righe.join('\n'); testo.setAttribute('aria-label', 'Tutte le risposte, da copiare');
-      ancora.type = copia.type = 'button'; ancora.id = 'riprova';
+      const testo = [`RISPOSTE (${fatte()} su ${N}) · ${Q.titolo}`];
+      for (const p of PASSI) testo.push(`[${p.id}] ${p.titolo} → ${fatta(p.id) ? risposte[p.id].risposta : '(senza risposta)'}`);
+      const riquadro = crea('div', 'copia'), campo = crea('textarea'), ancora = tasto('Riprova', 'conferma', 'riprova'), copia = tasto('Copia le risposte', 'secondo'), detto = crea('p', 'nota', '');
+      campo.readOnly = true; campo.value = testo.join('\n'); campo.setAttribute('aria-label', 'Tutte le risposte, da copiare');
       ancora.addEventListener('click', () => svuota());
       copia.addEventListener('click', () => {
-        const seleziona = () => { testo.focus(); testo.select(); detto.textContent = 'Il testo è selezionato: copialo e incollalo in un messaggio.'; };
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(testo.value).then(() => { detto.textContent = 'Copiate. Incollale in un messaggio a chi ti ha girato il link.'; }, seleziona); else seleziona();
+        const seleziona = () => { campo.hidden = false; campo.focus(); campo.select(); detto.textContent = 'Il testo è selezionato: copialo e incollalo in un messaggio.'; };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(campo.value).then(() => { detto.textContent = 'Copiate. Incollale in un messaggio a chi ti ha mandato il link.'; }, seleziona); else seleziona();
       });
-      const riga = crea('div', 'riga-tasto'); riga.append(ancora, copia, detto);
-      riquadro.append(riga, testo); el.append(riquadro);
+      campo.hidden = true;
+      riquadro.append(ancora, copia, detto, campo); el.append(riquadro);
     }
-    let gruppo = null, lista = null;
+    if (mancano) { const vai = tasto('Vai alla prima che manca', 'conferma', 'manca'); vai.addEventListener('click', () => mostra(primaAperta())); el.append(vai); }
+    el.append(crea('h2', '', 'Le tue risposte'), crea('p', 'nota', 'Per cambiarne una premi «Cambia».'));
+    const lista = crea('ul', 'riepilogo');
     PASSI.forEach((p, i) => {
-      if (p.gruppo !== gruppo) { gruppo = p.gruppo; el.append(crea('h2', '', gruppo)); lista = crea('ul', 'riepilogo'); el.append(lista); }
-      const li = crea('li'), st = statoDi(p.id);
-      const nome = crea('span', 'nome', p.titolo + ' '), pill = crea('span', 'stato', nomeStato(p)); pill.dataset.stato = st; nome.append(pill);
-      const data = crea('span', 'data', st === 'aperto' ? '' : (risposte[p.id].risposta || ''));
-      const b = crea('button', 'secondo', 'Rivedi'); b.type = 'button'; b.addEventListener('click', () => mostra(i));
-      li.append(nome, data, b); lista.append(li);
+      const li = crea('li'), c = fatta(p.id);
+      const b = tasto(c ? 'Cambia' : 'Rispondi', 'secondo'); b.addEventListener('click', () => mostra(i));
+      li.append(crea('span', 'nome', p.titolo), crea('span', 'data' + (c ? '' : ' manca'), c ? risposte[p.id].risposta.replace(/^Confermo: /, 'Va bene: ') : 'Manca la risposta'), b);
+      lista.append(li);
     });
+    el.append(lista);
   }
 
   // ------------------------------------------------------------------ il salvataggio
   function salva(p, r, risposta) {
     const dati = { ...r, risposta };
     risposte[p.id] = dati;
-    const pill = $('pill'); if (pill) { pill.dataset.stato = dati.stato; pill.textContent = nomeStato(p); }
     barra();
-    $('avanti').textContent = 'Avanti';
     const da = qui;
-    setTimeout(() => { if (qui === da) mostra(da + 1); }, 450);
-    if (modo !== 'vero') return;
+    setTimeout(() => { if (qui === da) mostra(da + 1); }, 600);
+    if (prova) return;
     daMandare[p.id] = dati; tieni(); svuota();
   }
 
@@ -389,7 +395,7 @@
   // le risposte partono una alla volta; se la rete cade restano in coda e si riprova da soli, sempre più di rado
   let inCorso = null, riprova = 0, attesa = 2000;
   function svuota() {
-    if (inCorso || modo !== 'vero') return inCorso;
+    if (inCorso || prova) return inCorso;
     clearTimeout(riprova);
     if (!Object.keys(daMandare).length) return null;
     inCorso = (async () => {
@@ -398,7 +404,6 @@
         const id = Object.keys(daMandare)[0];
         if (!id) break;
         const dati = daMandare[id];
-        avviso('Salvo…');
         const esito = await spedisci(id, dati);
         if (esito === 'no') { ferma = true; continue; }
         if (esito === 'rifiutata') rifiutate++; else mandate[id] = Date.now();
@@ -408,11 +413,11 @@
       inCorso = null;
       const n = Object.keys(daMandare).length;
       if (n) {
-        avviso(n === 1 ? 'Una risposta non è ancora salvata: riprovo da solo.' : `${n} risposte non sono ancora salvate: riprovo da solo.`, 'errore');
+        avviso(n === 1 ? 'Internet non va: la risposta è al sicuro qui, riprovo da solo.' : `Internet non va: ${n} risposte sono al sicuro qui, riprovo da solo.`, 'errore');
         riprova = setTimeout(svuota, attesa); attesa = Math.min(attesa * 2, 30000);
       } else {
         attesa = 2000;
-        if (rifiutate) avviso('Una risposta non è stata accettata: riscrivila più corta.', 'errore'); else avviso(`Salvata alle ${adesso()}.`);
+        if (rifiutate) avviso('Una risposta era troppo lunga: riscrivila più corta.', 'errore'); else avviso('✓ Risposta salvata', 'fatto');
       }
       if (qui === N) mostra(N, false);
     })();
@@ -423,7 +428,7 @@
   $('indietro').addEventListener('click', () => mostra(qui - 1));
   $('avanti').addEventListener('click', () => mostra(qui + 1));
 
-  // ------------------------------------------------------------------ partenza
+  // ------------------------------------------------------------------ partenza: subito la prima domanda senza risposta
   (async () => {
     let lette = {}, letteBene = false;
     try {
@@ -432,13 +437,15 @@
       Q = await a.json();
       if (b && b.ok) { lette = (await b.json()).risposte || {}; letteBene = true; }
     } catch {
-      avviso('Non riesco a caricare le domande. Controlla la connessione e ricarica la pagina.', 'errore');
+      $('passo').replaceChildren(crea('p', 'esito', 'La pagina non si è aperta bene. Controlla che il telefono sia collegato a internet e riapri il link.'));
+      $('passo').firstChild.dataset.tipo = 'errore';
       return;
     }
     PASSI = Q.passi; N = PASSI.length;
     POSTO = `endero-domande:${location.pathname}:${Q.giro || 1}`;
     document.title = `${Q.titolo} · Endero`;
-    const mie = tenute(), ora = Date.now();
+    $('prova').hidden = !prova;
+    const mie = prova ? {} : tenute(), ora = Date.now();
     for (const p of PASSI) {
       const mia = mie.risposte && mie.risposte[p.id];
       const inCoda = (mie.daMandare || []).includes(p.id), fresca = mie.mandate && ora - (mie.mandate[p.id] || 0) < 120000;
@@ -449,15 +456,9 @@
         if (inCoda || (letteBene && !lette[p.id] && !fresca)) daMandare[p.id] = mia;
       } else if (lette[p.id]) risposte[p.id] = lette[p.id];
     }
-    if (mie.modo === 'vero') {
-      modo = 'vero';
-      avviso(letteBene ? 'Ogni risposta si salva da sola.' : 'Non riesco a leggere le risposte già salvate: vedi quelle date da questo dispositivo.', letteBene ? '' : 'errore');
-      mostra(primaAperta(), false);
-      svuota();
-    } else {
-      avviso(letteBene ? '' : 'Non riesco a leggere le risposte già salvate. Controlla la connessione e ricarica la pagina.', letteBene ? '' : 'errore');
-      mostra(-1, false);
-    }
+    avviso(prova || letteBene ? (prova ? '' : 'Ogni risposta si salva da sola.') : 'Internet non va bene: le risposte restano al sicuro qui e partono appena torna.', prova || letteBene ? '' : 'errore');
+    mostra(primaAperta(), false);
+    svuota();
   })();
 })();
 </script>

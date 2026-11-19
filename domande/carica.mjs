@@ -11,15 +11,18 @@
 // Le risposte già date non si toccano. Per ripartire da zero su un dispositivo che ha già risposto si alza "giro".
 //
 // domande.json:
-//   { "titolo": "…", "occhiello": "…", "giro": 1, "introduzione": ["riga", "riga"], "passi": [ … ] }
-// Un passo è una schermata. Due tipi:
-//   { "id", "gruppo", "titolo", "tipo": "ipotesi", "ritagli": [[file, didascalia, "largo"|"medio"|"piccolo"]],
-//     "dubbio", "ipotesi", "aiuto"?, "nota"?, "altre": [[id, testo]], "etichette"?: [sinistra, destra] }
-//       → si conferma l'ipotesi, si sceglie un'alternativa o si scrive com'è
-//   { "id", "gruppo", "titolo", "tipo": "numero", "ritagli", "dubbio", "domanda", "unita", "min", "max",
-//     "riprende"?: id di un passo "ipotesi" (se ne mostra il testo "aiuto", o quello riscritto da chi risponde),
-//     "esempio"?: { "da": 100, "frase": "Con {n} cm … {r} cm.", "vuota": "…" } }
-//       → si scrive un numero, oppure due righe se un numero fisso non c'è
+//   { "titolo": "…", "giro": 1, "passi": [ … ] }
+// Un passo è una schermata: "id", "gruppo" (in alto a sinistra), "titolo", "ritagli": [[file, didascalia]],
+// "testo" (una riga o più: frasi corte, dette semplici), e poi secondo il "tipo":
+//   "ipotesi"  una proposta da approvare: "etichetta"?, "ipotesi", "nota"?, "domanda" (es. «Va bene così?»),
+//              "conferma" e "altro" (le scritte dei due tasti), "altre"?: [[id, testo]] per altre risposte pronte,
+//              "modifica": true se chi dice di no deve correggere il testo proposto invece di scriverlo da capo
+//   "scelta"   una domanda con le risposte pronte: "domanda", "scelte": [[id, testo]], "altro"? (false per toglierlo)
+//   "numero"   un numero da scrivere: "domanda", "unita", "min", "max", "altro",
+//              "riprende"?: id di un passo "ipotesi" (se ne mostra il testo, o quello corretto da chi risponde),
+//              "esempio"?: { "da": 100, "frase": "Con {n} cm … {r} cm.", "vuota": "…" }   ({r} = da − n)
+// Chi risponde non è pratico di tecnologia: la pagina si apre già sulla prima domanda. Con ?prova in fondo al link
+// si guarda senza salvare.
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -42,10 +45,11 @@ for (const p of q.passi || []) {
   if (!/^[a-z0-9-]{1,60}$/.test(p.id || '')) errori.push(`id non valido: ${p.id}`);
   if (visti.has(p.id)) errori.push(`id ripetuto: ${p.id}`);
   visti.add(p.id);
-  if (!['ipotesi', 'numero'].includes(p.tipo)) errori.push(`${p.id}: tipo sconosciuto`);
+  if (!['ipotesi', 'scelta', 'numero'].includes(p.tipo)) errori.push(`${p.id}: tipo sconosciuto`);
   if (!p.gruppo || !p.titolo) errori.push(`${p.id}: servono gruppo e titolo`);
   if (p.tipo === 'ipotesi' && !p.ipotesi) errori.push(`${p.id}: manca l'ipotesi`);
-  if (p.tipo === 'numero' && !p.domanda) errori.push(`${p.id}: manca la domanda`);
+  if (p.tipo !== 'ipotesi' && !p.domanda) errori.push(`${p.id}: manca la domanda`);
+  if (p.tipo === 'scelta' && !(Array.isArray(p.scelte) && p.scelte.length >= 2)) errori.push(`${p.id}: servono almeno due scelte`);
   for (const [file] of p.ritagli || []) {
     if (!/^[a-z0-9-]{1,60}$/.test(file) || !existsSync(join(cartella, 'ritagli', file + '.jpg'))) errori.push(`${p.id}: manca il ritaglio ${file}.jpg`);
     immagini.add(file);
