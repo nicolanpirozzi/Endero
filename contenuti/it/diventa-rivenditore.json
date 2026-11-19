@@ -57,7 +57,8 @@
       "interesse": "Rivenditore Endero",
       "titolo": "Camicie e capi uomo all'ingrosso, a marchio Endero",
       "testo": "Porta nel tuo negozio la collezione Endero: camicie e capi uomo fatti in Italia, con il nostro marchio. Listino e condizioni te li mandiamo per email dopo la richiesta.",
-      "foto": "La collezione in un negozio, foto orizzontale"
+      "foto": "La collezione in un negozio, foto orizzontale",
+      "immagine": { "file": "negozio-capi", "alt": "Giacche appese in primo piano nel negozio Endero, con le buste del marchio sugli scaffali" }
     },
     {
       "id": "conto-terzi",

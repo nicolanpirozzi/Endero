@@ -109,3 +109,4 @@ generate con Gemini, per scelta del proprietario; hanno lo stesso formato, e con
 | `negozio-fronte` | `negozio-fronte.jpg` | 605 KB | diventa rivenditore |
 | `etichetta-gruccia` | `etichetta-gruccia.jpg` | 404 KB | diventa rivenditore |
 | `giacca-in-prova` | `giacca-in-prova.jpg` | 888 KB | diventa rivenditore |
+| `negozio-capi` | `negozio-capi.jpg` | 535 KB | diventa rivenditore |

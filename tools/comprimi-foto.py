@@ -69,6 +69,7 @@ SEDE = [
     ('negozio-fronte.jpg', 'negozio-fronte', (0, 0, 2752, 1536), (864, 0, 1888, 1536)),
     ('etichetta-gruccia.jpg', 'etichetta-gruccia', (0, 150, 1792, 1345), (0, 0, 1792, 2400)),
     ('giacca-in-prova.jpg', 'giacca-in-prova', (0, 0, 2752, 1536), (1188, 0, 2212, 1536)),
+    ('negozio-capi.jpg', 'negozio-capi', (0, 0, 2000, 1116), (485, 0, 1229, 1116)),
 ]
 LARGHEZZE_SEDE = {'o': (960, 1600, 2000), 'v': (640, 1030)}
 # i dettagli del su misura: file originale, nome sul sito, ritaglio in piedi (tre per cinque)
