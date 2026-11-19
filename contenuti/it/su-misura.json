@@ -42,6 +42,7 @@
       },
       {
         "foto": "Polsino e bottone",
+        "immagine": { "file": "polsino", "alt": "Il polsino a quadretti blu di una camicia scura, con l'asola in vista, e un orologio al polso" },
         "etichetta": "Su misura",
         "nome": "[[Nome del capo]]",
         "tessuto": "[[Tessuto]]"
