@@ -54,7 +54,7 @@ export function suMisura(s, sito, { id = 'su-misura', gruppo = 'su-misura' } = {
     ${intesta(s)}
     <ul class="griglia">
       ${s.griglia.map((g) => `<li class="griglia__voce">
-        ${attesa({ nota: g.foto, etichetta: sito.foto_in_arrivo })}
+        ${fotoIntera(g.immagine, sito.foto?.['su-misura'], { sizes: '(max-width: 809px) 50vw, 17vw' }) || attesa({ nota: g.foto, etichetta: sito.foto_in_arrivo })}
         <span class="etichetta">${esc(g.etichetta)}</span>
         <div class="vetro griglia__scheda">
           <p class="griglia__nome">${t(g.nome)}</p>

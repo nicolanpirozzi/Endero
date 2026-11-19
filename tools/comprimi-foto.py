@@ -3,6 +3,7 @@
     python3 tools/comprimi-foto.py artigianato <cartella con gli originali>
     python3 tools/comprimi-foto.py collezione  <cartella con gli originali>
     python3 tools/comprimi-foto.py sede        <cartella con l'originale>
+    python3 tools/comprimi-foto.py dettagli    <cartella con gli originali>
     python3 tools/comprimi-foto.py registro    [cartella con gli originali della collezione]
 
 Gli originali non stanno nel repository: sono sul Drive del proprietario, nelle cartelle "Endero / Foto Contesto"
@@ -17,6 +18,9 @@ dell'originale: sinistra, alto, destra, basso) e l'immagine in contenuti/it/chi-
 
 SEDE. La foto del negozio (una, arrivata in chat il 2026-11-19, larga 2000 punti: più grande non c'è), per il
 riquadro con l'indirizzo della pagina "Dove siamo": -o è la foto intera, -v un ritaglio quasi quadrato per il telefono.
+
+DETTAGLI. Le foto dei sei riquadri in piedi della pagina del su misura (tre di base per cinque d'altezza), arrivate
+in chat una alla volta: di ognuna si tiene solo il ritaglio in piedi, in public/foto/su-misura/.
 
 COLLEZIONE. L'elenco sta in contenuti/it/collezione.json, voce "look": per ogni foto il nome nuovo ("file"), il nome
 del file com'era ("originale"), il tipo, il testo che la descrive. Le foto sono verticali e restano intere, nella
@@ -59,6 +63,10 @@ SEDE = [
     ('sarto-al-lavoro.jpg', 'sarto-al-lavoro', (0, 0, 2000, 1116), (640, 0, 1384, 1116)),
 ]
 LARGHEZZE_SEDE = {'o': (960, 1600, 2000), 'v': (640, 1030)}
+# i dettagli del su misura: file originale, nome sul sito, ritaglio in piedi (tre per cinque)
+DETTAGLI = [
+    ('colletto.jpg', 'colletto', (565, 0, 1235, 1116)),
+]
 # la collezione: le foto intere, in verticale; l'AVIF in tutte le grandezze, il WebP solo nelle prime due
 COLLEZIONE = {'v': (400, 800, 1400), 'webp': 800, 'o': (960, 1600, 2400)}
 
@@ -126,6 +134,20 @@ def sede(originali):
         indice[nome]['forma'] = round((orizzontale[2] - orizzontale[0]) / (orizzontale[3] - orizzontale[1]), 4)
         if nome == 'negozio':
             anteprima(foto.crop(orizzontale), os.path.join(uscita, f'{nome}-anteprima.jpg'))
+        print(nome, indice[nome])
+    with open(os.path.join(uscita, 'foto.json'), 'w') as f:
+        json.dump(indice, f, separators=(',', ':'))
+    pesi(uscita)
+
+
+def dettagli(originali):
+    uscita = os.path.join(FOTO, 'su-misura')
+    os.makedirs(uscita, exist_ok=True)
+    indice = {}
+    for file, nome, riquadro in DETTAGLI:
+        pezzo = apri(os.path.join(originali, file)).crop(riquadro)
+        larghe, _ = salva(pezzo, os.path.join(uscita, f'{nome}-v'), (400, 670))
+        indice[nome] = {'v': larghe, 'forma': round(pezzo.width / pezzo.height, 4)}
         print(nome, indice[nome])
     with open(os.path.join(uscita, 'foto.json'), 'w') as f:
         json.dump(indice, f, separators=(',', ':'))
@@ -226,6 +248,8 @@ if __name__ == '__main__':
         collezione(sys.argv[2])
     elif cosa == 'sede' and len(sys.argv) == 3:
         sede(sys.argv[2])
+    elif cosa == 'dettagli' and len(sys.argv) == 3:
+        dettagli(sys.argv[2])
     elif cosa == 'registro':
         registro(sys.argv[2] if len(sys.argv) > 2 else None)
     else:

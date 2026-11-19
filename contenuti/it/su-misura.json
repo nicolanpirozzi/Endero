@@ -28,6 +28,7 @@
     "griglia": [
       {
         "foto": "Colletto, primo piano",
+        "immagine": { "file": "colletto", "alt": "Il colletto di una camicia bianca con l'interno blu a rombi e i bottoni di madreperla" },
         "etichetta": "Su misura",
         "nome": "[[Nome del capo]]",
         "tessuto": "[[Tessuto]]"

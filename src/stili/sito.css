@@ -850,6 +850,14 @@ body[data-barra] .selettore {
   overflow: hidden;
 }
 
+/* la foto vera riempie il riquadro come il segnaposto */
+.griglia__voce > .foto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .griglia__voce:nth-child(4n + 2) .attesa,
 .griglia__voce:nth-child(4n + 3) .attesa {
   background-color: #e2ded5;
