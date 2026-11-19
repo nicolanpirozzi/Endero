@@ -106,6 +106,7 @@ scrivi('index.html', home({
   suMisura: testi.suMisura,
   rivenditori: testi.rivenditori,
   prodotti,
+  collezione: testi.collezione,
   anteprima,
   risorse: {
     ...base,

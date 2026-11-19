@@ -45,14 +45,38 @@ export function attesa({ nota, tipo = 'foto', tono = 'chiaro', classe = '', etic
  */
 export function foto(f, archivio, { sizes = '100vw', verticale = true, pigra = true } = {}) {
   const g = archivio?.indice?.[f?.file];
-  if (!g) return '';
+  if (!g?.o) return '';
   const v = archivio.versione ? `?v=${archivio.versione}` : '';
-  const serie = (verso, tipo) => g[verso].map((w) => `${archivio.cartella}${f.file}-${verso}-${w}.${tipo}${v} ${w}w`).join(', ');
+  // le foto della collezione hanno il WebP solo nelle grandezze piccole (vWebp): l'AVIF c'è sempre in tutte
+  const larghe = (verso, tipo) => (tipo === 'webp' && g[`${verso}Webp`]) || g[verso];
+  const serie = (verso, tipo) => larghe(verso, tipo).map((w) => `${archivio.cartella}${f.file}-${verso}-${w}.${tipo}${v} ${w}w`).join(', ');
   const media = g.o[Math.min(1, g.o.length - 1)];
   const fonti = [];
   if (verticale && g.v) for (const tipo of ['avif', 'webp']) fonti.push(`<source media="(max-width: 699px) and (orientation: portrait)" type="image/${tipo}" srcset="${esc(serie('v', tipo))}" sizes="100vw">`);
   fonti.push(`<source type="image/avif" srcset="${esc(serie('o', 'avif'))}" sizes="${esc(sizes)}">`);
   return `<picture class="foto"${f.fuoco ? ` data-fuoco="${esc(f.fuoco)}"` : ''}>${fonti.join('')}<img src="${archivio.cartella}${f.file}-o-${media}.webp${v}" srcset="${esc(serie('o', 'webp'))}" sizes="${esc(sizes)}" width="${media}" height="${Math.round(media / 1.5)}" alt="${esc(f.alt)}"${pigra ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async"></picture>`;
+}
+
+/**
+ * Una foto della collezione, intera e in verticale (due per tre, o quattro per cinque quelle prese da Instagram):
+ * il riquadro che la ospita la ritaglia quanto serve. `archivio.indice[file]` dice le grandezze e la forma.
+ * @param {object} o  sizes: quanto è larga sullo schermo; pigra: si carica quando serve; classe: quella del <picture>
+ */
+export function fotoIntera(f, archivio, { sizes = '50vw', pigra = true, classe = 'foto' } = {}) {
+  const g = archivio?.indice?.[f?.file];
+  if (!g?.v) return '';
+  const v = archivio.versione ? `?v=${archivio.versione}` : '';
+  const serie = (larghe, tipo) => larghe.map((w) => `${archivio.cartella}${f.file}-v-${w}.${tipo}${v} ${w}w`).join(', ');
+  const webp = g.vWebp || g.v, media = webp[webp.length - 1];
+  return `<picture class="${esc(classe)}"><source type="image/avif" srcset="${esc(serie(g.v, 'avif'))}" sizes="${esc(sizes)}"><img src="${archivio.cartella}${f.file}-v-${media}.webp${v}" srcset="${esc(serie(webp, 'webp'))}" sizes="${esc(sizes)}" width="${media}" height="${Math.round(media / (g.forma || 2 / 3))}" alt="${esc(f.alt)}"${pigra ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async"></picture>`;
+}
+
+/** L'indirizzo della grandezza maggiore di una foto della collezione: è il link di chi non ha gli script. */
+export function fotoGrande(f, archivio) {
+  const g = archivio?.indice?.[f?.file];
+  if (!g?.v) return '';
+  const webp = g.vWebp || g.v;
+  return `${archivio.cartella}${f.file}-v-${webp[webp.length - 1]}.webp${archivio.versione ? `?v=${archivio.versione}` : ''}`;
 }
 
 /** Disegno vettoriale del logo, preso dal foglio di simboli in fondo alla pagina. */

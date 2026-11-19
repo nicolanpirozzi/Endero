@@ -23,7 +23,12 @@
       {
         "titolo": "All'ingrosso",
         "href": "#ingrosso",
-        "foto": "Capi della collezione piegati o appesi"
+        "foto": "Capi della collezione piegati o appesi",
+        "immagine": {
+          "file": "maglieria-dolcevita-trecce-blu-notte",
+          "alt": "Uomo con dolcevita a trecce blu notte, un capo della collezione Endero",
+          "fuoco": "alto"
+        }
       },
       {
         "titolo": "Con il tuo marchio",

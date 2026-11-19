@@ -61,8 +61,9 @@ function selettore(s) {
  * @param {object} o.suMisura     su-misura.json (scheda misure e interruttore del configuratore)
  * @param {object} o.rivenditori  diventa-rivenditore.json (la fascia, in richiami.home)
  * @param {object[]} o.prodotti   i capi di prodotti.json
+ * @param {object} o.collezione   collezione.json (i look della vetrina, finché i capi non hanno nome e prezzo)
  */
-export default function home({ sito, testi: h, cultura, suMisura, rivenditori, prodotti, risorse, anteprima }) {
+export default function home({ sito, testi: h, cultura, suMisura, rivenditori, prodotti, collezione: collezioneTesti = {}, risorse, anteprima }) {
   const conf = suMisura.configuratore || {};
   const porta = { ...h.porta_su_misura, scheda: suMisura.presa_misure.scheda };
   // finché il configuratore non è acceso la pillola porta alla pagina del su misura
@@ -73,7 +74,7 @@ export default function home({ sito, testi: h, cultura, suMisura, rivenditori, p
   ${nastro(h.nastro)}
   <div class="corpo corpo--a-filo">
     ${selettore(h.selettore)}
-    ${vetrina(h.vetrina, prodotti, sito)}
+    ${vetrina(h.vetrina, prodotti, sito, { look: collezioneTesti.look, tipi: collezioneTesti.lookbook?.tipi })}
     ${collezione(h.categorie, sito, { id: '', gruppo: 'collezione' })}
     ${mestiere(h.artigianato, cultura.capitoli, sito)}
     ${presaMisure(porta, sito, { id: 'su-misura', gruppo: 'su-misura', invito })}

@@ -1,6 +1,6 @@
-// Pagina /collezione/ e una pagina per ogni capo. I capi sono dati (contenuti/it/prodotti.json):
-// prezzo, colori, taglie. Il carrello arriverà dopo; per ora si chiede su WhatsApp.
-import { esc, t, piano, attesa, icona, euro, indirizzoCapo } from '../parti/base.mjs';
+// Pagina /collezione/: il lookbook, cioè le foto vere dei capi divise per tipo, e sotto (quando arriveranno con
+// nome e prezzo in contenuti/it/prodotti.json) i capi, ognuno con la sua pagina. Niente carrello: si chiede su WhatsApp.
+import { esc, t, piano, attesa, fotoIntera, fotoGrande, icona, euro, indirizzoCapo } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 import { eroePagina, intesta, datiBase } from '../parti/sezioni.mjs';
 
@@ -19,38 +19,77 @@ function schedaCapo(capo, sito) {
       </a></li>`;
 }
 
-function capoInAttesa(a, sito) {
-  return `<li class="capo"><div class="capo__link">
-        <div class="capo__foto">${attesa({ nota: a.foto, etichetta: sito.foto_in_arrivo })}</div>
-        <p class="capo__nome">${t(a.nome)}</p>
-        <p class="capo__prezzo">${t(a.prezzo)}</p>
-      </div></li>`;
+/**
+ * Il lookbook. Senza script è già tutto lì: i tasti del filtro sono link alle quattro parti della pagina e ogni foto
+ * è un link alla sua versione grande. Lo script (src/sito.js, "lookbook") fa del filtro un filtro vero e apre le
+ * foto a tutto schermo nel <dialog> in fondo, con le frecce, il dito e il tasto «Chiedi di questo capo».
+ * Ogni foto ha per id il proprio nome: /collezione/#<nome> porta lì e, con lo script, la apre grande.
+ */
+function lookbook(c, sito) {
+  const l = c.lookbook, archivio = sito.foto?.collezione;
+  const look = c.look.filter((k) => archivio?.indice?.[k.file]);
+  if (!look.length) return '';
+  const gruppi = l.tipi.map((tipo) => ({ ...tipo, look: look.filter((k) => k.tipo === tipo.id) })).filter((g) => g.look.length);
+  const tasto = (href, filtro, nome, quanti, attivo) => `<li><a class="lookbook__tasto" href="${esc(href)}" data-filtro="${esc(filtro)}"${attivo ? ' aria-current="true"' : ''}>${esc(nome)}<span class="lookbook__quanti">${quanti}</span></a></li>`;
+  const voce = (k) => {
+    const g = archivio.indice[k.file];
+    // la foto grande occupa due colonne: le serve una grandezza in più
+    const sizes = k.grande ? '(max-width: 699px) 100vw, (max-width: 959px) 67vw, (max-width: 1299px) 50vw, 40vw' : '(max-width: 699px) 50vw, (max-width: 959px) 34vw, (max-width: 1299px) 25vw, 20vw';
+    return `<li class="look${k.grande ? ' look--grande' : ''}" id="${esc(k.file)}">
+          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" data-look="${esc(k.file)}" data-v="${g.v.join(',')}" data-webp="${(g.vWebp || g.v).join(',')}" data-forma="${g.forma}">${fotoIntera(k, archivio, { sizes })}</a>
+        </li>`;
+  };
+  const v = l.visore;
+  return `<section class="sezione lookbook" id="lookbook" data-lookbook data-cartella="${esc(archivio.cartella)}" data-versione="${esc(archivio.versione || '')}" data-messaggio="${esc(v.messaggio)}" data-whatsapp="${esc(sito.contatti.whatsapp_link)}">
+      ${intesta({ titolo: l.titolo, testo: l.testo })}
+      <nav class="lookbook__filtro" aria-label="${esc(l.filtro)}">
+        <ul>
+          ${tasto('#lookbook', '', l.tutti, look.length, true)}
+          ${gruppi.map((g) => tasto(`#${g.id}`, g.id, g.nome, g.look.length, false)).join('\n          ')}
+        </ul>
+      </nav>
+      ${gruppi.map((g) => `<section class="lookbook__tipo" id="${esc(g.id)}" data-tipo="${esc(g.id)}" data-nome="${esc(g.nome)}" aria-labelledby="tipo-${esc(g.id)}">
+        <h2 class="lookbook__nome" id="tipo-${esc(g.id)}">${esc(g.nome)}</h2>
+        <ul class="lookbook__griglia">
+        ${g.look.map(voce).join('\n        ')}
+        </ul>
+      </section>`).join('\n      ')}
+    </section>
+    <dialog class="visore" id="visore" aria-label="${esc(v.titolo)}" data-lenis-prevent>
+      <p class="visore__conta" aria-live="polite" aria-atomic="true"><span class="nascosto">${esc(v.foto)} </span><span data-visore-numero>1</span> ${esc(v.di)} <span data-visore-quanti>${look.length}</span><span class="visore__tipo" data-visore-tipo></span><span class="nascosto" data-visore-descrizione></span></p>
+      <button type="button" class="visore__tasto visore__chiudi" data-visore-chiudi aria-label="${esc(v.chiudi)}">${icona.chiudi}</button>
+      <figure class="visore__foto" data-visore-foto><picture><source type="image/avif" data-visore-avif><img data-visore-img alt="" decoding="async"></picture></figure>
+      <button type="button" class="visore__tasto visore__freccia visore__freccia--prima" data-visore-prima aria-label="${esc(v.prima)}">${icona.sinistra}</button>
+      <button type="button" class="visore__tasto visore__freccia visore__freccia--dopo" data-visore-dopo aria-label="${esc(v.dopo)}">${icona.destra}</button>
+      <a class="pillola pillola--chiara pillola--grande visore__chiedi" data-visore-chiedi href="${esc(sito.contatti.whatsapp_link)}" target="_blank" rel="noopener">${esc(v.chiedi)}</a>
+    </dialog>`;
 }
 
 export default function paginaCollezione({ sito, testi: c, prodotti, risorse, anteprima }) {
-  const capi = prodotti.length
-    ? prodotti.map((p) => schedaCapo(p, sito))
-    : Array.from({ length: c.attesa.quanti }, () => capoInAttesa(c.attesa, sito));
   const corpo = `<main>
-  ${eroePagina(c.eroe, sito)}
+  ${eroePagina(c.eroe, sito, { archivio: sito.foto?.collezione })}
   <div class="corpo">
-    <section class="sezione" id="capi">
+    ${lookbook(c, sito)}
+    ${prodotti.length ? `<section class="sezione" id="capi">
       ${intesta(c.elenco)}
       <ul class="capi">
-      ${capi.join('\n      ')}
+      ${prodotti.map((p) => schedaCapo(p, sito)).join('\n      ')}
       </ul>
-    </section>
+    </section>` : ''}
     <section class="sezione">
       ${intesta(c.invito)}
     </section>
   </div>
 </main>`;
   const d = sito.dominio;
+  const archivio = sito.foto?.collezione;
   const dati = [
     ...datiBase(sito, c.meta),
     {
       '@context': 'https://schema.org', '@type': 'CollectionPage', name: piano(c.eroe.titolo), url: `${d}/collezione/`, isPartOf: { '@id': `${d}/#sito` },
       ...(prodotti.length ? { mainEntity: { '@type': 'ItemList', itemListElement: prodotti.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: d + indirizzoCapo(p), name: p.nome })) } } : {}),
+      // le foto del lookbook, per la ricerca per immagini: ognuna con la sua descrizione
+      ...(archivio ? { image: c.look.filter((k) => archivio.indice[k.file]).map((k) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(k, archivio).split('?')[0], caption: k.alt })) } : {}),
     },
   ];
   return pagina({ sito, meta: c.meta, percorso: '/collezione/', corpo, risorse, anteprima, dati, classe: 'pagina-collezione' });

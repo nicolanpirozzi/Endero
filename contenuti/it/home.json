@@ -79,7 +79,7 @@
   },
   "vetrina": {
     "titolo": "La collezione",
-    "testo": "Camicie e capi uomo pronti da indossare, con taglie e prezzi chiari.",
+    "testo": "Maglieria, giacche, cappotti e abiti da uomo, fatti in Italia.",
     "quanti": 12,
     "tutti": {
       "testo": "Vedi tutta la collezione",
@@ -92,24 +92,55 @@
       "nome": "[[Nome del capo]]",
       "tessuto": "[[Tessuto]]",
       "prezzo": "[[€ —]]"
-    }
+    },
+    "_nota": "Finché i capi non hanno nome e prezzo (prodotti.json vuoto) qui si vedono dodici look scelti dal lookbook: i nomi sono quelli di collezione.json, nell'ordine in cui compaiono (due file da sei sul computer). Scelti alternando colori freddi e caldi e i tre modelli.",
+    "look": [
+      "maglieria-dolcevita-trecce-blu-notte",
+      "giacche-cappotto-cammello-cappello",
+      "maglieria-maglione-collo-bottoni-blu-acceso",
+      "abiti-gilet-quadri-azzurri-papillon",
+      "maglieria-girocollo-senape",
+      "felpe-grigia-e-a-quadri",
+      "giacche-cappotto-doppiopetto-quadri-azzurri",
+      "maglieria-dolcevita-ruggine",
+      "abiti-gessato-blu-seduto",
+      "maglieria-dolcevita-azzurro-melange",
+      "giacche-cappotto-cammello-dolcevita-senape",
+      "felpe-cappuccio-nera"
+    ]
   },
   "categorie": {
+    "_nota": "I tre ingressi: nomi scelti dal proprietario il 2026-11-19 (Maglieria · Giacche e cappotti · Su misura). Le foto sono ritagli orizzontali di look della collezione (collezione.json, 'orizzontale').",
     "riquadri": [
       {
-        "titolo": "[[Camicie]]",
-        "href": "/collezione/",
-        "foto": "Camicia della collezione"
+        "titolo": "Maglieria",
+        "href": "/collezione/#maglieria",
+        "foto": "Maglieria della collezione",
+        "immagine": {
+          "file": "maglieria-maglione-collo-bottoni-blu-acceso",
+          "alt": "Uomo sorridente con maglione blu acceso",
+          "fuoco": "alto"
+        }
       },
       {
-        "titolo": "[[Camicioni]]",
-        "href": "/collezione/",
-        "foto": "Capo della collezione"
+        "titolo": "Giacche e cappotti",
+        "href": "/collezione/#giacche-e-cappotti",
+        "foto": "Giacche e cappotti della collezione",
+        "immagine": {
+          "file": "giacche-cappotto-cammello-cappello",
+          "alt": "Uomo con cappotto color cammello che si tocca il cappello",
+          "fuoco": "alto"
+        }
       },
       {
-        "titolo": "[[Su misura]]",
+        "titolo": "Su misura",
         "href": "/camicie-su-misura/",
-        "foto": "Camicia su misura finita"
+        "foto": "Camicia su misura finita",
+        "immagine": {
+          "file": "abiti-gilet-blu-notte-camicia-bianca",
+          "alt": "Uomo con camicia bianca e gilet blu notte",
+          "fuoco": "alto"
+        }
       }
     ]
   },

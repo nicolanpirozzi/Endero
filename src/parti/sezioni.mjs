@@ -1,6 +1,6 @@
 // Sezioni del sito, condivise tra la pagina iniziale e le altre pagine.
 // Ordine e proporzioni vengono dal riferimento (docs/direzione-creativa.md, punti 1 e 3).
-import { esc, t, tConLink, piano, attesa, foto, logo, icona, euro, indirizzoCapo } from './base.mjs';
+import { esc, t, tConLink, piano, attesa, foto, fotoIntera, logo, icona, euro, indirizzoCapo } from './base.mjs';
 
 const aid = (id) => (id ? ` id="${esc(id)}"` : '');
 const agr = (gruppo) => (gruppo ? ` data-gruppo="${esc(gruppo)}"` : '');
@@ -14,9 +14,9 @@ export function intesta({ titolo, testo, link, classe = '' }) {
 }
 
 /** In cima alle pagine interne: foto (o video) con il titolo della pagina, come il video della pagina iniziale. */
-export function eroePagina({ titolo, sottotitolo, foto: nota, immagine }, sito) {
+export function eroePagina({ titolo, sottotitolo, foto: nota, immagine }, sito, { archivio = sito.foto?.artigianato } = {}) {
   // la foto vera, se c'è (è la prima cosa che si vede: si carica subito), altrimenti il segnaposto
-  const fondo = foto(immagine, sito.foto?.artigianato, { pigra: false }) || attesa({ nota, tono: 'scuro', etichetta: sito.foto_in_arrivo });
+  const fondo = foto(immagine, archivio, { pigra: false }) || attesa({ nota, tono: 'scuro', etichetta: sito.foto_in_arrivo });
   return `<section class="eroe eroe--pagina${immagine ? ' eroe--foto' : ''}" id="contenuto" tabindex="-1">
     <div class="eroe__fondo">${fondo}</div>
     <div class="eroe__testo">
@@ -186,10 +186,14 @@ export function collezione(c, sito, { id = 'collezione', gruppo = 'collezione' }
   return `<${tag} class="collezione${c.titolo ? '' : ' collezione--sola'}"${aid(id)}${agr(gruppo)}>
     ${c.titolo ? intesta(c) : ''}
     <ul class="riquadri">
-      ${c.riquadri.map((r) => `<li><a class="riquadro" href="${esc(r.href)}">
-        ${attesa({ nota: r.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
+      ${c.riquadri.map((r) => {
+        // la foto vera, ritagliata in orizzontale dalla collezione; dove manca resta il segnaposto
+        const vera = foto(r.immagine, sito.foto?.collezione, { sizes: '(max-width: 809px) 100vw, 34vw', verticale: false });
+        return `<li><a class="riquadro${vera ? ' riquadro--foto' : ''}" href="${esc(r.href)}">
+        ${vera || attesa({ nota: r.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
         <span class="titolo riquadro__titolo">${t(r.titolo)}</span>
-      </a></li>`).join('\n      ')}
+      </a></li>`;
+      }).join('\n      ')}
     </ul>
   </${tag}>`;
 }
@@ -248,10 +252,12 @@ export function prezzo(p, sito, { gruppo = 'su-misura' } = {}) {
 // ------------------------------------------------------------------ pezzi della struttura a più pagine (punto 10)
 
 /**
- * Vetrina: la griglia di foto a 6 colonne (2 sul telefono) con i capi di prodotti.json. Ogni riquadro porta al capo;
- * al passaggio compare la scheda in vetro con nome, tessuto e prezzo. Finché non ci sono capi, riquadri segnaposto.
+ * Vetrina: la griglia di foto a 6 colonne (2 sul telefono). Con i capi di prodotti.json ogni riquadro porta al capo
+ * e al passaggio compare la scheda in vetro con nome, tessuto e prezzo. Finché i capi non hanno nome e prezzo si
+ * vedono i look scelti in `v.look` tra quelli del lookbook (`look`, da collezione.json): ogni riquadro porta alla
+ * sua foto nella pagina della collezione, con l'etichetta del tipo. Senza né gli uni né gli altri, segnaposto.
  */
-export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione' } = {}) {
+export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione', look = [], tipi = [] } = {}) {
   const quanti = v.quanti || 12;
   const capi = prodotti.slice(0, quanti);
   const voce = (capo) => {
@@ -277,8 +283,14 @@ export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collez
           <p class="griglia__dettaglio">${t(a.tessuto)} · ${t(a.prezzo)}</p>
         </div>
       </li>`;
-  const voci = capi.length ? capi.map(voce) : Array.from({ length: quanti }, inAttesa);
-  const tutti = prodotti.length > quanti && v.tutti ? `<p class="vetrina__tutti"><a class="collegamento" href="${esc(v.tutti.href)}">${esc(v.tutti.testo)}${icona.freccia}</a></p>` : '';
+  const scelti = (v.look || []).map((file) => look.find((k) => k.file === file)).filter(Boolean).slice(0, quanti);
+  const nomeTipo = (idTipo) => tipi.find((x) => x.id === idTipo)?.nome || '';
+  const unLook = (k) => `<li class="griglia__voce griglia__voce--look"><a class="griglia__link" href="${esc(v.tutti.href)}#${esc(k.file)}">
+        <span class="griglia__cornice">${fotoIntera(k, sito.foto?.collezione, { sizes: '(max-width: 809px) 50vw, 17vw' })}</span>
+        <span class="etichetta">${esc(nomeTipo(k.tipo))}</span>
+      </a></li>`;
+  const voci = capi.length ? capi.map(voce) : scelti.length ? scelti.map(unLook) : Array.from({ length: quanti }, inAttesa);
+  const tutti = (prodotti.length > quanti || (!capi.length && scelti.length)) && v.tutti ? `<p class="vetrina__tutti"><a class="collegamento" href="${esc(v.tutti.href)}">${esc(v.tutti.testo)}${icona.freccia}</a></p>` : '';
   return `<section class="sezione sezione--griglia vetrina"${aid(id)}${agr(gruppo)}>
     ${intesta({ titolo: v.titolo, testo: v.testo })}
     <ul class="griglia">

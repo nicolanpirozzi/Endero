@@ -1,25 +1,374 @@
 {
-  "_nota": "Pagina /collezione/. I capi si aggiungono in prodotti.json: ogni capo ha la sua pagina /collezione/<nome>/. Finché l'elenco è vuoto si vedono i segnaposto.",
+  "_nota": "Pagina /collezione/: il lookbook. Le foto sono quelle della cartella 'Foto da caricare' sul Drive del proprietario (2026-11-19), compresse con `python3 tools/comprimi-foto.py collezione <cartella originali>` in public/foto/collezione/. Scelte sue: lookbook diviso per tipo con filtro in alto, foto grandi al tocco con «Chiedi di questo capo» su WhatsApp, niente nomi né prezzi finché non li manda (i testi 'alt' descrivono la foto, non sono nomi di prodotto). 'look' è l'elenco nell'ordine in cui si vedono: dentro ogni tipo dai colori freddi ai caldi, tenendo vicine le foto dello stesso servizio. 'file' è il nome nuovo (uguale su Drive), 'originale' il nome del file com'era nella cartella, 'grande' occupa due colonne e due righe (quali e dove: scelte con una prova di riempimento, perché la griglia non lasci buchi a 5, 4 e 3 colonne), 'orizzontale' è il ritaglio tre per due (sinistra, alto, destra, basso, in punti dell'originale) per chi serve anche in orizzontale. Registro completo: docs/registro-foto.md. I capi con nome e prezzo, quando arriveranno, vanno in prodotti.json: compaiono sotto il lookbook e hanno ciascuno la sua pagina.",
   "meta": {
-    "titolo": "La collezione Endero · Camicie e abbigliamento uomo",
-    "descrizione": "La collezione Endero: camicie e abbigliamento uomo fatti in Italia, con taglie e prezzi chiari.",
-    "immagine": "/film/manifesto.jpg",
-    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+    "titolo": "La collezione Endero · Maglieria, giacche e abiti da uomo",
+    "descrizione": "La collezione Endero: maglieria, giacche, cappotti, abiti e felpe da uomo, fatti in Italia. Guarda il lookbook e chiedi informazioni su WhatsApp.",
+    "immagine": "/foto/collezione/collezione-anteprima.jpg",
+    "immagine_alt": "Uomo con cappotto doppiopetto e coppola a quadri azzurri davanti a una parete blu"
   },
   "eroe": {
     "titolo": "La collezione Endero",
-    "sottotitolo": "Camicie e abbigliamento uomo, fatti in Italia",
-    "foto": "Capi della collezione, foto orizzontale"
+    "sottotitolo": "Maglieria, giacche, cappotti e abiti da uomo. Fatti in Italia.",
+    "foto": "Capi della collezione, foto orizzontale",
+    "immagine": {
+      "file": "giacche-cappotto-doppiopetto-quadri-azzurri",
+      "alt": "Uomo con cappotto doppiopetto e coppola a quadri azzurri davanti a una parete blu",
+      "fuoco": "alto"
+    }
   },
+  "lookbook": {
+    "titolo": "Il lookbook",
+    "testo": "Scegli una foto per vederla grande e chiedere informazioni su quel capo.",
+    "filtro": "Scegli cosa vedere",
+    "tutti": "Tutti",
+    "tipi": [
+      {
+        "id": "maglieria",
+        "nome": "Maglieria"
+      },
+      {
+        "id": "giacche-e-cappotti",
+        "nome": "Giacche e cappotti"
+      },
+      {
+        "id": "abiti",
+        "nome": "Abiti"
+      },
+      {
+        "id": "felpe",
+        "nome": "Felpe"
+      }
+    ],
+    "visore": {
+      "titolo": "Foto della collezione",
+      "chiudi": "Chiudi",
+      "prima": "Foto precedente",
+      "dopo": "Foto successiva",
+      "di": "di",
+      "chiedi": "Chiedi di questo capo",
+      "messaggio": "Buongiorno, vorrei informazioni su questo capo della collezione: ",
+      "foto": "Foto"
+    }
+  },
+  "look": [
+    {
+      "file": "maglieria-dolcevita-trecce-blu-notte",
+      "originale": "IMG_4492.jpeg",
+      "tipo": "maglieria",
+      "alt": "Dolcevita a trecce blu notte con pantaloni grigi",
+      "grande": true,
+      "orizzontale": [
+        0,
+        200,
+        3433,
+        2489
+      ]
+    },
+    {
+      "file": "maglieria-dolcevita-trecce-nero",
+      "originale": "IMG_4500.jpeg",
+      "tipo": "maglieria",
+      "alt": "Dolcevita a trecce nero con pantaloni grigi"
+    },
+    {
+      "file": "maglieria-maglione-collo-bottoni-blu-notte",
+      "originale": "_MAT9950.jpg",
+      "tipo": "maglieria",
+      "alt": "Maglione blu notte con collo a bottoni e pantaloni grigi"
+    },
+    {
+      "file": "maglieria-dolcevita-blu-sfumato",
+      "originale": "_MAT9963.jpg",
+      "tipo": "maglieria",
+      "alt": "Dolcevita blu sfumato con jeans"
+    },
+    {
+      "file": "maglieria-dolcevita-trecce-blu-notte-2",
+      "originale": "_MAT9990.jpg",
+      "tipo": "maglieria",
+      "alt": "Dolcevita a trecce blu notte, il modello sorride"
+    },
+    {
+      "file": "maglieria-maglione-collo-bottoni-blu-acceso",
+      "originale": "_MAT9911.jpg",
+      "tipo": "maglieria",
+      "alt": "Maglione blu acceso con collo a bottoni e pantaloni grigi",
+      "grande": true,
+      "orizzontale": [
+        0,
+        470,
+        3862,
+        3045
+      ]
+    },
+    {
+      "file": "maglieria-girocollo-blu-toppe",
+      "originale": "488150670_18287071930221988_7114703934573699203_n.jpg",
+      "tipo": "maglieria",
+      "alt": "Maglione girocollo blu con toppe a quadretti sui gomiti"
+    },
+    {
+      "file": "maglieria-girocollo-blu-toppa-dettaglio",
+      "originale": "487076488_18287071966221988_521678378735792646_n.jpg",
+      "tipo": "maglieria",
+      "alt": "La toppa ovale a quadretti sul gomito del maglione blu"
+    },
+    {
+      "file": "maglieria-girocollo-blu-toppe-di-lato",
+      "originale": "488049160_18287071957221988_4524720442243609165_n.jpg",
+      "tipo": "maglieria",
+      "alt": "Maglione girocollo blu visto di lato, con la toppa a quadretti sul gomito"
+    },
+    {
+      "file": "maglieria-girocollo-blu-etichetta",
+      "originale": "487786738_18287071948221988_8375560999428687384_n.jpg",
+      "tipo": "maglieria",
+      "alt": "Il collo del maglione blu con l'etichetta Endero"
+    },
+    {
+      "file": "maglieria-maglione-collo-bottoni-blu-acceso-2",
+      "originale": "_MAT9932.jpg",
+      "tipo": "maglieria",
+      "alt": "Maglione blu acceso con collo a bottoni, la mano sul colletto"
+    },
+    {
+      "file": "maglieria-dolcevita-azzurro-melange",
+      "originale": "IMG_4502.jpeg",
+      "tipo": "maglieria",
+      "alt": "Dolcevita azzurro mélange con pantaloni blu"
+    },
+    {
+      "file": "maglieria-maglione-scollo-v-azzurro",
+      "originale": "IMG_4521.jpeg",
+      "tipo": "maglieria",
+      "alt": "Maglione azzurro con scollo a V e giacca a quadri sulla spalla"
+    },
+    {
+      "file": "maglieria-camicia-blu-notte-maglione-azzurro",
+      "originale": "_MAT9387.jpg",
+      "tipo": "maglieria",
+      "alt": "Camicia blu notte con maglione azzurro annodato sulle spalle"
+    },
+    {
+      "file": "maglieria-cardigan-grigio-chiaro",
+      "originale": "_MAT9981.jpg",
+      "tipo": "maglieria",
+      "alt": "Cardigan grigio chiaro con bottoni e pantaloni blu"
+    },
+    {
+      "file": "maglieria-maglione-collo-bottoni-beige",
+      "originale": "IMG_4501.jpeg",
+      "tipo": "maglieria",
+      "alt": "Maglione beige con collo a bottoni e jeans"
+    },
+    {
+      "file": "maglieria-girocollo-senape",
+      "originale": "IMG_4507.jpeg",
+      "tipo": "maglieria",
+      "alt": "Maglione girocollo color senape con pantaloni blu",
+      "grande": true
+    },
+    {
+      "file": "maglieria-girocollo-arancio",
+      "originale": "IMG_4494.jpeg",
+      "tipo": "maglieria",
+      "alt": "Maglione girocollo arancio con jeans"
+    },
+    {
+      "file": "maglieria-girocollo-ruggine-sciarpa-quadri",
+      "originale": "_MAT9794.jpg",
+      "tipo": "maglieria",
+      "alt": "Maglione color ruggine con sciarpa a quadri azzurri e jeans"
+    },
+    {
+      "file": "maglieria-dolcevita-ruggine",
+      "originale": "_MAT9807.jpg",
+      "tipo": "maglieria",
+      "alt": "Dolcevita color ruggine con jeans"
+    },
+    {
+      "file": "giacche-cappotto-doppiopetto-quadri-azzurri",
+      "originale": "IMG_4516.jpeg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Cappotto doppiopetto a quadri azzurri con pantaloni e coppola nello stesso tessuto",
+      "grande": true,
+      "orizzontale": [
+        0,
+        350,
+        3647,
+        2781
+      ]
+    },
+    {
+      "file": "giacche-giacca-quadri-azzurri-pochette",
+      "originale": "IMG_4524.jpeg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Giacca a quadri azzurri con pochette e pantaloni grigi"
+    },
+    {
+      "file": "giacche-cappotto-quadri-azzurri-collo-pelo",
+      "originale": "IMG_4498.jpeg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Cappotto a quadri azzurri con collo in pelo"
+    },
+    {
+      "file": "giacche-cappotto-cammello-cappello",
+      "originale": "IMG_4512.jpeg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Cappotto color cammello su gilet e pantaloni a quadri azzurri, con cappello",
+      "grande": true,
+      "orizzontale": [
+        0,
+        500,
+        3237,
+        2658
+      ]
+    },
+    {
+      "file": "giacche-giacca-quadri-azzurri",
+      "originale": "_MAT9836.jpg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Giacca a quadri azzurri con camicia bianca e pantaloni blu"
+    },
+    {
+      "file": "giacche-camicione-quadri-azzurri",
+      "originale": "_MAT9246.jpg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Camicione a quadri azzurri su maglia bianca e jeans"
+    },
+    {
+      "file": "giacche-cappotto-doppiopetto-quadri-azzurri-2",
+      "originale": "IMG_4517.jpeg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Cappotto doppiopetto a quadri azzurri, visto di fronte"
+    },
+    {
+      "file": "giacche-cappotto-cammello-coppola",
+      "originale": "IMG_4514.jpeg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Cappotto color cammello con pantaloni e coppola a quadri azzurri"
+    },
+    {
+      "file": "giacche-cappotto-cammello-dolcevita-senape",
+      "originale": "_MAT9904.jpg",
+      "tipo": "giacche-e-cappotti",
+      "alt": "Cappotto color cammello con dolcevita senape e jeans"
+    },
+    {
+      "file": "abiti-gilet-quadri-azzurri-papillon",
+      "originale": "_MAT9654.jpg",
+      "tipo": "abiti",
+      "alt": "Gilet a quadri azzurri con camicia bianca e papillon",
+      "grande": true
+    },
+    {
+      "file": "abiti-abito-quadri-azzurri-cappotto-blu",
+      "originale": "IMG_4509.jpeg",
+      "tipo": "abiti",
+      "alt": "Abito a quadri azzurri con gilet, cappotto blu sulle spalle e cappello"
+    },
+    {
+      "file": "abiti-giacca-gilet-quadri-azzurri-coppola",
+      "originale": "_MAT9866.jpg",
+      "tipo": "abiti",
+      "alt": "Giacca e gilet a quadri azzurri con papillon e coppola"
+    },
+    {
+      "file": "abiti-gilet-quadri-azzurri-coppola",
+      "originale": "_MAT9699.jpg",
+      "tipo": "abiti",
+      "alt": "Gilet a quadri azzurri con camicia bianca, papillon e coppola"
+    },
+    {
+      "file": "abiti-gilet-blu-notte-camicia-bianca",
+      "originale": "IMG_4495.jpeg",
+      "tipo": "abiti",
+      "alt": "Gilet blu notte con camicia bianca e pantaloni blu",
+      "orizzontale": [
+        0,
+        900,
+        4000,
+        3567
+      ]
+    },
+    {
+      "file": "abiti-gessato-blu-seduto",
+      "originale": "491443322_18289858126221988_5392981614017553705_n.jpg",
+      "tipo": "abiti",
+      "alt": "Abito doppiopetto gessato blu, il modello è seduto su una panchina",
+      "grande": true
+    },
+    {
+      "file": "abiti-gessato-blu-doppiopetto",
+      "originale": "491437279_18290117590221988_5851017189637402318_n.jpg",
+      "tipo": "abiti",
+      "alt": "Abito doppiopetto gessato blu con camicia bianca, visto da vicino"
+    },
+    {
+      "file": "abiti-gessato-blu-bottoni",
+      "originale": "491438525_18290117599221988_8866928271361578631_n.jpg",
+      "tipo": "abiti",
+      "alt": "La giacca doppiopetto gessata blu mentre viene abbottonata"
+    },
+    {
+      "file": "abiti-gessato-blu-rever",
+      "originale": "491443351_18289858117221988_1005463451657944453_n.jpg",
+      "tipo": "abiti",
+      "alt": "Il rever a lancia della giacca gessata blu"
+    },
+    {
+      "file": "abiti-gessato-chiaro",
+      "originale": "490951480_18288591814221988_5260027291221477788_n.jpg",
+      "tipo": "abiti",
+      "alt": "Abito chiaro a righe sottili con cravatta scura, in un parco"
+    },
+    {
+      "file": "abiti-gessato-chiaro-2",
+      "originale": "491416500_18288591478221988_9105471936811310104_n.jpg",
+      "tipo": "abiti",
+      "alt": "Abito chiaro a righe sottili, il modello è appoggiato a un albero"
+    },
+    {
+      "file": "felpe-grigia-e-a-quadri",
+      "originale": "_MAT9745.jpg",
+      "tipo": "felpe",
+      "alt": "Felpa grigia con la E di Endero a quadri azzurri, sciarpa e cappellino nello stesso tessuto",
+      "grande": true
+    },
+    {
+      "file": "felpe-grigia-e-sulla-schiena",
+      "originale": "IMG_4519.jpeg",
+      "tipo": "felpe",
+      "alt": "Felpa grigia con la E di Endero a quadri sulla schiena"
+    },
+    {
+      "file": "felpe-cappuccio-blu-notte",
+      "originale": "_MAT9779.jpg",
+      "tipo": "felpe",
+      "alt": "Felpa blu notte con cappuccio e jeans"
+    },
+    {
+      "file": "felpe-grigia-e-sulla-schiena-2",
+      "originale": "_MAT0381.jpg",
+      "tipo": "felpe",
+      "alt": "Felpa grigia con la E di Endero sulla schiena, vista di spalle"
+    },
+    {
+      "file": "felpe-zip-nera",
+      "originale": "_MAT9747.jpg",
+      "tipo": "felpe",
+      "alt": "Felpa nera con zip e logo Endero su camicia bianca"
+    },
+    {
+      "file": "felpe-cappuccio-nera",
+      "originale": "_MAT9883.jpg",
+      "tipo": "felpe",
+      "alt": "Felpa nera con cappuccio e logo Endero"
+    }
+  ],
   "elenco": {
     "titolo": "Pronti da indossare",
-    "testo": "[[Testo della collezione: arriva con foto, nomi e prezzi dei capi]]"
-  },
-  "attesa": {
-    "quanti": 8,
-    "foto": "Foto del capo",
-    "nome": "[[Nome del capo]]",
-    "prezzo": "[[€ —]]"
+    "testo": ""
   },
   "scheda": {
     "a_partire": "Prezzo",
@@ -32,10 +381,57 @@
   },
   "invito": {
     "titolo": "Su misura",
-    "testo": "Non trovi la camicia che cerchi? Te la facciamo sulle tue misure.",
+    "testo": "Cerchi una camicia? Te la facciamo sulle tue misure.",
     "link": {
       "testo": "Scopri il su misura",
       "href": "/camicie-su-misura/"
     }
+  },
+  "fuori": {
+    "_nota": "File della cartella 'Foto da caricare' che non stanno nel sito: i doppioni (stesso file, o stessa foto esportata due volte) e i video, che il proprietario per ora non vuole (2026-11-19). 'nuovo' è il nome dato su Drive.",
+    "doppioni": [
+      {
+        "originale": "snapgram.io_download-file-10fh9i4c.jpg",
+        "nota": "file identico a `491438525_18290117599221988_8866928271361578631_n.jpg`, che nel sito è `abiti-gessato-blu-bottoni`"
+      },
+      {
+        "originale": "snapgram.io_download-file-8o6wszwx.jpg",
+        "nota": "file identico a `488150670_18287071930221988_7114703934573699203_n.jpg`, che nel sito è `maglieria-girocollo-blu-toppe`"
+      },
+      {
+        "originale": "snapgram.io_download-file-p3ghj2bm.jpg",
+        "nota": "file identico a `491443351_18289858117221988_1005463451657944453_n.jpg`, che nel sito è `abiti-gessato-blu-rever`"
+      },
+      {
+        "originale": "snapgram.io_download-file-pwic93w4.jpg",
+        "nota": "file identico a `490951480_18288591814221988_5260027291221477788_n.jpg`, che nel sito è `abiti-gessato-chiaro`"
+      },
+      {
+        "originale": "snapgram.io_download-file-tfe0lvw1.jpg",
+        "nota": "file identico a `491416500_18288591478221988_9105471936811310104_n.jpg`, che nel sito è `abiti-gessato-chiaro-2`"
+      },
+      {
+        "originale": "IMG_4508.jpeg",
+        "nuovo": "maglieria-girocollo-senape-copia.jpeg",
+        "nota": "la stessa foto di `IMG_4507.jpeg` (`maglieria-girocollo-senape`), esportata due volte"
+      }
+    ],
+    "video": [
+      {
+        "originale": "snapgram.io_download-file-wyfj07vm.mp4",
+        "nuovo": "video-abito-gessato-blu.mp4",
+        "nota": "reel dell'abito gessato blu con il logo Endero alla fine: verticale, 720 × 1280, 19 secondi"
+      },
+      {
+        "originale": "IMG_3393.mov",
+        "nuovo": "video-ristorante-1.mov",
+        "nota": "due modelli a tavola al ristorante, ripresa da telefono: verticale, 1080 × 1920, 23 secondi, con audio"
+      },
+      {
+        "originale": "IMG_3394.mov",
+        "nuovo": "video-ristorante-2.mov",
+        "nota": "come sopra, 7 secondi"
+      }
+    ]
   }
 }
