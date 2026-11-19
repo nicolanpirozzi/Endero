@@ -622,6 +622,7 @@ function lookbook() {
   let chiusura = null;       // si è chiuso dal visore e si aspetta che la cronologia torni un passo sotto
   let attesaChiusura = 0;
   let prossima = null;       // il <link> che fa scaricare in anticipo la foto dopo
+  let partenza = null;       // la foto da cui si è aperto il visore: chiudendo su quella, la pagina non si muove
 
   function serie(a, larghe, tipo) {
     const v = sez.dataset.versione ? `?v=${sez.dataset.versione}` : '';
@@ -677,6 +678,7 @@ function lookbook() {
       history.scrollRestoration = 'manual';
       spinto = true;
     }
+    partenza = a;
     dialogo.showModal();
     document.documentElement.classList.add('dialogo-aperto');
     lenis?.stop();
@@ -718,12 +720,16 @@ function lookbook() {
     history.scrollRestoration = 'auto';
     if (a) {
       const r = a.getBoundingClientRect();
-      if (r.top < 96 || r.bottom > innerHeight - 20) {
+      // Chi chiude sulla foto da cui era partito ritrova la pagina dov'era, anche se la foto era tagliata dal bordo.
+      // Se con le frecce è arrivato a un'altra, o la foto non si vede affatto, la pagina la porta in vista
+      const siVede = r.bottom > 96 && r.top < innerHeight - 20;
+      if (!(a === partenza && siVede) && (r.top < 96 || r.bottom > innerHeight - 20)) {
         const y = Math.max(0, r.top + scrollY - Math.max(110, (innerHeight - r.height) / 2));
         if (lenis) lenis.scrollTo(y, { immediate: true, force: true }); else scrollTo(0, y);
       }
       a.focus({ preventScroll: true });
     }
+    partenza = null;
     if (poi) apri(poi);
   }
 
@@ -814,22 +820,24 @@ function lookbook() {
 function videoEroe() {
   const fondo = document.querySelector('[data-video-eroe]');
   if (!fondo || ridotto || navigator.connection?.saveData) return;
-  const stretto = matchMedia('(max-width: 699px)').matches;
+  const telefono = matchMedia('(max-width: 699px)');
   const lento = new URLSearchParams(location.search).get('video') === 'lento' && fondo.dataset.lento;
-  const indirizzo = stretto ? fondo.dataset.telefono : lento || fondo.dataset.computer;
+  const indirizzo = () => (telefono.matches ? fondo.dataset.telefono : lento || fondo.dataset.computer);
   const apertura = document.querySelector('.apertura');
   const eroe = fondo.closest('.eroe');
-  let video = null, inVista = false;
+  const tasto = fondo.parentElement.querySelector('[data-video-ferma]');
+  let video = null, inVista = false, fermato = false;
 
-  const suona = () => { if (video && inVista && !document.hidden) video.play().catch(() => { /* il browser non lo fa partire da solo: resta la foto */ }); };
+  const suona = () => { if (video && inVista && !fermato && !document.hidden) video.play().catch(() => { /* il browser non lo fa partire da solo: resta la foto */ }); };
   function crea() {
     if (video) return;
-    video = Object.assign(document.createElement('video'), { muted: true, loop: true, playsInline: true, preload: 'auto', src: indirizzo });
+    video = Object.assign(document.createElement('video'), { muted: true, loop: true, playsInline: true, preload: 'auto', src: indirizzo() });
     video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
     video.setAttribute('aria-hidden', 'true');
     video.tabIndex = -1;
-    video.addEventListener('playing', () => video.setAttribute('data-parte', ''), { once: true });
+    // la prima volta che parte, compare sopra la foto e compare il tasto per fermarlo
+    video.addEventListener('playing', () => { video.setAttribute('data-parte', ''); if (tasto) tasto.hidden = false; });
     fondo.append(video);
     suona();
   }
@@ -839,15 +847,33 @@ function videoEroe() {
     if (inVista) suona(); else video.pause();
   }).observe(eroe);
   document.addEventListener('visibilitychange', () => { if (video) { if (document.hidden) video.pause(); else suona(); } });
+  // telefono girato, o finestra che passa da stretta a larga: la foto ferma cambia da sola, il video va cambiato qui
+  telefono.addEventListener('change', () => {
+    if (!video) return;
+    video.removeAttribute('data-parte');
+    video.src = indirizzo();
+    suona();
+  });
+  // un video che gira da solo deve potersi fermare: il tasto compare con il video, e chi lo ferma lo ritrova fermo
+  if (tasto) {
+    tasto.addEventListener('click', () => {
+      fermato = !fermato;
+      tasto.setAttribute('aria-pressed', String(fermato));
+      tasto.setAttribute('aria-label', fermato ? tasto.dataset.riparti : tasto.dataset.ferma);
+      if (fermato) video?.pause(); else suona();
+    });
+  }
 
   // il video sta sotto l'apertura: si comincia a scaricarlo quando al telo manca meno di uno schermo per sollevarsi.
-  // Finché l'apertura non ha deciso se parte il film o resta ferma è ancora bassa, e sembrerebbe già finita: si aspetta
+  // Finché l'apertura non ha deciso se parte il film o resta ferma è ancora bassa, e sembrerebbe già finita: si aspetta.
+  // E chi ricarica la pagina più giù non lo scarica finché non torna su, a uno schermo dal video.
   const decisa = () => !apertura || apertura.classList.contains('apertura--viva') || apertura.classList.contains('apertura--ferma');
   let richiesta = 0;
   const controlla = () => {
     richiesta = 0;
     if (video || !decisa()) return;
     if (apertura && apertura.getBoundingClientRect().bottom > innerHeight * 2) return;
+    if (eroe.getBoundingClientRect().bottom < -innerHeight) return;
     removeEventListener('scroll', aScorrimento);
     crea();
   };

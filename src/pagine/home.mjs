@@ -51,8 +51,11 @@ function eroe(e, sito) {
       </picture>
     </div>`
     : `<div class="eroe__fondo">${attesa({ nota: e.video, tono: 'scuro', etichetta: sito.video_in_arrivo, classe: 'attesa--video' })}</div>`;
-  return `<section class="eroe${fondo.includes('data-video-eroe') ? ' eroe--video' : ''}" id="contenuto" tabindex="-1">
-    ${fondo}
+  const conVideo = fondo.includes('data-video-eroe');
+  // il tasto per fermare il video: nascosto finché il video non parte (senza script, o con il movimento ridotto, non serve)
+  const ferma = conVideo ? `\n    <button type="button" class="eroe__ferma" data-video-ferma data-ferma="${esc(f.ferma)}" data-riparti="${esc(f.riparti)}" aria-label="${esc(f.ferma)}" aria-pressed="false" hidden><span class="eroe__ferma-pausa" aria-hidden="true"></span></button>` : '';
+  return `<section class="eroe${conVideo ? ' eroe--video' : ''}" id="contenuto" tabindex="-1">
+    ${fondo}${ferma}
     <div class="eroe__testo">
       <h1 class="titolo eroe__titolo">${e.titolo.map((r) => `<span>${esc(r)}</span>`).join(' ')}</h1>
       <p class="eroe__sotto">${esc(e.sottotitolo)}</p>

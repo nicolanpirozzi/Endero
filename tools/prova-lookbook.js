@@ -169,9 +169,17 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
   dove = await a.sullaFoto(conta.nomi[14]);
   controlla('chiudendo, la pagina è sulla foto a cui si era arrivati', !(await a.stato()).aperto && dove.fuoco && dove.inVista, JSON.stringify(dove));
   controlla('e l\'indirizzo è tornato quello della pagina, senza ancora', (await filtro()).indirizzo === base + '/collezione/', (await filtro()).indirizzo);
+  // una foto tagliata dal bordo dello schermo: aprendola e chiudendola senza cambiare foto la pagina non si muove
+  await page.evaluate(() => { const r = document.querySelectorAll('[data-look]')[8].getBoundingClientRect(); window.scrollTo(0, r.top + scrollY - (innerHeight - r.height * 0.45)); });
+  await page.waitForTimeout(700);
+  const tagliata = await page.evaluate(() => { const r = document.querySelectorAll('[data-look]')[8].getBoundingClientRect(); return { y: Math.round(scrollY), sotto: r.bottom > innerHeight + 40, sopra: r.top < innerHeight - 60 }; });
+  await page.locator('[data-look]').nth(8).click({ position: { x: 30, y: 30 } }); await a.pronta();
+  await page.keyboard.press('Escape'); await page.waitForTimeout(450);
+  controlla('una foto tagliata dal bordo: aperta e chiusa, la pagina resta dov\'era', tagliata.sotto && tagliata.sopra && Math.abs(await posizione() - tagliata.y) < 3 && !(await a.stato()).aperto, JSON.stringify({ ...tagliata, dopo: await posizione() }));
   // con un filtro acceso, più giù nella pagina: chiudere non deve riportare in cima
   const [tipoLungo] = conta.tipi[0];
-  await page.click(`[data-filtro="${tipoLungo}"]`); await page.waitForTimeout(350);
+  // da più giù il filtro riporta in cima al lookbook con uno scorrimento morbido: si aspetta che sia finito
+  await page.click(`[data-filtro="${tipoLungo}"]`); await page.waitForTimeout(1700);
   const ultima = page.locator('[data-tipo]:not([hidden]) [data-look]').last();
   await ultima.scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
   const giu = await posizione();

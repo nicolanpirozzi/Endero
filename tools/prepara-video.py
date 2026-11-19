@@ -14,7 +14,8 @@ Scelte nostre: al reel si toglie il cartello finale con il logo (il video gira i
 già in testata); il video del tavolo torna all'inizio con una dissolvenza, così il giro non si nota.
 
 Scrive in public/video/: eroe-telefono.mp4, eroe-computer.mp4, eroe-computer-lento.mp4 (lo stesso a metà velocità,
-per il confronto con ?video=lento) e, per ognuno dei due, l'immagine ferma del primo fotogramma in AVIF e WebP.
+per il confronto con ?video=lento) e, per ognuno dei due, un'immagine ferma in AVIF e WebP (il primo fotogramma
+per il tavolo, l'abito intero per il reel).
 Serve ffmpeg con zscale (per portare il video del telefono, girato in HDR, ai colori normali) e Pillow con AVIF.
 """
 import os
@@ -29,6 +30,7 @@ USCITA = os.path.join(RADICE, 'public', 'video')
 
 REEL = 'snapgram.io_download-file-wyfj07vm.mp4'
 REEL_FINE = 15.9            # secondi: dopo comincia il cartello sfocato con il logo
+REEL_FERMA = 13.4           # secondi: il fotogramma che fa da immagine ferma sui telefoni
 
 TAVOLO = 'IMG_3394.mov'
 # Del fotogramma verticale (1080 x 1920) si tiene la parte con i due modelli e il tavolo, tre per quattro: su uno
@@ -54,11 +56,11 @@ def durata(file):
                                 check=True, capture_output=True, text=True).stdout.strip())
 
 
-def ferma(video, nome):
-    """Il primo fotogramma, per chi non vede il video (movimento ridotto, rete lenta) e mentre il video arriva."""
+def ferma(video, nome, secondo=0):
+    """Un fotogramma fermo, per chi non vede il video (movimento ridotto, rete lenta) e mentre il video arriva."""
     with tempfile.TemporaryDirectory() as lavoro:
         png = os.path.join(lavoro, 'f.png')
-        ffmpeg('-i', video, '-frames:v', '1', png)
+        ffmpeg('-ss', str(secondo), '-i', video, '-frames:v', '1', png)
         im = Image.open(png).convert('RGB')
         im.save(os.path.join(USCITA, nome + '.avif'), quality=58, speed=4)
         im.save(os.path.join(USCITA, nome + '.webp'), quality=80, method=6)
@@ -79,7 +81,8 @@ def main(originali):
     telefono = os.path.join(USCITA, 'eroe-telefono.mp4')
     # sui telefoni conta il peso: con questa qualità il reel scende a 2,6 MB e a occhio non cambia
     ffmpeg('-i', os.path.join(originali, REEL), '-t', str(REEL_FINE), '-vf', 'fps=30', *H264, '-preset', 'veryslow', '-crf', '30', telefono)
-    print('eroe-telefono', ferma(telefono, 'eroe-telefono'), f'{os.path.getsize(telefono) / 1e6:.2f} MB', f'{durata(telefono):.1f} s')
+    # il primo fotogramma del reel è una mano mossa: per l'immagine ferma si prende l'abito intero, verso la fine
+    print('eroe-telefono', ferma(telefono, 'eroe-telefono', REEL_FERMA), f'{os.path.getsize(telefono) / 1e6:.2f} MB', f'{durata(telefono):.1f} s')
 
     # il tavolo: prima a colori normali e corretto, senza perdita, poi le due velocità
     with tempfile.TemporaryDirectory() as lavoro:

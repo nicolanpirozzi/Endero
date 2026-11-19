@@ -69,6 +69,14 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     const titolo = await page.evaluate(() => { const h = document.querySelector('.eroe__titolo'), r = h.getBoundingClientRect(), velo = getComputedStyle(document.querySelector('.eroe__fondo'), '::after').backgroundImage; return { visibile: r.top > 60 && r.bottom < innerHeight && r.width > 100, velo: velo.includes('gradient') }; });
     controlla(`${nome}: il titolo sta sopra il video, con il velo dietro`, titolo.visibile && titolo.velo, JSON.stringify(titolo));
     await foto(page, `video-${nome}`);
+    // il tasto che lo ferma e lo fa ripartire
+    const tasto = page.locator('[data-video-ferma]');
+    const prima = await tasto.evaluate((x) => ({ visibile: !x.hidden && x.getBoundingClientRect().width >= 44, nome: x.getAttribute('aria-label'), premuto: x.getAttribute('aria-pressed') }));
+    await tasto.click(); await page.waitForTimeout(400);
+    const fermato = { ...(await video(page)), nome: await tasto.getAttribute('aria-label'), premuto: await tasto.getAttribute('aria-pressed') };
+    await tasto.click(); await page.waitForTimeout(700);
+    const ripartito = await video(page);
+    controlla(`${nome}: c'è un tasto per fermare il video e farlo ripartire`, prima.visibile && /ferma/i.test(prima.nome) && prima.premuto === 'false' && fermato.fermo && fermato.premuto === 'true' && /ripartire/i.test(fermato.nome) && !ripartito.fermo, JSON.stringify([prima, fermato.fermo, fermato.nome, ripartito.fermo]));
     // più giù nella pagina il video si ferma; tornando su riparte
     await page.evaluate(() => window.scrollTo(0, document.querySelector('.eroe').getBoundingClientRect().bottom + scrollY + innerHeight));
     await page.waitForTimeout(700);
@@ -100,10 +108,45 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     controlla('/?video=lento prova lo stesso video a metà velocità', v && v.file === 'eroe-computer-lento.mp4' && !v.fermo, JSON.stringify(v));
     await a.contesto.close();
   }
+  {
+    // il telefono girato: la foto ferma cambia da sola, il video deve cambiare con lei
+    const a = await nuovo({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await a.page.goto(base + '/', { waitUntil: 'networkidle' });
+    await sottoAlVideo(a);
+    const largo = await video(a.page);
+    await a.page.setViewportSize({ width: 390, height: 844 });
+    await a.page.waitForFunction(() => { const v = document.querySelector('[data-video-eroe] video'); return v && /eroe-telefono/.test(v.currentSrc) && !v.paused && v.currentTime > 0.2; }, null, { timeout: 15000 }).catch(() => {});
+    const stretto = await video(a.page);
+    controlla('girando il telefono il video cambia insieme alla foto', largo && largo.file === 'eroe-computer.mp4' && stretto && stretto.file === 'eroe-telefono.mp4' && !stretto.fermo, JSON.stringify([largo && largo.file, stretto && stretto.file, stretto && stretto.fermo]));
+    await a.contesto.close();
+    // chi ricarica la pagina più giù non scarica il video finché non torna su
+    const b = await nuovo();
+    let scaricati = 0;
+    b.page.on('request', (r) => { if (/\/video\/.*\.mp4/.test(r.url())) scaricati++; });
+    await b.page.goto(base + '/#rivenditori', { waitUntil: 'networkidle' });
+    await b.page.waitForTimeout(1500);
+    const giu = await b.page.evaluate(() => ({ y: Math.round(scrollY), video: Boolean(document.querySelector('[data-video-eroe] video')) }));
+    controlla('ricaricando la pagina più giù il video non si scarica', giu.y > 3000 && !giu.video && scaricati === 0, JSON.stringify({ ...giu, scaricati }));
+    await sottoAlVideo(b);
+    const su = await video(b.page);
+    controlla('e tornando su parte', su && !su.fermo, JSON.stringify(su));
+    await b.contesto.close();
+  }
   for (const f of ['eroe-telefono.mp4', 'eroe-computer.mp4', 'eroe-computer-lento.mp4']) {
     const r = await fetch(`${base}/video/${f}`, { headers: { Range: 'bytes=0-99' } });
     const peso = Number((r.headers.get('content-range') || '').split('/')[1]) || Number(r.headers.get('content-length')) || (await r.arrayBuffer()).byteLength;
     controlla(`${f}: c'è, è un video e pesa meno di 3 MB`, r.status < 300 && (r.headers.get('content-type') || '').startsWith('video/') && (peso === 100 || peso < 3e6), `${r.status} ${r.headers.get('content-type')} ${peso}`);
+  }
+
+  for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO]]) {
+    const a = await nuovo(opzioni);
+    await a.page.goto(base + '/', { waitUntil: 'networkidle' });
+    await sottoAlVideo(a);
+    await a.page.locator('.eroe__azioni a[href="#collezione"]').click();
+    await a.page.waitForTimeout(2200);
+    const t = await a.page.evaluate(() => { const h = document.querySelector('#collezione h2').getBoundingClientRect(), sel = document.querySelector('.selettore').getBoundingClientRect(); return { titolo: Math.round(h.top), selettore: Math.round(sel.bottom) }; });
+    controlla(`${nome}: «Vedi la collezione» porta al titolo della collezione, sotto il selettore e non dietro`, t.titolo >= t.selettore && t.titolo < 260, JSON.stringify(t));
+    await a.contesto.close();
   }
 
   // ---------------------------------------------------------------- 2. Chi siamo
@@ -177,28 +220,37 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     await a.contesto.close();
   }
 
+  {
+    const a = await nuovo({ viewport: { width: 1920, height: 950 } });
+    await a.page.goto(base + '/', { waitUntil: 'networkidle' });
+    await a.vai('#su-misura');
+    const q = await a.page.evaluate(() => { const g = document.querySelector('#su-misura .grande').getBoundingClientRect(), s = document.querySelector('#su-misura .scheda-misure').getBoundingClientRect(); return { alta: Math.round(g.height), larga: Math.round(g.width), centro: Math.round(g.left + g.width / 2), scheda: s.top >= g.top && s.bottom <= g.bottom }; });
+    controlla('schermo molto largo: la camicia non diventa più alta dello schermo e resta al centro', q.alta <= 900 && q.larga <= 1600 && Math.abs(q.centro - 960) < 2 && q.scheda && await a.stretta(), JSON.stringify(q));
+    await a.contesto.close();
+  }
+
   // ---------------------------------------------------------------- 4. i rivenditori
   console.log('I rivenditori');
   const DUE = [['Rivenditore Endero', 'rivenditore-endero'], ['Conto terzi', 'conto-terzi']];
-  for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO], ['telefono stretto', { viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }]]) {
+  for (const [nome, opzioni] of [['computer', {}], ['tablet in piedi', { viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }], ['telefono', TELEFONO], ['telefono stretto', { viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }]]) {
     const a = await nuovo(opzioni), { page } = a;
     await page.goto(base + '/', { waitUntil: 'networkidle' });
     await a.vai('#rivenditori');
     await a.vai('#rivenditori .strade__voci', -160);
     const r = await page.evaluate(() => {
       const s = document.getElementById('rivenditori'), q = s.getBoundingClientRect();
-      const schede = [...s.querySelectorAll('.strada')].map((x) => { const b = x.getBoundingClientRect(), i = x.querySelector('img'), t = x.querySelector('.strada__testo').getBoundingClientRect(); return { nome: x.querySelector('.strada__nome').textContent.trim(), riga: x.querySelector('.strada__riga').textContent.trim(), href: x.getAttribute('href'), foto: i.complete && i.naturalWidth > 0, alt: i.alt, largo: Math.round(b.width), alto: Math.round(b.height), dentro: t.top >= b.top && t.bottom <= b.bottom + 1 && t.right <= b.right + 1 }; });
+      const schede = [...s.querySelectorAll('.strada')].map((x) => { const b = x.getBoundingClientRect(), i = x.querySelector('img'), t = x.querySelector('.strada__testo').getBoundingClientRect(); const n = x.querySelector('.strada__nome'), spazio = document.createRange(); spazio.selectNodeContents(n); const scritta = spazio.getBoundingClientRect(); return { nome: n.textContent.trim(), riga: x.querySelector('.strada__riga').textContent.trim(), href: x.getAttribute('href'), foto: i.complete && i.naturalWidth > 0, alt: i.alt, largo: Math.round(b.width), alto: Math.round(b.height), dentro: t.top >= b.top && t.bottom <= b.bottom + 1 && t.right <= b.right + 1 && scritta.right <= b.right - 12 && scritta.left >= b.left + 12, numero: (() => { const q = x.querySelector('.strada__numero').getBoundingClientRect(); return q.top > b.top + b.height * 0.33; })() }; });
       return { alta: Math.round(q.height), titolo: s.querySelector('h2')?.textContent.replace(/\s+/g, ' ').trim(), tasto: s.querySelector('.strade__testo .pillola')?.getAttribute('href'), schede, testo: s.textContent.toLowerCase() };
     });
     controlla(`${nome}: la sezione dei rivenditori è grande (era una fascia di 210 px)`, r.alta >= 500 && /negozio/i.test(r.titolo || ''), `${r.alta} px`);
     controlla(`${nome}: due scelte, Rivenditore Endero e Conto terzi, ognuna porta alla sua parte della pagina`, r.schede.length === 2 && r.schede.every((s, i) => s.nome === DUE[i][0] && s.href === `/diventa-rivenditore/#${DUE[i][1]}` && s.riga.length > 15), JSON.stringify(r.schede.map((s) => [s.nome, s.href])));
-    controlla(`${nome}: le schede hanno la foto, grande, e il testo ci sta dentro`, r.schede.every((s) => s.foto && s.alt.length > 10 && s.dentro && s.largo >= 250 && s.alto >= 200), JSON.stringify(r.schede.map((s) => [s.largo, s.alto, s.dentro, s.foto])));
+    controlla(`${nome}: le schede hanno la foto, grande, e il testo ci sta dentro, con il numero in basso dove si legge`, r.schede.every((s) => s.foto && s.alt.length > 10 && s.dentro && s.numero && s.largo >= 250 && s.alto >= 200), JSON.stringify(r.schede.map((s) => [s.largo, s.alto, s.dentro, s.numero, s.foto])));
     controlla(`${nome}: il tasto porta alla pagina dei rivenditori, e «white label» non compare`, r.tasto === '/diventa-rivenditore/' && !r.testo.includes('white label'), r.tasto);
     await foto(page, `rivenditori-home-${nome.replace(' ', '-')}`);
     controlla(`${nome}: niente esce dallo schermo, nessun errore`, await a.stretta() && a.errori.length === 0, a.errori.join(' | ').slice(0, 200));
     await a.contesto.close();
   }
-  for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO]]) {
+  for (const [nome, opzioni] of [['computer', {}], ['schermo largo', { viewport: { width: 1920, height: 950 } }], ['telefono', TELEFONO]]) {
     const a = await nuovo(opzioni), { page } = a;
     await page.goto(base + '/diventa-rivenditore/', { waitUntil: 'networkidle' });
     const p = await page.evaluate(() => ({
@@ -211,6 +263,13 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     controlla(`${nome}: tre capitoli: le due strade e, in più, il su misura per i clienti del negozio`, p.capitoli.map((c) => c[0]).join() === 'rivenditore-endero,conto-terzi,su-misura' && /in più/i.test(p.capitoli[2][1]), JSON.stringify(p.capitoli));
     controlla(`${nome}: nel modulo si sceglie tra le stesse voci`, JSON.stringify(p.voci) === JSON.stringify(['Rivenditore Endero', 'Produzione conto terzi', 'Su misura per i miei clienti']), JSON.stringify(p.voci));
     controlla(`${nome}: un solo titolo principale, e «white label» non compare`, p.h1 === 1 && !p.testo.includes('white label'));
+    // la scritta grande di ogni capitolo: nessuna parola spezzata a metà (ogni parola sta su una riga sola)
+    const spezzate = await page.evaluate(() => [...document.querySelectorAll('.capitolo__etichetta')].flatMap((e) => {
+      const nodo = e.firstChild, testo = nodo.textContent, fuori = [];
+      for (const m of testo.matchAll(/\S+/g)) { const r = document.createRange(); r.setStart(nodo, m.index); r.setEnd(nodo, m.index + m[0].length); if (r.getClientRects().length > 1) fuori.push(m[0]); }
+      return fuori;
+    }));
+    controlla(`${nome}: nelle scritte grandi dei capitoli nessuna parola è spezzata a metà`, spezzate.length === 0, spezzate.join(', '));
     // dalla scheda al capitolo, dal capitolo al modulo con la voce già segnata
     await a.vai('#offerta .strade__voci', -160);
     await page.locator('#offerta .strada').nth(1).click();

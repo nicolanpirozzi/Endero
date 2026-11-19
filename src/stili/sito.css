@@ -986,7 +986,11 @@ body[data-barra] .selettore {
      (la foto si ritaglia ai lati, la camicia resta). L'altezza è scritta, non ricavata dalla forma:
      con una forma e un'altezza minima il riquadro si allargherebbe oltre la pagina */
   aspect-ratio: auto;
-  height: max(620px, calc((100vw - 2 * var(--margine)) * 5 / 9));
+  /* sugli schermi molto larghi si ferma a 1600 punti, al centro: più larga sarebbe più alta dello schermo */
+  width: calc(100% - 2 * var(--margine));
+  max-width: 1600px;
+  margin-inline: auto;
+  height: max(620px, min(calc((100vw - 2 * var(--margine)) * 5 / 9), 889px));
   background: #0a1b45;
 }
 
@@ -1803,6 +1807,8 @@ body[data-barra] .selettore {
 
 .vetrina {
   padding-top: 24px;
+  /* chi arriva dal tasto «Vedi la collezione» o dal selettore trova il titolo sotto il selettore, non dietro */
+  scroll-margin-top: 72px;
 }
 
 .vetrina__tutti {
@@ -2155,11 +2161,82 @@ body[data-barra] .selettore {
   pointer-events: none;
 }
 
+/* il tasto che ferma il video e lo fa ripartire: piccolo, in basso a sinistra, compare quando il video parte */
+.eroe__ferma {
+  position: absolute;
+  z-index: 2;
+  left: max(var(--margine), env(safe-area-inset-left));
+  bottom: 28px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(10, 27, 69, 0.46);
+  box-shadow: inset 0 0 0 1px var(--bordo-vetro);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--filo);
+  cursor: pointer;
+  transition: background-color 180ms ease-out, transform 120ms ease-out;
+}
+
+.eroe__ferma[hidden] {
+  display: none;
+}
+
+/* due barre quando gira, un triangolo quando è fermo */
+.eroe__ferma-pausa {
+  width: 10px;
+  height: 12px;
+  border: solid currentColor;
+  border-width: 0 3px;
+}
+
+.eroe__ferma[aria-pressed="true"] .eroe__ferma-pausa {
+  width: 0;
+  height: 0;
+  margin-left: 3px;
+  border-style: solid;
+  border-width: 7px 0 7px 11px;
+  border-color: transparent transparent transparent currentColor;
+}
+
+.eroe__ferma:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+}
+
+.eroe__ferma:active {
+  transform: scale(0.94);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .eroe__ferma:hover {
+    background: rgba(10, 27, 69, 0.78);
+  }
+}
+
 @media (max-width: 699px) {
   /* sui telefoni c'è il reel, che è già verticale: resta al centro */
   .eroe--video .eroe__fondo img,
   .eroe--video .eroe__fondo video {
     object-position: 50% 40%;
+  }
+
+  /* il reel passa per inquadrature molto chiare (una camicia bianca dietro al titolo): il velo è più fitto,
+     anche in alto, dove ci sono i tasti della testata */
+  .eroe--video .eroe__fondo::after {
+    background:
+      radial-gradient(ellipse 80% 34% at 50% 47%, rgba(4, 16, 54, 0.42), rgba(4, 16, 54, 0) 76%),
+      linear-gradient(to bottom, rgba(4, 16, 54, 0.66), rgba(4, 16, 54, 0.46) 22%, rgba(4, 16, 54, 0.46) 60%, rgba(4, 16, 54, 0.64));
+  }
+
+  .eroe__ferma {
+    left: 16px;
+    bottom: 22px;
   }
 }
 
@@ -3460,6 +3537,8 @@ html.dialogo-aperto {
 
   /* la camicia in piedi, intera, e la scheda appena sotto: sopra la coprirebbe */
   .grande--camicia {
+    width: auto;
+    margin-inline: var(--margine);
     height: auto;
     background: none;
   }
@@ -4110,7 +4189,7 @@ html.dialogo-aperto {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(4, 16, 54, 0.3), rgba(4, 16, 54, 0.12) 38%, rgba(4, 16, 54, 0.82));
+  background: linear-gradient(to bottom, rgba(4, 16, 54, 0.3), rgba(4, 16, 54, 0.14) 28%, rgba(4, 16, 54, 0.66) 58%, rgba(4, 16, 54, 0.88));
   pointer-events: none;
 }
 
@@ -4137,7 +4216,8 @@ html.dialogo-aperto {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--vetro-chiaro);
+  /* vetro scuro: una delle due foto in alto è chiara, e la freccia bianca sul vetro chiaro spariva */
+  background: rgba(10, 27, 69, 0.46);
   box-shadow: inset 0 0 0 1px var(--bordo-vetro);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -4198,11 +4278,18 @@ html.dialogo-aperto {
    grande è più piccola che negli altri capitoli, e in nessun caso allarga la colonna oltre lo schermo */
 .capitoli--rivenditori .capitolo__etichetta {
   font-size: clamp(30px, 4vw, 58px);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
+/* la colonna del testo qui è più larga che negli altri capitoli: a 420 punti "Rivenditore" si spezzava a metà */
 .capitoli--rivenditori .capitolo__testo {
   min-width: 0;
+  max-width: 540px;
+}
+
+.capitoli--rivenditori .capitolo__testo > .titolo,
+.capitoli--rivenditori .capitolo__testo > .testo {
+  max-width: 420px;
 }
 
 /* nella pagina dei rivenditori il pezzo apre il corpo della pagina: lo spazio sopra lo dà già il nastro */
@@ -4210,17 +4297,36 @@ html.dialogo-aperto {
   margin-top: 0;
 }
 
-@media (max-width: 809px) {
+/* sotto i 960 punti il titolo sale sopra le schede: affiancate al testo sarebbero strette, e il nome non ci starebbe */
+@media (max-width: 959px) {
   .strade {
     grid-template-columns: 1fr;
     gap: 36px;
-    padding: 64px 16px;
+    padding: 64px var(--margine);
   }
 
   .strade__testo {
     justify-items: center;
-    max-width: none;
+    justify-self: center;
+    max-width: 620px;
     text-align: center;
+  }
+
+  .strade__titolo {
+    font-size: clamp(30px, 6vw, 44px);
+  }
+}
+
+@media (max-width: 809px) {
+  /* una colonna sola: la scritta grande del capitolo può crescere con lo schermo */
+  .capitoli--rivenditori .capitolo__etichetta {
+    font-size: min(9.4vw, 44px);
+  }
+}
+
+@media (max-width: 699px) {
+  .strade {
+    padding: 64px 16px;
   }
 
   .strade__titolo {
@@ -4234,11 +4340,6 @@ html.dialogo-aperto {
   /* sul telefono le schede stanno una sotto l'altra, più basse: due foto in piedi sarebbero due schermi */
   .strada {
     aspect-ratio: 5 / 4;
-  }
-
-  /* una colonna sola: la scritta grande del capitolo può crescere con lo schermo */
-  .capitoli--rivenditori .capitolo__etichetta {
-    font-size: min(9.4vw, 44px);
   }
 }
 

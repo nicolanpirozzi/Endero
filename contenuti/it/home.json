@@ -40,7 +40,9 @@
       "telefono": "eroe-telefono",
       "computer": "eroe-computer",
       "lento": "eroe-computer-lento",
-      "alt": "Uomini che indossano capi Endero"
+      "alt": "Uomini che indossano capi Endero",
+      "ferma": "Ferma il video",
+      "riparti": "Fai ripartire il video"
     },
     "pillole": [
       {
