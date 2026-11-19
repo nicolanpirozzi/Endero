@@ -3,7 +3,7 @@
 // del negozio resta come servizio in più. Una pagina sola: le due strade in cima, poi un capitolo per strada e uno
 // per il su misura, come funziona con il modulo, domande, chiusura. Il link "Fai richiesta" di ogni capitolo porta
 // al modulo con la sua voce già segnata (src/sito.js, "interesse").
-import { esc, t, piano, attesa, icona } from '../parti/base.mjs';
+import { esc, t, piano, attesa, foto, icona } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 import { eroePagina, nastro, strade, comeFunziona, domande, chiusura, datiBase } from '../parti/sezioni.mjs';
 
@@ -19,7 +19,7 @@ function loghi(l) {
 
 export default function paginaRivenditori({ sito, testi: r, nastro: fatti, risorse, anteprima }) {
   const capitoli = r.capitoli.map((c) => `<article class="capitolo" id="${esc(c.id)}">
-      <div class="capitolo__foto">${attesa({ nota: c.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
+      <div class="capitolo__foto">${foto(c.immagine, sito.foto?.sede, { sizes: '(max-width: 899px) 100vw, 55vw', verticale: false }) || attesa({ nota: c.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
       <div class="capitolo__testo">
         <p class="capitolo__etichetta">${esc(c.etichetta)}</p>
         <h2 class="titolo">${t(c.titolo)}</h2>
@@ -28,7 +28,7 @@ export default function paginaRivenditori({ sito, testi: r, nastro: fatti, risor
       </div>
     </article>`).join('\n    ');
   const corpo = `<main>
-  ${eroePagina(r.eroe, sito)}
+  ${eroePagina(r.eroe, sito, { archivio: sito.foto?.sede })}
   ${r.loghi.voci.length ? loghi(r.loghi) : nastro(fatti)}
   <div class="corpo">
     ${strade(r.offerta, r.strade, sito, { id: 'offerta' })}

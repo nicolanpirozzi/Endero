@@ -9,7 +9,8 @@
   "eroe": {
     "titolo": "Diventa rivenditore Endero",
     "sottotitolo": "Per negozi e marchi · In Italia e all'estero",
-    "foto": "Capi Endero in un negozio, foto orizzontale"
+    "foto": "Capi Endero in un negozio, foto orizzontale",
+    "immagine": { "file": "negozio-fronte", "alt": "Il negozio Endero: capi appesi lungo le pareti e le buste con il logo sugli scaffali" }
   },
   "loghi": {
     "_nota": "Loghi dei negozi clienti: li manda il proprietario, solo di chi ha dato il permesso. File in public/loghi-clienti/, a un solo colore. Finché l'elenco è vuoto la pagina mostra il nastro con i fatti.",
@@ -64,7 +65,8 @@
       "interesse": "Produzione conto terzi",
       "titolo": "Produzione conto terzi, con il tuo marchio",
       "testo": "I capi li produce Endero, ma portano il marchio del tuo negozio o della tua azienda, non il nostro. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto.",
-      "foto": "Etichetta di un cliente cucita su una camicia"
+      "foto": "Etichetta di un cliente cucita su una camicia",
+      "immagine": { "file": "etichetta-gruccia", "alt": "Una camicia bianca su una gruccia di legno, con l'etichetta cucita nel collo" }
     },
     {
       "id": "su-misura",
@@ -72,7 +74,8 @@
       "interesse": "Su misura per i miei clienti",
       "titolo": "Su misura per i tuoi clienti",
       "testo": "Un servizio in più, qualunque strada tu scelga: tu prendi le misure ai tuoi clienti, noi cuciamo la camicia. Offri il su misura nel tuo negozio senza avere un laboratorio.",
-      "foto": "Una camicia su misura consegnata in negozio"
+      "foto": "Una camicia su misura consegnata in negozio",
+      "immagine": { "file": "giacca-in-prova", "alt": "Una giacca gessata in prova su un manichino, con il metro da sarto sul rever" }
     }
   ],
   "capitolo_invito": "Fai richiesta",

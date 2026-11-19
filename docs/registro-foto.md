@@ -92,12 +92,20 @@ Cartella sul Drive: "Foto Contesto". Sul sito: `public/foto/artigianato/`.
 | `ricamo` | `_MAT9734.jpg` | 2814 KB | chi siamo |
 | `maglia` | `_MAT9926.jpg` | 3061 KB | chi siamo |
 
-## Sede
+## Sede, su misura e rivenditori
 
-Arrivata in chat il 2026-11-19 (su Drive non c'è). Sul sito: `public/foto/sede/`.
+Arrivate in chat e dalla pagina delle foto il 2026-11-19 (su Drive non ci sono). Sul sito: `public/foto/sede/` e `public/foto/su-misura/`.
+Le cinque caricate dalla pagina (`presa-misure`, `negozio-di-lato`, `negozio-fronte`, `etichetta-gruccia`, `giacca-in-prova`) sono immagini
+generate con Gemini, per scelta del proprietario; hanno lo stesso formato, e con ogni probabilità la stessa origine, `negozio`,
+`sarto-al-lavoro` e i dettagli `colletto`, `camicia-indossata`, `polsino`, `tessuto`. Il titolare deve saperlo prima della messa online.
 
 | Nome nuovo | File originale | Sul sito | Dove sta |
 | --- | --- | --- | --- |
 | `negozio` | `negozio-endero.jpg` | 678 KB | dove siamo |
 | `sarto-al-lavoro` | `sarto-al-lavoro.jpg` | 698 KB | su misura |
 | `camicia-bianca` | `camicia-bianca-indossata.jpg` | 103 KB | su misura |
+| `presa-misure` | `presa-misure.jpg` | 694 KB | su misura |
+| `negozio-di-lato` | `negozio-di-lato.jpg` | 628 KB | dove siamo |
+| `negozio-fronte` | `negozio-fronte.jpg` | 605 KB | diventa rivenditore |
+| `etichetta-gruccia` | `etichetta-gruccia.jpg` | 404 KB | diventa rivenditore |
+| `giacca-in-prova` | `giacca-in-prova.jpg` | 888 KB | diventa rivenditore |

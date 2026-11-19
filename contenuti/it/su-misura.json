@@ -74,6 +74,7 @@
     "titolo": "La presa misure",
     "testo": "Su appuntamento, nella nostra sede di Giugliano in Campania. Prendiamo le misure insieme e scegli tessuto e dettagli; il sarto ricontrolla le misure prima del taglio.",
     "foto": "Presa misure in sede, foto orizzontale",
+    "immagine": { "file": "presa-misure", "alt": "Il sarto prende le misure a un cliente in camicia bianca, nel negozio Endero" },
     "scheda": {
       "titolo": "La tua scheda misure",
       "gruppi": [

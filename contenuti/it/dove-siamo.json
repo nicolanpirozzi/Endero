@@ -9,7 +9,8 @@
   "eroe": {
     "titolo": "Dove siamo e contatti",
     "sottotitolo": "Viale del Toro 22 · Giugliano in Campania",
-    "foto": "L'ingresso della sede, foto orizzontale"
+    "foto": "L'ingresso della sede, foto orizzontale",
+    "immagine": { "file": "negozio-di-lato", "alt": "L'interno del negozio Endero: giacche appese, camicie sugli scaffali e il banco bianco" }
   },
   "sede": {
     "titolo": "La sede",

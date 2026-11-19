@@ -63,6 +63,12 @@ SEDE = [
     ('sarto-al-lavoro.jpg', 'sarto-al-lavoro', (0, 0, 2000, 1116), (640, 0, 1384, 1116)),
     # accanto al prezzo del su misura: la foto è in piedi e il riquadro è largo, se ne tiene la fascia dal viso al petto
     ('camicia-bianca-indossata.jpg', 'camicia-bianca', (0, 330, 1116, 973), (0, 300, 1116, 1275)),
+    # caricate dal proprietario dalla pagina delle foto (domande/foto.mjs) il 2026-11-19
+    ('presa-misure.jpg', 'presa-misure', (0, 0, 2752, 1536), (930, 0, 1954, 1536)),
+    ('negozio-di-lato.jpg', 'negozio-di-lato', (0, 0, 2752, 1536), (864, 0, 1888, 1536)),
+    ('negozio-fronte.jpg', 'negozio-fronte', (0, 0, 2752, 1536), (864, 0, 1888, 1536)),
+    ('etichetta-gruccia.jpg', 'etichetta-gruccia', (0, 150, 1792, 1345), (0, 0, 1792, 2400)),
+    ('giacca-in-prova.jpg', 'giacca-in-prova', (0, 0, 2752, 1536), (1188, 0, 2212, 1536)),
 ]
 LARGHEZZE_SEDE = {'o': (960, 1600, 2000), 'v': (640, 1030)}
 # i dettagli del su misura: file originale, nome sul sito, ritaglio in piedi (tre per cinque)
@@ -239,7 +245,11 @@ def registro(originali=None):
     for file, nome, _, _ in ARTIGIANATO:
         righe.append(f"| `{nome}` | `{file}` | {sul_sito('artigianato', nome) // 1024} KB | {dove_sta(nome, 'chi-siamo.json')} |")
     if os.path.isdir(os.path.join(FOTO, 'sede')):
-        righe += ['', '## Sede', '', 'Arrivata in chat il 2026-11-19 (su Drive non c\'è). Sul sito: `public/foto/sede/`.', '',
+        righe += ['', '## Sede, su misura e rivenditori', '',
+                  'Arrivate in chat e dalla pagina delle foto il 2026-11-19 (su Drive non ci sono). Sul sito: `public/foto/sede/` e `public/foto/su-misura/`.',
+                  'Le cinque caricate dalla pagina (`presa-misure`, `negozio-di-lato`, `negozio-fronte`, `etichetta-gruccia`, `giacca-in-prova`) sono immagini',
+                  'generate con Gemini, per scelta del proprietario; hanno lo stesso formato, e con ogni probabilità la stessa origine, `negozio`,',
+                  '`sarto-al-lavoro` e i dettagli `colletto`, `camicia-indossata`, `polsino`, `tessuto`. Il titolare deve saperlo prima della messa online.', '',
                   '| Nome nuovo | File originale | Sul sito | Dove sta |', '| --- | --- | --- | --- |']
         for file, nome, _, _ in SEDE:
             dove = ', '.join(pagine[n] for n, t in testi.items() if f'"{nome}"' in t) or 'non ancora in pagina'
