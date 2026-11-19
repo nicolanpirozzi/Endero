@@ -100,3 +100,4 @@ Arrivata in chat il 2026-11-19 (su Drive non c'è). Sul sito: `public/foto/sede/
 | --- | --- | --- | --- |
 | `negozio` | `negozio-endero.jpg` | 678 KB | dove siamo |
 | `sarto-al-lavoro` | `sarto-al-lavoro.jpg` | 698 KB | su misura |
+| `camicia-bianca` | `camicia-bianca-indossata.jpg` | 103 KB | su misura |

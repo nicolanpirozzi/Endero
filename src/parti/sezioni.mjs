@@ -272,7 +272,7 @@ export function domande(d, { gruppo = 'su-misura' } = {}) {
 // 12 · Prezzo: foto a sinistra, cifra e invito a destra.
 export function prezzo(p, sito, { gruppo = 'su-misura' } = {}) {
   return `<section class="prezzo"${agr(gruppo)}>
-    <div class="prezzo__foto">${attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
+    <div class="prezzo__foto">${foto(p.immagine, sito.foto?.sede, { sizes: '(max-width: 809px) 100vw, 65vw' }) || attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}</div>
     <div class="prezzo__testo">
       <div>
         <h2 class="titolo">${t(p.titolo)}</h2>

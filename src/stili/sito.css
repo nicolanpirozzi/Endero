@@ -850,6 +850,7 @@ body[data-barra] .selettore {
   overflow: hidden;
 }
 
+.prezzo__foto > .foto,
 .scheda-misure__capo > .foto {
   width: 100%;
   height: 100%;

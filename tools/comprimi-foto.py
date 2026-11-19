@@ -61,6 +61,8 @@ SEDE = [
     ('negozio-endero.jpg', 'negozio', (0, 0, 2000, 1116), (485, 0, 1515, 1116)),
     # in cima alla pagina del su misura; sul telefono si tiene il sarto, seduto al centro
     ('sarto-al-lavoro.jpg', 'sarto-al-lavoro', (0, 0, 2000, 1116), (640, 0, 1384, 1116)),
+    # accanto al prezzo del su misura: la foto è in piedi e il riquadro è largo, se ne tiene la fascia dal viso al petto
+    ('camicia-bianca-indossata.jpg', 'camicia-bianca', (0, 330, 1116, 973), (0, 300, 1116, 1275)),
 ]
 LARGHEZZE_SEDE = {'o': (960, 1600, 2000), 'v': (640, 1030)}
 # i dettagli del su misura: file originale, nome sul sito, ritaglio in piedi (tre per cinque)

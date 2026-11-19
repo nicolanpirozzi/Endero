@@ -178,6 +178,7 @@
     "titolo": "Il su misura",
     "testo": "La camicia Endero cucita sulle tue misure, con il tessuto e i dettagli che scegli tu.",
     "foto": "Camicia su misura indossata, foto orizzontale",
+    "immagine": { "file": "camicia-bianca", "alt": "Uomo con occhiali e camicia bianca, il collo aperto" },
     "a_partire": "A partire da",
     "cifra": "[[€ —]]",
     "invito": "Prenota la presa misure"
