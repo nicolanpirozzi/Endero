@@ -55,6 +55,8 @@ ARTIGIANATO = [
 # (lì il riquadro è quasi quadrato: si tiene il centro, con il banco e gli scaffali con le buste Endero)
 SEDE = [
     ('negozio-endero.jpg', 'negozio', (0, 0, 2000, 1116), (485, 0, 1515, 1116)),
+    # in cima alla pagina del su misura; sul telefono si tiene il sarto, seduto al centro
+    ('sarto-al-lavoro.jpg', 'sarto-al-lavoro', (0, 0, 2000, 1116), (640, 0, 1384, 1116)),
 ]
 LARGHEZZE_SEDE = {'o': (960, 1600, 2000), 'v': (640, 1030)}
 # la collezione: le foto intere, in verticale; l'AVIF in tutte le grandezze, il WebP solo nelle prime due
@@ -122,7 +124,8 @@ def sede(originali):
             pezzo = foto.crop(riquadro)
             indice[nome][verso], _ = salva(pezzo, os.path.join(uscita, f'{nome}-{verso}'), LARGHEZZE_SEDE[verso])
         indice[nome]['forma'] = round((orizzontale[2] - orizzontale[0]) / (orizzontale[3] - orizzontale[1]), 4)
-        anteprima(foto.crop(orizzontale), os.path.join(uscita, f'{nome}-anteprima.jpg'))
+        if nome == 'negozio':
+            anteprima(foto.crop(orizzontale), os.path.join(uscita, f'{nome}-anteprima.jpg'))
         print(nome, indice[nome])
     with open(os.path.join(uscita, 'foto.json'), 'w') as f:
         json.dump(indice, f, separators=(',', ':'))
@@ -208,7 +211,8 @@ def registro(originali=None):
         righe += ['', '## Sede', '', 'Arrivata in chat il 2026-11-19 (su Drive non c\'è). Sul sito: `public/foto/sede/`.', '',
                   '| Nome nuovo | File originale | Sul sito | Dove sta |', '| --- | --- | --- | --- |']
         for file, nome, _, _ in SEDE:
-            righe.append(f"| `{nome}` | `{file}` | {sul_sito('sede', nome) // 1024} KB | {dove_sta(nome, 'dove-siamo.json')} |")
+            dove = ', '.join(pagine[n] for n, t in testi.items() if f'"{nome}"' in t) or 'non ancora in pagina'
+            righe.append(f"| `{nome}` | `{file}` | {sul_sito('sede', nome) // 1024} KB | {dove} |")
     with open(os.path.join(RADICE, 'docs', 'registro-foto.md'), 'w') as f:
         f.write('\n'.join(righe) + '\n')
     print(f"registro scritto: {len(dati['look'])} foto della collezione, {len(ARTIGIANATO)} di cultura e artigianato")

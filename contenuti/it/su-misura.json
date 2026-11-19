@@ -9,7 +9,11 @@
   "eroe": {
     "titolo": "Camicie su misura a Giugliano, Napoli",
     "sottotitolo": "Presa misure su appuntamento · Viale del Toro 22",
-    "foto": "Il sarto al lavoro su una camicia, foto orizzontale"
+    "foto": "Il sarto al lavoro su una camicia, foto orizzontale",
+    "immagine": {
+      "file": "sarto-al-lavoro",
+      "alt": "Un sarto seduto su uno sgabello cuce a mano un capo a quadretti, davanti al banco da lavoro"
+    }
   },
   "configuratore": {
     "attivo": true,

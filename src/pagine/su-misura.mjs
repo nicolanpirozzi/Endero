@@ -17,7 +17,7 @@ function ingressoConfiguratore(c) {
 
 export default function paginaSuMisura({ sito, testi: p, risorse, anteprima }) {
   const corpo = `<main>
-  ${eroePagina(p.eroe, sito)}
+  ${eroePagina(p.eroe, sito, { archivio: sito.foto?.sede })}
   <div class="corpo">
     ${ingressoConfiguratore(p.configuratore)}
     ${suMisura(p.dettagli, sito, { id: 'dettagli', gruppo: '' })}
