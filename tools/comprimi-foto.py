@@ -2,6 +2,7 @@
 
     python3 tools/comprimi-foto.py artigianato <cartella con gli originali>
     python3 tools/comprimi-foto.py collezione  <cartella con gli originali>
+    python3 tools/comprimi-foto.py sede        <cartella con l'originale>
     python3 tools/comprimi-foto.py registro    [cartella con gli originali della collezione]
 
 Gli originali non stanno nel repository: sono sul Drive del proprietario, nelle cartelle "Endero / Foto Contesto"
@@ -13,6 +14,9 @@ ARTIGIANATO. Ogni foto esce in due ritagli, perché sul sito riempie riquadri di
 e ogni ritaglio in più grandezze e in due formati (AVIF, più leggero, e WebP per i browser che non lo leggono).
 Per aggiungere una foto: una riga in ARTIGIANATO (nome del file originale, nome sul sito, i due ritagli in punti
 dell'originale: sinistra, alto, destra, basso) e l'immagine in contenuti/it/chi-siamo.json.
+
+SEDE. La foto del negozio (una, arrivata in chat il 2026-11-19, larga 2000 punti: più grande non c'è), per il
+riquadro con l'indirizzo della pagina "Dove siamo": -o è la foto intera, -v un ritaglio quasi quadrato per il telefono.
 
 COLLEZIONE. L'elenco sta in contenuti/it/collezione.json, voce "look": per ogni foto il nome nuovo ("file"), il nome
 del file com'era ("originale"), il tipo, il testo che la descrive. Le foto sono verticali e restano intere, nella
@@ -47,6 +51,12 @@ ARTIGIANATO = [
     ('_MAT9734.jpg', 'ricamo', (0, 1727, 4000, 4394), (0, 0, 4000, 6000)),
     ('_MAT9926.jpg', 'maglia', (0, 2000, 4000, 4667), (0, 0, 4000, 6000)),
 ]
+# la sede: file originale, nome sul sito, la foto intera per gli schermi larghi, il ritaglio per il telefono
+# (lì il riquadro è quasi quadrato: si tiene il centro, con il banco e gli scaffali con le buste Endero)
+SEDE = [
+    ('negozio-endero.jpg', 'negozio', (0, 0, 2000, 1116), (485, 0, 1515, 1116)),
+]
+LARGHEZZE_SEDE = {'o': (960, 1600, 2000), 'v': (640, 1030)}
 # la collezione: le foto intere, in verticale; l'AVIF in tutte le grandezze, il WebP solo nelle prime due
 COLLEZIONE = {'v': (400, 800, 1400), 'webp': 800, 'o': (960, 1600, 2400)}
 
@@ -95,6 +105,24 @@ def artigianato(originali):
             indice[nome][verso], _ = salva(pezzo, os.path.join(uscita, f'{nome}-{verso}'), LARGHEZZE[verso])
         if nome == 'coppole':
             anteprima(foto.crop(orizzontale), os.path.join(uscita, f'{nome}-anteprima.jpg'))
+        print(nome, indice[nome])
+    with open(os.path.join(uscita, 'foto.json'), 'w') as f:
+        json.dump(indice, f, separators=(',', ':'))
+    pesi(uscita)
+
+
+def sede(originali):
+    uscita = os.path.join(FOTO, 'sede')
+    os.makedirs(uscita, exist_ok=True)
+    indice = {}
+    for file, nome, orizzontale, verticale in SEDE:
+        foto = apri(os.path.join(originali, file))
+        indice[nome] = {}
+        for verso, riquadro in (('o', orizzontale), ('v', verticale)):
+            pezzo = foto.crop(riquadro)
+            indice[nome][verso], _ = salva(pezzo, os.path.join(uscita, f'{nome}-{verso}'), LARGHEZZE_SEDE[verso])
+        indice[nome]['forma'] = round((orizzontale[2] - orizzontale[0]) / (orizzontale[3] - orizzontale[1]), 4)
+        anteprima(foto.crop(orizzontale), os.path.join(uscita, f'{nome}-anteprima.jpg'))
         print(nome, indice[nome])
     with open(os.path.join(uscita, 'foto.json'), 'w') as f:
         json.dump(indice, f, separators=(',', ':'))
@@ -176,6 +204,11 @@ def registro(originali=None):
               '| Nome nuovo | File originale | Sul sito | Dove sta |', '| --- | --- | --- | --- |']
     for file, nome, _, _ in ARTIGIANATO:
         righe.append(f"| `{nome}` | `{file}` | {sul_sito('artigianato', nome) // 1024} KB | {dove_sta(nome, 'chi-siamo.json')} |")
+    if os.path.isdir(os.path.join(FOTO, 'sede')):
+        righe += ['', '## Sede', '', 'Arrivata in chat il 2026-11-19 (su Drive non c\'è). Sul sito: `public/foto/sede/`.', '',
+                  '| Nome nuovo | File originale | Sul sito | Dove sta |', '| --- | --- | --- | --- |']
+        for file, nome, _, _ in SEDE:
+            righe.append(f"| `{nome}` | `{file}` | {sul_sito('sede', nome) // 1024} KB | {dove_sta(nome, 'dove-siamo.json')} |")
     with open(os.path.join(RADICE, 'docs', 'registro-foto.md'), 'w') as f:
         f.write('\n'.join(righe) + '\n')
     print(f"registro scritto: {len(dati['look'])} foto della collezione, {len(ARTIGIANATO)} di cultura e artigianato")
@@ -187,6 +220,8 @@ if __name__ == '__main__':
         artigianato(sys.argv[2])
     elif cosa == 'collezione' and len(sys.argv) == 3:
         collezione(sys.argv[2])
+    elif cosa == 'sede' and len(sys.argv) == 3:
+        sede(sys.argv[2])
     elif cosa == 'registro':
         registro(sys.argv[2] if len(sys.argv) > 2 else None)
     else:

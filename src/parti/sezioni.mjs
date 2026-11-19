@@ -65,14 +65,14 @@ export function suMisura(s, sito, { id = 'su-misura', gruppo = 'su-misura' } = {
   </section>`;
 }
 
-// 7 · Foto grande con scheda in vetro: la presa misure.
+// 7 · Foto grande con scheda in vetro: la presa misure. La foto vera, quando c'è (p.immagine), sta con quelle della sede.
 export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } = {}) {
   const s = p.scheda;
   const pillola = invito || { testo: s.invito, href: '#prenota' };
   return `<section class="sezione"${aid(id)}${agr(gruppo)}>
     ${intesta(p)}
     <div class="grande">
-      ${attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
+      ${foto(p.immagine, sito.foto?.sede, { sizes: '(max-width: 809px) 100vw, calc(100vw - 72px)' }) || attesa({ nota: p.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
       <div class="vetro scheda-misure" data-pillola-via>
         <div class="vetro__testa">
           <h3 class="vetro__titolo">${esc(s.titolo)}</h3>

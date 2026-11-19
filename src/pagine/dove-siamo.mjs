@@ -7,7 +7,7 @@ import { sedeConFoto } from '../parti/sede.mjs';
 export default function paginaDoveSiamo({ sito, testi: p, risorse, anteprima }) {
   const c = p.contatti;
   const corpo = `<main>
-  ${eroePagina(p.eroe, sito)}
+  ${eroePagina(p.eroe, sito, { archivio: sito.foto?.sede })}
   <div class="corpo">
     ${sedeConFoto(p.sede, sito, { id: 'sede' })}
     <section class="sezione funziona">

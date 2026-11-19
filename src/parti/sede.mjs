@@ -1,6 +1,7 @@
 // Foto grande con il pannello della sede a destra. Il proprietario l'ha tolta dalla pagina iniziale (2026-11-15):
-// resta pronta per la pagina /dove-siamo/, con i testi di contenuti/it/dove-siamo.json.
-import { esc, t, attesa, icona } from './base.mjs';
+// sta nella pagina /dove-siamo/, con i testi di contenuti/it/dove-siamo.json e, dal 2026-11-19, la foto vera del negozio
+// (public/foto/sede/); senza la foto resta il segnaposto.
+import { esc, t, attesa, foto, icona } from './base.mjs';
 
 function intesta(d) {
   return `<header class="intesta">
@@ -15,7 +16,7 @@ export function sedeConFoto(d, sito, { id = 'sede' } = {}) {
   return `<section class="sezione" id="${esc(id)}">
     ${intesta(d)}
     <div class="grande grande--pannello">
-      ${attesa({ nota: d.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
+      ${foto(d.immagine, sito.foto?.sede, { sizes: '(max-width: 809px) 100vw, calc(100vw - 72px)' }) || attesa({ nota: d.foto, tono: 'scuro', etichetta: sito.foto_in_arrivo })}
       <div class="vetro pannello-sede">
         <div class="vetro__testa">
           <h3 class="vetro__titolo">${esc(p.titolo)}</h3>

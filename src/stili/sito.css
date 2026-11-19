@@ -1044,6 +1044,18 @@ body[data-barra] .selettore {
   text-align: left;
 }
 
+/* una foto vera in un riquadro grande lo riempie come faceva il segnaposto */
+.grande > .foto {
+  position: absolute;
+  inset: 0;
+}
+
+/* nella sede il pannello copre il lato destro della foto; il riquadro è più basso della foto, e si tiene
+   la parte alta (gli scaffali con le buste Endero) */
+.grande--pannello > .foto img {
+  object-position: 50% 30%;
+}
+
 .pannello-sede {
   position: absolute;
   top: 25px;
@@ -3409,7 +3421,8 @@ html.dialogo-aperto {
     display: grid;
   }
 
-  .grande > .attesa {
+  .grande > .attesa,
+  .grande > .foto {
     position: relative;
     inset: auto;
     aspect-ratio: 371 / 332;
@@ -3440,7 +3453,8 @@ html.dialogo-aperto {
     scroll-margin-top: 58px;
   }
 
-  .grande--pannello > .attesa {
+  .grande--pannello > .attesa,
+  .grande--pannello > .foto {
     aspect-ratio: 371 / 402;
   }
 

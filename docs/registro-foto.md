@@ -91,3 +91,11 @@ Cartella sul Drive: "Foto Contesto". Sul sito: `public/foto/artigianato/`.
 | `bottoni-polso` | `_MAT9578.jpeg` | 1289 KB | chi siamo |
 | `ricamo` | `_MAT9734.jpg` | 2814 KB | chi siamo |
 | `maglia` | `_MAT9926.jpg` | 3061 KB | chi siamo |
+
+## Sede
+
+Arrivata in chat il 2026-11-19 (su Drive non c'è). Sul sito: `public/foto/sede/`.
+
+| Nome nuovo | File originale | Sul sito | Dove sta |
+| --- | --- | --- | --- |
+| `negozio` | `negozio-endero.jpg` | 678 KB | dove siamo |
