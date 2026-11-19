@@ -49,6 +49,7 @@
       },
       {
         "foto": "Capo della collezione",
+        "immagine": { "file": "capo-collezione", "alt": "Uomo con maglione azzurro, pantaloni grigi e una giacca a quadri azzurri sulla spalla" },
         "etichetta": "Pronta",
         "nome": "[[Nome del capo]]",
         "tessuto": "[[Tessuto]]"
