@@ -1,0 +1,25 @@
+# Questionari a passi per Endero (il titolare, il sarto): pagine che si aprono con un link, senza Claude e senza accesso.
+# Worker separato dal sito e dall'anteprima. Motore in domande/, contenuti e risposte solo nell'archivio KV.
+#   npx wrangler deploy --config wrangler.domande.toml
+#   node domande/carica.mjs <cartella del questionario>     carica domande e ritagli e stampa il link
+#   node domande/leggi.mjs <link>                           legge le risposte
+name = "endero-domande"
+main = "domande/worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+preview_urls = false
+
+[[kv_namespaces]]
+binding = "DOMANDE"
+id = "a44b8c9d71cf4ed8852df3bbf3f73c76"
+
+# la pagina e il carattere viaggiano dentro il Worker
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.woff2"]
+fallthrough = true

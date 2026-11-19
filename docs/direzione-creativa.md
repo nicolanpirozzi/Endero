@@ -403,3 +403,10 @@ Che cosa si è imparato: per la camicia il 3D in diretta non va riproposto; un m
 
 **Chi fa cosa.** Scena 3D e preparazione del modello: Fable 5.2, come per il film. Pagina, riquadro, modulo e collegamento al resto del sito: Opus 5.5.
 
+
+**Logica delle taglie e questionari (dal 18 novembre 2026).** Il proprietario vuole che con l'ordine arrivi in azienda anche la taglia di partenza con le variazioni («Taglia 41 · collo +2 cm · manica −6 cm»). Le regole confermate dal titolare stanno in `CLAUDE.md`; le misure delle otto camicie campione non stanno nel repository.
+
+- *Come si chiede a Endero*: una pagina a passi, una domanda per schermata, con il ritaglio del loro foglio accanto a quello che abbiamo capito. La prima (24 domande al titolare) era un artifact di Claude, e chi non ha Claude non poteva salvare: dal 19 novembre i questionari stanno sul Worker `endero-domande` (`domande/worker.js`, `domande/pagina.html`), che si apre con un link lungo e casuale e salva ogni risposta nell'archivio KV. All'inizio chi apre sceglie tra «Rispondo per Endero» e «Sto solo guardando la pagina»: nel secondo caso non si salva niente, così le prove non si confondono con le risposte vere.
+- *Due tipi di schermata*: un'ipotesi da confermare, correggere o riscrivere; un numero da scrivere (i centimetri di agio), con un esempio che fa il conto mentre si scrive, oppure due righe se un numero fisso non c'è. Il formato delle domande è in testa a `domande/carica.mjs`.
+- *Comandi*: `npx wrangler deploy --config wrangler.domande.toml` pubblica il motore; `node domande/carica.mjs <cartella> --base <indirizzo del Worker>` carica domande e ritagli (la cartella sta fuori dal repository, la chiave del link la crea lo script); `node domande/leggi.mjs <link>` legge le risposte; `node tools/prova-domande.js <link>` fa 50 controlli, ma solo su un questionario con `"prova": true`, che poi si toglie dall'archivio.
+- *Se la rete cade* la risposta resta in coda sul dispositivo e riparte da sola; il riepilogo dice «non devi mandare niente» solo quando sul server c'è tutto.
