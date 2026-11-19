@@ -97,8 +97,8 @@
   will-change: transform;
 }
 
-/* PROVA del tessuto che ondeggia (src/configuratore/onda.js): la tela su cui la scheda grafica disegna la camicia,
-   al posto dell'immagine spostata tutta insieme. Sta nel piano come gli altri pezzi, in punti del fotogramma. */
+/* Il tessuto che ondeggia (src/configuratore/onda.js): la tela su cui la scheda grafica disegna la camicia, al posto
+   dell'immagine spostata tutta insieme. Sta nel piano come gli altri pezzi, in punti del fotogramma. */
 .configura__onda {
   position: absolute;
   max-width: none;

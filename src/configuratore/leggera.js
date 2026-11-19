@@ -45,7 +45,7 @@ const stringi = (v, a, b) => Math.max(a, Math.min(b, v));
  * @param {HTMLElement} palco  il palco della camicia, con l'immagine ferma dentro
  * @param {string} dove        la cartella dei file, per esempio "/camicia/leggera/"
  * @param {string} versione    l'impronta dei file, messa dal build: quando i pezzi si rifanno il browser non usa i vecchi
- * @param {object} prova       in prova: { onda: quanto ondeggia il tessuto (0 no, 1 la misura di mezzo; vedi onda.js),
+ * @param {object} tessuto     { onda: quanto ondeggia il tessuto (0 no, 1 la misura scelta dal proprietario; vedi onda.js),
  *                             comunque: anche senza accelerazione grafica (per i controlli) }
  */
 export async function leggera(palco, dove, versione = '', { onda = 0, comunque = false } = {}) {
@@ -68,7 +68,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   riquadro.append(piano);
   palco.querySelector('.configura__ferma').closest('picture').after(riquadro);
   // (l'altezza vera, con i decimali: arrotondata, in fondo al fotogramma i pezzi sarebbero fuori posto di un quarto di punto)
-  let stoffa = null;                                   // in prova: il tessuto che ondeggia (onda.js), se c'è
+  let stoffa = null;                                   // il tessuto che ondeggia (onda.js), dove la scheda grafica c'è
   const misura = () => {
     const k = riquadro.getBoundingClientRect().height / FA;
     if (k > 0) { piano.style.transform = `scale(${k})`; if (stoffa && stoffa.misura(k) && !corre) stoffa.disegna(null); }
@@ -172,13 +172,15 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   const prossimo = () => (manuale ? -1 : requestAnimationFrame(passo));
   let finto = 0;
   const adesso = () => (manuale ? finto : performance.now());
-  let corre = 0, prima = 0, quieta = 0, lenti = 0, contati = 0;
+  let corre = 0, prima = 0, quieta = 0, lenti = 0, contati = 0, male = 0;
   const passo = (ora) => {
-    // La stoffa deve andare liscia o non andare: se su questo computer i fotogrammi arrivano a meno di trenta al
-    // secondo (trenta lenti su sessanta), si rinuncia da soli e resta la camicia rigida
-    if (stoffa && !manuale && prima) {
-      if (ora - prima > 34) lenti++;
-      if (++contati >= 60) { if (lenti >= 30) rinuncia(); lenti = contati = 0; }
+    // La stoffa deve andare liscia o non andare. Si contano i fotogrammi a gruppi di sessanta (un secondo), lasciando
+    // stare i primi dopo ogni partenza, quando la pagina sta ancora finendo di caricare: se in due gruppi di fila più
+    // di metà arrivano in ritardo (oltre 24 millesimi: lo schermo ne vuole uno ogni 17), si rinuncia da soli e resta
+    // la camicia rigida, che è fatta di sole immagini spostate e non rallenta
+    if (stoffa && !manuale && prima && ++contati > 20) {
+      if (ora - prima > 24) lenti++;
+      if (contati >= 80) { male = lenti > 30 ? male + 1 : 0; lenti = 0; contati = 20; if (male >= 2) rinuncia(); }
     }
     const vero = stringi((ora - prima) / 1000, 0.001, 0.034);
     prima = ora;
@@ -208,7 +210,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   const sveglia = () => {
     quieta = 0;
     if (corre || ridotto.matches) return;
-    prima = adesso(); corre = prossimo(); lenti = contati = 0;
+    prima = adesso(); corre = prossimo(); lenti = contati = male = 0;
   };
 
   /** Via la stoffa: torna la camicia rigida, quella approvata. */
@@ -217,7 +219,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     stoffa.tela.remove(); stoffa = null; camicia.style.visibility = '';
     if (corre) disegna();
   }
-  // PROVA: il tessuto che ondeggia. Se qui non si può fare (il browser non ha l'accelerazione grafica) resta la camicia rigida
+  // Il tessuto che ondeggia. Se qui non si può fare (il browser non ha l'accelerazione grafica) resta la camicia rigida
   if (onda) {
     stoffa = creaOnda({ piano, dopo: ombra, foto: camicia, riquadro: D.pezzi.camicia, rx, camera, daFerma, zPiano: G[2], sole, forza: onda, comunque });
     if (stoffa) {

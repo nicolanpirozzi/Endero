@@ -1,5 +1,6 @@
 // La stoffa che ondeggia: la camicia leggera, ma con il tessuto che si muove come un telo.
-// PROVA (2026-11-18): si apre con ?prova=onda nell'indirizzo (anche onda-a, più lieve, e onda-c, più mossa).
+// Scelta dal proprietario il 2026-11-19, provate tre misure ai loro indirizzi: "B, di mezzo", e sul suo computer
+// "Sì, è fluido". Da allora è la camicia normale del configuratore.
 //
 // Il proprietario ha mandato un sito di riferimento (motion-depth.framer.website: passando sopra un'immagine, quella
 // ondeggia come un telo di stoffa, con le pieghe in chiaro e scuro) e ha chiesto: "Oggi la camicia è immobile e si
@@ -10,7 +11,8 @@
 // la mano, e poi torna piatta. Le pieghe prendono un po' più o un po' meno luce secondo come si girano verso la
 // finestra della scena. Piatta, è l'immagine di Blender punto per punto.
 // Lo disegna la scheda grafica (WebGL, un solo disegno di 1.700 triangoli); il conto della stoffa pesa meno di un
-// millisecondo a fotogramma. Dove il browser non ha l'accelerazione grafica non parte, e resta la camicia leggera.
+// millisecondo a fotogramma. Dove il browser non ha l'accelerazione grafica non parte, e se i fotogrammi arrivano
+// lenti leggera.js ci rinuncia: in tutti e due i casi resta la camicia che dondola tutta insieme.
 
 const COLONNE = 22, RIGHE = 40;        // i punti della griglia
 const BORDO = 40;                      // punti del fotogramma di griglia in più intorno alla camicia
@@ -59,7 +61,7 @@ void main() {
  *   daFerma    3 x 3: da un punto del fotogramma al piano della camicia ferma
  *   zPiano     dove sta quel piano
  *   sole       il verso da cui arriva la luce nella scena
- *   forza      1 è la misura di mezzo
+ *   forza      1 è la misura scelta dal proprietario (provate anche 0,6 e 1,6)
  *   comunque   disegna anche se il browser non ha l'accelerazione grafica (solo per le prove)
  * @returns l'oggetto che leggera.js fa avanzare e disegnare, o null se qui la stoffa non si può fare
  */

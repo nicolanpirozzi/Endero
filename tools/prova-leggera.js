@@ -102,14 +102,14 @@ const SCHERMI = [
         for (let i = 0; i <= 12; i++) { await page.mouse.move(da + (a - da) * i / 12, y); await page.waitForTimeout(25); await page.evaluate(() => window.__camicia.passo(25)); }
       }
       // poi il tempo va avanti da solo: il massimo dello spostamento, e quanto ci mette a fermarsi
-      return page.evaluate(() => { let max = 0, n = 0, mossa = ''; while (window.__camicia.passo(16.67) && n < 3000) { n++; const l = window.__camicia.p.lato; if (Math.abs(l) > Math.abs(max)) { max = l; mossa = document.querySelectorAll('.configura__posa--strati img')[2].style.transform; } } return { max, secondi: n * 16.67 / 1000, mossa }; });
+      return page.evaluate(() => { let max = 0, n = 0, mossa = ''; while (window.__camicia.passo(16.67) && n < 3000) { n++; const l = window.__camicia.p.lato; if (Math.abs(l) > Math.abs(max)) { max = l; mossa = document.querySelectorAll('.configura__posa--strati img')[1].style.transform; } } return { max, secondi: n * 16.67 / 1000, mossa }; });
     };
     const sinistra = cx + cw * 0.2, destra = cx + cw * 0.8;
     const versoDestra = await passata(sinistra, destra);
     const dopo = await stato();
     // il proprietario ha chiesto 6 cm all'orlo con una passata decisa; col dito, che fa meno strada, è di meno
     vedi(dito ? versoDestra.max > 0.01 && versoDestra.max < 0.05 : versoDestra.max > 0.032 && versoDestra.max < 0.047, 'passando verso destra la camicia va a destra, di circa 6 cm all\'orlo', orlo(versoDestra.max));
-    vedi(versoDestra.mossa.startsWith('matrix3d('), 'mentre si muove la camicia ha la sua trasformazione');
+    vedi(versoDestra.mossa.startsWith('matrix3d('), 'mentre la camicia si muove, la sua ombra la segue');
     vedi(dopo.mossa === '' && dopo.ombra === '' && versoDestra.secondi < 20, 'poi si ferma esattamente al suo posto', `dopo ${versoDestra.secondi.toFixed(1)} s`);
     vedi(dopo.invito, 'toccata, l\'invito a passarci sopra se ne va');
     const versoSinistra = await passata(destra, sinistra);
@@ -158,14 +158,14 @@ const SCHERMI = [
     await ctx.close();
   }
 
-  console.log('in prova: il tessuto che ondeggia (?prova=onda)');
+  console.log('il tessuto che ondeggia');
   for (const [nome, vista, fitto] of [['computer 1440 x 790', { width: 1440, height: 790 }, 1], ['telefono 390 x 760', { width: 390, height: 760 }, 2]]) {
     const ctx = await browser.newContext({ viewport: vista, deviceScaleFactor: fitto });
     const page = await ctx.newPage();
     const errori = [];
     page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
     page.on('pageerror', (e) => errori.push(String(e)));
-    await page.goto(PAGINA + '?prova=onda&comunque&manuale', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '?comunque&manuale', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => window.__camicia && 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
     const ferma = () => page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 4000); return n * 16.67 / 1000; });
     const c = await page.evaluate(() => { const t = document.querySelector('canvas.configura__onda'), r = document.querySelectorAll('.configura__strati img')[2].getBoundingClientRect(); return { tela: !!t, nascosta: getComputedStyle(document.querySelectorAll('.configura__strati img')[2]).visibility === 'hidden', onda: window.__camicia.onda, r: [r.left, r.top, r.width, r.height], larga: document.documentElement.scrollWidth }; });
@@ -189,6 +189,27 @@ const SCHERMI = [
     await ctx.close();
   }
 
+  console.log('dove la scheda grafica non c\'è: la camicia dondola tutta insieme (?rigida)');
+  for (const [nome, vista, fitto] of [['computer 1440 x 790', { width: 1440, height: 790 }, 1], ['telefono 390 x 760', { width: 390, height: 760 }, 2]]) {
+    const ctx = await browser.newContext({ viewport: vista, deviceScaleFactor: fitto });
+    const page = await ctx.newPage();
+    const errori = [];
+    page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
+    page.on('pageerror', (e) => errori.push(String(e)));
+    await page.goto(PAGINA + '?rigida&manuale', { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => window.__camicia && 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
+    const c = await page.evaluate(() => { const im = document.querySelectorAll('.configura__strati img')[2], r = im.getBoundingClientRect(); return { tele: document.querySelectorAll('canvas').length, visibile: getComputedStyle(im).visibility === 'visible', onda: window.__camicia.onda, r: [r.left, r.top, r.width, r.height] }; });
+    vedi(c.tele === 0 && c.visibile && c.onda === null, `${nome}: niente stoffa, la camicia è l'immagine ritagliata`);
+    await page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 4000); });
+    const y = Math.min(vista.height - 70, Math.max(100, c.r[1] + c.r[3] * 0.55));
+    await page.mouse.move(c.r[0] + c.r[2] * 0.2 - 60, y);
+    for (let i = 0; i <= 12; i++) { await page.mouse.move(c.r[0] + c.r[2] * (0.2 + 0.05 * i), y); await page.waitForTimeout(25); await page.evaluate(() => window.__camicia.passo(25)); }
+    const mossa = await page.evaluate(() => { let max = 0, n = 0, m = ''; while (window.__camicia.passo(16.67) && n++ < 4000) { const l = window.__camicia.p.lato; if (l > max) { max = l; m = document.querySelectorAll('.configura__strati img')[2].style.transform; } } return { max, m, dopo: document.querySelectorAll('.configura__strati img')[2].style.transform }; });
+    vedi(mossa.max > 0.02 && mossa.m.startsWith('matrix3d(') && mossa.dopo === '', `${nome}: passandoci sopra dondola e torna al suo posto`, `${(mossa.max * 155).toFixed(1)} cm all'orlo`);
+    vedi(errori.length === 0, `${nome}: nessun errore`, errori.join(' | '));
+    await ctx.close();
+  }
+
   console.log('movimento ridotto');
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 790 }, reducedMotion: 'reduce' });
@@ -208,23 +229,36 @@ const SCHERMI = [
     vedi(await page.locator('.configura__ferma').isVisible(), 'resta l\'immagine ferma');
     await ctx.close();
   }
-  console.log('fluidità (qui il browser di prova disegna col processore: su uno schermo vero va meglio)');
-  {
+  // Quanti fotogrammi al secondo. Il browser di prova non ha scheda grafica e disegna tutto col processore: la camicia
+  // rigida (immagini spostate) deve andare liscia anche così; il tessuto che ondeggia qui va lento per forza, e allora
+  // deve rinunciare da solo e lasciare il posto alla camicia rigida. Su una scheda grafica vera lo giudica il proprietario.
+  for (const [titolo, domanda, stoffa] of [['fluidità della camicia rigida', '?rigida', false], ['il tessuto, se va lento, rinuncia da solo', '?comunque', true]]) {
+    console.log(titolo);
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 790 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
-    await page.goto(PAGINA, { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + domanda, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => 'viva' in document.querySelector('.configura__palco').dataset);
     await page.waitForTimeout(200);
     const c = await page.evaluate(() => { const r = document.querySelectorAll('.configura__posa--strati img')[2].getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });
+    const tele = () => page.evaluate(() => document.querySelectorAll('canvas.configura__onda').length);
+    const inizio = await tele();
     await page.evaluate(() => { window.__tempi = []; let prima = performance.now(); const giro = (ora) => { window.__tempi.push(ora - prima); prima = ora; requestAnimationFrame(giro); }; requestAnimationFrame(giro); });
-    for (let giro = 0; giro < 8; giro++) for (let i = 0; i <= 10; i++) { await page.mouse.move(c[0] + c[2] * (giro % 2 ? 0.8 - 0.06 * i : 0.2 + 0.06 * i), c[1] + c[3] * 0.55); await page.waitForTimeout(16); }
-    await page.waitForTimeout(1500);
-    const t = await page.evaluate(() => { const v = window.__tempi.slice(5).sort((a, b) => a - b); return { n: v.length, mediana: v[v.length >> 1], lento: v[Math.floor(v.length * 0.95)], mossa: document.querySelectorAll('.configura__posa--strati img')[2].style.transform !== '' }; });
+    for (let giro = 0; giro < (stoffa ? 24 : 8); giro++) for (let i = 0; i <= 10; i++) { await page.mouse.move(c[0] + c[2] * (giro % 2 ? 0.8 - 0.06 * i : 0.2 + 0.06 * i), c[1] + c[3] * 0.55); await page.waitForTimeout(16); }
+    await page.waitForTimeout(stoffa ? 300 : 1500);
+    // l'ombra ha la sua trasformazione finché la camicia si muove, con la stoffa e senza
+    const t = await page.evaluate(() => { const meta = (a) => { const v = [...a].sort((x, y) => x - y); return v[v.length >> 1]; }, tutti = window.__tempi.slice(5), v = [...tutti].sort((a, b) => a - b); return { n: v.length, mediana: v[v.length >> 1], lento: v[Math.floor(v.length * 0.95)], inizio: meta(tutti.slice(0, 80)), fine: meta(tutti.slice(-80)), mossa: document.querySelectorAll('.configura__posa--strati img')[1].style.transform !== '' }; });
     vedi(t.mossa, 'col tempo vero la camicia si muove');
-    vedi(t.mediana < 20 && t.lento < 34, 'un fotogramma ogni sedicesimo di secondo circa', `mediana ${t.mediana.toFixed(1)} ms, il 95% entro ${t.lento.toFixed(1)} ms, ${t.n} fotogrammi`);
-    // quanto lavora lo script a ogni fotogramma
-    const lavoro = await page.evaluate(() => { const p = performance.now(); for (let i = 0; i < 200; i++) document.querySelector('.configura__palco').dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 600 + (i % 7), clientY: 400, bubbles: true })); return (performance.now() - p) / 200; });
-    vedi(lavoro < 0.5, 'il conto di un movimento del mouse è trascurabile', `${(lavoro * 1000).toFixed(0)} milionesimi di secondo`);
+    if (!stoffa) {
+      vedi(t.mediana < 20 && t.lento < 34, 'un fotogramma ogni sedicesimo di secondo circa', `mediana ${t.mediana.toFixed(1)} ms, il 95% entro ${t.lento.toFixed(1)} ms, ${t.n} fotogrammi`);
+      // quanto lavora lo script a ogni movimento del mouse
+      const lavoro = await page.evaluate(() => { const p = performance.now(); for (let i = 0; i < 200; i++) document.querySelector('.configura__palco').dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', clientX: 600 + (i % 7), clientY: 400, bubbles: true })); return (performance.now() - p) / 200; });
+      vedi(lavoro < 0.5, 'il conto di un movimento del mouse è trascurabile', `${(lavoro * 1000).toFixed(0)} milionesimi di secondo`);
+    } else {
+      const fine = await tele(), visibile = await page.evaluate(() => getComputedStyle(document.querySelectorAll('.configura__strati img')[2]).visibility === 'visible');
+      // o il tessuto è rimasto (andava liscio), o ha rinunciato ed è tornata la camicia rigida, e da lì in poi va liscia
+      if (fine === 1) vedi(inizio === 1 && t.inizio <= 24, 'il tessuto andava liscio ed è rimasto', `${t.inizio.toFixed(1)} ms a fotogramma`);
+      else vedi(inizio === 1 && fine === 0 && visibile && t.fine < 20, 'il tessuto andava lento: ha rinunciato ed è tornata la camicia rigida, liscia', `${t.inizio.toFixed(1)} ms a fotogramma col tessuto, ${t.fine.toFixed(1)} dopo`);
+    }
     await ctx.close();
   }
   await browser.close();
