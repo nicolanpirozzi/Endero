@@ -69,6 +69,7 @@ DETTAGLI = [
     ('camicia-indossata.jpg', 'camicia-indossata', (745, 0, 1415, 1116)),
     ('polsino.jpg', 'polsino', (690, 0, 1360, 1116)),
     ('capo-collezione.jpg', 'capo-collezione', (50, 0, 1250, 2000)),
+    ('tessuto.jpg', 'tessuto', (680, 0, 1350, 1116)),
 ]
 # la collezione: le foto intere, in verticale; l'AVIF in tutte le grandezze, il WebP solo nelle prime due
 COLLEZIONE = {'v': (400, 800, 1400), 'webp': 800, 'o': (960, 1600, 2400)}
