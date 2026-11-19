@@ -35,6 +35,7 @@
       },
       {
         "foto": "Camicia indossata",
+        "immagine": { "file": "camicia-indossata", "alt": "Uomo con camicia bianca e cravatta bordeaux a righe, appoggiato a un albero in un giardino" },
         "etichetta": "Pronta",
         "nome": "[[Nome del capo]]",
         "tessuto": "[[Tessuto]]"
