@@ -1,14 +1,14 @@
 {
-  "_nota": "Cultura e artigianato: prende il posto della storia (docs/direzione-creativa.md, punto 10). I capitoli nascono dalle foto vere: un capitolo per foto, e il testo descrive solo quello che la foto mostra in tutti i suoi ritagli (sul computer la foto è tagliata in orizzontale, sul telefono in verticale: ciò che resta fuori da uno dei due non si nomina). Le sei foto sono quelle mandate dal proprietario il 2026-11-18 (Drive, cartella 'Foto Contesto'), compresse con tools/comprimi-foto.py in public/foto/artigianato/. Titoli e testi sono bozze nostre, da approvare. Gli stessi capitoli servono alla sezione della pagina iniziale e alla pagina /cultura-e-artigianato/, dove la foto di apertura non si ripete tra i capitoli. 'fuoco': 'alto' tiene la parte alta della foto nei riquadri larghi. Della produzione si dice solo 'fatto in Italia'.",
+  "_nota": "Cultura e artigianato: prende il posto della storia (docs/direzione-creativa.md, punto 10). Un capitolo per foto. Le frasi non descrivono la foto: il proprietario le ha volute così il 2026-11-19 (\"devono essere frasi che richiamano alla bellezza delle cose fatte a mano, dell'alta moda italiana, dell'importanza del lavoro umano. Devono avere una correlazione con l'immagine dietro ma non parlare solo di quello\"); titoli e frasi dei sei capitoli li ha scelti lui tra due versioni. Parlano di valori: niente numeri, tempi, persone o lavorazioni precise che non abbia confermato. Sottotitolo, introduzione e descrizione sono bozze nostre nello stesso tono, da approvare. Le foto sono le sei mandate dal proprietario il 2026-11-18 (Drive, cartella 'Foto Contesto'), compresse con tools/comprimi-foto.py in public/foto/artigianato/. Gli stessi capitoli servono alla sezione della pagina iniziale e alla pagina /cultura-e-artigianato/, dove la foto di apertura non si ripete tra i capitoli. 'fuoco': 'alto' tiene la parte alta della foto nei riquadri larghi. Della produzione si dice solo 'fatto in Italia'.",
   "meta": {
     "titolo": "Cultura e artigianato · Endero, camicie e abbigliamento uomo",
-    "descrizione": "Cultura e artigianato Endero: i tessuti, i bottoni e i ricami dei nostri capi uomo, visti da vicino. Fatti in Italia.",
+    "descrizione": "Cultura e artigianato Endero: la bellezza delle cose fatte a mano, la cura dei dettagli e il valore del lavoro delle persone. Fatto in Italia.",
     "immagine": "/foto/artigianato/coppole-anteprima.jpg",
     "immagine_alt": "Due uomini sorridenti con coppola a quadri azzurri; uno indossa un gilet nello stesso tessuto"
   },
   "eroe": {
     "titolo": "Cultura e artigianato",
-    "sottotitolo": "I capi Endero, da vicino",
+    "sottotitolo": "La bellezza delle cose fatte a mano",
     "foto": "Foto di apertura, orizzontale",
     "immagine": {
       "file": "coppole",
@@ -18,12 +18,12 @@
   },
   "introduzione": {
     "titolo": "Il mestiere",
-    "testo": "Lo stesso tessuto su più capi, e la E di Endero su bottoni e ricami: sono i dettagli che si vedono guardando da vicino."
+    "testo": "Fare le cose a mano è una scelta: chiede tempo, strumenti di qualità e persone che conoscono il mestiere. È la tradizione della moda italiana, ed è il nostro modo di lavorare."
   },
   "capitoli": [
     {
-      "titolo": "Lo stesso tessuto",
-      "testo": "Il quadro azzurro passa dal gilet alla coppola.",
+      "titolo": "Fatto da persone",
+      "testo": "C'è un piacere che conosce solo chi indossa qualcosa fatto a mano: sapere che dietro ci sono persone, non soltanto un tessuto.",
       "foto": "Due uomini con coppola e gilet a quadri",
       "immagine": {
         "file": "coppole",
@@ -32,8 +32,8 @@
       }
     },
     {
-      "titolo": "Il cappello",
-      "testo": "La fascia è nello stesso tessuto a quadri.",
+      "titolo": "L'arte del vestire",
+      "testo": "L'alta moda italiana lo insegna da sempre: lo stile è un'arte fatta di scelte, dove ogni dettaglio parla con gli altri.",
       "foto": "Uomo con cappello dalla fascia a quadri",
       "immagine": {
         "file": "cappello",
@@ -42,8 +42,8 @@
       }
     },
     {
-      "titolo": "Il bottone con la E",
-      "testo": "Azzurro, con la E di Endero, sul tessuto a quadri.",
+      "titolo": "Unico, come chi lo sceglie",
+      "testo": "Dove si lavora a mano e con gli strumenti migliori niente è già deciso: ogni dettaglio può diventare tuo, fino all'ultimo bottone.",
       "foto": "Bottone con la E su tessuto a quadri",
       "immagine": {
         "file": "bottone-e",
@@ -51,8 +51,8 @@
       }
     },
     {
-      "titolo": "I bottoni della manica",
-      "testo": "In fondo alla manica, accanto ai bottoni chiari a quattro fori, quello con la E.",
+      "titolo": "Il segno delle mani",
+      "testo": "È nei particolari più piccoli che le mani lasciano il loro segno: lì un capo smette di essere uno fra tanti.",
       "foto": "Bottoni in fondo alla manica",
       "immagine": {
         "file": "bottoni-polso",
@@ -61,8 +61,8 @@
       }
     },
     {
-      "titolo": "La E ricamata",
-      "testo": "Ricamata in bianco e blu sul tessuto a quadri.",
+      "titolo": "Il tempo delle cose belle",
+      "testo": "La bellezza non ha fretta: nasce da gesti pazienti, un filo alla volta.",
       "foto": "La E ricamata sul tessuto",
       "immagine": {
         "file": "ricamo",
@@ -70,8 +70,8 @@
       }
     },
     {
-      "titolo": "La maglia",
-      "testo": "Blu, con il bordo e i polsi a coste, e la E ricamata piccola sul davanti.",
+      "titolo": "Il valore del lavoro umano",
+      "testo": "Nessuna etichetta lo dice meglio delle mani: ciò che è fatto con cura si sente, e a farlo sono le persone.",
       "foto": "Maglia blu con la E ricamata",
       "immagine": {
         "file": "maglia",
