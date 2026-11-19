@@ -157,15 +157,21 @@ def registro(originali=None):
              'non si corregge a mano.', '']
     dati = json.load(open(os.path.join(CONTENUTI, 'collezione.json')))
     nomi = {t['id']: t['nome'] for t in dati['lookbook']['tipi']}
-    righe += ['## Collezione', '', 'Cartella sul Drive: "Foto da caricare". Sul sito: `public/foto/collezione/`.', '',
-              '| N. | Nome nuovo | File originale | Tipo | Misure | Pesava | Sul sito | Dove sta |', '| --- | --- | --- | --- | --- | --- | --- | --- |']
+    # su Drive il nome nuovo ce l'hanno solo i file rinominati: gli altri sono rimasti col nome di partenza
+    vecchi = set(dati.get('drive', {}).get('nome_vecchio', []))
+    righe += ['## Collezione', '', 'Cartella sul Drive: "Foto da caricare". Sul sito: `public/foto/collezione/`.', '']
+    if vecchi:
+        righe += [f"Su Drive hanno il nome nuovo {len(dati['look']) - len(vecchi)} foto su {len(dati['look'])}: le rinomine le ha fermate il proprietario il 2026-11-19.",
+                  'La colonna "Su Drive" dice come si chiama oggi il file nella cartella.', '']
+    righe += ['| N. | Nome nuovo | File originale | Su Drive | Tipo | Misure | Pesava | Sul sito | Dove sta |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     for i, k in enumerate(dati['look']):
         misure, peso = di_partenza(k['originale'])
-        righe.append(f"| {i + 1} | `{k['file']}` | `{k['originale']}` | {nomi[k['tipo']]} | {misure} | {peso} | {sul_sito('collezione', k['file']) // 1024} KB | {dove_sta(k['file'], 'collezione.json')} |")
-    for titolo, voce in (('Doppioni', 'doppioni'), ('Video, non ancora nel sito', 'video')):
+        su_drive = 'nome di partenza' if k['file'] in vecchi else 'nome nuovo'
+        righe.append(f"| {i + 1} | `{k['file']}` | `{k['originale']}` | {su_drive} | {nomi[k['tipo']]} | {misure} | {peso} | {sul_sito('collezione', k['file']) // 1024} KB | {dove_sta(k['file'], 'collezione.json')} |")
+    for titolo, voce in (('Doppioni, rimasti su Drive', 'doppioni'), ('Video, non ancora nel sito', 'video')):
         if dati.get('fuori', {}).get(voce):
-            righe += ['', f'### {titolo}', '', '| File originale | Nome su Drive | Nota |', '| --- | --- | --- |']
-            righe += [f"| `{d['originale']}` | {'`' + d['nuovo'] + '`' if d.get('nuovo') else 'tolto'} | {d['nota']} |" for d in dati['fuori'][voce]]
+            righe += ['', f'### {titolo}', '', '| File su Drive | Nome proposto | Nota |', '| --- | --- | --- |']
+            righe += [f"| `{d['originale']}` | {'`' + d['proposto'] + '`' if d.get('proposto') else 'da togliere'} | {d['nota']} |" for d in dati['fuori'][voce]]
     righe += ['', '## Cultura e artigianato', '', 'Cartella sul Drive: "Foto Contesto". Sul sito: `public/foto/artigianato/`.', '',
               '| Nome nuovo | File originale | Sul sito | Dove sta |', '| --- | --- | --- | --- |']
     for file, nome, _, _ in ARTIGIANATO:

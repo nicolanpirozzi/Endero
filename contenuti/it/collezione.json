@@ -387,8 +387,25 @@
       "href": "/camicie-su-misura/"
     }
   },
+  "drive": {
+    "_nota": "Come stanno i file sul Drive del proprietario. Le rinomine le ha fermate lui il 2026-11-19, a 34 foto su 46: le foto elencate qui hanno ancora il nome di partenza ('originale'), le altre il nome nuovo. Doppioni e video non sono stati toccati. Non si riprende senza che lo chieda.",
+    "nome_vecchio": [
+      "abiti-giacca-gilet-quadri-azzurri-coppola",
+      "abiti-gessato-blu-doppiopetto",
+      "abiti-gessato-blu-bottoni",
+      "abiti-gessato-blu-rever",
+      "abiti-gessato-chiaro",
+      "abiti-gessato-chiaro-2",
+      "felpe-grigia-e-a-quadri",
+      "felpe-grigia-e-sulla-schiena",
+      "felpe-cappuccio-blu-notte",
+      "felpe-grigia-e-sulla-schiena-2",
+      "felpe-zip-nera",
+      "felpe-cappuccio-nera"
+    ]
+  },
   "fuori": {
-    "_nota": "File della cartella 'Foto da caricare' che non stanno nel sito: i doppioni (stesso file, o stessa foto esportata due volte) e i video, che il proprietario per ora non vuole (2026-11-19). 'nuovo' è il nome dato su Drive.",
+    "_nota": "File della cartella 'Foto da caricare' che non stanno nel sito: i doppioni (stesso file, o stessa foto esportata due volte) e i video, che il proprietario per ora non vuole (2026-11-19). Su Drive sono rimasti com'erano: 'proposto' è il nome che avrebbero preso.",
     "doppioni": [
       {
         "originale": "snapgram.io_download-file-10fh9i4c.jpg",
@@ -412,24 +429,24 @@
       },
       {
         "originale": "IMG_4508.jpeg",
-        "nuovo": "maglieria-girocollo-senape-copia.jpeg",
+        "proposto": "maglieria-girocollo-senape-copia.jpeg",
         "nota": "la stessa foto di `IMG_4507.jpeg` (`maglieria-girocollo-senape`), esportata due volte"
       }
     ],
     "video": [
       {
         "originale": "snapgram.io_download-file-wyfj07vm.mp4",
-        "nuovo": "video-abito-gessato-blu.mp4",
+        "proposto": "video-abito-gessato-blu.mp4",
         "nota": "reel dell'abito gessato blu con il logo Endero alla fine: verticale, 720 × 1280, 19 secondi"
       },
       {
         "originale": "IMG_3393.mov",
-        "nuovo": "video-ristorante-1.mov",
+        "proposto": "video-ristorante-1.mov",
         "nota": "due modelli a tavola al ristorante, ripresa da telefono: verticale, 1080 × 1920, 23 secondi, con audio"
       },
       {
         "originale": "IMG_3394.mov",
-        "nuovo": "video-ristorante-2.mov",
+        "proposto": "video-ristorante-2.mov",
         "nota": "come sopra, 7 secondi"
       }
     ]

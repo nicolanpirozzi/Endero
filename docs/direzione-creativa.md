@@ -172,9 +172,14 @@ Comandi: `npm run anteprima` (sito in locale su http://127.0.0.1:8766, modulo sp
 
 ## 8. Materiali da ricevere
 
-- Video del laboratorio per l'apertura del sito: 10–20 secondi, orizzontale, più un taglio verticale per il telefono.
-- Dodici foto verticali di dettagli e capi per la griglia, una foto orizzontale grande, tre foto per gli ingressi alla collezione, foto per la storia.
-- Foto, nomi, descrizioni e prezzi dei prodotti della collezione.
+Aggiornato il 19 novembre 2026, dopo le foto della collezione (punto 13) e di cultura e artigianato. Quello che è arrivato sono capi indossati: maglieria, giacche e cappotti, abiti, felpe. Non c'è nessuna foto di camicie da vicino, del laboratorio, della sede o di un negozio: per questo i riquadri qui sotto restano segnaposto ("lascia il segnaposto", proprietario).
+
+- Pagina iniziale: il video del laboratorio per l'apertura (10–20 secondi, orizzontale, più un taglio verticale per il telefono) e la foto orizzontale della presa misure in sede, con la piccola foto del capo nella sua scheda.
+- Camicie su misura, dieci riquadri: il sarto al lavoro su una camicia (orizzontale, apertura della pagina); sei foto per i dettagli (colletto in primo piano, camicia indossata, polsino e bottone, un capo della collezione, tessuto da vicino, camicia indossata di spalle); la presa misure in sede (orizzontale) con la foto del capo nella scheda; una camicia su misura indossata (orizzontale) accanto al prezzo.
+- Diventa rivenditore, sei riquadri: capi Endero in un negozio (orizzontale, apertura); etichetta cucita nel collo, in primo piano; presa misure in un negozio; e i tre capitoli: la collezione in un negozio (orizzontale), l'etichetta di un cliente cucita su una camicia, una camicia su misura consegnata in negozio.
+- Dove siamo, due riquadri: l'ingresso della sede e la sede di Viale del Toro, tutte e due orizzontali.
+- Nomi, descrizioni e prezzi dei capi della collezione: oggi il lookbook mostra le foto senza schede.
+- I tre video della cartella "Foto da caricare" (un reel dell'abito gessato, due riprese al ristorante) restano fuori: "nessuno per ora" (proprietario).
 - Orari della sede, prezzo "a partire da", testi delle domande frequenti.
 
 ## 9. Diventa rivenditore
@@ -255,7 +260,7 @@ Deciso dal proprietario il 15 novembre 2026, dopo che il fondatore ha visto l'an
 | Indirizzo | Cosa contiene | Ricerca a cui risponde |
 | --- | --- | --- |
 | `/` | Apertura, eroe, vetrina dei prodotti, cultura e artigianato, porta verso il su misura, fascia rivenditori | Endero, camicie uomo |
-| `/collezione/`, `/collezione/<capo>/` | Come oggi | camicia uomo, nome del capo |
+| `/collezione/`, `/collezione/<capo>/` | Dal 19 novembre il lookbook con le foto vere (punto 13); le schede dei capi quando arrivano nomi e prezzi | abbigliamento uomo Endero, nome del capo |
 | `/camicie-su-misura/` | Tutto il su misura che stava in pagina iniziale: dettagli, presa misure, come funziona con il modulo, prezzo, domande. In cima l'ingresso al configuratore | camicia su misura, camicia su misura Napoli |
 | `/camicie-su-misura/configuratore/` | Il configuratore (punto 12) | crea la tua camicia su misura |
 | `/cultura-e-artigianato/` | Prende il posto di `/storia/` | Endero camicie, chi siamo |
@@ -412,3 +417,29 @@ Che cosa si è imparato: per la camicia il 3D in diretta non va riproposto; un m
 - *Comandi*: `npx wrangler deploy --config wrangler.domande.toml` pubblica il motore; `node domande/carica.mjs <cartella> --base <indirizzo del Worker>` carica domande e ritagli (la cartella sta fuori dal repository, la chiave del link la crea lo script e ricaricando resta la stessa); `node domande/leggi.mjs <link>` legge le risposte; `node tools/prova-domande.js <link>` fa 63 controlli, ma solo su un questionario con `"prova": true`, che poi si toglie dall'archivio.
 - *Se la rete cade* la risposta resta in coda sul dispositivo e riparte da sola; la fine dice «puoi chiudere la pagina» solo quando sul server c'è tutto.
 - *Il calcolo* (`worker/taglie.mjs`): a ogni misura del cliente si aggiunge l'agio, poi per ogni taglia si conta quanto dista dalla camicia campione, in taglie e non in centimetri, con peso doppio per collo, spalle e torace; vince la somma più bassa. Le differenze da mezzo centimetro in su diventano variazioni, arrotondate al mezzo. L'ordine è «da verificare» se il cliente sta oltre la prima o l'ultima taglia di più di mezza taglia, se una variazione supera la soglia del sarto, se manca una misura o se un agio non è ancora impostato. `perIlReparto` restituisce il testo per l'ordine: la riga, l'eventuale avviso, e sotto le misure scritte dal cliente. `node tools/prova-taglie.mjs` fa 39 controlli su numeri inventati; con il file della configurazione vera (fuori dal repository) controlla anche che ogni camicia campione ritrovi la propria taglia.
+
+## 13. Collezione: il lookbook
+
+Fatto il 19 novembre 2026 con le 46 foto che il proprietario ha messo su Drive nella cartella "Foto da caricare", e messo sull'anteprima con il suo ok ("Aggiornala subito"). Le sue scelte: lookbook diviso per tipo con il filtro in cima, foto che si aprono grandi al tocco, ingressi "Maglieria · Giacche e cappotti · Su misura", segnaposto dove non c'è una foto adatta, nessun video per ora.
+
+**Le foto.** Sono capi indossati, quasi tutti davanti alla stessa parete blu. Quattro tipi: maglieria (20), giacche e cappotti (9), abiti (11), felpe (6). Di 55 file della cartella, 46 sono foto diverse, 5 sono copie identiche di altre, una è la stessa foto esportata due volte, 3 sono video. Le foto prese da Instagram sono larghe 1440 punti: bastano per la griglia e per il telefono, a tutto schermo su un computer grande sono al limite.
+
+**L'ordine.** Dentro ogni tipo le foto vanno per colore, dal blu notte ai colori caldi, alternando figura intera e dettaglio perché due foto quasi uguali non stiano vicine. Otto foto sono "grandi" (occupano quattro riquadri): quelle con la composizione più forte, messe in modo che la griglia non lasci buchi a cinque, quattro e tre colonne. L'ordine è quello dell'elenco `look` in `contenuti/it/collezione.json`: per cambiarlo si spostano le righe.
+
+**I nomi.** Ogni file si chiama tipo, capo, colore: `maglieria-dolcevita-trecce-blu-notte`. La descrizione di ogni foto (il testo per chi non la vede e per Google) dice cosa si vede, non è il nome di un prodotto: i nomi veri dei capi li dà il proprietario. `docs/registro-foto.md` tiene la corrispondenza con i nomi di partenza, i pesi e le pagine in cui ogni foto compare. Su Drive il nome nuovo ce l'hanno 34 foto su 46: le rinomine le ha fermate il proprietario.
+
+**La pagina.** In cima una foto grande, poi il filtro (Tutti, Maglieria, Giacche e cappotti, Abiti, Felpe, ognuno con il suo numero), che resta attaccato in alto mentre si scorre. Le foto stanno in riquadri due per tre: cinque colonne sugli schermi grandi, poi quattro, tre, due sul telefono, quattro sul telefono di traverso. Senza JavaScript i tasti del filtro portano alle quattro parti della pagina e ogni foto è un link alla sua versione grande.
+
+**Il visore.** Toccando una foto si apre a tutto schermo: sotto c'è subito la copia piccola già scaricata e sopra compare quella grande. Si cambia foto con le frecce, la tastiera o il dito; si chiude con il tasto, Esc, un clic fuori dalla foto, il dito verso il basso o Indietro del browser. "Chiedi di questo capo" apre WhatsApp con la descrizione e l'indirizzo della foto. `/collezione/#<nome della foto>` la apre direttamente: lo usano i dodici look della pagina iniziale.
+
+**Due trappole del visore**, trovate dalla revisione indipendente e ora nella prova. Chiudendo, la pagina deve restare sulla foto che si guardava e sul filtro acceso: aprendo si aggiunge una voce alla cronologia e la voce sotto perde l'ancora, così tornando indietro il browser non sposta niente e siamo noi a rimettere indirizzo e posizione. E l'avviso di chiusura di una finestra `<dialog>` arriva un attimo dopo la chiusura: se nel frattempo il visore è stato riaperto, quell'avviso lo richiudeva. Lo stato aperto o chiuso lo tiene lo script, non la finestra.
+
+**Aggiungere una foto.** Si mette l'originale in una cartella con gli altri, si aggiunge una riga a `look` (nome nuovo, file originale, tipo, descrizione; `grande` e il ritaglio `orizzontale` solo se servono), poi:
+
+```
+python3 -I tools/comprimi-foto.py collezione <cartella degli originali>
+python3 -I tools/comprimi-foto.py registro <cartella degli originali>
+node build/costruisci.mjs && node tools/prova-lookbook.js
+```
+
+Il primo comando rifà tutta la cartella `public/foto/collezione/` (quattro minuti), quindi servono tutti gli originali, non solo quello nuovo: si riscaricano dal Drive. La prova fa 119 controlli, in locale o sull'anteprima passando il suo indirizzo.
