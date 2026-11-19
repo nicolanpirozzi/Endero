@@ -63,6 +63,7 @@
       },
       {
         "foto": "Camicia indossata, di spalle",
+        "immagine": { "file": "camicia-giacca", "alt": "Camicia bianca con cravatta bordeaux a righe sotto una giacca di lino chiaro gessato: il polsino esce dalla manica" },
         "etichetta": "Pronta",
         "nome": "[[Nome del capo]]",
         "tessuto": "[[Tessuto]]"
