@@ -469,6 +469,7 @@ export function datiBase(sito, meta) {
     {
       '@context': 'https://schema.org', '@type': 'Organization', '@id': `${d}/#organizzazione`, name: sito.nome, url: `${d}/`, logo: `${d}/logo-endero.png`, email: c.email,
       ...(sito.fondazione ? { foundingDate: String(sito.fondazione) } : {}),
+      ...(sito.societa ? { legalName: sito.societa.ragione_sociale, vatID: `IT${sito.societa.partita_iva}` } : {}),
       // i profili social, quando il proprietario li dà (sito.json, "social"): dicono a Google che sono la stessa Endero
       ...(sito.social?.length ? { sameAs: sito.social.map((s) => s.link) } : {}),
     },

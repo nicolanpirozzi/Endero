@@ -195,6 +195,16 @@ for (const percorso of ['/', '/camicie-su-misura/']) {
   const nellaScheda = [...(html.slice(html.indexOf('class="vetro scheda-misure')).split('</section>')[0] || '').matchAll(/<dt>([^<]+)<\/dt>/g)].map((m) => senzaTag(m[1]));
   vero(`${percorso}: la scheda misure ha le stesse voci del configuratore`, nelRiquadro.length >= 10 && nellaScheda.join('|') === nelRiquadro.join('|'), nellaScheda.filter((v) => !nelRiquadro.includes(v)).join(', ') || `${nellaScheda.length} voci contro ${nelRiquadro.length}`);
 }
+// i dati della società: piè di pagina (in tutte le pagine), informativa privacy e dati per Google dicono la stessa cosa
+const iva = (piede.match(/Partita IVA (\d{11})/) || [])[1] || '';
+const privacy = htmlDi('/privacy/');
+const organizzazione = (() => { try { return JSON.parse(leggi('index.html').match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph'].find((n) => n['@type'] === 'Organization'); } catch { return {}; } })();
+vero('il piè di pagina ha ragione sociale e partita IVA', Boolean(iva) && /S\.r\.l\.s\./.test(piede), senzaTag(piede).slice(-120));
+vero('l\'informativa privacy ha la stessa società e la stessa partita IVA del piè di pagina', Boolean(iva) && privacy.includes(`partita IVA ${iva}`) && Boolean(organizzazione.legalName) && senzaTag(privacy).includes(organizzazione.legalName));
+vero('i dati per Google hanno ragione sociale e partita IVA', organizzazione.vatID === `IT${iva}` && Boolean(organizzazione.legalName));
+for (const percorso of ['/privacy/', '/cookie/']) vero(`${percorso}: non è più una bozza`, !/legale__avviso|[Bb]ozza/.test(htmlDi(percorso)) && !/\{\{|\}\}/.test(htmlDi(percorso)));
+// l'antispam dei moduli è stato deciso (Cloudflare Turnstile): senza la sua chiave nel build, i moduli non lo hanno
+if (!/data-turnstile/.test(htmlDi('/camicie-su-misura/'))) chiudi('Antispam dei moduli (Cloudflare Turnstile): il build pubblico va fatto con TURNSTILE_SITE_KEY, e il Worker con TURNSTILE_SECRET. Allora l\'informativa lo nomina da sé.');
 // le pagine di categoria si raggiungono dalla pagina iniziale e dalla collezione
 const categorie = pagine.filter((p) => /pagina-categoria/.test(p.html)).map((p) => p.percorso);
 for (const da of ['/', '/collezione/']) {

@@ -20,13 +20,76 @@ function scorrimento() {
     prevent: (el) => el.tagName === 'TEXTAREA' && el.scrollHeight > el.clientHeight,
   });
   // se la persona prende in mano lo scorrimento durante uno guidato, la guida finisce lì
-  lenis.on('virtual-scroll', () => { if (guidato) { clearTimeout(fineGuida); guidato = false; } });
+  lenis.on('virtual-scroll', () => {
+    if (corsa) corsa.fermata = true;
+    if (guidato) { clearTimeout(fineGuida); guidato = false; }
+  });
 }
 
 // Durante uno scorrimento guidato (selettore, collegamenti interni) la testata non torna come barra:
 // coprirebbe il titolo della sezione appena raggiunta.
 let guidato = false;
 let fineGuida = 0;
+
+// Le sezioni che restano ferme sullo schermo mentre si scorre, e intanto cambiano (i capitoli di «Chi siamo»:
+// sei foto in circa quattro schermate). Uno scorrimento guidato che le attraversa salta il tratto in cui stanno
+// ferme, invece di sfogliarle tutte di corsa: si vedono passare come una sezione qualsiasi. Ognuna dice dove
+// comincia e finisce quel tratto, quanto di lei si vede con la pagina in un punto, e sa fermarsi e ripartire.
+const ferme = [];
+let corsa = null;            // lo scorrimento guidato che sta saltando una sezione ferma
+
+/** Le parti di una sezione ferma che il percorso da `da` ad `a` attraversa, nell'ordine in cui le incontra. */
+function trattiFermi(da, a) {
+  const basso = Math.min(da, a), alto = Math.max(da, a), verso = a > da ? 1 : -1;
+  return ferme.map((f) => {
+    const [inizio, fine] = f.tratto();
+    const su = Math.max(basso, inizio), giu = Math.min(alto, fine);
+    return giu - su > 1 ? { f, entra: verso > 0 ? su : giu, esce: verso > 0 ? giu : su, lungo: giu - su } : null;
+  }).filter(Boolean).sort((x, y) => verso * (x.entra - y.entra));
+}
+
+/**
+ * Lo scorrimento guidato che salta le sezioni ferme: la stessa durata e la stessa curva di Lenis, su un percorso
+ * più corto. Arrivato all'inizio del tratto fermo la pagina passa di colpo alla sua fine: lì la sezione sta nello
+ * stesso punto dello schermo, quindi il salto non si vede, e intanto le sue foto non cambiano.
+ */
+function salta(da, a, tratti, libera) {
+  const verso = a > da ? 1 : -1;
+  const strada = Math.abs(a - da) - tratti.reduce((s, x) => s + x.lungo, 0);
+  const curva = (k) => Math.min(1, 1.001 - Math.pow(2, -10 * k));
+  const metti = (y) => (lenis ? lenis.scrollTo(y, { immediate: true, force: true }) : scrollTo({ top: y, behavior: 'instant' }));
+  // dove si arriva: se di una sezione ferma lì si vede molto, la sua foto torna a quella giusta già durante
+  // il salto (una volta sola); altrimenti resta com'è e si rimette a posto dopo, quando non si vede più
+  for (const x of tratti) { x.f.ferma(); x.dopo = x.f.visibile(a) > innerHeight * 0.25; }
+  if (corsa) corsa.fermata = true;
+  const questa = { fermata: false };
+  corsa = questa;
+  const smetti = () => { questa.fermata = true; };
+  const SEGNI = ['wheel', 'touchstart', 'keydown'];
+  SEGNI.forEach((s) => addEventListener(s, smetti, { capture: true, passive: true }));
+  const fine = () => {
+    SEGNI.forEach((s) => removeEventListener(s, smetti, { capture: true }));
+    for (const x of tratti) x.f.riparti(x.f.visibile(scrollY) > 0);
+    if (corsa === questa) { corsa = null; libera(); }
+  };
+  const partenza = performance.now();
+  const passo = (ora) => {
+    if (questa.fermata) return fine();
+    const k = Math.min(1, (ora - partenza) / 1200);
+    let resto = strada * curva(k), y = da;
+    for (const x of tratti) {
+      const fin = Math.abs(x.entra - y);
+      if (resto <= fin) break;
+      resto -= fin;
+      y = x.esce;
+      if (!x.saltato) { x.saltato = true; if (x.dopo) x.f.riparti(true); }
+    }
+    metti(y + verso * resto);
+    if (k < 1) requestAnimationFrame(passo);
+    else fine();
+  };
+  requestAnimationFrame(passo);
+}
 
 /** Porta un elemento in cima allo schermo, rispettando il suo scroll-margin-top. */
 function vaiA(el, { subito = false } = {}) {
@@ -38,9 +101,13 @@ function vaiA(el, { subito = false } = {}) {
   } else {
     y = el.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(el).scrollMarginTop) || 0);
   }
+  y = Math.min(Math.max(0, y), Math.max(0, document.documentElement.scrollHeight - innerHeight));
   guidato = true;
   clearTimeout(fineGuida);
   const libera = () => { fineGuida = setTimeout(() => { guidato = false; }, 150); };
+  if (corsa) corsa.fermata = true;
+  const tratti = subito ? [] : trattiFermi(scrollY, y);
+  if (tratti.length) { salta(scrollY, y, tratti, libera); return; }
   if (lenis) lenis.scrollTo(y, { immediate: subito, duration: 1.2, force: true, onComplete: libera });
   else { scrollTo({ top: y, behavior: subito || ridotto ? 'auto' : 'smooth' }); fineGuida = setTimeout(() => { guidato = false; }, 1200); }
   if (subito) libera();
@@ -438,8 +505,11 @@ function mestiere() {
     if (!binario || capitoli.length < 2) return;
     sez.classList.add('mestiere--vivo');
     let richiesta = 0;
+    let ferma = false;       // durante un salto guidato le foto restano come sono (vedi salta)
+    let tempoSalto = 0;
     function aggiorna() {
       richiesta = 0;
+      if (ferma) return;
       const alto = palco.clientHeight;
       const passo = alto * 0.66;
       const fatto = -binario.getBoundingClientRect().top - alto * 0.17;   // un attimo fermi prima della prima foto
@@ -456,6 +526,29 @@ function mestiere() {
     addEventListener('scroll', chiedi, { passive: true });
     addEventListener('resize', chiedi, { passive: true });
     aggiorna();
+    // il tratto in cui il palco resta fermo in cima allo schermo, per gli scorrimenti guidati (salta)
+    const inizio = () => binario.getBoundingClientRect().top + scrollY;
+    ferme.push({
+      tratto: () => { const y = inizio(); return [y, y + binario.offsetHeight - palco.clientHeight]; },
+      // quanta altezza del palco si vede con la pagina scorsa fino a y
+      visibile: (y) => {
+        const [su, giu] = [inizio(), inizio() + binario.offsetHeight - palco.clientHeight];
+        const cima = Math.min(Math.max(y, su), giu) - y;
+        return Math.max(0, Math.min(innerHeight, cima + palco.clientHeight) - Math.max(0, cima));
+      },
+      ferma: () => { ferma = true; },
+      // morbido: la foto passa a quella giusta scoprendosi una volta, come scorrendo (vedi .mestiere--salto)
+      riparti: (morbido) => {
+        if (!ferma) return;
+        ferma = false;
+        if (morbido) {
+          sez.classList.add('mestiere--salto');
+          clearTimeout(tempoSalto);
+          tempoSalto = setTimeout(() => sez.classList.remove('mestiere--salto'), 1000);
+        }
+        aggiorna();
+      },
+    });
   });
 }
 

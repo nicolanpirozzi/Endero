@@ -1966,6 +1966,16 @@ body[data-barra] .selettore {
   transform: none;
 }
 
+/* dopo un salto guidato (src/sito.js, salta) la foto torna a quella giusta in una volta sola, scoprendosi */
+.mestiere--salto .mestiere__capitolo {
+  transition: clip-path 800ms var(--ease-in-out);
+}
+
+.mestiere--salto .mestiere__foto > .foto,
+.mestiere--salto .mestiere__foto > .attesa {
+  transition: transform 1000ms var(--morbido);
+}
+
 /* fascia dei rivenditori: come il blocco della collezione, senza riquadri */
 .fascia {
   padding: 56px 0;

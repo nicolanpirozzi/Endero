@@ -19,4 +19,9 @@ database_id = "00000000-0000-0000-0000-000000000000"   # da sostituire dopo `wra
 [observability]
 enabled = true
 
+# Ogni notte il Worker cancella le richieste più vecchie di 24 mesi dall'ultima (worker/index.js, scheduled),
+# come promette l'informativa privacy.
+[triggers]
+crons = ["17 3 * * *"]
+
 # L'anteprima ha una configurazione sua: wrangler.anteprima.toml.

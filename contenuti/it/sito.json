@@ -4,6 +4,12 @@
   "nome": "Endero",
   "dominio": "https://www.endero.it",
   "fondazione": "1996",
+  "societa": {
+    "_nota": "Dati della società, confermati dal proprietario il 2026-11-20. La sede legale è la stessa del negozio. Gli stessi dati sono scritti nel piè di pagina (piede.legale) e nell'informativa privacy (legale.json): tools/prova-seo.mjs controlla che coincidano.",
+    "ragione_sociale": "Produzione & Distribuzione Endero S.r.l.s.",
+    "partita_iva": "08887031212"
+  },
+  "email_moduli": false,
   "social": [
     { "nome": "Instagram", "link": "https://www.instagram.com/endero_official/" }
   ],
@@ -112,7 +118,7 @@
         ]
       }
     ],
-    "legale": "© 2026 Endero · [[Ragione sociale e partita IVA da confermare]]",
+    "legale": "© 2026 Produzione & Distribuzione Endero S.r.l.s. · Partita IVA 08887031212",
     "sede": {
       "titolo": "Dove siamo",
       "righe": [

@@ -1,7 +1,7 @@
 {
-  "_nota": "Informativa privacy e cookie: bozza nostra, da far validare a Endero o al suo consulente prima della messa online (decisione del 2026-11-14). I dati societari sono da confermare.",
-  "avviso": "[[Bozza da validare con il consulente di Endero prima della messa online]]",
-  "aggiornamento": "Ultimo aggiornamento: [[data]]",
+  "_nota": "Informativa privacy e cookie. Bozza nostra del 2026-11-14, confermata dal consulente di Endero il 2026-11-20 («Il consulente ha confermato le bozze, puoi pubblicarle»). Dati societari e sede legale confermati dal proprietario lo stesso giorno; conservazione: 24 mesi dall'ultima richiesta (scelta sua), e il Worker del sito cancella da sé le richieste più vecchie (worker/index.js, scheduled). Lo stesso giorno, su sua scelta («Correggi tu quelle frasi»), abbiamo corretto le righe che non corrispondevano ai moduli veri: campi obbligatori e dati dei rivenditori, e lo scopo «mandarti listino e condizioni». Le parti tra {{ }} compaiono solo quando ciò che descrivono è attivo: {{email|…}} con le email dei moduli (sito.json, email_moduli), {{antispam|…}} con la chiave di Cloudflare Turnstile (TURNSTILE_SITE_KEY nel build). Quando il configuratore invierà gli ordini (misure del corpo, pagamento con Stripe) l'informativa va aggiornata e riletta dal consulente.",
+  "avviso": "",
+  "aggiornamento": "Ultimo aggiornamento: 20 novembre 2026",
   "privacy": {
     "meta": {
       "titolo": "Informativa privacy · Endero",
@@ -12,40 +12,40 @@
       {
         "titolo": "Titolare del trattamento",
         "paragrafi": [
-          "[[Ragione sociale]], con sede legale in [[indirizzo della sede legale]], partita IVA [[numero]]. Per qualsiasi domanda sui tuoi dati puoi scrivere a info@endero.it."
+          "Produzione & Distribuzione Endero S.r.l.s., con sede legale in Viale del Toro 22, 80014 Giugliano in Campania (NA), partita IVA 08887031212. Per qualsiasi domanda sui tuoi dati puoi scrivere a info@endero.it."
         ]
       },
       {
         "titolo": "Quali dati raccogliamo",
         "paragrafi": [
           "Quando compili un modulo del sito: nome e cognome, numero di telefono, email se la indichi, giorno e fascia oraria preferiti per la presa misure, il testo del messaggio. Con la richiesta salviamo anche data e ora, la pagina da cui l'hai inviata e il Paese da cui ti colleghi.",
-          "Se chiedi di diventare rivenditore: nome del negozio o marchio, città, Paese, tipo di attività, partita IVA e sito se li indichi.",
+          "Se chiedi di diventare rivenditore: che cosa ti interessa, la città e il Paese della tua attività e, se li indichi, nome del negozio o marchio, tipo di attività, partita IVA e sito o profilo Instagram.",
           "Mentre navighi: i dati tecnici che ogni sito riceve dal browser, come l'indirizzo IP, trattati dal fornitore che ospita il sito per farlo funzionare e proteggerlo."
         ]
       },
       {
         "titolo": "Perché li usiamo",
         "elenco": [
-          "Per risponderti e fissare l'appuntamento per la presa misure, su tua richiesta (articolo 6, paragrafo 1, lettera b del Regolamento UE 2016/679).",
+          "Per risponderti, fissare l'appuntamento per la presa misure o, se chiedi di diventare rivenditore, mandarti listino e condizioni, su tua richiesta (articolo 6, paragrafo 1, lettera b del Regolamento UE 2016/679).",
           "Per la sicurezza del sito e per fermare lo spam nei moduli, nel nostro legittimo interesse (articolo 6, paragrafo 1, lettera f)."
         ]
       },
       {
         "titolo": "Sono obbligatori?",
         "paragrafi": [
-          "Nome e telefono servono per ricontattarti: senza non possiamo rispondere alla richiesta. Nel modulo di contatto serve anche il messaggio. Gli altri campi sono facoltativi."
+          "Nome e telefono servono per ricontattarti: senza non possiamo rispondere alla richiesta. Nel modulo di contatto serve anche il messaggio. Se chiedi di diventare rivenditore servono anche email, città, Paese e che cosa ti interessa: listino e condizioni te li mandiamo per email. Gli altri campi sono facoltativi."
         ]
       },
       {
         "titolo": "Per quanto tempo li teniamo",
         "paragrafi": [
-          "[[Durata da definire, per esempio 24 mesi dall'ultima richiesta]], poi li cancelliamo."
+          "Per 24 mesi dall'ultima richiesta, poi li cancelliamo."
         ]
       },
       {
         "titolo": "Chi li vede",
         "paragrafi": [
-          "Solo le persone di Endero che si occupano della tua richiesta e i fornitori che ci danno i servizi tecnici, nominati responsabili del trattamento: Cloudflare, Inc. per l'hosting del sito, il database delle richieste e il filtro antispam; [[Resend, per l'invio delle email, quando sarà attivo]]. I dati non vengono venduti né diffusi."
+          "Solo le persone di Endero che si occupano della tua richiesta e i fornitori che ci danno i servizi tecnici, nominati responsabili del trattamento: Cloudflare, Inc. per il database delle richieste{{antispam|, il filtro antispam}} e l'hosting del sito{{email|; Resend, Inc. per l'invio delle email}}. I dati non vengono venduti né diffusi."
         ]
       },
       {
@@ -80,13 +80,13 @@
         "titolo": "Cosa usa questo sito oggi",
         "paragrafi": [
           "Solo strumenti tecnici, necessari al funzionamento e alla sicurezza. Non usiamo cookie di statistica né di profilazione.",
-          "Cloudflare, che ospita il sito, può salvare cookie tecnici per proteggerlo dagli accessi automatici. Il filtro antispam dei moduli (Cloudflare Turnstile), [[quando sarà attivo]], si caricherà solo quando inizi a compilare un modulo."
+          "Cloudflare, che ospita il sito, può salvare cookie tecnici per proteggerlo dagli accessi automatici.{{antispam| Il filtro antispam dei moduli (Cloudflare Turnstile) si carica solo quando inizi a compilare un modulo.}}"
         ]
       },
       {
         "titolo": "Statistiche e pubblicità",
         "paragrafi": [
-          "[[Se e quando attiveremo Google Analytics e Meta Pixel, partiranno solo dopo il tuo consenso dal banner, e qui ci sarà l'elenco dei cookie con la loro durata.]]"
+          "Se e quando attiveremo Google Analytics e Meta Pixel, partiranno solo dopo il tuo consenso dal banner, e qui ci sarà l'elenco dei cookie con la loro durata."
         ]
       },
       {

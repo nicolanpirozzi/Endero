@@ -25,8 +25,9 @@ Tutto il resto di questo dossier resta da confermare.
 | --- | --- | --- |
 | Attività | Produzione e distribuzione di abbigliamento uomo | da fonte terza (Campania Shopping, Virgilio, PagineGialle) |
 | Anno di inizio | 1996 ("produce e distribuisce abbigliamento uomo dal 1996") | da fonte terza (Campania Shopping) |
-| Ragione sociale | Produzione & Distribuzione Endero S.r.l.s. | da fonte terza (Visurissima, Empresite, Virgilio) |
-| Partita IVA | 08887031212 | da fonte terza (Visurissima), da verificare su visura |
+| Ragione sociale | Produzione & Distribuzione Endero S.r.l.s. | confermata dal proprietario il 2026-11-20 (prima: da fonte terza, Visurissima, Empresite, Virgilio) |
+| Partita IVA | 08887031212 | confermata dal proprietario il 2026-11-20 (prima: da fonte terza, Visurissima) |
+| Sede legale | Viale del Toro 22, 80014 Giugliano in Campania (NA), la stessa del negozio | dal proprietario, 2026-11-20 (Empresite dava Via Aniello Palumbo: non si usa) |
 | Titolare | Ennio De Rosa, citato nelle recensioni | da fonte terza (Wheree) |
 | Origine del nome | ENnio DE ROsa → Endero | ipotesi |
 | Capi prodotti | Oltre 1,3 milioni, dichiarati nella bio Instagram | dal piano |

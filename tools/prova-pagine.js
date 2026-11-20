@@ -353,6 +353,57 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     controlla('nessun errore', a.errori.length === 0 && a.rotte.length === 0, [...a.errori, ...a.rotte].join(' | ').slice(0, 300));
     await a.contesto.close();
   }
+  // ---------------------------------------------------------------- 6. un clic che attraversa «Chi siamo»
+  // (proprietario, 2026-11-20: cliccando «Rivenditori» la pagina sfogliava di corsa tutte le foto di Chi siamo).
+  // Si registra, fotogramma per fotogramma, quale foto si vede mentre la pagina scorre da sola.
+  console.log('Un clic che attraversa «Chi siamo»');
+  for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO]]) {
+    const a = await nuovo(opzioni), { page } = a;
+    await page.goto(base + '/', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(600);
+    const registra = () => page.evaluate(() => {
+      window.__salto = [];
+      const capitoli = [...document.querySelectorAll('.mestiere__capitolo')], palco = document.querySelector('.mestiere__palco');
+      const giro = () => {
+        const r = palco.getBoundingClientRect();
+        let foto = 0;
+        capitoli.forEach((k, i) => { if (i && parseFloat(k.style.getPropertyValue('--p') || '0') > 0.5) foto = i; });
+        window.__salto.push({ vis: Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)), foto, attivo: capitoli.findIndex((k) => k.hasAttribute('data-attivo')) });
+        if (window.__salto.length < 300) requestAnimationFrame(giro);
+      };
+      requestAnimationFrame(giro);
+    });
+    const clic = async (voce) => {
+      if (nome === 'telefono') { await page.click('.selettore__apri'); await page.waitForTimeout(400); }
+      await page.click(`[data-voce="${voce}"]`);
+      await page.waitForTimeout(3200);
+      return page.evaluate(() => {
+        const r = window.__salto;
+        let cambi = 0;
+        for (let i = 1; i < r.length; i++) if (r[i].foto !== r[i - 1].foto && r[i].vis > 0) cambi++;
+        return { cambi, fine: r.at(-1).foto, attivo: r.at(-1).attivo };
+      });
+    };
+    await a.vai('#collezione', -60);
+    await registra();
+    const giu = await clic('rivenditori');
+    controlla(`${nome}: dalla collezione ai rivenditori le foto di Chi siamo non si sfogliano`, giu.cambi === 0 && giu.fine === 5 && giu.attivo === 5, JSON.stringify(giu));
+    await registra();
+    const su = await clic('collezione');
+    controlla(`${nome}: risalendo alla collezione non si sfogliano`, su.cambi === 0 && su.fine === 0 && su.attivo === 0, JSON.stringify(su));
+    await a.vai('#rivenditori', -60);
+    await registra();
+    const arrivo = await clic('chi-siamo');
+    controlla(`${nome}: arrivando su Chi siamo dal basso la prima foto torna con una scoperta sola`, arrivo.cambi <= 1 && arrivo.fine === 0 && arrivo.attivo === 0, JSON.stringify(arrivo));
+    // scorrendo a mano le foto si sfogliano ancora, tutte e in ordine
+    const y0 = await page.evaluate(() => scrollY);
+    const viste = [];
+    for (let k = 1; k <= 16; k++) { await page.evaluate((v) => window.scrollTo(0, v), y0 + k * 280); await page.waitForTimeout(150); viste.push(await page.evaluate(() => [...document.querySelectorAll('.mestiere__capitolo')].findIndex((x) => x.hasAttribute('data-attivo')))); }
+    controlla(`${nome}: scorrendo a mano dentro Chi siamo le foto si sfogliano tutte, in ordine`, viste.every((v, i) => !i || v >= viste[i - 1]) && viste.includes(0) && viste.at(-1) === 5 && new Set(viste).size === 6, viste.join(' '));
+    controlla(`${nome}: nessun errore`, a.errori.length === 0, a.errori.join(' | ').slice(0, 300));
+    await a.contesto.close();
+  }
+
   console.log('Gli schermi di mezzo');
   for (const largo of [810, 820, 834, 900, 959, 1024]) {
     const a = await nuovo({ viewport: { width: largo, height: 1100 } }), { page } = a;
