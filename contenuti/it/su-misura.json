@@ -96,8 +96,8 @@
             "Braccio",
             "Avambraccio",
             "Polso",
-            "Lunghezza davanti",
-            "Lunghezza dietro"
+            "Lunghezza totale davanti",
+            "Lunghezza totale dietro"
           ]
         }
       ],

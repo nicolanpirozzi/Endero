@@ -177,16 +177,17 @@ export function paginaCapo({ sito, testi: c, capo, risorse, anteprima }) {
   };
   // Il prezzo che si legge nella pagina va anche nei dati: senza un'offerta Google segna la scheda del capo come
   // incompleta. Niente disponibilità: non c'è carrello, si chiede su WhatsApp.
+  // Un capo senza prezzo non si dichiara come prodotto: Google lo segnerebbe come scheda non valida.
   const dati = [
     ...datiBase(sito, c.meta),
-    {
+    ...(typeof capo.prezzo !== 'number' ? [] : [{
       '@context': 'https://schema.org', '@type': 'Product', name: capo.nome, url: d + indirizzoCapo(capo),
       ...(capo.descrizione ? { description: capo.descrizione } : {}),
       ...(capo.foto?.length ? { image: capo.foto.map((f) => d + f) } : {}),
       ...(capo.categoria ? { category: capo.categoria } : {}),
       brand: { '@type': 'Brand', name: sito.nome },
-      ...(typeof capo.prezzo === 'number' ? { offers: { '@type': 'Offer', price: capo.prezzo.toFixed(2), priceCurrency: 'EUR', url: d + indirizzoCapo(capo) } } : {}),
-    },
+      offers: { '@type': 'Offer', price: capo.prezzo.toFixed(2), priceCurrency: 'EUR', url: d + indirizzoCapo(capo) },
+    }]),
   ];
   return pagina({
     sito, meta, percorso: indirizzoCapo(capo), corpo, risorse, anteprima, dati, classe: 'pagina-chiara pagina-capo',

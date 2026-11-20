@@ -185,6 +185,16 @@ vero('la mappa del sito porta le foto, e le foto esistono', fotoMappa.length >= 
 const tutteLePagine = pagine.map((p) => p.html).join('\n');
 const soloInMappa = fotoMappa.map((u) => u.slice(dominio.length)).filter((u) => !tutteLePagine.includes(`src="${u}"`));
 vero('nella mappa ogni foto ha lo stesso indirizzo che ha nella sua pagina', soloInMappa.length === 0, soloInMappa.slice(0, 3).join(' '));
+// le misure si chiamano allo stesso modo ovunque: nel riquadro del configuratore, nella scheda del su misura e in
+// quella della pagina iniziale (se un nome cambia, per esempio «Taglia» in «Giro collo», cambia in tutti e tre)
+const htmlDi = (percorso) => pagine.find((p) => p.percorso === percorso)?.html || '';
+const configuratore = htmlDi('/camicie-su-misura/configuratore/');
+const nelRiquadro = [...(configuratore.slice(configuratore.indexOf('configura__gruppo--misure')).split('</fieldset>')[0] || '').matchAll(/<label class="misura__nome"[^>]*>([^<]+)<\/label>/g)].map((m) => senzaTag(m[1]));
+for (const percorso of ['/', '/camicie-su-misura/']) {
+  const html = htmlDi(percorso);
+  const nellaScheda = [...(html.slice(html.indexOf('class="vetro scheda-misure')).split('</section>')[0] || '').matchAll(/<dt>([^<]+)<\/dt>/g)].map((m) => senzaTag(m[1]));
+  vero(`${percorso}: la scheda misure ha le stesse voci del configuratore`, nelRiquadro.length >= 10 && nellaScheda.join('|') === nelRiquadro.join('|'), nellaScheda.filter((v) => !nelRiquadro.includes(v)).join(', ') || `${nellaScheda.length} voci contro ${nelRiquadro.length}`);
+}
 // le pagine di categoria si raggiungono dalla pagina iniziale e dalla collezione
 const categorie = pagine.filter((p) => /pagina-categoria/.test(p.html)).map((p) => p.percorso);
 for (const da of ['/', '/collezione/']) {

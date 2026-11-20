@@ -294,13 +294,15 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
   // Quante parole di <main> non si vedono (opacità zero, ritagliate, nascoste). Non si contano le parti che sono
   // nascoste per come funzionano, e non perché aspettano lo scorrimento: l'apertura a film, il selettore delle
   // sezioni chiuso sul telefono, le schede che compaiono al passaggio del mouse (.griglia__scheda) e i capitoli di
-  // «Chi siamo» in pagina iniziale, che si vedono uno alla volta (gli stessi testi stanno interi in /chi-siamo/).
+  // «Chi siamo» in pagina iniziale, che si vedono uno alla volta (gli stessi testi stanno interi in /chi-siamo/),
+  // «Endero» in cima alle briciole sui telefoni (è il logo in testata) e l'invito «Passaci sopra con il mouse»
+  // della camicia dove il mouse non c'è.
   const nascoste = (page) => page.evaluate(() => {
     let tutte = 0, perse = 0;
     const cammina = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
     for (let n = cammina.nextNode(); n; n = cammina.nextNode()) {
       const parole = n.textContent.trim().split(/\s+/).filter(Boolean).length;
-      if (!parole || n.parentElement.closest('.apertura, .selettore, .griglia__scheda, .mestiere__scheda, script, style, dialog, .nascosto, details:not([open]) .domanda__risposta')) continue;
+      if (!parole || n.parentElement.closest('.apertura, .selettore, .griglia__scheda, .mestiere__scheda, .briciole, .configura__invito, script, style, dialog, .nascosto, details:not([open]) .domanda__risposta')) continue;
       tutte += parole;
       for (let e = n.parentElement; e && e !== document.body; e = e.parentElement) {
         const s = getComputedStyle(e);
@@ -309,12 +311,17 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     }
     return { tutte, perse, armato: document.documentElement.classList.contains('movimento') };
   });
-  for (const percorso of ['/', '/camicie-su-misura/', '/diventa-rivenditore/', '/chi-siamo/', '/dove-siamo/', '/collezione/maglieria/']) {
+  for (const percorso of ['/', '/camicie-su-misura/', '/camicie-su-misura/configuratore/', '/diventa-rivenditore/', '/chi-siamo/', '/dove-siamo/', '/collezione/', '/collezione/maglieria/', '/collezione/giacche-e-cappotti/', '/collezione/abiti/', '/collezione/felpe/']) {
     // come fa Google: apre la pagina su uno schermo da telefono e poi lo allunga fino in fondo, senza scorrere
     const a = await nuovo({ viewport: { width: 412, height: 732 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true }), { page } = a;
     await page.goto(base + percorso, { waitUntil: 'networkidle' });
     await page.waitForTimeout(600);
     const alta = Math.min(await page.evaluate(() => document.documentElement.scrollHeight), 30000);
+    // prima di allungare lo schermo: la pagina non deve essersi armata da sola (la barra delle categorie scorre
+    // da sé per mostrare la voce accesa, e non è un gesto di chi guarda)
+    await page.waitForTimeout(1500);
+    const daSola = await nascoste(page);
+    controlla(`${percorso}: la pagina non nasconde nulla da sola, prima che chi guarda si muova`, !daSola.armato && daSola.perse === 0, JSON.stringify(daSola));
     await page.setViewportSize({ width: 412, height: alta });
     await page.waitForTimeout(900);
     const fermo = await nascoste(page);

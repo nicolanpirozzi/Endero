@@ -13,6 +13,7 @@ const VOCI = [
   ['/3-camicia-su-misura', '/camicie-su-misura/'],
   ['/brand/1-camicia-su-misura', '/camicie-su-misura/'],
   // le schede dei capi stavano tutte sotto /home/ (per esempio /home/1-43-camicione-in-flanella-camicia-su-misura.html)
+  ['/home', '/collezione/'],
   ['/home/*', '/collezione/'],
   ['/best-sellers', '/collezione/'],
   ['/prices-drop', '/collezione/'],

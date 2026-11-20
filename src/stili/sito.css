@@ -951,9 +951,10 @@ body[data-barra] .selettore {
   gap: 20px;
 }
 
+/* la seconda colonna è più larga: lì stanno le voci lunghe («Lunghezza totale davanti») */
 .scheda-misure__gruppi {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.24fr);
   gap: 18px;
 }
 
@@ -974,6 +975,7 @@ body[data-barra] .selettore {
 .scheda-misure dd {
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .scheda-misure__capo {
@@ -2570,6 +2572,18 @@ body[data-barra] .selettore {
    Senza script, o se lo script non parte, tutto resta visibile da subito. E .movimento arriva solo al primo segno
    di vita di chi guarda (rotella, dito, tasto, scorrimento): chi legge la pagina senza scorrerla la trova intera. */
 
+/* chi stampa la pagina la vuole intera, anche se non l'ha scorsa tutta */
+@media print {
+  .movimento [data-rivela],
+  .movimento [data-rivela] .parola,
+  .movimento [data-rivela] > .attesa {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+  }
+}
+
 /* nell'istante in cui si arma, ciò che sta fuori dallo schermo sparisce di colpo, senza dissolvenza */
 .movimento--arma [data-rivela],
 .movimento--arma [data-rivela] .parola,
@@ -4058,6 +4072,18 @@ html.dialogo-aperto {
     width: 84px;
   }
 
+  /* la scheda delle misure usciva di 15 punti dalla foto: la sua pillola, che non va a capo, la teneva larga */
+  .scheda-misure {
+    min-width: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .scheda-misure .pillola {
+    justify-self: stretch;
+    padding: 0 10px;
+  }
+
   .testata .pillola {
     padding: 0 12px;
     font-size: 10px;
@@ -4706,6 +4732,17 @@ body[data-barra] .lookbook__filtro {
   opacity: 1;
   outline: 2px solid var(--blu);
   outline-offset: 2px;
+}
+
+/* sui telefoni tre voci vanno a capo: resta «Collezione / Maglieria», e «Endero» è il logo in testata */
+@media (max-width: 479px) {
+  .briciole li:first-child {
+    display: none;
+  }
+
+  .briciole li:nth-child(2)::before {
+    content: none;
+  }
 }
 
 /* sotto il titolo vengono subito la barra delle categorie e le foto */

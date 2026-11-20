@@ -329,6 +329,8 @@ function dividiParole(el) {
   return i;
 }
 
+let disarmaComparse = null;
+
 function comparse() {
   if (ridotto || !('IntersectionObserver' in window)) return;
   const tutti = [];
@@ -344,28 +346,38 @@ function comparse() {
   }
   const apertura = document.querySelector('.apertura');
   // Finché chi guarda non si muove, niente è nascosto: chi legge la pagina senza scorrerla (Google, che la allunga
-  // invece di scorrerla; un'anteprima; una stampa) la trova intera. Al primo segno di vita (rotella, dito, tasto,
-  // o la pagina che scorre) si nasconde ciò che sta fuori dallo schermo, e da lì compare scorrendo come sempre.
+  // invece di scorrerla; un'anteprima) la trova intera. Al primo segno di vita (rotella, dito, tasto, o la pagina
+  // che scorre) si nasconde ciò che sta fuori dallo schermo, e da lì compare scorrendo come sempre.
   let armato = false;
   const SEGNI = ['wheel', 'touchstart', 'keydown', 'scroll'];
-  const arma = () => {
-    if (armato) return;
+  const arma = (e) => {
+    // conta la pagina che scorre, non un elemento che scorre al suo interno: la barra delle categorie si sposta
+    // da sola per mostrare la voce accesa, e non è un gesto di chi guarda
+    if (armato || (e?.type === 'scroll' && e.target !== document)) return;
     armato = true;
     for (const s of SEGNI) removeEventListener(s, arma, { capture: true });
-    // quello che è già sullo schermo resta com'è
-    const copertoFinoA = apertura ? apertura.getBoundingClientRect().bottom : 0;
-    for (const el of tutti) {
-      const r = el.getBoundingClientRect();
-      if (r.top < innerHeight && r.bottom > Math.max(0, copertoFinoA)) el.setAttribute('data-subito', '');
-    }
-    // si nasconde di colpo, senza la dissolvenza delle comparse: quello che sparisce è fuori dallo schermo
     const radice = document.documentElement;
-    radice.classList.add('movimento', 'movimento--arma');
-    for (const el of tutti) if (el.hasAttribute('data-subito')) el.setAttribute('data-visto', '');
-    void radice.offsetHeight;
-    radice.classList.remove('movimento--arma');
-    tutti.forEach((el) => { if (!el.hasAttribute('data-visto')) osserva.observe(el); });
+    try {
+      // quello che è già sullo schermo resta com'è
+      const copertoFinoA = apertura ? apertura.getBoundingClientRect().bottom : 0;
+      for (const el of tutti) {
+        const r = el.getBoundingClientRect();
+        if (r.top < innerHeight && r.bottom > Math.max(0, copertoFinoA)) el.setAttribute('data-subito', '');
+      }
+      // si nasconde di colpo, senza la dissolvenza delle comparse: quello che sparisce è fuori dallo schermo
+      radice.classList.add('movimento', 'movimento--arma');
+      for (const el of tutti) if (el.hasAttribute('data-subito')) el.setAttribute('data-visto', '');
+      void radice.offsetHeight;
+      radice.classList.remove('movimento--arma');
+      tutti.forEach((el) => { if (!el.hasAttribute('data-visto')) osserva.observe(el); });
+    } catch (errore) {
+      // se qualcosa va storto, niente resta nascosto
+      console.error('sito: comparse', errore);
+      radice.classList.remove('movimento', 'movimento--arma');
+    }
   };
+  // se il resto di questa funzione si ferma per un errore, le comparse non si armano più (vedi avvia, in fondo)
+  disarmaComparse = () => { armato = true; for (const s of SEGNI) removeEventListener(s, arma, { capture: true }); };
 
   const osserva = new IntersectionObserver((voci) => {
     const entrate = voci.filter((v) => v.isIntersecting).map((v) => v.target);
@@ -928,7 +940,7 @@ function avvia(nome, fn) {
     fn();
   } catch (errore) {
     console.error('sito: ' + nome, errore);
-    if (nome === 'comparse') document.documentElement.classList.remove('movimento');
+    if (nome === 'comparse') { disarmaComparse?.(); document.documentElement.classList.remove('movimento'); }
   }
 }
 
