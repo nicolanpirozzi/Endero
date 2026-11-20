@@ -19,7 +19,7 @@ database_id = "00000000-0000-0000-0000-000000000000"   # da sostituire dopo `wra
 [observability]
 enabled = true
 
-# Ogni notte il Worker cancella le richieste più vecchie di 24 mesi dall'ultima (worker/index.js, scheduled),
+# Ogni notte il Worker cancella le richieste più vecchie di 24 mesi dall'ultima (worker/conservazione.mjs),
 # come promette l'informativa privacy.
 [triggers]
 crons = ["17 3 * * *"]

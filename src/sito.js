@@ -52,8 +52,10 @@ function trattiFermi(da, a) {
  * Lo scorrimento guidato che salta le sezioni ferme: la stessa durata e la stessa curva di Lenis, su un percorso
  * più corto. Arrivato all'inizio del tratto fermo la pagina passa di colpo alla sua fine: lì la sezione sta nello
  * stesso punto dello schermo, quindi il salto non si vede, e intanto le sue foto non cambiano.
+ * `vecchia` è lo scorrimento guidato già in corso, se c'è (un doppio clic, un secondo clic sul selettore): si chiude
+ * dopo aver fermato le sezioni per questo, così tra l'uno e l'altro le foto non si rimettono a posto di colpo.
  */
-function salta(da, a, tratti, libera) {
+function salta(da, a, tratti, libera, vecchia) {
   const verso = a > da ? 1 : -1;
   const strada = Math.abs(a - da) - tratti.reduce((s, x) => s + x.lungo, 0);
   const curva = (k) => Math.min(1, 1.001 - Math.pow(2, -10 * k));
@@ -61,20 +63,32 @@ function salta(da, a, tratti, libera) {
   // dove si arriva: se di una sezione ferma lì si vede molto, la sua foto torna a quella giusta già durante
   // il salto (una volta sola); altrimenti resta com'è e si rimette a posto dopo, quando non si vede più
   for (const x of tratti) { x.f.ferma(); x.dopo = x.f.visibile(a) > innerHeight * 0.25; }
-  if (corsa) corsa.fermata = true;
-  const questa = { fermata: false };
-  corsa = questa;
-  const smetti = () => { questa.fermata = true; };
+  vecchia?.chiudi();
+  // ogni sezione si lascia andare una volta sola, nel modo giusto per quel momento (vedi riparti in mestiere)
+  const lascia = (x, modo) => { if (!x.lasciata) { x.lasciata = true; x.f.riparti(modo); } };
   const SEGNI = ['wheel', 'touchstart', 'keydown'];
-  SEGNI.forEach((s) => addEventListener(s, smetti, { capture: true, passive: true }));
-  const fine = () => {
-    SEGNI.forEach((s) => removeEventListener(s, smetti, { capture: true }));
-    for (const x of tratti) x.f.riparti(x.f.visibile(scrollY) > 0);
-    if (corsa === questa) { corsa = null; libera(); }
+  const questa = {
+    fermata: false,
+    chiusa: false,
+    // chiusa da uno scorrimento guidato nuovo: niente libera (la guida continua con quello) e le sezioni si
+    // rimettono a posto appena non si vedono più
+    chiudi: () => finisci('fuori', false),
   };
+  const smetti = () => { questa.fermata = true; };
+  function finisci(modo, rilascia) {
+    if (questa.chiusa) return;
+    questa.chiusa = true;
+    SEGNI.forEach((s) => removeEventListener(s, smetti, { capture: true }));
+    for (const x of tratti) lascia(x, modo || (x.f.visibile(scrollY) > 0 ? 'morbido' : 'subito'));
+    if (corsa === questa) corsa = null;
+    if (rilascia) libera();
+  }
+  corsa = questa;
+  SEGNI.forEach((s) => addEventListener(s, smetti, { capture: true, passive: true }));
   const partenza = performance.now();
   const passo = (ora) => {
-    if (questa.fermata) return fine();
+    if (questa.chiusa) return;
+    if (questa.fermata) return finisci('', true);
     const k = Math.min(1, (ora - partenza) / 1200);
     let resto = strada * curva(k), y = da;
     for (const x of tratti) {
@@ -82,11 +96,11 @@ function salta(da, a, tratti, libera) {
       if (resto <= fin) break;
       resto -= fin;
       y = x.esce;
-      if (!x.saltato) { x.saltato = true; if (x.dopo) x.f.riparti(true); }
+      if (!x.saltato) { x.saltato = true; if (x.dopo) lascia(x, 'morbido'); }
     }
     metti(y + verso * resto);
     if (k < 1) requestAnimationFrame(passo);
-    else fine();
+    else finisci('', true);
   };
   requestAnimationFrame(passo);
 }
@@ -105,9 +119,10 @@ function vaiA(el, { subito = false } = {}) {
   guidato = true;
   clearTimeout(fineGuida);
   const libera = () => { fineGuida = setTimeout(() => { guidato = false; }, 150); };
-  if (corsa) corsa.fermata = true;
+  const vecchia = corsa;
   const tratti = subito ? [] : trattiFermi(scrollY, y);
-  if (tratti.length) { salta(scrollY, y, tratti, libera); return; }
+  if (tratti.length) { salta(scrollY, y, tratti, libera, vecchia); return; }
+  vecchia?.chiudi();
   if (lenis) lenis.scrollTo(y, { immediate: subito, duration: 1.2, force: true, onComplete: libera });
   else { scrollTo({ top: y, behavior: subito || ridotto ? 'auto' : 'smooth' }); fineGuida = setTimeout(() => { guidato = false; }, 1200); }
   if (subito) libera();
@@ -505,11 +520,26 @@ function mestiere() {
     if (!binario || capitoli.length < 2) return;
     sez.classList.add('mestiere--vivo');
     let richiesta = 0;
-    let ferma = false;       // durante un salto guidato le foto restano come sono (vedi salta)
-    let tempoSalto = 0;
+    // Durante un salto guidato le foto restano come sono (vedi salta). `ferma` conta gli scorrimenti guidati che
+    // la tengono ferma: con un doppio clic sono due, e il primo che finisce non deve rimetterla a posto.
+    // `fuori`: si rimette a posto appena non si vede più (o, se resta in vista, poco dopo, scoprendosi una volta).
+    let ferma = 0;
+    let fuori = false;
+    let tempoSalto = 0, tempoFuori = 0;
+    const scopriUnaVolta = () => {
+      sez.classList.add('mestiere--salto');
+      clearTimeout(tempoSalto);
+      tempoSalto = setTimeout(() => sez.classList.remove('mestiere--salto'), 1000);
+    };
     function aggiorna() {
       richiesta = 0;
       if (ferma) return;
+      if (fuori) {
+        const r = palco.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < innerHeight) return;
+        fuori = false;
+        clearTimeout(tempoFuori);
+      }
       const alto = palco.clientHeight;
       const passo = alto * 0.66;
       const fatto = -binario.getBoundingClientRect().top - alto * 0.17;   // un attimo fermi prima della prima foto
@@ -536,16 +566,17 @@ function mestiere() {
         const cima = Math.min(Math.max(y, su), giu) - y;
         return Math.max(0, Math.min(innerHeight, cima + palco.clientHeight) - Math.max(0, cima));
       },
-      ferma: () => { ferma = true; },
-      // morbido: la foto passa a quella giusta scoprendosi una volta, come scorrendo (vedi .mestiere--salto)
-      riparti: (morbido) => {
-        if (!ferma) return;
-        ferma = false;
-        if (morbido) {
-          sez.classList.add('mestiere--salto');
-          clearTimeout(tempoSalto);
-          tempoSalto = setTimeout(() => sez.classList.remove('mestiere--salto'), 1000);
-        }
+      ferma: () => { ferma++; fuori = false; clearTimeout(tempoFuori); },
+      // come ripartire quando nessuno la tiene più ferma: 'subito' (non si vede, nessuno se ne accorge), 'morbido'
+      // (la foto passa a quella giusta scoprendosi una volta, come scorrendo), 'fuori' (vedi sopra)
+      riparti: (modo) => {
+        ferma = Math.max(0, ferma - 1);
+        if (ferma) return;
+        if (modo === 'fuori') {
+          fuori = true;
+          clearTimeout(tempoFuori);
+          tempoFuori = setTimeout(() => { if (fuori && !ferma) { fuori = false; scopriUnaVolta(); aggiorna(); } }, 1400);
+        } else if (modo === 'morbido') scopriUnaVolta();
         aggiorna();
       },
     });

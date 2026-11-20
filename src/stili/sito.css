@@ -3823,6 +3823,15 @@ html.dialogo-aperto {
     padding-bottom: 58px;
   }
 
+  /* sul telefono società e partita IVA vanno su due righe, senza il punto in mezzo */
+  .piede__legale > span {
+    display: block;
+  }
+
+  .piede__legale > .piede__punto {
+    display: none;
+  }
+
   .pillola-fissa {
     right: max(var(--margine), env(safe-area-inset-right));
     bottom: max(14px, env(safe-area-inset-bottom));

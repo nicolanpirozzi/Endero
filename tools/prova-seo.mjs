@@ -198,8 +198,9 @@ for (const percorso of ['/', '/camicie-su-misura/']) {
 // i dati della società: piè di pagina (in tutte le pagine), informativa privacy e dati per Google dicono la stessa cosa
 const iva = (piede.match(/Partita IVA (\d{11})/) || [])[1] || '';
 const privacy = htmlDi('/privacy/');
-const organizzazione = (() => { try { return JSON.parse(leggi('index.html').match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph'].find((n) => n['@type'] === 'Organization'); } catch { return {}; } })();
-vero('il piè di pagina ha ragione sociale e partita IVA', Boolean(iva) && /S\.r\.l\.s\./.test(piede), senzaTag(piede).slice(-120));
+const organizzazione = (() => { try { return JSON.parse(leggi('index.html').match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph'].find((n) => n['@type'] === 'Organization') || {}; } catch { return {}; } })();
+const testoPiede = senzaTag(piede).replace(/\u00a0/g, ' ');
+vero('il piè di pagina ha ragione sociale e partita IVA, le stesse dei dati per Google', Boolean(iva) && Boolean(organizzazione.legalName) && testoPiede.includes(organizzazione.legalName), testoPiede.slice(-120));
 vero('l\'informativa privacy ha la stessa società e la stessa partita IVA del piè di pagina', Boolean(iva) && privacy.includes(`partita IVA ${iva}`) && Boolean(organizzazione.legalName) && senzaTag(privacy).includes(organizzazione.legalName));
 vero('i dati per Google hanno ragione sociale e partita IVA', organizzazione.vatID === `IT${iva}` && Boolean(organizzazione.legalName));
 for (const percorso of ['/privacy/', '/cookie/']) vero(`${percorso}: non è più una bozza`, !/legale__avviso|[Bb]ozza/.test(htmlDi(percorso)) && !/\{\{|\}\}/.test(htmlDi(percorso)));

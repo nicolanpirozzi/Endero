@@ -368,7 +368,7 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
         const r = palco.getBoundingClientRect();
         let foto = 0;
         capitoli.forEach((k, i) => { if (i && parseFloat(k.style.getPropertyValue('--p') || '0') > 0.5) foto = i; });
-        window.__salto.push({ vis: Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)), foto, attivo: capitoli.findIndex((k) => k.hasAttribute('data-attivo')) });
+        window.__salto.push({ vis: Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)), foto, attivo: capitoli.findIndex((k) => k.hasAttribute('data-attivo')), morbido: !!document.querySelector('.mestiere--salto'), testata: document.querySelector('[data-testata]')?.dataset.stato || '' });
         if (window.__salto.length < 300) requestAnimationFrame(giro);
       };
       requestAnimationFrame(giro);
@@ -377,13 +377,15 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
       if (nome === 'telefono') { await page.click('.selettore__apri'); await page.waitForTimeout(400); }
       await page.click(`[data-voce="${voce}"]`);
       await page.waitForTimeout(3200);
-      return page.evaluate(() => {
-        const r = window.__salto;
-        let cambi = 0;
-        for (let i = 1; i < r.length; i++) if (r[i].foto !== r[i - 1].foto && r[i].vis > 0) cambi++;
-        return { cambi, fine: r.at(-1).foto, attivo: r.at(-1).attivo };
-      });
+      return risultato();
     };
+    // cambi: quante volte la foto cambia mentre si vede; tagli: quante di quelle sono di colpo, senza scoprirsi
+    const risultato = () => page.evaluate(() => {
+      const r = window.__salto;
+      let cambi = 0, tagli = 0;
+      for (let i = 1; i < r.length; i++) if (r[i].foto !== r[i - 1].foto && r[i].vis > 0) { cambi++; if (!r[i].morbido) tagli++; }
+      return { cambi, tagli, fine: r.at(-1).foto, attivo: r.at(-1).attivo, barra: r.some((x) => x.testata === 'barra') };
+    });
     await a.vai('#collezione', -60);
     await registra();
     const giu = await clic('rivenditori');
@@ -395,7 +397,30 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     await registra();
     const arrivo = await clic('chi-siamo');
     controlla(`${nome}: arrivando su Chi siamo dal basso la prima foto torna con una scoperta sola`, arrivo.cambi <= 1 && arrivo.fine === 0 && arrivo.attivo === 0, JSON.stringify(arrivo));
+    // un doppio clic, e un secondo clic mentre la pagina sta ancora scorrendo (revisione del 2026-11-20: la foto
+    // cambiava di colpo e la testata tornava sopra il titolo della sezione raggiunta)
+    if (nome === 'computer') {
+      await a.vai('#collezione', -60);
+      await registra();
+      await page.dblclick('[data-voce="rivenditori"]');
+      await page.waitForTimeout(3200);
+      const doppio = await risultato();
+      controlla(`${nome}: con un doppio clic la foto non cambia di colpo`, doppio.tagli === 0 && doppio.cambi === 0 && doppio.fine === 5, JSON.stringify(doppio));
+      for (const [prima, dopo, attesa, fineAttesa] of [['rivenditori', 'su-misura', 250, 5], ['rivenditori', 'chi-siamo', 450, 0], ['rivenditori', 'collezione', 450, 0]]) {
+        await a.vai('#collezione', -60);
+        await registra();
+        await page.click(`[data-voce="${prima}"]`);
+        await page.waitForTimeout(attesa);
+        await page.click(`[data-voce="${dopo}"]`);
+        await page.waitForTimeout(3200);
+        const due = await risultato();
+        const arrivo = await page.evaluate((v) => ({ testata: document.querySelector('[data-testata]')?.dataset.stato, voce: document.querySelector('[data-voce][aria-current]')?.dataset.voce, cima: Math.round(document.getElementById(v).getBoundingClientRect().top) }), dopo);
+        controlla(`${nome}: ${prima} e poi ${dopo} dopo ${attesa} ms: nessun taglio di colpo, la testata non copre il titolo, la voce giusta accesa`, due.tagli === 0 && due.fine === fineAttesa && arrivo.testata !== 'barra' && arrivo.voce === dopo && arrivo.cima >= -2 && arrivo.cima < 200, JSON.stringify({ ...due, ...arrivo }));
+      }
+    }
     // scorrendo a mano le foto si sfogliano ancora, tutte e in ordine
+    await a.vai('#rivenditori', -60);
+    await clic('chi-siamo');
     const y0 = await page.evaluate(() => scrollY);
     const viste = [];
     for (let k = 1; k <= 16; k++) { await page.evaluate((v) => window.scrollTo(0, v), y0 + k * 280); await page.waitForTimeout(150); viste.push(await page.evaluate(() => [...document.querySelectorAll('.mestiere__capitolo')].findIndex((x) => x.hasAttribute('data-attivo')))); }

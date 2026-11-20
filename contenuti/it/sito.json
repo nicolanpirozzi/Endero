@@ -5,7 +5,7 @@
   "dominio": "https://www.endero.it",
   "fondazione": "1996",
   "societa": {
-    "_nota": "Dati della società, confermati dal proprietario il 2026-11-20. La sede legale è la stessa del negozio. Gli stessi dati sono scritti nel piè di pagina (piede.legale) e nell'informativa privacy (legale.json): tools/prova-seo.mjs controlla che coincidano.",
+    "_nota": "Dati della società, confermati dal proprietario il 2026-11-20. La sede legale è la stessa del negozio. Gli stessi dati sono scritti nel piè di pagina (piede.legale: le parti separate da ' · ' vanno su righe diverse sul telefono, e tra Endero e S.r.l.s. c'è uno spazio che non va a capo) e nell'informativa privacy (legale.json): tools/prova-seo.mjs controlla che coincidano.",
     "ragione_sociale": "Produzione & Distribuzione Endero S.r.l.s.",
     "partita_iva": "08887031212"
   },
@@ -118,7 +118,7 @@
         ]
       }
     ],
-    "legale": "© 2026 Produzione & Distribuzione Endero S.r.l.s. · Partita IVA 08887031212",
+    "legale": "© 2026 Produzione & Distribuzione Endero\u00a0S.r.l.s. · Partita IVA 08887031212",
     "sede": {
       "titolo": "Dove siamo",
       "righe": [

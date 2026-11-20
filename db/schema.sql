@@ -15,7 +15,14 @@ CREATE TABLE IF NOT EXISTS richieste (
   dettagli   TEXT    NOT NULL DEFAULT '',            -- JSON con i campi propri di un tipo (rivenditore: attività, città, interessi…)
   pagina     TEXT    NOT NULL DEFAULT '',            -- da quale pagina è partita
   paese      TEXT    NOT NULL DEFAULT '',
-  gestita    INTEGER NOT NULL DEFAULT 0              -- 1 quando Endero ha ricontattato la persona
+  gestita    INTEGER NOT NULL DEFAULT 0,             -- 1 quando Endero ha ricontattato la persona
+  -- telefono ed email come si confrontano (worker/conservazione.mjs): servono a cancellare le richieste
+  -- 24 mesi dopo l'ultima della stessa persona, come promette l'informativa privacy
+  chiave_telefono TEXT NOT NULL DEFAULT '',
+  chiave_email    TEXT NOT NULL DEFAULT ''
 );
+-- Un database locale fatto prima del 2026-11-20 non ha le due colonne chiave: si cancella e si rifà con db:locale.
 
 CREATE INDEX IF NOT EXISTS richieste_per_data ON richieste (creata DESC);
+CREATE INDEX IF NOT EXISTS richieste_per_telefono ON richieste (chiave_telefono, creata);
+CREATE INDEX IF NOT EXISTS richieste_per_email ON richieste (chiave_email, creata);

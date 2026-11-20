@@ -14,33 +14,17 @@ export default {
     return env.ASSETS.fetch(request);
   },
   // una volta al giorno (wrangler.toml, triggers): via le richieste vecchie, come dice l'informativa privacy
+  // (worker/conservazione.mjs)
   async scheduled(evento, env, ctx) {
     if (env.DB) ctx.waitUntil(dimentica(env.DB));
   },
 };
 
-// L'informativa privacy (contenuti/it/legale.json) promette: «Per 24 mesi dall'ultima richiesta, poi li cancelliamo».
-// Quindi una richiesta se ne va quando ha più di 24 mesi e la stessa persona (stesso telefono, o stessa email) non
-// ne ha mandate di più recenti. Se la durata cambia, cambia qui e nell'informativa.
-export const CONSERVAZIONE_MESI = 24;
-export const DIMENTICA = `DELETE FROM richieste WHERE id IN (
-  SELECT r.id FROM richieste r
-  WHERE r.creata < strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-${CONSERVAZIONE_MESI} months')
-    AND NOT EXISTS (
-      SELECT 1 FROM richieste n
-      WHERE n.creata >= strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-${CONSERVAZIONE_MESI} months')
-        AND (n.telefono = r.telefono OR (r.email <> '' AND n.email = r.email))
-    )
-)`;
-async function dimentica(db) {
-  const esito = await db.prepare(DIMENTICA).run();
-  console.log('richieste cancellate perché più vecchie di', CONSERVAZIONE_MESI, 'mesi:', esito.meta?.changes ?? 0);
-}
-
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
+import { dimentica, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];
 // i campi propri delle richieste dei rivenditori: nomi, scelte ammesse e lunghezze vengono dai contenuti della pagina,
@@ -154,8 +138,8 @@ export async function contatto(request, env) {
 
   try {
     await env.DB.prepare(
-      'INSERT INTO richieste (tipo, nome, telefono, email, giorno, fascia, messaggio, dettagli, pagina, paese) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)'
-    ).bind(r.tipo, r.nome, r.telefono, r.email, r.giorno, r.fascia, r.messaggio, r.dettagli, percorsoInterno(request.headers.get('Referer') || '', request), request.cf?.country || '').run();
+      'INSERT INTO richieste (tipo, nome, telefono, email, giorno, fascia, messaggio, dettagli, pagina, paese, chiave_telefono, chiave_email) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)'
+    ).bind(r.tipo, r.nome, r.telefono, r.email, r.giorno, r.fascia, r.messaggio, r.dettagli, percorsoInterno(request.headers.get('Referer') || '', request), request.cf?.country || '', chiaveTelefono(r.telefono), chiaveEmail(r.email)).run();
   } catch (errore) {
     console.error('salvataggio non riuscito', errore);
     return rispondi(false, 500, 'Non siamo riusciti a salvare la richiesta. Scrivici su WhatsApp.');

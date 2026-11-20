@@ -101,7 +101,7 @@ export function piede(sito, percorso = "") {
     </div>
   </div>
   <div class="piede__fondo">
-    <p>${t(p.legale)}</p>
+    <p class="piede__legale">${p.legale.split(' · ').map((x) => `<span>${t(x)}</span>`).join('<span class="piede__punto" aria-hidden="true"> · </span>')}</p>
   </div>
 </footer>`;
 }
