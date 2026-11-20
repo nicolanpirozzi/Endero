@@ -1,10 +1,12 @@
 {
   "_nota": "Configuratore, passo 1: la camicia appesa (un film calcolato prima) e il riquadro in vetro con i campi del foglio 'Camicie su misura' di Endero. Le misure si compilano; 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. Le righe d'aiuto delle misure sono le note scritte a mano sul foglio: restano tra [[ ]] finché il proprietario non le conferma. 'min' e 'max' sono i limiti che il campo accetta, in centimetri (per la taglia, il numero): scelti da noi, larghi, da rivedere con il sarto.",
   "meta": {
-    "titolo": "Crea la tua camicia su misura · Endero",
-    "descrizione": "La camicia Endero su misura, da guardare in 3D e comporre passo dopo passo.",
-    "immagine": "/film/manifesto.jpg",
-    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+    "titolo": "Camicia su misura online · Crea la tua con Endero",
+    "briciola": "Crea la tua camicia",
+    "servizio": "Camicia su misura online",
+    "descrizione": "Crea online la tua camicia su misura Endero: guardi la camicia, scrivi le tue misure da casa e il sarto le ricontrolla prima del taglio. Fatta in Italia.",
+    "immagine": "/anteprime/configuratore.jpg",
+    "immagine_alt": "Camicia bianca a maniche lunghe appesa a una gruccia di legno, davanti a una parete blu"
   },
   "palco": {
     "alt": "Camicia bianca a maniche lunghe appesa a una gruccia di legno, davanti a una parete blu",

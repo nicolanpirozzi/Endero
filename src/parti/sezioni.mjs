@@ -464,7 +464,12 @@ export function datiBase(sito, meta) {
   const c = sito.contatti;
   const d = sito.dominio;
   return [
-    { '@context': 'https://schema.org', '@type': 'Organization', '@id': `${d}/#organizzazione`, name: sito.nome, url: `${d}/`, logo: `${d}/logo.svg`, email: c.email },
+    {
+      '@context': 'https://schema.org', '@type': 'Organization', '@id': `${d}/#organizzazione`, name: sito.nome, url: `${d}/`, logo: `${d}/logo.svg`, email: c.email,
+      ...(sito.fondazione ? { foundingDate: String(sito.fondazione) } : {}),
+      // i profili social, quando il proprietario li dà (sito.json, "social"): dicono a Google che sono la stessa Endero
+      ...(sito.social?.length ? { sameAs: sito.social.map((s) => s.link) } : {}),
+    },
     { '@context': 'https://schema.org', '@type': 'WebSite', '@id': `${d}/#sito`, name: sito.nome, url: `${d}/`, inLanguage: 'it-IT', publisher: { '@id': `${d}/#organizzazione` } },
     {
       '@context': 'https://schema.org',
@@ -472,8 +477,11 @@ export function datiBase(sito, meta) {
       '@id': `${d}/#sede`,
       name: sito.nome,
       url: `${d}/`,
-      image: `${d}/film/manifesto.jpg`,
+      image: sito.foto?.sede?.indice?.negozio ? `${d}/foto/sede/negozio-anteprima.jpg` : `${d}/film/manifesto.jpg`,
       description: piano(sito.descrizione),
+      hasMap: c.mappa,
+      // gli orari, quando Endero li conferma (sito.json, "orari": [{ giorni: ['Monday', …], apre: '09:00', chiude: '13:00' }])
+      ...(sito.orari?.length ? { openingHoursSpecification: sito.orari.map((o) => ({ '@type': 'OpeningHoursSpecification', dayOfWeek: o.giorni, opens: o.apre, closes: o.chiude })) } : {}),
       telephone: c.whatsapp_internazionale,
       email: c.email,
       address: { '@type': 'PostalAddress', streetAddress: c.via, postalCode: c.cap, addressLocality: c.citta, addressRegion: c.provincia, addressCountry: c.paese },

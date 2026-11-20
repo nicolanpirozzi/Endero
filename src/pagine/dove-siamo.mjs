@@ -1,6 +1,6 @@
 // Pagina /dove-siamo/: la sede, i contatti e un modulo per scrivere a Endero.
 import { esc, t, icona } from '../parti/base.mjs';
-import { pagina } from '../parti/telaio.mjs';
+import { pagina, briciola } from '../parti/telaio.mjs';
 import { eroePagina, modulo, datiBase } from '../parti/sezioni.mjs';
 import { sedeConFoto } from '../parti/sede.mjs';
 
@@ -32,5 +32,5 @@ export default function paginaDoveSiamo({ sito, testi: p, risorse, anteprima }) 
     ...datiBase(sito, p.meta),
     { '@context': 'https://schema.org', '@type': 'ContactPage', name: p.eroe.titolo, url: `${d}/dove-siamo/`, about: { '@id': `${d}/#sede` }, isPartOf: { '@id': `${d}/#sito` } },
   ];
-  return pagina({ sito, meta: p.meta, percorso: '/dove-siamo/', corpo, risorse, anteprima, dati, classe: 'pagina-dove-siamo' });
+  return pagina({ sito, meta: p.meta, percorso: '/dove-siamo/', corpo, risorse, anteprima, dati, classe: 'pagina-dove-siamo', briciole: [briciola(sito, '/dove-siamo/')] });
 }

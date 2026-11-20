@@ -2,9 +2,9 @@
   "_nota": "Pagina /camicie-su-misura/: tutto il su misura (punto 10 della direzione creativa). Bozza da approvare. Le parti tra [[ ]] sono segnaposto. La scheda misure serve anche alla porta sul su misura della pagina iniziale. Il configuratore (punto 12) si accende con configuratore.attivo: true quando la sua pagina esiste; allora compaiono l'ingresso in cima a questa pagina e la pillola 'Crea la tua camicia' in pagina iniziale.",
   "meta": {
     "titolo": "Camicie su misura a Giugliano, Napoli · Endero",
-    "descrizione": "Camicia su misura Endero, fatta in Italia: presa misure su appuntamento nella sede di Giugliano in Campania, Viale del Toro 22. Prenota online o su WhatsApp.",
-    "immagine": "/film/manifesto.jpg",
-    "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
+    "descrizione": "Camicie su misura a Giugliano in Campania, provincia di Napoli: presa misure su appuntamento in Viale del Toro 22, oppure la crei online. Fatte in Italia.",
+    "immagine": "/anteprime/camicie-su-misura.jpg",
+    "immagine_alt": "Il sarto prende le misure a un cliente in camicia bianca, nel negozio Endero"
   },
   "eroe": {
     "titolo": "Camicie su misura a Giugliano, Napoli",
@@ -72,7 +72,7 @@
   },
   "presa_misure": {
     "titolo": "La presa misure",
-    "testo": "Su appuntamento, nella nostra sede di Giugliano in Campania. Prendiamo le misure insieme e scegli tessuto e dettagli; il sarto ricontrolla le misure prima del taglio.",
+    "testo": "Su appuntamento, nella nostra sede di Giugliano in Campania, in provincia di Napoli. Prendiamo le misure insieme e scegli tessuto e dettagli; il sarto ricontrolla le misure prima del taglio.",
     "foto": "Presa misure in sede, foto orizzontale",
     "immagine": { "file": "presa-misure", "alt": "Il sarto prende le misure a un cliente in camicia bianca, nel negozio Endero" },
     "scheda": {
@@ -155,7 +155,15 @@
       },
       {
         "domanda": "Dove si prendono le misure?",
-        "risposta": "Nella nostra sede di Giugliano in Campania, in Viale del Toro 22, su appuntamento."
+        "risposta": "Nella nostra sede di Giugliano in Campania, in provincia di Napoli, in Viale del Toro 22, su appuntamento. Oppure da casa, con «Crea la tua camicia»."
+      },
+      {
+        "domanda": "Posso ordinare senza venire in sede?",
+        "risposta": "Sì. Con «Crea la tua camicia» scrivi le tue misure da casa. Il sarto le ricontrolla prima del taglio e, se qualcosa non torna, ti scrive su WhatsApp."
+      },
+      {
+        "domanda": "Quali misure servono?",
+        "risposta": "Giro collo, spalla, spallina, torace, pancia, bacino, lunghezza della manica, braccio, avambraccio, polso e lunghezza della camicia, davanti e dietro. In sede le prende il sarto; da casa le scrivi tu, una per una."
       },
       {
         "domanda": "Quanto costa una camicia su misura?",

@@ -16,7 +16,52 @@
       "fuoco": "alto"
     }
   },
+  "categorie": {
+    "_nota": "Una pagina per categoria (/collezione/<id>/), voluta dal proprietario il 2026-11-20 per Google ('Sì, una pagina per categoria'). Testi nostri, in bozza, scritti solo con ciò che si vede nelle foto e con 'fatto in Italia': niente tessuti, materiali o lavorazioni che Endero non abbia confermato. 'immagine' in meta è l'anteprima per i social (tools/anteprime-social.py).",
+    "maglieria": {
+      "titolo": "Maglieria uomo",
+      "testo": "Dolcevita a trecce, girocollo, maglioni con il collo a bottoni e cardigan, dai blu agli azzurri fino ai colori caldi. Capi Endero fatti in Italia: scegli una foto per vederla grande e chiedere la disponibilità.",
+      "meta": {
+        "titolo": "Maglieria uomo · Collezione Endero, fatta in Italia",
+        "descrizione": "Maglieria uomo Endero: dolcevita a trecce, girocollo, maglioni e cardigan, fatti in Italia. Guarda le foto e chiedi la disponibilità su WhatsApp.",
+        "immagine": "/anteprime/collezione-maglieria.jpg",
+        "immagine_alt": "Uomo con dolcevita a trecce blu notte"
+      }
+    },
+    "giacche-e-cappotti": {
+      "titolo": "Giacche e cappotti uomo",
+      "testo": "Cappotti doppiopetto e color cammello, giacche e camicioni a quadri azzurri. Capi Endero fatti in Italia: scegli una foto per vederla grande e chiedere la disponibilità.",
+      "meta": {
+        "titolo": "Giacche e cappotti uomo · Collezione Endero",
+        "descrizione": "Giacche e cappotti uomo Endero: cappotti doppiopetto e color cammello, giacche e camicioni a quadri, fatti in Italia. Chiedi la disponibilità su WhatsApp.",
+        "immagine": "/anteprime/collezione-giacche-e-cappotti.jpg",
+        "immagine_alt": "Uomo con cappotto color cammello che si tocca il cappello"
+      }
+    },
+    "abiti": {
+      "titolo": "Abiti uomo",
+      "testo": "Abiti gessati, blu e chiari, anche doppiopetto, e completi a quadri azzurri con il gilet. Capi Endero fatti in Italia: scegli una foto per vederla grande e chiedere la disponibilità.",
+      "meta": {
+        "titolo": "Abiti uomo · Collezione Endero, fatta in Italia",
+        "descrizione": "Abiti uomo Endero: gessati blu e chiari, doppiopetto e completi a quadri con il gilet, fatti in Italia. Guarda le foto e chiedi la disponibilità su WhatsApp.",
+        "immagine": "/anteprime/collezione-abiti.jpg",
+        "immagine_alt": "Uomo con camicia bianca e gilet blu notte"
+      }
+    },
+    "felpe": {
+      "titolo": "Felpe uomo",
+      "testo": "Felpe con il cappuccio e con la zip, grigie, blu notte e nere, con la E di Endero. Fatte in Italia: scegli una foto per vederla grande e chiedere la disponibilità.",
+      "meta": {
+        "titolo": "Felpe uomo · Collezione Endero, fatta in Italia",
+        "descrizione": "Felpe uomo Endero: con il cappuccio e con la zip, grigie, blu notte e nere, fatte in Italia. Guarda le foto e chiedi la disponibilità su WhatsApp.",
+        "immagine": "/anteprime/collezione-felpe.jpg",
+        "immagine_alt": "Felpa grigia con la E di Endero"
+      }
+    }
+  },
   "lookbook": {
+    "percorso": "Percorso",
+    "collezione": "Collezione",
     "titolo": "Il lookbook",
     "testo": "Scegli una foto per vederla grande e chiedere informazioni su quel capo.",
     "filtro": "Scegli cosa vedere",

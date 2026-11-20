@@ -1,7 +1,7 @@
 // Pagina /camicie-su-misura/: tutto il su misura, con i testi suoi (contenuti/it/su-misura.json).
 // In cima l'ingresso al configuratore, spento finché la sua pagina non esiste (configuratore.attivo).
 import { esc, piano } from '../parti/base.mjs';
-import { pagina } from '../parti/telaio.mjs';
+import { pagina, briciola } from '../parti/telaio.mjs';
 import { eroePagina, intesta, suMisura, presaMisure, comeFunziona, domande, prezzo, datiBase } from '../parti/sezioni.mjs';
 
 const daConfermare = (s) => /\[\[/.test(s);
@@ -43,5 +43,5 @@ export default function paginaSuMisura({ sito, testi: p, risorse, anteprima }) {
       mainEntity: confermate.map((v) => ({ '@type': 'Question', name: v.domanda, acceptedAnswer: { '@type': 'Answer', text: v.risposta } })),
     }] : []),
   ];
-  return pagina({ sito, meta: p.meta, percorso: '/camicie-su-misura/', corpo, risorse, anteprima, dati, classe: 'pagina-su-misura' });
+  return pagina({ sito, meta: p.meta, percorso: '/camicie-su-misura/', corpo, risorse, anteprima, dati, classe: 'pagina-su-misura', briciole: [briciola(sito, '/camicie-su-misura/')] });
 }

@@ -122,6 +122,8 @@ La vista dall'alto è senza prospettiva proprio per questo: il tessuto può scor
 
 ## 5. Pagine e Google
 
+> Il lavoro SEO del 20 novembre 2026 (pagine di categoria, dati strutturati, mappa con le foto, controllo automatico, cosa manca) è al punto 15. La tabella qui sotto è il progetto del 14 novembre.
+
 | Indirizzo | Titolo H1 (bozza) | Ricerca a cui risponde | Dati strutturati |
 | --- | --- | --- | --- |
 | `/` | Camicie su misura, fatte in Italia | Endero, camicia su misura | Organization, WebSite, ClothingStore |
@@ -474,3 +476,43 @@ Nella pagina c'è il primo fotogramma, fermo. Il video lo aggiunge lo script qua
 **La foto del negozio e il questionario per Endero** (stessa sera). La prima foto del negozio, arrivata in chat e larga 2000 punti, è nel riquadro con l'indirizzo di «Dove siamo» (`public/foto/sede/`, `tools/comprimi-foto.py sede`): sugli schermi larghi è intera e il pannello ne copre il lato destro, sul telefono è un ritaglio quasi quadrato del centro. Le informazioni che solo Endero può dare (orari, prezzo, tempi e consegna del su misura, vestibilità, email degli ordini, nomi e prezzi dei capi, come lavorano i rivenditori, Instagram, società e partita IVA, consulente per la privacy, sito di oggi, chi gestisce endero.it, foto che mancano) sono in un questionario di 19 domande sul Worker `endero-domande`, una per schermata e sempre con «Non lo so» tra le risposte: nessuno deve restare fermo. Il questionario delle misure resta quello di prima: il sarto ha risposto a 10 domande su 23.
 
 **Dopo la revisione indipendente.** Corretti: il video non si scarica più in cima alla pagina né ricaricando più giù, cambia quando si gira il telefono, ha un tasto per fermarlo (in basso a sinistra) e sui telefoni un velo più fitto e un'immagine ferma nitida (l'abito intero, non il primo fotogramma); chiudendo una foto senza averla cambiata la pagina resta dov'era; la scritta grande «Rivenditore Endero» non si spezza più; sotto i 960 punti il titolo dei rivenditori sale sopra le due schede; la camicia del su misura si ferma a 1600 punti di larghezza; il tasto «Vedi la collezione» porta al titolo, non dietro il selettore. Lasciato com'è, da decidere: nella scheda delle misure la prima voce è ancora «Taglia», che diventerà «Giro collo» insieme al configuratore.
+
+## 15. Farsi trovare su Google
+
+Fatto il 20 novembre 2026, mentre si aspettano le risposte del sarto. Il proprietario ha chiesto di capire «lato SEO, a che punto siamo» e di implementare il resto in autonomia. Le sue scelte: una pagina per ogni categoria della collezione; puntare su tre ricerche (camicie su misura a Napoli e provincia, camicie su misura online, ingrosso e conto terzi per negozi e marchi; non scelta: le categorie di abbigliamento uomo); testi nuovi scritti da noi e messi sull'anteprima; scheda Google e Search Console le gestisce Endero o un suo tecnico.
+
+**Da dove si partiva.** C'erano già: un titolo e una descrizione per pagina, un solo H1, indirizzi canonici in italiano, dati strutturati di base, mappa del sito, robots, quattro reindirizzamenti, pagine complete senza JavaScript, foto leggere. Misurato in locale: la pagina non salta mentre carica (CLS 0) e la prima immagine arriva subito. Mancavano: pagine per le categorie, briciole, immagini di anteprima vere per i social, foto e date nella mappa, i vecchi indirizzi reali del negozio PrestaShop, un controllo automatico.
+
+**Una ricerca, una pagina.**
+
+| Ricerca | Pagina | Titolo per Google |
+| --- | --- | --- |
+| Endero | `/` | Endero · Camicie su misura e abbigliamento uomo dal 1996 |
+| camicie su misura Napoli, Giugliano | `/camicie-su-misura/` | Camicie su misura a Giugliano, Napoli · Endero |
+| camicia su misura online | `/camicie-su-misura/configuratore/` | Camicia su misura online · Crea la tua con Endero |
+| camicie ingrosso, produzione conto terzi | `/diventa-rivenditore/` | Diventa rivenditore Endero · Ingrosso e conto terzi |
+| maglieria, giacche e cappotti, abiti, felpe uomo | `/collezione/<categoria>/` | per esempio: Maglieria uomo · Collezione Endero, fatta in Italia |
+| dove si trova Endero | `/dove-siamo/` | Dove siamo e contatti · Endero, Giugliano in Campania |
+
+**Le pagine di categoria** (`paginaCategoria` in `src/pagine/collezione.mjs`, testi in `collezione.json`, voce `categorie`). In cima niente foto grande: il percorso («Collezione / Maglieria»), il titolo, due righe, poi la barra del lookbook, qui fatta di link alle altre categorie, e le foto, che si aprono grandi come nella collezione. Nella pagina della collezione i tasti del filtro portano l'indirizzo delle categorie: con gli script il clic filtra sul posto, come approvato; senza script, e per Google, sono link veri. Gli ingressi della pagina iniziale portano alle categorie. I testi dicono solo ciò che si vede nelle foto e «fatto in Italia»: niente tessuti o lavorazioni non confermati.
+
+**Quello che Google legge e non si vede.**
+
+- Dati strutturati in ogni pagina (`datiBase` e `datiDiPagina`): Endero come organizzazione, con l'anno 1996; la sede, con indirizzo, telefono, foto e mappa; la pagina stessa; le briciole; i servizi (su misura, su misura online, ingrosso, conto terzi, su misura per i negozi); le domande frequenti; le foto della collezione con la loro descrizione. Orari e profili social si aggiungono da `sito.json` (`orari`, `social`) appena Endero li dà.
+- Anteprima per i social: un'immagine 1200 × 630 per pagina (`tools/anteprime-social.py`, `public/anteprime/`), con le misure dichiarate.
+- `sitemap.xml`: ogni pagina con la data dell'ultima modifica dei suoi testi (dal commit di git) e le sue foto.
+- Reindirizzamenti: tutti gli indirizzi della mappa del negozio PrestaShop di oggi, letta dal sito vero (`worker/reindirizzamenti.mjs`).
+
+**Il controllo.** `node tools/prova-seo.mjs` costruisce la versione pubblica a parte e fa circa 400 controlli sui file, come li vedrà Google: titoli e descrizioni unici e della lunghezza giusta, un solo H1, canonici, anteprime, dati strutturati coerenti, link e ancore, immagini con descrizione e misure, mappa, robots, reindirizzamenti. Stampa a parte ciò che blocca la messa online senza essere un difetto: i testi tra `[[ ]]`, gli orari, i social, l'ordine del configuratore. Si lancia prima di ogni aggiornamento dell'anteprima.
+
+**Fuori dal sito.** `docs/endero-su-google.pdf` (sorgente `.html` accanto) è il foglio da dare a chi gestisce scheda Google, Search Console e dominio: i dati di Endero scritti sempre uguali, cosa mettere nella scheda, cosa fare il giorno della messa online.
+
+**Cosa resta, in ordine di peso.**
+
+1. Le risposte di Endero: orari, prezzo e tempi del su misura, società e partita IVA, profili social. Finché mancano, il sito ha testi «da confermare» in vista.
+2. Il configuratore che invia davvero l'ordine: la pagina che punta su «camicia su misura online» oggi non vende.
+3. Una guida «Come prendere le misure per una camicia», con le spiegazioni che il sarto sta confermando: è la pagina che più può portare visite a chi vuole ordinare da casa.
+4. Più testo nelle pagine della collezione, quando arrivano nomi, descrizioni e prezzi dei capi: oggi reggono sulle foto.
+5. Il film dell'apertura pesa 10 MB anche sul telefono. È una scelta approvata e in prova la pagina resta veloce a comparire, ma su una rete lenta il caricamento dura: se dopo la messa online i dati di Google lo segnalano, serve una versione più leggera per il telefono.
+6. La pagina dei rivenditori divisa in due (ingrosso, conto terzi) quando ci saranno contenuti per riempirle.
+7. La versione inglese, già predisposta nella struttura.

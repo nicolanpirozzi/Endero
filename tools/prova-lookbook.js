@@ -388,7 +388,9 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
     visore: getComputedStyle(document.getElementById('visore')).display,
   }));
   controlla('senza JavaScript: i quattro tipi si vedono tutti e il visore resta chiuso', nj.visibili === 4 && nj.visore === 'none', JSON.stringify([nj.visibili, nj.visore]));
-  controlla('senza JavaScript: i tasti del filtro portano alle parti della pagina', nj.tasti.every((x) => x.startsWith('#') && x.length > 1), nj.tasti.join(' '));
+  // senza script «Tutti» resta nella pagina e ogni tipo porta alla sua pagina di categoria, che esiste
+  const categorie = await Promise.all(nj.tasti.slice(1).map((l) => fetch(base + l).then((r) => r.status === 200 && /^\/collezione\/[a-z-]+\/$/.test(l))));
+  controlla('senza JavaScript: i tasti del filtro portano alle pagine delle categorie', nj.tasti[0] === '#lookbook' && categorie.length === 4 && categorie.every(Boolean), nj.tasti.join(' '));
   const grandi = await Promise.all(nj.link.slice(0, 6).map((l) => fetch(base + l).then((r) => r.status === 200 && (r.headers.get('content-type') || '').startsWith('image/'))));
   controlla('senza JavaScript: ogni foto è un link alla sua versione grande', nj.link.length === N && grandi.every(Boolean));
   await a.contesto.close();
@@ -409,7 +411,7 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
       tutti: (document.querySelector('.vetrina__tutti a') || {}).href || '',
     }));
     controlla(`${nome}: dodici look in vetrina; senza script ognuno porta alla sua foto nella collezione`, hm.look.length === 12 && hm.look.every((x) => /^\/collezione\/#[a-z0-9-]+$/.test(x)) && hm.look.every((x) => conta.nomi.includes(x.split('#')[1])), JSON.stringify(hm.look.slice(0, 2)));
-    controlla(`${nome}: tre ingressi con la foto: Maglieria, Giacche e cappotti, Su misura`, JSON.stringify(hm.ingressi) === JSON.stringify([['Maglieria', '/collezione/#maglieria', true], ['Giacche e cappotti', '/collezione/#giacche-e-cappotti', true], ['Su misura', '/camicie-su-misura/', true]]), JSON.stringify(hm.ingressi));
+    controlla(`${nome}: tre ingressi con la foto: Maglieria, Giacche e cappotti, Su misura`, JSON.stringify(hm.ingressi) === JSON.stringify([['Maglieria', '/collezione/maglieria/', true], ['Giacche e cappotti', '/collezione/giacche-e-cappotti/', true], ['Su misura', '/camicie-su-misura/', true]]), JSON.stringify(hm.ingressi));
     controlla(`${nome}: le foto si caricano, niente manca, niente esce dallo schermo`, hm.caricate === 0 && a.rotte.length === 0 && await a.stretta(), `${hm.caricate} non caricate, ${a.rotte.join(', ')}`);
     controlla(`${nome}: c'è il link a tutta la collezione`, hm.tutti.endsWith('/collezione/'), hm.tutti);
     // toccando un look la foto si apre grande e si resta in pagina iniziale
@@ -440,6 +442,31 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
     s = await a.stato();
     controlla(`${nome}: Indietro chiude la foto e non lascia la pagina iniziale`, !s.aperto && s.percorso === '/' && s.ancora === '', JSON.stringify(s));
     controlla(`${nome}: nessun errore in pagina`, a.errori.length === 0, a.errori.join(' | ').slice(0, 300));
+    await a.contesto.close();
+  }
+
+  // ---------------------------------------------------------------- 9. le pagine di categoria
+  console.log('Le pagine di categoria');
+  for (const [nome, opzioni] of [['computer', {}], ['telefono stretto', { viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }]]) {
+    a = await nuovo(opzioni); page = a.page;
+    const [idTipo, quanteTipo] = conta.tipi[3];
+    await page.goto(`${base}/collezione/${idTipo}/`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(500);
+    const k = await page.evaluate(() => {
+      const acceso = document.querySelector('.lookbook__tasto[aria-current="page"]'), r = acceso.getBoundingClientRect();
+      return { h1: document.querySelectorAll('h1').length, titolo: document.querySelector('h1').innerText, foto: document.querySelectorAll('[data-look]').length, briciole: [...document.querySelectorAll('.briciole li')].map((x) => x.innerText.trim()), su: document.querySelector('.briciole a').getAttribute('href'), barra: [...document.querySelectorAll('.lookbook__tasto')].map((x) => x.getAttribute('href')), acceso: acceso.getAttribute('href'), inVista: r.left >= 0 && r.right <= innerWidth };
+    });
+    controlla(`${nome}: una categoria ha il suo titolo, il percorso e solo le sue foto`, k.h1 === 1 && /uomo/i.test(k.titolo) && k.foto === quanteTipo && k.briciole.length === 2 && k.su === '/collezione/', JSON.stringify(k));
+    controlla(`${nome}: la barra porta alle altre categorie e a tutta la collezione, con la voce di questa accesa e in vista`, k.barra[0] === '/collezione/' && k.barra.length === 5 && k.barra.slice(1).every((x) => /^\/collezione\/[a-z-]+\/$/.test(x)) && k.acceso === `/collezione/${idTipo}/` && k.inVista && await a.stretta(), JSON.stringify(k.barra));
+    const seconda = page.locator('[data-look]').nth(1);
+    await seconda.scrollIntoViewIfNeeded();
+    if (opzioni.hasTouch) await seconda.tap(); else await seconda.click();
+    s = await a.stato();
+    controlla(`${nome}: la foto si apre grande restando nella categoria`, s.aperto && s.numero === '2' && s.quanti === String(quanteTipo) && s.percorso === `/collezione/${idTipo}/` && await a.pronta() && (await a.vista()).sua, JSON.stringify(s));
+    await page.goBack(); await page.waitForTimeout(450);
+    s = await a.stato();
+    controlla(`${nome}: Indietro chiude la foto e resta nella categoria`, !s.aperto && s.percorso === `/collezione/${idTipo}/` && s.ancora === '', JSON.stringify(s));
+    controlla(`${nome}: nessun errore, nessun file mancante`, a.errori.length === 0 && a.rotte.length === 0, [...a.errori, ...a.rotte].join(' | ').slice(0, 300));
     await a.contesto.close();
   }
 

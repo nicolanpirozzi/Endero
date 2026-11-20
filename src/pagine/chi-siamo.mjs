@@ -3,7 +3,7 @@
 // resta come riga piccola sopra il titolo. Gli stessi capitoli della pagina iniziale, qui a foto e testo alternati;
 // il nastro dei fatti, fermo, con il richiamo ai rivenditori sotto "2.500 negozi serviti".
 import { esc, t, attesa, foto } from '../parti/base.mjs';
-import { pagina } from '../parti/telaio.mjs';
+import { pagina, briciola } from '../parti/telaio.mjs';
 import { eroePagina, intesta, nastroFermo, chiusura, datiBase } from '../parti/sezioni.mjs';
 
 export const PERCORSO = '/chi-siamo/';
@@ -38,5 +38,5 @@ export default function paginaCultura({ sito, testi: c, nastro, richiamo, risors
     ...datiBase(sito, c.meta),
     { '@context': 'https://schema.org', '@type': 'AboutPage', name: c.eroe.titolo, url: d + PERCORSO, about: { '@id': `${d}/#organizzazione` }, isPartOf: { '@id': `${d}/#sito` } },
   ];
-  return pagina({ sito, meta: c.meta, percorso: PERCORSO, corpo, risorse, anteprima, dati, classe: 'pagina-cultura' });
+  return pagina({ sito, meta: c.meta, percorso: PERCORSO, corpo, risorse, anteprima, dati, classe: 'pagina-cultura', briciole: [briciola(sito, PERCORSO)] });
 }

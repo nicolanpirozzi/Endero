@@ -6,6 +6,7 @@
 // Variabili facoltative: TURNSTILE_SITE_KEY (chiave pubblica dell'antispam del modulo),
 // URL_ANTEPRIMA (indirizzo provvisorio dell'anteprima, per esempio https://endero-anteprima.xxx.workers.dev).
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -14,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import home from '../src/pagine/home.mjs';
 import paginaSuMisura from '../src/pagine/su-misura.mjs';
 import paginaConfiguratore from '../src/pagine/configuratore.mjs';
-import paginaCollezione, { paginaCapo, indirizzoCapo } from '../src/pagine/collezione.mjs';
+import paginaCollezione, { paginaCapo, paginaCategoria, indirizzoCapo, indirizzoCategoria } from '../src/pagine/collezione.mjs';
 import paginaCultura, { PERCORSO as PERCORSO_CULTURA } from '../src/pagine/chi-siamo.mjs';
 import paginaRivenditori, { PERCORSO as PERCORSO_RIVENDITORI } from '../src/pagine/rivenditori.mjs';
 import paginaDoveSiamo from '../src/pagine/dove-siamo.mjs';
@@ -85,7 +86,25 @@ for (const [file, info] of Object.entries(esito.metafile.outputs)) {
 const turnstile = process.env.TURNSTILE_SITE_KEY || '';
 // URL_ANTEPRIMA: l'indirizzo provvisorio su cui va l'anteprima (per l'immagine nella scheda del link)
 const origineAnteprima = (process.env.URL_ANTEPRIMA || '').replace(/\/$/, '');
-const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima };
+/** Larghezza e altezza di un JPEG di public/, lette dal file: servono ai social per mostrare grande l'anteprima del link. */
+const misureLette = new Map();
+function misure(indirizzo) {
+  if (misureLette.has(indirizzo)) return misureLette.get(indirizzo);
+  let esito = null;
+  const file = join(RADICE, 'public', indirizzo.split('?')[0]);
+  if (/\.jpe?g$/i.test(file) && existsSync(file)) {
+    const b = readFileSync(file);
+    // si scorrono i segmenti del JPEG fino a quello che porta le misure (SOF0…SOF15, esclusi quelli che non lo sono)
+    for (let i = 2; i + 9 < b.length && b[i] === 0xff;) {
+      const tipo = b[i + 1], lungo = b.readUInt16BE(i + 2);
+      if (tipo >= 0xc0 && tipo <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(tipo)) { esito = [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5)]; break; }
+      i += 2 + lungo;
+    }
+  }
+  misureLette.set(indirizzo, esito);
+  return esito;
+}
+const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima, misure };
 
 // le foto vere di Endero (tools/comprimi-foto.py): per ogni cartella, le grandezze di ogni foto e un'impronta,
 // così se una foto si rifà chi torna non vede quella vecchia rimasta nel browser
@@ -128,7 +147,21 @@ if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/,
 const testiConfiguratore = leggi('configuratore.json');
 
 // 3 · pagine
-scrivi('index.html', home({
+/** Quando è cambiato l'ultima volta il contenuto di una pagina: la data dell'ultimo commit dei suoi file di testo. */
+function ultimaModifica(file) {
+  try {
+    return execFileSync('git', ['log', '-1', '--format=%cs', '--', ...file.map((f) => join('contenuti', lingua, f))], { cwd: RADICE, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch { return ''; }
+}
+/** Le foto di una pagina, per la mappa del sito: quelle vere di Endero (public/foto/), ognuna una volta. */
+const fotoDi = (html) => [...new Set([...html.matchAll(/<img\b[^>]*\bsrc="(\/foto\/[^"?]+)/g)].map((m) => m[1]))];
+// la mappa del sito: per ogni pagina l'indirizzo, la data dell'ultima modifica dei suoi testi e le sue foto
+const pagine = [];
+function genera(percorso, html, fonti = []) {
+  scrivi(percorso === '/' ? 'index.html' : percorso.slice(1) + 'index.html', html);
+  pagine.push({ percorso, modificata: fonti.length ? ultimaModifica(fonti) : '', foto: fotoDi(html) });
+}
+genera('/', home({
   sito,
   testi: testiHome,
   cultura: testi.cultura,
@@ -144,28 +177,29 @@ scrivi('index.html', home({
     js: [risorsa.sito, risorsa.apertura],
     precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
   },
-}));
-const pagine = ['/'];
-function genera(percorso, html) {
-  scrivi(percorso.slice(1) + 'index.html', html);
-  pagine.push(percorso);
-}
-genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }));
-genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, camicia, risorse: base, anteprima }));
-genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }));
+}), ['home.json', 'collezione.json', 'chi-siamo.json']);
+genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }), ['su-misura.json']);
+genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, camicia, risorse: base, anteprima }), ['configuratore.json']);
+genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }), ['collezione.json', 'prodotti.json']);
+// una pagina per ogni categoria della collezione che ha i suoi testi (collezione.json, "categorie") e almeno una foto
 const visti = new Set();
+for (const tipo of testi.collezione.lookbook.tipi) {
+  if (!testi.collezione.categorie?.[tipo.id] || !sito.foto.collezione || !testi.collezione.look.some((k) => k.tipo === tipo.id)) continue;
+  visti.add(tipo.id);
+  genera(indirizzoCategoria(tipo.id), paginaCategoria({ sito, testi: testi.collezione, tipo, risorse: base, anteprima }), ['collezione.json']);
+}
 for (const capo of prodotti) {
   // l'indirizzo del capo diventa una cartella: solo minuscole, cifre e trattini, e mai due uguali
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(capo.slug || '')) throw new Error(`prodotti.json: slug non valido per "${capo.nome}": "${capo.slug}"`);
-  if (visti.has(capo.slug)) throw new Error(`prodotti.json: slug doppio "${capo.slug}"`);
+  if (visti.has(capo.slug)) throw new Error(`prodotti.json: slug doppio, o uguale al nome di una categoria: "${capo.slug}"`);
   visti.add(capo.slug);
 }
-for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }));
-genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }));
-genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori, nastro: testiHome.nastro, risorse: base, anteprima }));
-genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }));
-genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }));
-genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }));
+for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }), ['prodotti.json']);
+genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }), ['chi-siamo.json']);
+genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori, nastro: testiHome.nastro, risorse: base, anteprima }), ['diventa-rivenditore.json']);
+genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }), ['dove-siamo.json']);
+genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }), ['legale.json']);
+genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }), ['legale.json']);
 scrivi('grazie/index.html', semplice({ sito, testi: servizio.grazie, percorso: '/grazie/', risorse: base }));
 scrivi('404.html', semplice({ sito, testi: servizio.non_trovata, percorso: '/404', risorse: base }));
 
@@ -178,9 +212,14 @@ scrivi('logo.svg', svg('completo', '#0f285e'));
 scrivi('robots.txt', anteprima
   ? 'User-agent: *\nDisallow: /\n'
   : `User-agent: *\nAllow: /\n\nSitemap: ${sito.dominio}/sitemap.xml\n`);
+// La mappa dice a Google quali pagine ci sono, quando sono cambiate i loro testi e quali foto contengono
+// (le foto contano: chi cerca un capo spesso cerca per immagini).
+const xml = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 scrivi('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pagine.map((p) => `  <url><loc>${sito.dominio}${p}</loc></url>`).join('\n')}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${pagine.map((p) => `  <url>
+    <loc>${xml(sito.dominio + p.percorso)}</loc>${p.modificata ? `\n    <lastmod>${p.modificata}</lastmod>` : ''}${p.foto.map((f) => `\n    <image:image><image:loc>${xml(sito.dominio + f)}</image:loc></image:image>`).join('')}
+  </url>`).join('\n')}
 </urlset>
 `);
 

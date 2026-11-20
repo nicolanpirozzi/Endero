@@ -604,7 +604,16 @@ function lookbook() {
       scrivi(a.dataset.filtro ? `#${a.dataset.filtro}` : pulito());
     });
   }
-  sfuma();
+  // nelle pagine di categoria la barra è fatta di link e la voce accesa è la pagina stessa: sul telefono può stare
+  // oltre il bordo, e si porta in vista senza spostare la pagina
+  const accesa = fila?.querySelector('[aria-current="page"]')?.parentElement;
+  const mostraAccesa = () => {
+    if (accesa && (accesa.offsetLeft < fila.scrollLeft || accesa.offsetLeft + accesa.offsetWidth > fila.scrollLeft + fila.clientWidth)) fila.scrollLeft = accesa.offsetLeft - (fila.clientWidth - accesa.offsetWidth) / 2;
+    sfuma();
+  };
+  mostraAccesa();
+  // quando arriva il carattere del sito le voci si allargano: si rifà il conto
+  if (accesa) document.fonts?.ready.then(mostraAccesa);
 
   // ---- il visore
   const dialogo = document.getElementById('visore');

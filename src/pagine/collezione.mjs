@@ -1,7 +1,7 @@
 // Pagina /collezione/: il lookbook, cioè le foto vere dei capi divise per tipo, e sotto (quando arriveranno con
 // nome e prezzo in contenuti/it/prodotti.json) i capi, ognuno con la sua pagina. Niente carrello: si chiede su WhatsApp.
 import { esc, t, piano, attesa, fotoIntera, fotoGrande, icona, euro, indirizzoCapo } from '../parti/base.mjs';
-import { pagina } from '../parti/telaio.mjs';
+import { pagina, briciola } from '../parti/telaio.mjs';
 import { eroePagina, intesta, datiBase, datiLook, datiVisore, visore, larga } from '../parti/sezioni.mjs';
 
 export { euro, indirizzoCapo };
@@ -19,6 +19,19 @@ function schedaCapo(capo, sito) {
       </a></li>`;
 }
 
+/** L'indirizzo della pagina di una categoria della collezione (maglieria, giacche e cappotti, abiti, felpe). */
+export const indirizzoCategoria = (id) => `/collezione/${id}/`;
+
+/** Una foto del lookbook: un riquadro due per tre (quattro riquadri se è "grande"), che è un link alla sua versione grande. */
+function voceLook(k, archivio, attributi = '') {
+  // la foto grande occupa due colonne: le serve una grandezza in più
+  const w = (riquadro) => `${larga(k, archivio, riquadro)}vw`;
+  const sizes = k.grande ? `(max-width: 699px) ${w(100)}, (max-width: 959px) ${w(67)}, (max-width: 1299px) ${w(50)}, ${w(40)}` : `(max-width: 699px) ${w(50)}, (max-width: 959px) ${w(34)}, (max-width: 1299px) ${w(25)}, ${w(20)}`;
+  return `<li class="look${k.grande ? ' look--grande' : ''}" id="${esc(k.file)}">
+          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" ${datiLook(k, archivio)}${attributi}>${fotoIntera(k, archivio, { sizes })}</a>
+        </li>`;
+}
+
 /**
  * Il lookbook. Senza script è già tutto lì: i tasti del filtro sono link alle quattro parti della pagina e ogni foto
  * è un link alla sua versione grande. Lo script (src/sito.js, "lookbook") fa del filtro un filtro vero e apre le
@@ -30,22 +43,18 @@ function lookbook(c, sito) {
   const look = c.look.filter((k) => archivio?.indice?.[k.file]);
   if (!look.length) return '';
   const gruppi = l.tipi.map((tipo) => ({ ...tipo, look: look.filter((k) => k.tipo === tipo.id) })).filter((g) => g.look.length);
+  // Ogni tipo ha anche la sua pagina (paginaCategoria): il tasto del filtro ne porta l'indirizzo, così Google la trova e
+  // chi non ha gli script ci arriva; con gli script il clic filtra qui, senza cambiare pagina
+  const versoIlTipo = (id) => (c.categorie?.[id] ? indirizzoCategoria(id) : `#${id}`);
   const tasto = (href, filtro, nome, quanti, attivo) => `<li><a class="lookbook__tasto" href="${esc(href)}" data-filtro="${esc(filtro)}"${attivo ? ' aria-current="true"' : ''}>${esc(nome)}<span class="lookbook__quanti">${quanti}</span></a></li>`;
-  const voce = (k) => {
-    // la foto grande occupa due colonne: le serve una grandezza in più
-    const w = (riquadro) => `${larga(k, archivio, riquadro)}vw`;
-    const sizes = k.grande ? `(max-width: 699px) ${w(100)}, (max-width: 959px) ${w(67)}, (max-width: 1299px) ${w(50)}, ${w(40)}` : `(max-width: 699px) ${w(50)}, (max-width: 959px) ${w(34)}, (max-width: 1299px) ${w(25)}, ${w(20)}`;
-    return `<li class="look${k.grande ? ' look--grande' : ''}" id="${esc(k.file)}">
-          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" ${datiLook(k, archivio)}>${fotoIntera(k, archivio, { sizes })}</a>
-        </li>`;
-  };
+  const voce = (k) => voceLook(k, archivio);
   const v = l.visore;
   return `<section class="sezione lookbook" id="lookbook" data-lookbook ${datiVisore(v, sito)}>
       ${intesta({ titolo: l.titolo, testo: l.testo })}
       <nav class="lookbook__filtro" aria-label="${esc(l.filtro)}">
         <ul>
           ${tasto('#lookbook', '', l.tutti, look.length, true)}
-          ${gruppi.map((g) => tasto(`#${g.id}`, g.id, g.nome, g.look.length, false)).join('\n          ')}
+          ${gruppi.map((g) => tasto(versoIlTipo(g.id), g.id, g.nome, g.look.length, false)).join('\n          ')}
         </ul>
       </nav>
       ${gruppi.map((g) => `<section class="lookbook__tipo" id="${esc(g.id)}" data-tipo="${esc(g.id)}" data-nome="${esc(g.nome)}" aria-labelledby="tipo-${esc(g.id)}">
@@ -85,7 +94,57 @@ export default function paginaCollezione({ sito, testi: c, prodotti, risorse, an
       ...(archivio ? { image: c.look.filter((k) => archivio.indice[k.file]).map((k) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(k, archivio).split('?')[0], caption: k.alt })) } : {}),
     },
   ];
-  return pagina({ sito, meta: c.meta, percorso: '/collezione/', corpo, risorse, anteprima, dati, classe: 'pagina-collezione' });
+  return pagina({ sito, meta: c.meta, percorso: '/collezione/', corpo, risorse, anteprima, dati, classe: 'pagina-collezione', briciole: [briciola(sito, '/collezione/')] });
+}
+
+/**
+ * La pagina di una categoria della collezione, per esempio /collezione/maglieria/: una ricerca, una pagina.
+ * In cima il percorso, il titolo e due righe; poi la stessa barra del lookbook, qui fatta di link alle altre
+ * categorie, e le foto di quel tipo, che si aprono grandi come nella collezione. Testi in collezione.json, "categorie".
+ */
+export function paginaCategoria({ sito, testi: c, tipo, risorse, anteprima }) {
+  const l = c.lookbook, k = c.categorie[tipo.id], archivio = sito.foto.collezione;
+  const tutti = c.look.filter((x) => archivio.indice[x.file]);
+  const look = tutti.filter((x) => x.tipo === tipo.id);
+  const percorso = indirizzoCategoria(tipo.id);
+  const altre = l.tipi.filter((x) => c.categorie[x.id] && tutti.some((y) => y.tipo === x.id));
+  const tasto = (href, nome, quanti, qui) => `<li><a class="lookbook__tasto" href="${esc(href)}"${qui ? ' aria-current="page"' : ''}>${esc(nome)}<span class="lookbook__quanti">${quanti}</span></a></li>`;
+  const corpo = `<main>
+  <header class="categoria" id="contenuto" tabindex="-1">
+    <nav class="briciole" aria-label="${esc(l.percorso)}"><ol><li><a href="/collezione/">${esc(l.collezione)}</a></li><li aria-current="page">${esc(tipo.nome)}</li></ol></nav>
+    <h1 class="titolo categoria__titolo">${t(k.titolo)}</h1>
+    <p class="testo categoria__testo">${t(k.testo)}</p>
+  </header>
+  <div class="corpo">
+    <section class="sezione lookbook lookbook--categoria" id="lookbook" data-look-elenco data-pagina="/collezione/" ${datiVisore(l.visore, sito)}>
+      <nav class="lookbook__filtro" aria-label="${esc(l.filtro)}">
+        <ul>
+          ${tasto('/collezione/', l.tutti, tutti.length, false)}
+          ${altre.map((x) => tasto(indirizzoCategoria(x.id), x.nome, tutti.filter((y) => y.tipo === x.id).length, x.id === tipo.id)).join('\n          ')}
+        </ul>
+      </nav>
+      <ul class="lookbook__griglia">
+        ${look.map((x) => voceLook(x, archivio, ` data-nome-tipo="${esc(tipo.nome)}"`)).join('\n        ')}
+      </ul>
+    </section>
+    ${visore(l.visore, sito, look.length)}
+    <section class="sezione">
+      ${intesta(c.invito)}
+    </section>
+  </div>
+</main>`;
+  const d = sito.dominio;
+  const dati = [
+    ...datiBase(sito, k.meta),
+    {
+      '@context': 'https://schema.org', '@type': 'CollectionPage', name: piano(k.titolo), url: d + percorso,
+      image: look.map((x) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(x, archivio).split('?')[0], caption: x.alt })),
+    },
+  ];
+  return pagina({
+    sito, meta: k.meta, percorso, corpo, risorse, anteprima, dati, classe: 'pagina-chiara pagina-categoria',
+    briciole: [briciola(sito, '/collezione/'), briciola(sito, percorso, tipo.nome)],
+  });
 }
 
 /** La pagina di un capo: foto a sinistra, nome, prezzo, colori e taglie a destra. */

@@ -3,7 +3,7 @@
 // due scene, la mano che la tocca da sinistra e da destra, che src/configuratore/configuratore.js fa partire quando il mouse le passa sopra.
 // Senza script resta l'immagine ferma.
 import { esc, t } from '../parti/base.mjs';
-import { pagina } from '../parti/telaio.mjs';
+import { pagina, briciola } from '../parti/telaio.mjs';
 import { datiBase } from '../parti/sezioni.mjs';
 
 /**
@@ -85,6 +85,15 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
   return pagina({
     sito, meta: c.meta, percorso: '/camicie-su-misura/configuratore/', corpo, anteprima,
     risorse: { ...risorse, css: [...risorse.css, camicia.stile], js: [...risorse.js, camicia.script] },
-    dati: datiBase(sito, c.meta), classe: 'pagina-configuratore',
+    dati: [
+      ...datiBase(sito, c.meta),
+      {
+        '@context': 'https://schema.org', '@type': 'Service', '@id': `${sito.dominio}/camicie-su-misura/configuratore/#servizio`,
+        name: c.meta.servizio, serviceType: c.meta.servizio, description: c.meta.descrizione,
+        url: `${sito.dominio}/camicie-su-misura/configuratore/`, provider: { '@id': `${sito.dominio}/#sede` },
+      },
+    ],
+    classe: 'pagina-configuratore',
+    briciole: [briciola(sito, '/camicie-su-misura/'), briciola(sito, '/camicie-su-misura/configuratore/', c.meta.briciola)],
   });
 }

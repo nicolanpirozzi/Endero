@@ -106,6 +106,46 @@ export function piede(sito, percorso = "") {
 </footer>`;
 }
 
+/** Una voce delle briciole: il nome è quello del menu, se la pagina ci sta, altrimenti quello dato. */
+export function briciola(sito, percorso, nome = '') {
+  return { nome: nome || sito.menu.voci.find((v) => v.link === percorso)?.testo || percorso, percorso };
+}
+
+// I tipi di schema.org che descrivono una pagina: se la pagina ne porta già uno, è quello che si completa.
+const TIPI_PAGINA = ['WebPage', 'AboutPage', 'ContactPage', 'CollectionPage', 'ItemPage'];
+
+/**
+ * Completa i dati strutturati di una pagina con ciò che vale per tutte: il nodo della pagina (titolo, descrizione,
+ * lingua, immagine, a quale sito appartiene) e le briciole, cioè il percorso dalla pagina iniziale fin qui, che
+ * Google mostra al posto dell'indirizzo. Le pagine senza dati strutturati (privacy, cookie) restano senza.
+ */
+function datiDiPagina(dati, { sito, meta, url, briciole }) {
+  if (!dati.length) return dati;
+  const d = sito.dominio;
+  const tutti = [...dati];
+  let percorso = null;
+  if (briciole.length) {
+    percorso = {
+      '@context': 'https://schema.org', '@type': 'BreadcrumbList', '@id': `${url}#briciole`,
+      itemListElement: [{ nome: sito.nome, percorso: '/' }, ...briciole].map((b, i) => ({ '@type': 'ListItem', position: i + 1, name: piano(b.nome), item: d + b.percorso })),
+    };
+    tutti.push(percorso);
+  }
+  let nodo = tutti.find((x) => TIPI_PAGINA.includes(x['@type']) && (!x.url || x.url === url));
+  if (!nodo) { nodo = { '@context': 'https://schema.org', '@type': 'WebPage' }; tutti.push(nodo); }
+  Object.assign(nodo, {
+    '@id': nodo['@id'] || `${url}#pagina`,
+    url,
+    name: nodo.name || piano(meta.titolo),
+    description: piano(meta.descrizione),
+    inLanguage: 'it-IT',
+    isPartOf: { '@id': `${d}/#sito` },
+    ...(meta.immagine ? { primaryImageOfPage: { '@type': 'ImageObject', url: d + meta.immagine } } : {}),
+    ...(percorso ? { breadcrumb: { '@id': percorso['@id'] } } : {}),
+  });
+  return tutti;
+}
+
 /**
  * La pagina intera.
  * @param {object} o
@@ -118,9 +158,13 @@ export function piede(sito, percorso = "") {
  * @param {boolean} o.anteprima se vero, la pagina non va indicizzata
  * @param {string} o.classe     classe del <body>; `pagina-chiara` per le pagine senza foto in cima
  * @param {boolean} o.servizio  pagina di servizio (404, conferma): senza indirizzo canonico
+ * @param {object[]} o.briciole il percorso dalla pagina iniziale a questa, lei compresa: [{ nome, percorso }]
  */
-export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', servizio = false }) {
+export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], anteprima = true, classe = '', servizio = false, briciole = [] }) {
   const url = sito.dominio + percorso;
+  dati = datiDiPagina(dati, { sito, meta, url, briciole });
+  // le misure dell'immagine di anteprima le legge il build dal file: i social la mostrano grande solo se le conoscono
+  const misure = (meta.immagine && risorse.misure?.(meta.immagine)) || null;
   // in anteprima la scheda del link punta all'indirizzo provvisorio, così immagine e titolo si vedono; canonical resta su endero.it
   const origine = (anteprima && risorse.origineAnteprima) || sito.dominio;
   const immagine = meta.immagine ? origine + meta.immagine : '';
@@ -135,7 +179,7 @@ export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], antepr
 <script>document.documentElement.classList.add('js')</script>
 <title>${esc(piano(meta.titolo))}</title>
 <meta name="description" content="${esc(piano(meta.descrizione))}">
-${anteprima ? '<meta name="robots" content="noindex, nofollow">\n' : ''}${servizio ? '' : `<link rel="canonical" href="${esc(url)}">
+${anteprima ? '<meta name="robots" content="noindex, nofollow">\n' : '<meta name="robots" content="max-image-preview:large, max-snippet:-1">\n'}${servizio ? '' : `<link rel="canonical" href="${esc(url)}">
 <link rel="alternate" hreflang="it" href="${esc(url)}">
 <link rel="alternate" hreflang="x-default" href="${esc(url)}">`}
 <meta name="theme-color" content="#0a1b45">
@@ -146,8 +190,9 @@ ${anteprima ? '<meta name="robots" content="noindex, nofollow">\n' : ''}${serviz
 <meta property="og:description" content="${esc(piano(meta.descrizione))}">
 ${servizio ? '' : `<meta property="og:url" content="${esc(origine + percorso)}">`}
 ${immagine ? `<meta property="og:image" content="${esc(immagine)}">
-<meta property="og:image:alt" content="${esc(meta.immagine_alt || '')}">
+${misure ? `<meta property="og:image:width" content="${misure[0]}">\n<meta property="og:image:height" content="${misure[1]}">\n` : ''}<meta property="og:image:alt" content="${esc(meta.immagine_alt || '')}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${esc(immagine)}">
 ` : ''}<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/font/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
 ${(risorse.precarica || []).join('\n')}

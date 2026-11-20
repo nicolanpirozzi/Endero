@@ -4,7 +4,7 @@
 // per il su misura, come funziona con il modulo, domande, chiusura. Il link "Fai richiesta" di ogni capitolo porta
 // al modulo con la sua voce già segnata (src/sito.js, "interesse").
 import { esc, t, piano, attesa, foto, icona } from '../parti/base.mjs';
-import { pagina } from '../parti/telaio.mjs';
+import { pagina, briciola } from '../parti/telaio.mjs';
 import { eroePagina, nastro, strade, comeFunziona, domande, chiusura, datiBase } from '../parti/sezioni.mjs';
 
 export const PERCORSO = '/diventa-rivenditore/';
@@ -54,5 +54,5 @@ export default function paginaRivenditori({ sito, testi: r, nastro: fatti, risor
       mainEntity: r.domande.voci.filter((v) => !/\[\[/.test(v.domanda + v.risposta)).map((v) => ({ '@type': 'Question', name: v.domanda, acceptedAnswer: { '@type': 'Answer', text: v.risposta } })),
     },
   ];
-  return pagina({ sito, meta: r.meta, percorso: PERCORSO, corpo, risorse, anteprima, dati, classe: 'pagina-rivenditori' });
+  return pagina({ sito, meta: r.meta, percorso: PERCORSO, corpo, risorse, anteprima, dati, classe: 'pagina-rivenditori', briciole: [briciola(sito, PERCORSO)] });
 }

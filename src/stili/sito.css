@@ -4414,7 +4414,7 @@ body[data-barra] .lookbook__filtro {
   transition: background-color 200ms ease-out, color 200ms ease-out;
 }
 
-.lookbook__tasto[aria-current="true"] {
+.lookbook__tasto[aria-current] {
   background: var(--bianco);
   color: var(--blu);
 }
@@ -4425,12 +4425,12 @@ body[data-barra] .lookbook__filtro {
 }
 
 /* la voce accesa è bianca: il contorno bianco non si vedrebbe */
-.lookbook__tasto[aria-current="true"]:focus-visible {
+.lookbook__tasto[aria-current]:focus-visible {
   outline-color: var(--blu);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .lookbook__tasto:not([aria-current="true"]):hover {
+  .lookbook__tasto:not([aria-current]):hover {
     background: rgba(255, 255, 255, 0.14);
   }
 }
@@ -4608,6 +4608,93 @@ body[data-barra] .lookbook__filtro {
 
   .look--grande {
     grid-row: span 2;
+  }
+}
+
+/* ------------------------------------------------------------------ pagine di categoria della collezione */
+
+/* In cima niente foto grande: chi arriva qui cerca i capi, che cominciano subito sotto. Il percorso, il titolo, due righe. */
+.categoria {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 150px 24px 0;
+  text-align: center;
+  outline: none;
+}
+
+.categoria__titolo {
+  font-size: clamp(30px, 4.2vw, 52px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.categoria__testo {
+  max-width: 60ch;
+  font-size: 15px;
+}
+
+/* il percorso: «Collezione / Maglieria», piccolo, sopra il titolo */
+.briciole ol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.briciole li + li::before {
+  content: "/";
+  margin-right: 8px;
+  opacity: 0.45;
+}
+
+.briciole a {
+  display: inline-block;
+  padding: 12px 0;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.72;
+  transition: opacity 180ms ease-out;
+}
+
+.briciole li[aria-current] {
+  padding: 12px 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .briciole a:hover {
+    opacity: 1;
+  }
+}
+
+.briciole a:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--blu);
+  outline-offset: 2px;
+}
+
+/* sotto il titolo vengono subito la barra delle categorie e le foto */
+.lookbook--categoria {
+  padding-top: 44px;
+}
+
+@media (max-width: 699px) {
+  .categoria {
+    padding-top: 118px;
+  }
+
+  .lookbook--categoria {
+    padding-top: 32px;
   }
 }
 
