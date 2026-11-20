@@ -199,7 +199,9 @@ for (const percorso of ['/', '/camicie-su-misura/']) {
 const iva = (piede.match(/Partita IVA (\d{11})/) || [])[1] || '';
 const privacy = htmlDi('/privacy/');
 const organizzazione = (() => { try { return JSON.parse(leggi('index.html').match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph'].find((n) => n['@type'] === 'Organization') || {}; } catch { return {}; } })();
-const testoPiede = senzaTag(piede).replace(/\u00a0/g, ' ');
+// come lo legge chi ascolta la pagina: senza le parti nascoste ai lettori di schermo, e con gli spazi veri
+const testoPiede = senzaTag(piede.replace(/<span[^>]*aria-hidden="true"[^>]*>[^<]*<\/span>/g, '')).replace(/\u00a0/g, ' ');
+vero('nel piè di pagina il nome della società non va a capo e si legge staccato dalla partita IVA', /Endero(&nbsp;|\u00a0)S\.r\.l\.s\./.test(piede) && /S\.r\.l\.s\. Partita IVA/.test(testoPiede), testoPiede.slice(-80));
 vero('il piè di pagina ha ragione sociale e partita IVA, le stesse dei dati per Google', Boolean(iva) && Boolean(organizzazione.legalName) && testoPiede.includes(organizzazione.legalName), testoPiede.slice(-120));
 vero('l\'informativa privacy ha la stessa società e la stessa partita IVA del piè di pagina', Boolean(iva) && privacy.includes(`partita IVA ${iva}`) && Boolean(organizzazione.legalName) && senzaTag(privacy).includes(organizzazione.legalName));
 vero('i dati per Google hanno ragione sociale e partita IVA', organizzazione.vatID === `IT${iva}` && Boolean(organizzazione.legalName));

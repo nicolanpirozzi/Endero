@@ -11,11 +11,16 @@
 
 export const CONSERVAZIONE_MESI = 24;
 
-/** Il telefono come lo si confronta: solo le cifre, e senza il prefisso dell'Italia se c'è (+39, 0039). */
+/**
+ * Il telefono come lo si confronta: solo le cifre, con il prefisso internazionale scritto sempre allo stesso modo
+ * (00 o +), e senza quello dell'Italia: «(+39) 347 000 1111», «0039 3470001111» e «347-000-1111» sono la stessa
+ * persona. Anche un cellulare scritto con 39 davanti e senza + (12 cifre che cominciano con 393).
+ */
 export function chiaveTelefono(telefono) {
-  const testo = String(telefono || '').trim();
-  const cifre = testo.replace(/\D/g, '');
-  return /^(\+|00)\s*39/.test(testo) ? cifre.replace(/^(00)?39/, '') : cifre;
+  const s = String(telefono || '').replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '').replace(/^00/, '+');
+  if (s.startsWith('+39')) return s.slice(3);
+  if (/^393\d{9}$/.test(s)) return s.slice(2);
+  return s.replace(/^\+/, '');
 }
 
 /** L'email come la si confronta: senza spazi ai lati, in minuscolo. */

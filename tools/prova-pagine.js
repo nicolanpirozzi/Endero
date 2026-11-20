@@ -368,7 +368,7 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
         const r = palco.getBoundingClientRect();
         let foto = 0;
         capitoli.forEach((k, i) => { if (i && parseFloat(k.style.getPropertyValue('--p') || '0') > 0.5) foto = i; });
-        window.__salto.push({ vis: Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)), foto, attivo: capitoli.findIndex((k) => k.hasAttribute('data-attivo')), morbido: !!document.querySelector('.mestiere--salto'), testata: document.querySelector('[data-testata]')?.dataset.stato || '' });
+        window.__salto.push({ y: Math.round(scrollY), vis: Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)), foto, ps: capitoli.map((k) => parseFloat(k.style.getPropertyValue('--p') || '0')), attivo: capitoli.findIndex((k) => k.hasAttribute('data-attivo')), testata: document.querySelector('[data-testata]')?.dataset.stato || '' });
         if (window.__salto.length < 300) requestAnimationFrame(giro);
       };
       requestAnimationFrame(giro);
@@ -379,12 +379,19 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
       await page.waitForTimeout(3200);
       return risultato();
     };
-    // cambi: quante volte la foto cambia mentre si vede; tagli: quante di quelle sono di colpo, senza scoprirsi
+    // cambi: quante volte la foto cambia mentre si vede; tagli: fotogrammi in cui una foto in vista si sposta di
+    // colpo (più di un terzo della sua altezza da un fotogramma all'altro: scoprendosi, o scorrendo, va per gradi);
+    // ferma: la foto che si vede quando la pagina si è fermata, che deve essere già quella giusta
     const risultato = () => page.evaluate(() => {
       const r = window.__salto;
       let cambi = 0, tagli = 0;
-      for (let i = 1; i < r.length; i++) if (r[i].foto !== r[i - 1].foto && r[i].vis > 0) { cambi++; if (!r[i].morbido) tagli++; }
-      return { cambi, tagli, fine: r.at(-1).foto, attivo: r.at(-1).attivo, barra: r.some((x) => x.testata === 'barra') };
+      for (let i = 1; i < r.length; i++) {
+        if (r[i].foto !== r[i - 1].foto && r[i].vis > 0) cambi++;
+        if (r[i].vis > 0 && r[i - 1].vis > 0 && r[i].ps.some((p, k) => Math.abs(p - r[i - 1].ps[k]) > 0.34)) tagli++;
+      }
+      let ferma = r.length - 1;
+      for (let i = 0; i + 8 < r.length; i++) if (r.slice(i, i + 8).every((x) => x.y === r[i].y)) { ferma = i; break; }
+      return { cambi, tagli, fine: r.at(-1).foto, attivo: r.at(-1).attivo, allArrivo: r[Math.min(r.length - 1, ferma + 4)].foto, barra: r.some((x) => x.testata === 'barra') };
     });
     await a.vai('#collezione', -60);
     await registra();
@@ -417,6 +424,36 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
         const arrivo = await page.evaluate((v) => ({ testata: document.querySelector('[data-testata]')?.dataset.stato, voce: document.querySelector('[data-voce][aria-current]')?.dataset.voce, cima: Math.round(document.getElementById(v).getBoundingClientRect().top) }), dopo);
         controlla(`${nome}: ${prima} e poi ${dopo} dopo ${attesa} ms: nessun taglio di colpo, la testata non copre il titolo, la voce giusta accesa`, due.tagli === 0 && due.fine === fineAttesa && arrivo.testata !== 'barra' && arrivo.voce === dopo && arrivo.cima >= -2 && arrivo.cima < 200, JSON.stringify({ ...due, ...arrivo }));
       }
+      // dai rivenditori: Collezione e subito Chi siamo. Quando la pagina si ferma su Chi siamo la foto è già la prima
+      for (const attesa of [150, 250]) {
+        await a.vai('#rivenditori', -60);
+        await registra();
+        await page.click('[data-voce="collezione"]');
+        await page.waitForTimeout(attesa);
+        await page.click('[data-voce="chi-siamo"]');
+        await page.waitForTimeout(3200);
+        const r = await risultato();
+        controlla(`${nome}: Collezione e dopo ${attesa} ms Chi siamo: arrivati, la foto è già la prima`, r.tagli === 0 && r.allArrivo === 0 && r.fine === 0, JSON.stringify(r));
+      }
+      // arrivando su Chi siamo dal basso e scorrendo subito a mano, la foto segue la mano senza scatti
+      await a.vai('#rivenditori', -60);
+      await registra();
+      await page.click('[data-voce="chi-siamo"]');
+      await page.waitForTimeout(700);
+      await page.mouse.move(700, 450);
+      for (let k = 0; k < 8; k++) { await page.mouse.wheel(0, 160); await page.waitForTimeout(90); }
+      await page.waitForTimeout(2000);
+      const mano = await risultato();
+      controlla(`${nome}: arrivando su Chi siamo e scorrendo subito a mano, nessuno scatto`, mano.tagli === 0, JSON.stringify(mano));
+      // dalla tastiera: Invio su una voce e poi Tab durante il salto, la pagina arriva lo stesso
+      await a.vai('#collezione', -60);
+      await page.focus('[data-voce="rivenditori"]');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(300);
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(2500);
+      const tasto = await page.evaluate(() => ({ cima: Math.round(document.getElementById('rivenditori').getBoundingClientRect().top), voce: document.querySelector('[data-voce][aria-current]')?.dataset.voce }));
+      controlla(`${nome}: Invio e poi Tab durante il salto: la pagina arriva ai rivenditori`, tasto.cima >= -2 && tasto.cima < 200 && tasto.voce === 'rivenditori', JSON.stringify(tasto));
     }
     // scorrendo a mano le foto si sfogliano ancora, tutte e in ordine
     await a.vai('#rivenditori', -60);

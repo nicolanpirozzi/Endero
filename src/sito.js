@@ -63,23 +63,26 @@ function salta(da, a, tratti, libera, vecchia) {
   // dove si arriva: se di una sezione ferma lì si vede molto, la sua foto torna a quella giusta già durante
   // il salto (una volta sola); altrimenti resta com'è e si rimette a posto dopo, quando non si vede più
   for (const x of tratti) { x.f.ferma(); x.dopo = x.f.visibile(a) > innerHeight * 0.25; }
-  vecchia?.chiudi();
+  vecchia?.chiudi(a);
   // ogni sezione si lascia andare una volta sola, nel modo giusto per quel momento (vedi riparti in mestiere)
   const lascia = (x, modo) => { if (!x.lasciata) { x.lasciata = true; x.f.riparti(modo); } };
   const SEGNI = ['wheel', 'touchstart', 'keydown'];
+  // dalla tastiera fermano il salto solo i tasti che scorrono la pagina: un secondo Invio su un'altra voce fa
+  // partire il suo salto (vaiA), un Tab non deve lasciare la pagina a metà strada
+  const SCORRONO = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'];
   const questa = {
     fermata: false,
     chiusa: false,
-    // chiusa da uno scorrimento guidato nuovo: niente libera (la guida continua con quello) e le sezioni si
-    // rimettono a posto appena non si vedono più
-    chiudi: () => finisci('fuori', false),
+    // chiusa da uno scorrimento guidato nuovo, che va a `bersaglio`: niente libera (la guida continua con quello).
+    // Se là la sezione si vede, la sua foto torna giusta già durante il viaggio; altrimenti appena esce dallo schermo.
+    chiudi: (bersaglio) => finisci((x) => (typeof bersaglio === 'number' && x.f.visibile(bersaglio) > 0 ? 'morbido' : 'fuori'), false),
   };
-  const smetti = () => { questa.fermata = true; };
+  const smetti = (e) => { if (e.type !== 'keydown' || SCORRONO.includes(e.key)) questa.fermata = true; };
   function finisci(modo, rilascia) {
     if (questa.chiusa) return;
     questa.chiusa = true;
     SEGNI.forEach((s) => removeEventListener(s, smetti, { capture: true }));
-    for (const x of tratti) lascia(x, modo || (x.f.visibile(scrollY) > 0 ? 'morbido' : 'subito'));
+    for (const x of tratti) lascia(x, modo ? modo(x) : (x.f.visibile(scrollY) > 0 ? 'morbido' : 'subito'));
     if (corsa === questa) corsa = null;
     if (rilascia) libera();
   }
@@ -88,7 +91,7 @@ function salta(da, a, tratti, libera, vecchia) {
   const partenza = performance.now();
   const passo = (ora) => {
     if (questa.chiusa) return;
-    if (questa.fermata) return finisci('', true);
+    if (questa.fermata) return finisci(null, true);
     const k = Math.min(1, (ora - partenza) / 1200);
     let resto = strada * curva(k), y = da;
     for (const x of tratti) {
@@ -100,7 +103,7 @@ function salta(da, a, tratti, libera, vecchia) {
     }
     metti(y + verso * resto);
     if (k < 1) requestAnimationFrame(passo);
-    else finisci('', true);
+    else finisci(null, true);
   };
   requestAnimationFrame(passo);
 }
@@ -122,7 +125,7 @@ function vaiA(el, { subito = false } = {}) {
   const vecchia = corsa;
   const tratti = subito ? [] : trattiFermi(scrollY, y);
   if (tratti.length) { salta(scrollY, y, tratti, libera, vecchia); return; }
-  vecchia?.chiudi();
+  vecchia?.chiudi(y);
   if (lenis) lenis.scrollTo(y, { immediate: subito, duration: 1.2, force: true, onComplete: libera });
   else { scrollTo({ top: y, behavior: subito || ridotto ? 'auto' : 'smooth' }); fineGuida = setTimeout(() => { guidato = false; }, 1200); }
   if (subito) libera();
@@ -342,7 +345,10 @@ function selettore() {
   function aggiorna() {
     richiesta = 0;
     tono();
-    if (!nav.classList.contains('selettore--chiuso') && Math.abs(scrollY - apertoA) > 48) chiudi();
+    // la tendina aperta si chiude se si scorre a mano; durante uno scorrimento guidato resta aperta (si può
+    // scegliere un'altra voce) e la distanza si conta da dove quello finisce
+    if (guidato) apertoA = scrollY;
+    else if (!nav.classList.contains('selettore--chiuso') && Math.abs(scrollY - apertoA) > 48) chiudi();
     const soglia = nav.getBoundingClientRect().bottom + 60;
     let scelto = sezioni[0]?.dataset.gruppo;
     for (const s of sezioni) if (s.getBoundingClientRect().top <= soglia) scelto = s.dataset.gruppo;
@@ -525,11 +531,18 @@ function mestiere() {
     // `fuori`: si rimette a posto appena non si vede più (o, se resta in vista, poco dopo, scoprendosi una volta).
     let ferma = 0;
     let fuori = false;
-    let tempoSalto = 0, tempoFuori = 0;
+    let tempoFuori = 0;
+    // La scoperta unica dopo un salto: per 800 ms ogni foto va da dov'è a dove deve stare, fotogramma per
+    // fotogramma. Se intanto si scorre a mano, il punto d'arrivo si sposta con la mano e la foto lo segue, senza
+    // fermarsi e senza scatti alla fine (una transizione CSS, ripartendo a ogni scorrimento, restava ferma e poi saltava).
+    const SCOPERTA = 800;
+    let scoperta = null;     // { da: [valori di partenza], inizio }
+    const curva = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const scopriUnaVolta = () => {
-      sez.classList.add('mestiere--salto');
-      clearTimeout(tempoSalto);
-      tempoSalto = setTimeout(() => sez.classList.remove('mestiere--salto'), 1000);
+      const ora = capitoli.map((c) => parseFloat(c.style.getPropertyValue('--p') || '0'));
+      scoperta = { da: ora, inizio: performance.now() };
+      const giro = () => { aggiorna(); if (scoperta) requestAnimationFrame(giro); };
+      requestAnimationFrame(giro);
     };
     function aggiorna() {
       richiesta = 0;
@@ -543,10 +556,16 @@ function mestiere() {
       const alto = palco.clientHeight;
       const passo = alto * 0.66;
       const fatto = -binario.getBoundingClientRect().top - alto * 0.17;   // un attimo fermi prima della prima foto
+      let w = 1;
+      if (scoperta) {
+        w = curva(Math.min(1, (performance.now() - scoperta.inizio) / SCOPERTA));
+        if (w >= 1) scoperta = null;
+      }
       let attivo = 0;
       capitoli.forEach((c, k) => {
         if (!k) return;
-        const p = Math.min(1, Math.max(0, (fatto - (k - 1) * passo) / passo));
+        let p = Math.min(1, Math.max(0, (fatto - (k - 1) * passo) / passo));
+        if (scoperta) p = scoperta.da[k] + (p - scoperta.da[k]) * w;
         c.style.setProperty('--p', p.toFixed(4));
         if (p >= 0.55) attivo = k;
       });
@@ -575,7 +594,7 @@ function mestiere() {
         if (modo === 'fuori') {
           fuori = true;
           clearTimeout(tempoFuori);
-          tempoFuori = setTimeout(() => { if (fuori && !ferma) { fuori = false; scopriUnaVolta(); aggiorna(); } }, 1400);
+          tempoFuori = setTimeout(() => { if (fuori && !ferma) { fuori = false; scopriUnaVolta(); } }, 1400);
         } else if (modo === 'morbido') scopriUnaVolta();
         aggiorna();
       },
