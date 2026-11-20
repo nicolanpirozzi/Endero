@@ -96,7 +96,7 @@ export default function home({ sito, testi: h, cultura, suMisura, configuratore 
   ${nastro(h.nastro)}
   <div class="corpo corpo--a-filo">
     ${selettore(h.selettore)}
-    ${vetrina(h.vetrina, prodotti, sito, { look: collezioneTesti.look, tipi: collezioneTesti.lookbook?.tipi, visore: collezioneTesti.lookbook?.visore })}
+    ${vetrina(h.vetrina, prodotti, sito, { look: collezioneTesti.look, tipi: collezioneTesti.lookbook?.tipi, categorie: collezioneTesti.categorie, visore: collezioneTesti.lookbook?.visore })}
     ${collezione(h.categorie, sito, { id: '', gruppo: 'collezione' })}
     ${mestiere(h.chi_siamo, cultura.capitoli, sito)}
     ${portaSuMisura(porta, sito, { camicia, misure, alt: configuratore.palco?.alt, invito })}

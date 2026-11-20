@@ -61,7 +61,7 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
   const conta = await page.evaluate(() => ({
     look: document.querySelectorAll('[data-look]').length,
     tipi: [...document.querySelectorAll('[data-tipo]')].map((t) => [t.dataset.tipo, t.querySelectorAll('[data-look]').length]),
-    tasti: [...document.querySelectorAll('[data-filtro]')].map((t) => [t.dataset.filtro, Number(t.querySelector('.lookbook__quanti').textContent)]),
+    tasti: [...document.querySelectorAll('[data-filtro]')].map((t) => [t.dataset.filtro, Number(t.dataset.quanti)]),
     nomi: [...document.querySelectorAll('[data-look]')].map((x) => x.dataset.look),
     senzaAlt: [...document.querySelectorAll('[data-look] img')].filter((i) => !i.alt.trim()).length,
     h1: document.querySelectorAll('h1').length,
@@ -410,7 +410,8 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
       ingressi: [...document.querySelectorAll('.riquadri .riquadro')].map((x) => [x.querySelector('.riquadro__titolo').textContent.trim(), x.getAttribute('href'), x.classList.contains('riquadro--foto')]),
       tutti: (document.querySelector('.vetrina__tutti a') || {}).href || '',
     }));
-    controlla(`${nome}: dodici look in vetrina; senza script ognuno porta alla sua foto nella collezione`, hm.look.length === 12 && hm.look.every((x) => /^\/collezione\/#[a-z0-9-]+$/.test(x)) && hm.look.every((x) => conta.nomi.includes(x.split('#')[1])), JSON.stringify(hm.look.slice(0, 2)));
+    // dal 20 novembre ogni look porta alla pagina della sua categoria (il nome del file comincia con quello del tipo: maglieria-, giacche-, abiti-, felpe-)
+    controlla(`${nome}: dodici look in vetrina; senza script ognuno porta alla sua foto nella pagina della sua categoria`, hm.look.length === 12 && hm.look.every((x) => /^\/collezione\/[a-z-]+\/#[a-z0-9-]+$/.test(x) && x.split('/')[2].startsWith(x.split('#')[1].split('-')[0])) && hm.look.every((x) => conta.nomi.includes(x.split('#')[1])) && new Set(hm.look.map((x) => x.split('/')[2])).size === 4, JSON.stringify(hm.look.slice(0, 2)));
     controlla(`${nome}: tre ingressi con la foto: Maglieria, Giacche e cappotti, Su misura`, JSON.stringify(hm.ingressi) === JSON.stringify([['Maglieria', '/collezione/maglieria/', true], ['Giacche e cappotti', '/collezione/giacche-e-cappotti/', true], ['Su misura', '/camicie-su-misura/', true]]), JSON.stringify(hm.ingressi));
     controlla(`${nome}: le foto si caricano, niente manca, niente esce dallo schermo`, hm.caricate === 0 && a.rotte.length === 0 && await a.stretta(), `${hm.caricate} non caricate, ${a.rotte.join(', ')}`);
     controlla(`${nome}: c'è il link a tutta la collezione`, hm.tutti.endsWith('/collezione/'), hm.tutti);
@@ -456,7 +457,7 @@ const foto = async (page, nome) => { if (schermate) { fs.mkdirSync(schermate, { 
       const acceso = document.querySelector('.lookbook__tasto[aria-current="page"]'), r = acceso.getBoundingClientRect();
       return { h1: document.querySelectorAll('h1').length, titolo: document.querySelector('h1').innerText, foto: document.querySelectorAll('[data-look]').length, briciole: [...document.querySelectorAll('.briciole li')].map((x) => x.innerText.trim()), su: document.querySelector('.briciole a').getAttribute('href'), barra: [...document.querySelectorAll('.lookbook__tasto')].map((x) => x.getAttribute('href')), acceso: acceso.getAttribute('href'), inVista: r.left >= 0 && r.right <= innerWidth };
     });
-    controlla(`${nome}: una categoria ha il suo titolo, il percorso e solo le sue foto`, k.h1 === 1 && /uomo/i.test(k.titolo) && k.foto === quanteTipo && k.briciole.length === 2 && k.su === '/collezione/', JSON.stringify(k));
+    controlla(`${nome}: una categoria ha il suo titolo, il percorso e solo le sue foto`, k.h1 === 1 && /uomo/i.test(k.titolo) && k.foto === quanteTipo && k.briciole.length === 3 && k.su === '/' && k.barra.includes('/collezione/'), JSON.stringify(k));
     controlla(`${nome}: la barra porta alle altre categorie e a tutta la collezione, con la voce di questa accesa e in vista`, k.barra[0] === '/collezione/' && k.barra.length === 5 && k.barra.slice(1).every((x) => /^\/collezione\/[a-z-]+\/$/.test(x)) && k.acceso === `/collezione/${idTipo}/` && k.inVista && await a.stretta(), JSON.stringify(k.barra));
     const seconda = page.locator('[data-look]').nth(1);
     await seconda.scrollIntoViewIfNeeded();

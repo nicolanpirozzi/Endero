@@ -4,7 +4,7 @@
 // Senza script resta l'immagine ferma.
 import { esc, t } from '../parti/base.mjs';
 import { pagina, briciola } from '../parti/telaio.mjs';
-import { datiBase } from '../parti/sezioni.mjs';
+import { datiBase, domande } from '../parti/sezioni.mjs';
 
 /**
  * Un gruppo di campi del riquadro, descritto in configuratore.json (scheda.gruppi):
@@ -81,6 +81,9 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
     </div>
   </form>
 </section>
+${c.domande ? `<div class="corpo configura__sotto">
+  ${domande(c.domande, { gruppo: '' })}
+</div>` : ''}
 </main>`;
   return pagina({
     sito, meta: c.meta, percorso: '/camicie-su-misura/configuratore/', corpo, anteprima,
@@ -92,6 +95,11 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
         name: c.meta.servizio, serviceType: c.meta.servizio, description: c.meta.descrizione,
         url: `${sito.dominio}/camicie-su-misura/configuratore/`, provider: { '@id': `${sito.dominio}/#sede` },
       },
+      // le domande sotto il riquadro, anche per Google
+      ...(c.domande ? [{
+        '@context': 'https://schema.org', '@type': 'FAQPage',
+        mainEntity: c.domande.voci.map((v) => ({ '@type': 'Question', name: v.domanda, acceptedAnswer: { '@type': 'Answer', text: v.risposta } })),
+      }] : []),
     ],
     classe: 'pagina-configuratore',
     briciole: [briciola(sito, '/camicie-su-misura/'), briciola(sito, '/camicie-su-misura/configuratore/', c.meta.briciola)],

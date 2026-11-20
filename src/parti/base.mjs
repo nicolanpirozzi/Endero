@@ -36,17 +36,20 @@ export function attesa({ nota, tipo = 'foto', tono = 'chiaro', classe = '', etic
   </div>`;
 }
 
+/** Ciò che va in fondo all'indirizzo di una foto: la sua impronta, che cambia solo se quella foto si rifà. */
+export const impronta = (archivio, file) => (archivio?.versioni?.[file] ? `?v=${archivio.versioni[file]}` : '');
+
 /**
  * Una foto vera di Endero, compressa da tools/comprimi-foto.py: il ritaglio orizzontale per gli schermi larghi e
  * quello verticale per il telefono tenuto in piedi, ognuno in più grandezze, in AVIF e in WebP.
  * @param {object} f        dal JSON dei testi: { file: 'coppole', alt, fuoco: 'alto' (se nel riquadro largo va tenuta la parte alta) }
- * @param {object} archivio { cartella, indice, versione }: lo prepara il build da public/foto/<cartella>/foto.json
+ * @param {object} archivio { cartella, indice, versioni }: lo prepara il build da public/foto/<cartella>/foto.json
  * @param {object} o        sizes: quanto è larga sullo schermo; verticale: usa anche il ritaglio verticale; pigra: si carica quando serve
  */
 export function foto(f, archivio, { sizes = '100vw', verticale = true, pigra = true } = {}) {
   const g = archivio?.indice?.[f?.file];
   if (!g?.o) return '';
-  const v = archivio.versione ? `?v=${archivio.versione}` : '';
+  const v = impronta(archivio, f.file);
   // le foto della collezione hanno il WebP solo nelle grandezze piccole (vWebp): l'AVIF c'è sempre in tutte
   const larghe = (verso, tipo) => (tipo === 'webp' && g[`${verso}Webp`]) || g[verso];
   const serie = (verso, tipo) => larghe(verso, tipo).map((w) => `${archivio.cartella}${f.file}-${verso}-${w}.${tipo}${v} ${w}w`).join(', ');
@@ -65,7 +68,7 @@ export function foto(f, archivio, { sizes = '100vw', verticale = true, pigra = t
 export function fotoIntera(f, archivio, { sizes = '50vw', pigra = true, classe = 'foto' } = {}) {
   const g = archivio?.indice?.[f?.file];
   if (!g?.v) return '';
-  const v = archivio.versione ? `?v=${archivio.versione}` : '';
+  const v = impronta(archivio, f.file);
   const serie = (larghe, tipo) => larghe.map((w) => `${archivio.cartella}${f.file}-v-${w}.${tipo}${v} ${w}w`).join(', ');
   const webp = g.vWebp || g.v, media = webp[webp.length - 1];
   return `<picture class="${esc(classe)}"><source type="image/avif" srcset="${esc(serie(g.v, 'avif'))}" sizes="${esc(sizes)}"><img src="${archivio.cartella}${f.file}-v-${media}.webp${v}" srcset="${esc(serie(webp, 'webp'))}" sizes="${esc(sizes)}" width="${media}" height="${Math.round(media / (g.forma || 2 / 3))}" alt="${esc(f.alt)}"${pigra ? ' loading="lazy"' : ' fetchpriority="high"'} decoding="async"></picture>`;
@@ -76,7 +79,7 @@ export function fotoGrande(f, archivio) {
   const g = archivio?.indice?.[f?.file];
   if (!g?.v) return '';
   const webp = g.vWebp || g.v;
-  return `${archivio.cartella}${f.file}-v-${webp[webp.length - 1]}.webp${archivio.versione ? `?v=${archivio.versione}` : ''}`;
+  return `${archivio.cartella}${f.file}-v-${webp[webp.length - 1]}.webp${impronta(archivio, f.file)}`;
 }
 
 /** Disegno vettoriale del logo, preso dal foglio di simboli in fondo alla pagina. */
@@ -118,3 +121,6 @@ export const euro = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', c
 
 /** Indirizzo della pagina di un capo della collezione. */
 export const indirizzoCapo = (capo) => `/collezione/${capo.slug}/`;
+
+/** Indirizzo della pagina di una categoria della collezione (maglieria, giacche e cappotti, abiti, felpe). */
+export const indirizzoCategoria = (id) => `/collezione/${id}/`;

@@ -1,6 +1,6 @@
 // Sezioni del sito, condivise tra la pagina iniziale e le altre pagine.
 // Ordine e proporzioni vengono dal riferimento (docs/direzione-creativa.md, punti 1 e 3).
-import { esc, t, tConLink, piano, attesa, foto, fotoIntera, fotoGrande, logo, icona, euro, indirizzoCapo } from './base.mjs';
+import { esc, t, tConLink, piano, attesa, foto, fotoIntera, fotoGrande, logo, icona, euro, indirizzoCapo, indirizzoCategoria } from './base.mjs';
 
 const aid = (id) => (id ? ` id="${esc(id)}"` : '');
 const agr = (gruppo) => (gruppo ? ` data-gruppo="${esc(gruppo)}"` : '');
@@ -263,7 +263,7 @@ export function domande(d, { gruppo = 'su-misura' } = {}) {
     <div class="domande__elenco">
       ${d.voci.map((v) => `<details class="domanda">
         <summary><span>${t(v.domanda)}</span>${icona.giu}</summary>
-        <div class="domanda__risposta"><p>${t(v.risposta)}</p></div>
+        <div class="domanda__risposta"><p>${t(v.risposta)}</p>${v.link ? `<p><a class="collegamento" href="${esc(v.link.href)}">${esc(v.link.testo)}${icona.freccia}</a></p>` : ''}</div>
       </details>`).join('\n      ')}
     </div>
   </section>`;
@@ -300,18 +300,18 @@ export function larga(k, archivio, riquadro) {
 }
 
 /**
- * Ciò che lo script (src/sito.js, "lookbook") deve sapere di una foto per aprirla grande: nome, grandezze, forma.
+ * Ciò che lo script (src/sito.js, "lookbook") deve sapere di una foto per aprirla grande: nome, grandezze, forma, impronta.
  * Va sul link della foto, che senza script porta alla foto stessa o alla sua pagina.
  */
 export function datiLook(k, archivio) {
   const g = archivio.indice[k.file];
-  return `data-look="${esc(k.file)}" data-v="${g.v.join(',')}" data-webp="${(g.vWebp || g.v).join(',')}" data-forma="${g.forma}"`;
+  return `data-look="${esc(k.file)}" data-v="${g.v.join(',')}" data-webp="${(g.vWebp || g.v).join(',')}" data-forma="${g.forma}" data-versione="${esc(archivio.versioni?.[k.file] || '')}"`;
 }
 
 /** Ciò che serve una volta sola, sull'elemento che contiene le foto: dove stanno i file e cosa scrivere su WhatsApp. */
 export function datiVisore(v, sito) {
   const archivio = sito.foto.collezione;
-  return `data-cartella="${esc(archivio.cartella)}" data-versione="${esc(archivio.versione || '')}" data-messaggio="${esc(v.messaggio)}" data-whatsapp="${esc(sito.contatti.whatsapp_link)}"`;
+  return `data-cartella="${esc(archivio.cartella)}" data-messaggio="${esc(v.messaggio)}" data-whatsapp="${esc(sito.contatti.whatsapp_link)}"`;
 }
 
 /**
@@ -335,10 +335,11 @@ export function visore(v, sito, quante) {
  * e al passaggio compare la scheda in vetro con nome, tessuto e prezzo. Finché i capi non hanno nome e prezzo si
  * vedono i look scelti in `v.look` tra quelli del lookbook (`look`, da collezione.json), con l'etichetta del tipo:
  * toccandone uno la foto si apre grande restando in pagina iniziale (proprietario, 2026-11-19: "diventa grande ma
- * resto sempre in home"); senza script il riquadro porta alla sua foto nella pagina della collezione.
+ * resto sempre in home"); senza script il riquadro porta alla sua foto nella pagina della sua categoria (`categorie`:
+ * quelle che hanno una pagina; così Google trova da qui anche Abiti e Felpe), o in quella della collezione.
  * Senza né capi né look, segnaposto.
  */
-export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione', look = [], tipi = [], visore: testiVisore } = {}) {
+export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collezione', look = [], tipi = [], categorie = {}, visore: testiVisore } = {}) {
   const quanti = v.quanti || 12;
   const capi = prodotti.slice(0, quanti);
   const voce = (capo) => {
@@ -367,7 +368,8 @@ export function vetrina(v, prodotti, sito, { id = 'collezione', gruppo = 'collez
   const sceltiTutti = (v.look || []).map((file) => look.find((k) => k.file === file)).filter(Boolean).slice(0, quanti);
   const nomeTipo = (idTipo) => tipi.find((x) => x.id === idTipo)?.nome || '';
   const archivio = sito.foto?.collezione;
-  const unLook = (k) => `<li class="griglia__voce griglia__voce--look"><a class="griglia__link" href="${esc(v.tutti.href)}#${esc(k.file)}" ${datiLook(k, archivio)} data-grande="${esc(fotoGrande(k, archivio))}" data-nome-tipo="${esc(nomeTipo(k.tipo))}">
+  const paginaDelLook = (k) => (categorie?.[k.tipo] ? indirizzoCategoria(k.tipo) : v.tutti.href);
+  const unLook = (k) => `<li class="griglia__voce griglia__voce--look"><a class="griglia__link" href="${esc(paginaDelLook(k))}#${esc(k.file)}" ${datiLook(k, archivio)} data-grande="${esc(fotoGrande(k, archivio))}" data-nome-tipo="${esc(nomeTipo(k.tipo))}">
         <span class="griglia__cornice">${fotoIntera(k, archivio, { sizes: `(max-width: 809px) ${larga(k, archivio, 50)}vw, ${larga(k, archivio, 17)}vw` })}</span>
         <span class="etichetta">${esc(nomeTipo(k.tipo))}</span>
       </a></li>`;
@@ -465,7 +467,7 @@ export function datiBase(sito, meta) {
   const d = sito.dominio;
   return [
     {
-      '@context': 'https://schema.org', '@type': 'Organization', '@id': `${d}/#organizzazione`, name: sito.nome, url: `${d}/`, logo: `${d}/logo.svg`, email: c.email,
+      '@context': 'https://schema.org', '@type': 'Organization', '@id': `${d}/#organizzazione`, name: sito.nome, url: `${d}/`, logo: `${d}/logo-endero.png`, email: c.email,
       ...(sito.fondazione ? { foundingDate: String(sito.fondazione) } : {}),
       // i profili social, quando il proprietario li dà (sito.json, "social"): dicono a Google che sono la stessa Endero
       ...(sito.social?.length ? { sameAs: sito.social.map((s) => s.link) } : {}),
@@ -477,7 +479,7 @@ export function datiBase(sito, meta) {
       '@id': `${d}/#sede`,
       name: sito.nome,
       url: `${d}/`,
-      image: sito.foto?.sede?.indice?.negozio ? `${d}/foto/sede/negozio-anteprima.jpg` : `${d}/film/manifesto.jpg`,
+      image: sito.foto?.sede?.indice?.negozio ? `${d}/foto/sede/negozio-anteprima.jpg` : `${d}/anteprime/home.jpg`,
       description: piano(sito.descrizione),
       hasMap: c.mappa,
       // gli orari, quando Endero li conferma (sito.json, "orari": [{ giorni: ['Monday', …], apre: '09:00', chiude: '13:00' }])

@@ -342,15 +342,30 @@ function comparse() {
       tutti.push(el);
     });
   }
-  // quello che è già sullo schermo resta com'è
   const apertura = document.querySelector('.apertura');
-  const copertoFinoA = apertura ? apertura.getBoundingClientRect().bottom : 0;
-  for (const el of tutti) {
-    const r = el.getBoundingClientRect();
-    if (r.top < innerHeight && r.bottom > Math.max(0, copertoFinoA)) el.setAttribute('data-subito', '');
-  }
-  document.documentElement.classList.add('movimento');
-  for (const el of tutti) if (el.hasAttribute('data-subito')) el.setAttribute('data-visto', '');
+  // Finché chi guarda non si muove, niente è nascosto: chi legge la pagina senza scorrerla (Google, che la allunga
+  // invece di scorrerla; un'anteprima; una stampa) la trova intera. Al primo segno di vita (rotella, dito, tasto,
+  // o la pagina che scorre) si nasconde ciò che sta fuori dallo schermo, e da lì compare scorrendo come sempre.
+  let armato = false;
+  const SEGNI = ['wheel', 'touchstart', 'keydown', 'scroll'];
+  const arma = () => {
+    if (armato) return;
+    armato = true;
+    for (const s of SEGNI) removeEventListener(s, arma, { capture: true });
+    // quello che è già sullo schermo resta com'è
+    const copertoFinoA = apertura ? apertura.getBoundingClientRect().bottom : 0;
+    for (const el of tutti) {
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight && r.bottom > Math.max(0, copertoFinoA)) el.setAttribute('data-subito', '');
+    }
+    // si nasconde di colpo, senza la dissolvenza delle comparse: quello che sparisce è fuori dallo schermo
+    const radice = document.documentElement;
+    radice.classList.add('movimento', 'movimento--arma');
+    for (const el of tutti) if (el.hasAttribute('data-subito')) el.setAttribute('data-visto', '');
+    void radice.offsetHeight;
+    radice.classList.remove('movimento--arma');
+    tutti.forEach((el) => { if (!el.hasAttribute('data-visto')) osserva.observe(el); });
+  };
 
   const osserva = new IntersectionObserver((voci) => {
     const entrate = voci.filter((v) => v.isIntersecting).map((v) => v.target);
@@ -362,7 +377,7 @@ function comparse() {
       osserva.unobserve(el);
     }
   }, { rootMargin: '0px 0px -10% 0px' });
-  tutti.forEach((el) => { if (!el.hasAttribute('data-visto')) osserva.observe(el); });
+  for (const s of SEGNI) addEventListener(s, arma, { capture: true, passive: true });
   document.addEventListener('focusin', (e) => {
     for (let el = e.target.closest?.('[data-rivela]'); el; el = el.parentElement?.closest('[data-rivela]')) el.setAttribute('data-visto', '');
   });
@@ -634,7 +649,7 @@ function lookbook() {
   let partenza = null;       // la foto da cui si è aperto il visore: chiudendo su quella, la pagina non si muove
 
   function serie(a, larghe, tipo) {
-    const v = sez.dataset.versione ? `?v=${sez.dataset.versione}` : '';
+    const v = a.dataset.versione ? `?v=${a.dataset.versione}` : '';
     return larghe.split(',').map((w) => `${sez.dataset.cartella}${a.dataset.look}-v-${w}.${tipo}${v} ${w}w`).join(', ');
   }
   const larga = (a) => `${Math.max(200, Math.round(Math.min(innerWidth, innerHeight * Number(a.dataset.forma))))}px`;

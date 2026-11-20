@@ -36,7 +36,9 @@ export default function paginaSuMisura({ sito, testi: p, risorse, anteprima }) {
     {
       '@context': 'https://schema.org', '@type': 'Service', '@id': `${url}#servizio`,
       name: p.servizio.nome, serviceType: p.servizio.nome, description: piano(p.servizio.descrizione), url,
-      provider: { '@id': `${d}/#sede` }, areaServed: { '@type': 'City', name: sito.contatti.citta },
+      provider: { '@id': `${d}/#sede` },
+      // dove si offre: la città della sede e la sua provincia (chi cerca «camicie su misura Napoli»)
+      areaServed: [{ '@type': 'City', name: sito.contatti.citta }, { '@type': 'AdministrativeArea', name: 'Città metropolitana di Napoli' }],
     },
     ...(confermate.length ? [{
       '@context': 'https://schema.org', '@type': 'FAQPage',

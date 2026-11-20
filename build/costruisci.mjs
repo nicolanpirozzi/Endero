@@ -106,15 +106,21 @@ function misure(indirizzo) {
 }
 const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima, misure };
 
-// le foto vere di Endero (tools/comprimi-foto.py): per ogni cartella, le grandezze di ogni foto e un'impronta,
-// così se una foto si rifà chi torna non vede quella vecchia rimasta nel browser
+// le foto vere di Endero (tools/comprimi-foto.py): per ogni cartella, le grandezze di ogni foto e, per ogni foto,
+// un'impronta di tutte le sue grandezze, che va in fondo al suo indirizzo: se una foto si rifà chi torna non vede
+// quella vecchia rimasta nel browser. L'impronta è della foto e non della cartella: aggiungendone una, gli indirizzi
+// delle altre non cambiano, e Google non deve rileggerle tutte.
 sito.foto = {};
 for (const cartella of existsSync(join(RADICE, 'public/foto')) ? readdirSync(join(RADICE, 'public/foto')) : []) {
   const dove = join(RADICE, 'public/foto', cartella);
   if (!existsSync(join(dove, 'foto.json'))) continue;
-  const impronta = createHash('sha256');
-  for (const nome of readdirSync(dove).sort()) impronta.update(nome).update(readFileSync(join(dove, nome)));
-  sito.foto[cartella] = { cartella: `/foto/${cartella}/`, indice: JSON.parse(readFileSync(join(dove, 'foto.json'), 'utf8')), versione: impronta.digest('hex').slice(0, 10) };
+  const indice = JSON.parse(readFileSync(join(dove, 'foto.json'), 'utf8'));
+  const impronte = {};
+  for (const nome of readdirSync(dove).sort()) {
+    const foto = (nome.match(/^(.+)-[ov]-\d+\.(?:avif|webp)$/) || [])[1];
+    if (foto && indice[foto]) (impronte[foto] ||= createHash('sha256')).update(nome).update(readFileSync(join(dove, nome)));
+  }
+  sito.foto[cartella] = { cartella: `/foto/${cartella}/`, indice, versioni: Object.fromEntries(Object.entries(impronte).map(([foto, i]) => [foto, i.digest('hex').slice(0, 10)])) };
 }
 // i video dell'apertura (tools/prepara-video.py): la stessa impronta, per lo stesso motivo
 sito.video = {};
@@ -147,14 +153,24 @@ if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/,
 const testiConfiguratore = leggi('configuratore.json');
 
 // 3 · pagine
-/** Quando è cambiato l'ultima volta il contenuto di una pagina: la data dell'ultimo commit dei suoi file di testo. */
+/**
+ * Quando è cambiato l'ultima volta il contenuto di una pagina: la data dell'ultimo commit dei suoi testi (i nomi
+ * semplici stanno in contenuti/<lingua>/) e degli elenchi delle sue foto (i percorsi che cominciano con public/).
+ * Un cambio di grafica non la sposta: a Google interessa quando è cambiato ciò che si legge. Serve la cronologia
+ * intera di git: con una copia parziale del repository tutte le pagine prenderebbero la stessa data.
+ */
 function ultimaModifica(file) {
   try {
-    return execFileSync('git', ['log', '-1', '--format=%cs', '--', ...file.map((f) => join('contenuti', lingua, f))], { cwd: RADICE, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return execFileSync('git', ['log', '-1', '--format=%cs', '--', ...file.map((f) => (f.startsWith('public/') ? f : join('contenuti', lingua, f)))], { cwd: RADICE, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   } catch { return ''; }
 }
-/** Le foto di una pagina, per la mappa del sito: quelle vere di Endero (public/foto/), ognuna una volta. */
-const fotoDi = (html) => [...new Set([...html.matchAll(/<img\b[^>]*\bsrc="(\/foto\/[^"?]+)/g)].map((m) => m[1]))];
+/**
+ * Le immagini di una pagina, per la mappa del sito: le foto di Endero (public/foto/) e la camicia del configuratore
+ * (public/camicia/), ognuna una volta e con lo stesso indirizzo che ha nella pagina, impronta compresa.
+ */
+const fotoDi = (html) => [...new Set([...html.matchAll(/<img\b[^>]*\bsrc="(\/(?:foto|camicia)\/[^"]+)"/g)].map((m) => m[1]))];
+// gli elenchi delle foto, cartella per cartella: se cambiano le foto di una pagina, cambia la sua data
+const FOTO = { collezione: 'public/foto/collezione/foto.json', artigianato: 'public/foto/artigianato/foto.json', sede: 'public/foto/sede/foto.json', suMisura: 'public/foto/su-misura/foto.json' };
 // la mappa del sito: per ogni pagina l'indirizzo, la data dell'ultima modifica dei suoi testi e le sue foto
 const pagine = [];
 function genera(percorso, html, fonti = []) {
@@ -177,16 +193,16 @@ genera('/', home({
     js: [risorsa.sito, risorsa.apertura],
     precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
   },
-}), ['home.json', 'collezione.json', 'chi-siamo.json']);
-genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }), ['su-misura.json']);
+}), ['home.json', 'collezione.json', 'chi-siamo.json', FOTO.collezione, FOTO.artigianato]);
+genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }), ['su-misura.json', FOTO.sede, FOTO.suMisura]);
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, camicia, risorse: base, anteprima }), ['configuratore.json']);
-genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }), ['collezione.json', 'prodotti.json']);
+genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }), ['collezione.json', 'prodotti.json', FOTO.collezione]);
 // una pagina per ogni categoria della collezione che ha i suoi testi (collezione.json, "categorie") e almeno una foto
 const visti = new Set();
 for (const tipo of testi.collezione.lookbook.tipi) {
   if (!testi.collezione.categorie?.[tipo.id] || !sito.foto.collezione || !testi.collezione.look.some((k) => k.tipo === tipo.id)) continue;
   visti.add(tipo.id);
-  genera(indirizzoCategoria(tipo.id), paginaCategoria({ sito, testi: testi.collezione, tipo, risorse: base, anteprima }), ['collezione.json']);
+  genera(indirizzoCategoria(tipo.id), paginaCategoria({ sito, testi: testi.collezione, tipo, risorse: base, anteprima }), ['collezione.json', FOTO.collezione]);
 }
 for (const capo of prodotti) {
   // l'indirizzo del capo diventa una cartella: solo minuscole, cifre e trattini, e mai due uguali
@@ -195,17 +211,17 @@ for (const capo of prodotti) {
   visti.add(capo.slug);
 }
 for (const capo of prodotti) genera(indirizzoCapo(capo), paginaCapo({ sito, testi: testi.collezione, capo, risorse: base, anteprima }), ['prodotti.json']);
-genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }), ['chi-siamo.json']);
-genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori, nastro: testiHome.nastro, risorse: base, anteprima }), ['diventa-rivenditore.json']);
-genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }), ['dove-siamo.json']);
+genera(PERCORSO_CULTURA, paginaCultura({ sito, testi: testi.cultura, nastro: testiHome.nastro, richiamo: testi.rivenditori.richiami.cultura, risorse: base, anteprima }), ['chi-siamo.json', FOTO.artigianato]);
+genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori, nastro: testiHome.nastro, risorse: base, anteprima }), ['diventa-rivenditore.json', FOTO.sede]);
+genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }), ['dove-siamo.json', FOTO.sede]);
 genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }), ['legale.json']);
 genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }), ['legale.json']);
 scrivi('grazie/index.html', semplice({ sito, testi: servizio.grazie, percorso: '/grazie/', risorse: base }));
 scrivi('404.html', semplice({ sito, testi: servizio.non_trovata, percorso: '/404', risorse: base }));
 
-// 4 · icona e logo per Google, dal vettoriale approvato
+// 4 · il logo vettoriale, dal disegno approvato. Le icone quadrate e il logo in PNG per Google stanno già in public/:
+// li fa tools/icone.js dallo stesso disegno, e si rifanno solo se il logo cambia.
 const svg = (nome, colore) => readFileSync(join(RADICE, 'brand/logo', `endero-${nome}.svg`), 'utf8').replace(/currentColor/g, colore);
-scrivi('favicon.svg', svg('simbolo', '#0f285e'));
 scrivi('logo.svg', svg('completo', '#0f285e'));
 
 // 5 · file per i motori di ricerca. In anteprima il sito resta chiuso.

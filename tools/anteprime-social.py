@@ -7,8 +7,8 @@ condivide una pagina del sito. Una per pagina, JPEG 1200 x 630, in public/antepr
 Le ricava dalle immagini già compresse del sito (public/foto/, public/camicia/): non servono gli originali.
 Ogni voce dice da quale file, e quanto in alto sta la fascia che si tiene (0 = in cima, 1 = in fondo): le foto
 sono più alte dell'anteprima, e conta che i visi e i capi restino dentro.
-La pagina iniziale, la collezione, chi siamo e dove siamo hanno già la loro (manifesto del film, e i file
-"-anteprima.jpg" che scrive tools/comprimi-foto.py). L'indirizzo di ogni anteprima sta nei testi della pagina,
+La collezione, chi siamo e dove siamo hanno già la loro (i file "-anteprima.jpg" che scrive tools/comprimi-foto.py).
+Quella della pagina iniziale è il manifesto del film ritagliato alla forma giusta: intero era 1920 x 1200. L'indirizzo di ogni anteprima sta nei testi della pagina,
 alla voce meta.immagine.
 """
 import os
@@ -22,6 +22,7 @@ LARGA, ALTA = 1200, 630
 
 # nome dell'anteprima, immagine di partenza (dentro public/), quanto in alto sta la fascia
 ANTEPRIME = [
+    ('home', 'film/manifesto.jpg', 0.5),
     ('camicie-su-misura', 'foto/sede/presa-misure-o-2000.avif', 0.35),
     ('configuratore', 'camicia/ferma-2x.webp', 0.5),
     ('diventa-rivenditore', 'foto/sede/negozio-fronte-o-2000.avif', 0.4),

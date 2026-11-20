@@ -1,10 +1,10 @@
 // Pagina /collezione/: il lookbook, cioè le foto vere dei capi divise per tipo, e sotto (quando arriveranno con
 // nome e prezzo in contenuti/it/prodotti.json) i capi, ognuno con la sua pagina. Niente carrello: si chiede su WhatsApp.
-import { esc, t, piano, attesa, fotoIntera, fotoGrande, icona, euro, indirizzoCapo } from '../parti/base.mjs';
+import { esc, t, piano, attesa, fotoIntera, fotoGrande, icona, euro, indirizzoCapo, indirizzoCategoria } from '../parti/base.mjs';
 import { pagina, briciola } from '../parti/telaio.mjs';
 import { eroePagina, intesta, datiBase, datiLook, datiVisore, visore, larga } from '../parti/sezioni.mjs';
 
-export { euro, indirizzoCapo };
+export { euro, indirizzoCapo, indirizzoCategoria };
 
 function foto(src, alt, classe = '') {
   return `<img class="${classe}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async">`;
@@ -19,16 +19,13 @@ function schedaCapo(capo, sito) {
       </a></li>`;
 }
 
-/** L'indirizzo della pagina di una categoria della collezione (maglieria, giacche e cappotti, abiti, felpe). */
-export const indirizzoCategoria = (id) => `/collezione/${id}/`;
-
 /** Una foto del lookbook: un riquadro due per tre (quattro riquadri se è "grande"), che è un link alla sua versione grande. */
-function voceLook(k, archivio, attributi = '') {
+function voceLook(k, archivio, attributi = '', pigra = true) {
   // la foto grande occupa due colonne: le serve una grandezza in più
   const w = (riquadro) => `${larga(k, archivio, riquadro)}vw`;
   const sizes = k.grande ? `(max-width: 699px) ${w(100)}, (max-width: 959px) ${w(67)}, (max-width: 1299px) ${w(50)}, ${w(40)}` : `(max-width: 699px) ${w(50)}, (max-width: 959px) ${w(34)}, (max-width: 1299px) ${w(25)}, ${w(20)}`;
   return `<li class="look${k.grande ? ' look--grande' : ''}" id="${esc(k.file)}">
-          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" ${datiLook(k, archivio)}${attributi}>${fotoIntera(k, archivio, { sizes })}</a>
+          <a class="look__link" href="${esc(fotoGrande(k, archivio))}" ${datiLook(k, archivio)}${attributi}>${fotoIntera(k, archivio, { sizes, pigra })}</a>
         </li>`;
 }
 
@@ -46,7 +43,9 @@ function lookbook(c, sito) {
   // Ogni tipo ha anche la sua pagina (paginaCategoria): il tasto del filtro ne porta l'indirizzo, così Google la trova e
   // chi non ha gli script ci arriva; con gli script il clic filtra qui, senza cambiare pagina
   const versoIlTipo = (id) => (c.categorie?.[id] ? indirizzoCategoria(id) : `#${id}`);
-  const tasto = (href, filtro, nome, quanti, attivo) => `<li><a class="lookbook__tasto" href="${esc(href)}" data-filtro="${esc(filtro)}"${attivo ? ' aria-current="true"' : ''}>${esc(nome)}<span class="lookbook__quanti">${quanti}</span></a></li>`;
+  // il numero delle foto sta in un attributo e lo scrive il foglio di stile: il testo del link, per Google e per chi
+  // ascolta la pagina, resta il nome della categoria e non «Maglieria20»
+  const tasto = (href, filtro, nome, quanti, attivo) => `<li><a class="lookbook__tasto" href="${esc(href)}" data-filtro="${esc(filtro)}" data-quanti="${quanti}"${attivo ? ' aria-current="true"' : ''}>${esc(nome)}</a></li>`;
   const voce = (k) => voceLook(k, archivio);
   const v = l.visore;
   return `<section class="sezione lookbook" id="lookbook" data-lookbook ${datiVisore(v, sito)}>
@@ -91,7 +90,7 @@ export default function paginaCollezione({ sito, testi: c, prodotti, risorse, an
       '@context': 'https://schema.org', '@type': 'CollectionPage', name: piano(c.eroe.titolo), url: `${d}/collezione/`, isPartOf: { '@id': `${d}/#sito` },
       ...(prodotti.length ? { mainEntity: { '@type': 'ItemList', itemListElement: prodotti.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: d + indirizzoCapo(p), name: p.nome })) } } : {}),
       // le foto del lookbook, per la ricerca per immagini: ognuna con la sua descrizione
-      ...(archivio ? { image: c.look.filter((k) => archivio.indice[k.file]).map((k) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(k, archivio).split('?')[0], caption: k.alt })) } : {}),
+      ...(archivio ? { image: c.look.filter((k) => archivio.indice[k.file]).map((k) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(k, archivio), caption: k.alt })) } : {}),
     },
   ];
   return pagina({ sito, meta: c.meta, percorso: '/collezione/', corpo, risorse, anteprima, dati, classe: 'pagina-collezione', briciole: [briciola(sito, '/collezione/')] });
@@ -108,10 +107,10 @@ export function paginaCategoria({ sito, testi: c, tipo, risorse, anteprima }) {
   const look = tutti.filter((x) => x.tipo === tipo.id);
   const percorso = indirizzoCategoria(tipo.id);
   const altre = l.tipi.filter((x) => c.categorie[x.id] && tutti.some((y) => y.tipo === x.id));
-  const tasto = (href, nome, quanti, qui) => `<li><a class="lookbook__tasto" href="${esc(href)}"${qui ? ' aria-current="page"' : ''}>${esc(nome)}<span class="lookbook__quanti">${quanti}</span></a></li>`;
+  const tasto = (href, nome, quanti, qui) => `<li><a class="lookbook__tasto" href="${esc(href)}" data-quanti="${quanti}"${qui ? ' aria-current="page"' : ''}>${esc(nome)}</a></li>`;
   const corpo = `<main>
   <header class="categoria" id="contenuto" tabindex="-1">
-    <nav class="briciole" aria-label="${esc(l.percorso)}"><ol><li><a href="/collezione/">${esc(l.collezione)}</a></li><li aria-current="page">${esc(tipo.nome)}</li></ol></nav>
+    <nav class="briciole" aria-label="${esc(l.percorso)}"><ol><li><a href="/">${esc(sito.nome)}</a></li><li><a href="/collezione/">${esc(l.collezione)}</a></li><li aria-current="page">${esc(tipo.nome)}</li></ol></nav>
     <h1 class="titolo categoria__titolo">${t(k.titolo)}</h1>
     <p class="testo categoria__testo">${t(k.testo)}</p>
   </header>
@@ -124,7 +123,7 @@ export function paginaCategoria({ sito, testi: c, tipo, risorse, anteprima }) {
         </ul>
       </nav>
       <ul class="lookbook__griglia">
-        ${look.map((x) => voceLook(x, archivio, ` data-nome-tipo="${esc(tipo.nome)}"`)).join('\n        ')}
+        ${look.map((x, i) => voceLook(x, archivio, ` data-nome-tipo="${esc(tipo.nome)}"`, i > 0)).join('\n        ')}
       </ul>
     </section>
     ${visore(l.visore, sito, look.length)}
@@ -138,7 +137,7 @@ export function paginaCategoria({ sito, testi: c, tipo, risorse, anteprima }) {
     ...datiBase(sito, k.meta),
     {
       '@context': 'https://schema.org', '@type': 'CollectionPage', name: piano(k.titolo), url: d + percorso,
-      image: look.map((x) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(x, archivio).split('?')[0], caption: x.alt })),
+      image: look.map((x) => ({ '@type': 'ImageObject', contentUrl: d + fotoGrande(x, archivio), caption: x.alt })),
     },
   ];
   return pagina({
@@ -173,10 +172,11 @@ export function paginaCapo({ sito, testi: c, capo, risorse, anteprima }) {
   const meta = {
     titolo: `${capo.nome} · Endero`,
     descrizione: capo.descrizione ? capo.descrizione.slice(0, 155) : `${capo.nome}, ${capo.categoria || 'collezione'} Endero, fatto in Italia.`,
-    immagine: capo.foto?.[0] || '/film/manifesto.jpg',
+    immagine: capo.foto?.[0] || '/anteprime/home.jpg',
     immagine_alt: capo.nome,
   };
-  // senza carrello niente offerta per Google: il prezzo si legge nella pagina
+  // Il prezzo che si legge nella pagina va anche nei dati: senza un'offerta Google segna la scheda del capo come
+  // incompleta. Niente disponibilità: non c'è carrello, si chiede su WhatsApp.
   const dati = [
     ...datiBase(sito, c.meta),
     {
@@ -185,7 +185,11 @@ export function paginaCapo({ sito, testi: c, capo, risorse, anteprima }) {
       ...(capo.foto?.length ? { image: capo.foto.map((f) => d + f) } : {}),
       ...(capo.categoria ? { category: capo.categoria } : {}),
       brand: { '@type': 'Brand', name: sito.nome },
+      ...(typeof capo.prezzo === 'number' ? { offers: { '@type': 'Offer', price: capo.prezzo.toFixed(2), priceCurrency: 'EUR', url: d + indirizzoCapo(capo) } } : {}),
     },
   ];
-  return pagina({ sito, meta, percorso: indirizzoCapo(capo), corpo, risorse, anteprima, dati, classe: 'pagina-chiara pagina-capo' });
+  return pagina({
+    sito, meta, percorso: indirizzoCapo(capo), corpo, risorse, anteprima, dati, classe: 'pagina-chiara pagina-capo',
+    briciole: [briciola(sito, '/collezione/'), briciola(sito, indirizzoCapo(capo), capo.nome)],
+  });
 }

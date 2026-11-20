@@ -3,6 +3,8 @@
 // "Chi siamo" al posto di "Artigianato" (voci, titoli, indirizzo, vecchi indirizzi che rimandano),
 // la sezione del su misura con la camicia del configuratore e le sue misure, le due strade dei rivenditori
 // (Rivenditore Endero e Conto terzi) in pagina iniziale e nella loro pagina, con la voce già segnata nel modulo.
+// Dal 20 novembre anche: chi legge la pagina senza scorrerla (Google) trova tutto il testo, gli schermi tra 810 e
+// 1024 punti, le domande sotto il configuratore.
 //
 //   node tools/prova-pagine.js [indirizzo del sito, senza barra finale] [cartella per le schermate]
 //
@@ -283,6 +285,91 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await page.waitForTimeout(600);
     controlla(`${nome}: niente esce dallo schermo, nessun errore, nessun file mancante`, await a.stretta() && a.errori.length === 0 && a.rotte.length === 0, [...a.errori, ...a.rotte].join(' | ').slice(0, 300));
     if (nome === 'computer') await foto(page, 'rivenditori-pagina');
+    await a.contesto.close();
+  }
+
+  // ---------------------------------------------------------------- 5. chi legge senza scorrere, e gli schermi di mezzo
+  // (revisione SEO del 20 novembre 2026)
+  console.log('Chi legge la pagina senza scorrerla');
+  // Quante parole di <main> non si vedono (opacità zero, ritagliate, nascoste). Non si contano le parti che sono
+  // nascoste per come funzionano, e non perché aspettano lo scorrimento: l'apertura a film, il selettore delle
+  // sezioni chiuso sul telefono, le schede che compaiono al passaggio del mouse (.griglia__scheda) e i capitoli di
+  // «Chi siamo» in pagina iniziale, che si vedono uno alla volta (gli stessi testi stanno interi in /chi-siamo/).
+  const nascoste = (page) => page.evaluate(() => {
+    let tutte = 0, perse = 0;
+    const cammina = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
+    for (let n = cammina.nextNode(); n; n = cammina.nextNode()) {
+      const parole = n.textContent.trim().split(/\s+/).filter(Boolean).length;
+      if (!parole || n.parentElement.closest('.apertura, .selettore, .griglia__scheda, .mestiere__scheda, script, style, dialog, .nascosto, details:not([open]) .domanda__risposta')) continue;
+      tutte += parole;
+      for (let e = n.parentElement; e && e !== document.body; e = e.parentElement) {
+        const s = getComputedStyle(e);
+        if (s.opacity === '0' || s.visibility === 'hidden' || s.display === 'none' || /inset\(0(px)? 0(px)? 100%/.test(s.clipPath)) { perse += parole; break; }
+      }
+    }
+    return { tutte, perse, armato: document.documentElement.classList.contains('movimento') };
+  });
+  for (const percorso of ['/', '/camicie-su-misura/', '/diventa-rivenditore/', '/chi-siamo/', '/dove-siamo/', '/collezione/maglieria/']) {
+    // come fa Google: apre la pagina su uno schermo da telefono e poi lo allunga fino in fondo, senza scorrere
+    const a = await nuovo({ viewport: { width: 412, height: 732 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true }), { page } = a;
+    await page.goto(base + percorso, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(600);
+    const alta = Math.min(await page.evaluate(() => document.documentElement.scrollHeight), 30000);
+    await page.setViewportSize({ width: 412, height: alta });
+    await page.waitForTimeout(900);
+    const fermo = await nascoste(page);
+    controlla(`${percorso}: senza scorrere, tutto il testo si vede`, fermo.tutte > 40 && fermo.perse === 0 && !fermo.armato, JSON.stringify(fermo));
+    await a.contesto.close();
+  }
+  {
+    // chi scorre davvero ritrova le comparse: al primo colpo di rotella ciò che sta sotto si nasconde, e scorrendo compare
+    const a = await nuovo(), { page } = a;
+    await page.goto(base + '/camicie-su-misura/', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(500);
+    const prima = await nascoste(page);
+    await page.mouse.move(700, 450);
+    await page.mouse.wheel(0, 40);
+    await page.waitForTimeout(250);
+    const dopo = await nascoste(page);
+    controlla('al primo colpo di rotella ciò che sta sotto lo schermo si prepara a comparire', !prima.armato && prima.perse === 0 && dopo.armato && dopo.perse > 30, JSON.stringify({ prima, dopo }));
+    const inVista = await page.evaluate(() => [...document.querySelectorAll('[data-rivela]')].filter((e) => { const r = e.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.height > 0; }).every((e) => getComputedStyle(e).opacity === '1'));
+    controlla('quello che era già sullo schermo non sparisce', inVista);
+    // si aspetta che lo scorrimento morbido della rotella sia finito, poi si scende al passo di chi legge: ciò che
+    // si salta, o che passa prima che la foto che lo contiene si sia scoperta (un secondo), compare quando si torna su
+    // (era così anche prima)
+    await page.waitForTimeout(1500);
+    const fondo = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y < fondo; y += 200) { await page.evaluate((v) => window.scrollTo(0, v), y); await page.waitForTimeout(300); }
+    await page.waitForTimeout(1600);
+    const fine = await nascoste(page);
+    controlla('scorrendo fino in fondo tutto è comparso', fine.perse === 0, JSON.stringify(fine));
+    controlla('nessun errore', a.errori.length === 0 && a.rotte.length === 0, [...a.errori, ...a.rotte].join(' | ').slice(0, 300));
+    await a.contesto.close();
+  }
+  console.log('Gli schermi di mezzo');
+  for (const largo of [810, 820, 834, 900, 959, 1024]) {
+    const a = await nuovo({ viewport: { width: largo, height: 1100 } }), { page } = a;
+    for (const percorso of ['/camicie-su-misura/', '/diventa-rivenditore/', '/collezione/abiti/', '/camicie-su-misura/configuratore/']) {
+      await page.goto(base + percorso, { waitUntil: 'networkidle' });
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await page.waitForTimeout(350);
+      const misure = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+      controlla(`${percorso} a ${largo} punti: niente esce dallo schermo`, misure[0] <= misure[1], misure.join(' > '));
+    }
+    await a.contesto.close();
+  }
+  console.log('Le domande sotto il configuratore');
+  for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO]]) {
+    const a = await nuovo(opzioni), { page } = a;
+    await page.goto(base + '/camicie-su-misura/configuratore/', { waitUntil: 'networkidle' });
+    const c = await page.evaluate(() => ({ h1: document.querySelectorAll('h1').length, domande: document.querySelectorAll('.configura__sotto details').length, titolo: document.querySelector('.configura__sotto h2')?.textContent || '', online: /online/i.test(document.querySelector('.configura__testo')?.textContent || '') }));
+    controlla(`${nome}: sotto il riquadro ci sono le domande sul su misura online`, c.h1 === 1 && c.domande >= 3 && /online/i.test(c.titolo) && c.online, JSON.stringify(c));
+    await a.vai('.configura__sotto', -120);
+    await page.locator('.configura__sotto summary').first().click();
+    await page.waitForTimeout(500);
+    const aperta = await page.evaluate(() => { const d = document.querySelector('.configura__sotto details'); const r = d.querySelector('.domanda__risposta').getBoundingClientRect(); const s = getComputedStyle(d.querySelector('.domanda__risposta p')); return { aperta: d.open, alta: Math.round(r.height), colore: s.color, fondo: getComputedStyle(document.querySelector('.configura__sotto')).backgroundColor }; });
+    controlla(`${nome}: una domanda si apre e la risposta si legge`, aperta.aperta && aperta.alta > 20 && aperta.colore !== aperta.fondo, JSON.stringify(aperta));
+    controlla(`${nome}: niente esce dallo schermo, nessun errore`, await a.stretta() && a.errori.length === 0 && a.rotte.length === 0, [...a.errori, ...a.rotte].join(' | ').slice(0, 300));
+    await foto(page, `configuratore-domande-${nome}`);
     await a.contesto.close();
   }
 

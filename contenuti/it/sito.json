@@ -4,7 +4,9 @@
   "nome": "Endero",
   "dominio": "https://www.endero.it",
   "fondazione": "1996",
-  "social": [],
+  "social": [
+    { "nome": "Instagram", "link": "https://www.instagram.com/endero_official/" }
+  ],
   "orari": [],
   "contatti": {
     "whatsapp": "333 854 8712",
@@ -42,7 +44,7 @@
       {
         "icona": "schermo",
         "titolo": "Configura la tua camicia online",
-        "testo": "Da casa: guardi la camicia in 3D e scrivi le tue misure.",
+        "testo": "Da casa: scrivi le tue misure e il sarto le ricontrolla prima del taglio.",
         "href": "/camicie-su-misura/configuratore/"
       },
       {
@@ -94,6 +96,10 @@
           {
             "testo": "info@endero.it",
             "link": "mailto:info@endero.it"
+          },
+          {
+            "testo": "Instagram",
+            "link": "https://www.instagram.com/endero_official/"
           },
           {
             "testo": "Privacy",

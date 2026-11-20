@@ -1,5 +1,5 @@
 {
-  "_nota": "Configuratore, passo 1: la camicia appesa (un film calcolato prima) e il riquadro in vetro con i campi del foglio 'Camicie su misura' di Endero. Le misure si compilano; 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. Le righe d'aiuto delle misure sono le note scritte a mano sul foglio: restano tra [[ ]] finché il proprietario non le conferma. 'min' e 'max' sono i limiti che il campo accetta, in centimetri (per la taglia, il numero): scelti da noi, larghi, da rivedere con il sarto.",
+  "_nota": "Configuratore, passo 1: la camicia appesa (un film calcolato prima) e il riquadro in vetro con i campi del foglio 'Camicie su misura' di Endero. Le misure si compilano; 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. Le righe d'aiuto delle misure sono le note scritte a mano sul foglio: restano tra [[ ]] finché il proprietario non le conferma. 'min' e 'max' sono i limiti che il campo accetta, in centimetri (per la taglia, il numero): scelti da noi, larghi, da rivedere con il sarto. 'domande' sta sotto la camicia e il riquadro: tre risposte per chi cerca la camicia su misura online, scritte da noi il 2026-11-20 solo con ciò che è già deciso (il sarto ricontrolla le misure prima del taglio e scrive su WhatsApp se qualcosa non torna; le misure sono quelle del riquadro; la presa misure in sede). Bozza da far vedere al proprietario. Niente prezzi, tempi, pagamento o consegna finché non sono confermati.",
   "meta": {
     "titolo": "Camicia su misura online · Crea la tua con Endero",
     "briciola": "Crea la tua camicia",
@@ -15,7 +15,7 @@
   },
   "scheda": {
     "titolo": "La tua camicia su misura",
-    "testo": "Scrivi le tue misure in centimetri, con la virgola se serve.",
+    "testo": "Online, da casa: scrivi le tue misure in centimetri, con la virgola se serve.",
     "errore_misura": "Scrivi un numero tra {min} e {max}.",
     "gruppi": [
       {
@@ -224,5 +224,26 @@
     ],
     "continua": "Continua",
     "continua_nota": "Per ora il modulo non invia nulla."
+  },
+  "domande": {
+    "titolo": "Camicia su misura online: come funziona",
+    "voci": [
+      {
+        "domanda": "Come si ordina una camicia su misura online?",
+        "risposta": "Scrivi le tue misure in questa pagina, in centimetri. Il sarto le ricontrolla prima del taglio e, se qualcosa non torna, ti scrive su WhatsApp."
+      },
+      {
+        "domanda": "Quali misure devo prendere?",
+        "risposta": "La taglia (il giro del collo), spalla, spallina, torace, pancia, bacino, lunghezza della manica, braccio, avambraccio, polso e lunghezza della camicia, davanti e dietro."
+      },
+      {
+        "domanda": "E se preferisco farmi prendere le misure?",
+        "risposta": "Puoi prenotare la presa misure in sede, a Giugliano in Campania, in Viale del Toro 22: le misure le prende il sarto.",
+        "link": {
+          "testo": "Prenota la presa misure",
+          "href": "/camicie-su-misura/#prenota"
+        }
+      }
+    ]
   }
 }

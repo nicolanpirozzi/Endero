@@ -1750,6 +1750,19 @@ body[data-barra] .selettore {
   color: var(--blu-tenue);
 }
 
+/* Tra 810 e 959 punti (un tablet in piedi) la colonna del testo è stretta e la pillola, che non va a capo, usciva
+   dalla pagina: lì prende la larghezza della colonna e stringe i suoi margini. */
+@media (min-width: 810px) and (max-width: 959px) {
+  .prezzo__testo {
+    padding-right: 20px;
+  }
+
+  .prezzo__fondo .pillola {
+    width: 100%;
+    padding-inline: 10px;
+  }
+}
+
 .prezzo__cifra {
   margin-bottom: 14px;
   font-size: 36px;
@@ -2554,7 +2567,15 @@ body[data-barra] .selettore {
 
 /* ------------------------------------------------------------------ movimento */
 /* Solo con lo script e senza movimento ridotto: src/sito.js mette .movimento su <html> e segna gli elementi.
-   Senza script, o se lo script non parte, tutto resta visibile da subito. */
+   Senza script, o se lo script non parte, tutto resta visibile da subito. E .movimento arriva solo al primo segno
+   di vita di chi guarda (rotella, dito, tasto, scorrimento): chi legge la pagina senza scorrerla la trova intera. */
+
+/* nell'istante in cui si arma, ciò che sta fuori dallo schermo sparisce di colpo, senza dissolvenza */
+.movimento--arma [data-rivela],
+.movimento--arma [data-rivela] .parola,
+.movimento--arma [data-rivela] > .attesa {
+  transition: none !important;
+}
 
 .movimento [data-rivela="su"] {
   opacity: 0;
@@ -4435,7 +4456,11 @@ body[data-barra] .lookbook__filtro {
   }
 }
 
-.lookbook__quanti {
+/* quante foto: il numero sta in data-quanti e non nel testo del link, che resta il nome della categoria.
+   La seconda riga dice a chi ascolta la pagina di non leggerlo (dove il browser la capisce; altrove vale la prima). */
+.lookbook__tasto[data-quanti]::after {
+  content: attr(data-quanti);
+  content: attr(data-quanti) / "";
   font-size: 9px;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
@@ -4636,7 +4661,7 @@ body[data-barra] .lookbook__filtro {
   font-size: 15px;
 }
 
-/* il percorso: «Collezione / Maglieria», piccolo, sopra il titolo */
+/* il percorso: «Endero / Collezione / Maglieria», piccolo, sopra il titolo */
 .briciole ol {
   display: flex;
   flex-wrap: wrap;

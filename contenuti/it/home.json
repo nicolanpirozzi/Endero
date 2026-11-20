@@ -1,9 +1,9 @@
 {
   "_nota": "Testi della pagina iniziale, in bozza. Fatti ammessi: solo quelli confermati in CLAUDE.md. Le parti tra [[ ]] sono segnaposto da confermare; le voci 'foto' descrivono la foto vera che ci andrà. I nomi dei tre ingressi alla collezione li decide il proprietario quando manda i prodotti. Mai 'dal 1996' e 'fatto in Italia' nella stessa frase. I capitoli di Cultura e artigianato stanno in cultura-e-artigianato.json, la fascia dei rivenditori in diventa-rivenditore.json (richiami.home).",
   "meta": {
-    "titolo": "Endero · Camicie su misura e abbigliamento uomo dal 1996",
-    "descrizione": "Endero, dal 1996: camicie su misura a Giugliano in Campania (Napoli) e online, la collezione uomo fatta in Italia, ingrosso e conto terzi per negozi e marchi.",
-    "immagine": "/film/manifesto.jpg",
+    "titolo": "Endero dal 1996 · Camicie su misura e abbigliamento uomo",
+    "descrizione": "Endero, dal 1996. Camicie su misura a Giugliano in Campania (Napoli) e online, collezione uomo fatta in Italia, ingrosso e conto terzi per negozi e marchi.",
+    "immagine": "/anteprime/home.jpg",
     "immagine_alt": "Il logo Endero ricamato in filo bianco su tessuto blu"
   },
   "apertura": {

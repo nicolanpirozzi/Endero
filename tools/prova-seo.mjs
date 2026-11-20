@@ -57,6 +57,10 @@ const esiste = (indirizzo) => {
 const mappa = leggi('sitemap.xml');
 const inMappa = [...mappa.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const titoli = new Map(), descrizioni = new Map();
+// Regola del progetto: mai «dal 1996» e «fatto in Italia» nella stessa frase (insieme direbbero una cosa che Endero
+// non ha confermato). Si guarda frase per frase: titolo, descrizione, e ogni paragrafo, titolo e voce di elenco.
+const frasi = (testo) => testo.split(/(?<=[.!?])\s+/);
+const insieme = (testo) => frasi(testo).filter((f) => /1996/.test(f) && /fatt[oaie] in Italia/i.test(f));
 
 for (const p of pagine) {
   const { html, percorso } = p;
@@ -86,14 +90,19 @@ for (const p of pagine) {
   const canonico = attr(testa.match(/<link rel="canonical"[^>]*>/)?.[0] || '', 'href');
   vero(`${chi}: indirizzo canonico giusto`, canonico === dominio + percorso, canonico);
   vero(`${chi}: versione italiana dichiarata`, new RegExp(`<link rel="alternate" hreflang="it" href="${dominio + percorso}"`).test(testa));
+  vero(`${chi}: icone del sito (quadrata per Google, .ico, PNG, iPhone)`, ['<link rel="icon" href="/favicon.ico"', '<link rel="icon" href="/favicon.svg"', '<link rel="icon" href="/icona-192.png"', '<link rel="apple-touch-icon" href="/icona-180.png"'].every((x) => testa.includes(x)));
   if (pubblico) vero(`${chi}: Google può mostrare le foto grandi`, /<meta name="robots" content="[^"]*max-image-preview:large/.test(testa));
   const og = (nome) => attr(testa.match(new RegExp(`<meta property="og:${nome}"[^>]*>`))?.[0] || '', 'content');
   const legale = ['/privacy/', '/cookie/'].includes(percorso);
   vero(`${chi}: titolo e descrizione per i social`, og('title') === titolo && og('description') === descrizione);
+  const pezzi = [titolo, descrizione, ...[...corpo.matchAll(/<(p|h[1-6]|li|dd|summary|figcaption)\b[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => senzaTag(m[2]))];
+  vero(`${chi}: mai «dal 1996» e «fatto in Italia» nella stessa frase`, pezzi.every((x) => insieme(x).length === 0), pezzi.flatMap(insieme).join(' | '));
+  vero(`${chi}: la camicia del configuratore non è più «in 3D»`, !/\bin 3D\b/i.test(descrizione + ' ' + senzaTag(corpo)));
   if (!legale) {
     const immagine = og('image') || '';
     vero(`${chi}: ha un'immagine di anteprima che esiste`, immagine.startsWith(dominio + '/') && esiste(immagine.slice(dominio.length)), immagine);
-    vero(`${chi}: l'anteprima dichiara le sue misure ed è larga almeno 1200`, Number(og('image:width')) >= 1200 && Number(og('image:height')) >= 600, `${og('image:width')} x ${og('image:height')}`);
+    vero(`${chi}: l'anteprima è 1200 x 630 e lo dichiara`, Number(og('image:width')) === 1200 && Number(og('image:height')) === 630, `${og('image:width')} x ${og('image:height')}`);
+    vero(`${chi}: l'anteprima pesa meno di 300 KB (oltre, WhatsApp può non mostrarla)`, esiste(immagine.slice(dominio.length)) && statSync(join(cartella, immagine.slice(dominio.length))).size < 300000);
     vero(`${chi}: l'anteprima ha una descrizione`, (og('image:alt') || '').length > 8);
     vero(`${chi}: scheda grande su X e simili`, /<meta name="twitter:card" content="summary_large_image">/.test(testa) && /<meta name="twitter:image"/.test(testa));
   }
@@ -104,7 +113,12 @@ for (const p of pagine) {
   try { for (const b of blocchi) { const j = JSON.parse(b); nodi.push(...(Array.isArray(j) ? j : j['@graph'] || [j])); } } catch (e) { vero(`${chi}: dati strutturati leggibili`, false, String(e)); }
   if (!legale) {
     const tipo = (t) => nodi.filter((n) => n['@type'] === t);
-    const pagina = nodi.find((n) => ['WebPage', 'AboutPage', 'ContactPage', 'CollectionPage', 'ItemPage'].includes(n['@type']) && n.url === dominio + percorso);
+    const TIPI_PAGINA = ['WebPage', 'AboutPage', 'ContactPage', 'CollectionPage', 'ItemPage', 'FAQPage'];
+    const pagina = nodi.find((n) => TIPI_PAGINA.includes(n['@type']) && n.url === dominio + percorso);
+    vero(`${chi}: un solo nodo descrive la pagina`, nodi.filter((n) => TIPI_PAGINA.includes(n['@type'])).length === 1, nodi.filter((n) => TIPI_PAGINA.includes(n['@type'])).map((n) => n['@type']).join(' '));
+    vero(`${chi}: il nome della pagina nei dati è il suo titolo`, pagina?.name === titolo, pagina?.name);
+    const logo = (nodi.find((n) => n['@type'] === 'Organization') || {}).logo || '';
+    vero(`${chi}: il logo per Google è un'immagine con le sue misure (PNG), e c'è`, /\.png$/.test(logo) && esiste(logo.slice(dominio.length)), logo);
     vero(`${chi}: dati di organizzazione, sito e sede`, tipo('Organization').length === 1 && tipo('WebSite').length === 1 && tipo('ClothingStore').length === 1);
     vero(`${chi}: la pagina si descrive (nome, descrizione, sito, lingua)`, Boolean(pagina && pagina.name && pagina.description === descrizione && pagina.isPartOf && pagina.inLanguage === 'it-IT'), JSON.stringify(pagina || {}).slice(0, 120));
     const sede = tipo('ClothingStore')[0] || {};
@@ -120,7 +134,13 @@ for (const p of pagine) {
     vero(`${chi}: i riferimenti dentro i dati strutturati tornano`, riferimenti.every((r) => ids.has(JSON.parse(r)['@id'])), riferimenti.filter((r) => !ids.has(JSON.parse(r)['@id'])).join(' '));
     for (const f of tipo('FAQPage')) vero(`${chi}: le domande frequenti hanno domanda e risposta, senza segnaposto`, f.mainEntity.length >= 2 && f.mainEntity.every((q) => q.name && q.acceptedAnswer?.text && !/\[\[/.test(q.name + q.acceptedAnswer.text)));
     for (const s of tipo('Service')) vero(`${chi}: il servizio «${s.name}» ha nome, descrizione e chi lo offre`, Boolean(s.name && s.description && s.provider?.['@id']));
-    for (const c of tipo('CollectionPage')) if (c.image) vero(`${chi}: le foto dichiarate esistono e hanno una descrizione`, c.image.length > 0 && c.image.every((i) => i.caption && esiste(i.contentUrl.slice(dominio.length))));
+    for (const c of tipo('CollectionPage')) if (c.image) {
+      vero(`${chi}: le foto dichiarate esistono e hanno una descrizione`, c.image.length > 0 && c.image.every((i) => i.caption && esiste(i.contentUrl.slice(dominio.length))));
+      // ogni foto ha un indirizzo solo: quello della pagina, impronta compresa
+      const altrove = c.image.map((i) => i.contentUrl.slice(dominio.length)).filter((u) => !corpo.includes(`"${u}"`));
+      vero(`${chi}: le foto dichiarate hanno lo stesso indirizzo che hanno nella pagina`, altrove.length === 0, altrove.slice(0, 3).join(' '));
+    }
+    for (const pr of tipo('Product')) vero(`${chi}: il capo ha nome, marchio e prezzo (senza, Google lo segna incompleto)`, Boolean(pr.name && pr.brand && pr.offers?.price && pr.offers?.priceCurrency === 'EUR'));
     if (!sede.openingHoursSpecification) chiudi('Orari della sede: mancano sul sito e nei dati per Google (sito.json, "orari").');
     if (!(tipo('Organization')[0] || {}).sameAs) chiudi('Profili social (Instagram e altri): mancano i link (sito.json, "social").');
   }
@@ -131,6 +151,10 @@ for (const p of pagine) {
   vero(`${chi}: nessun link interno rotto`, rotti.length === 0, [...new Set(rotti)].join(' '));
   const ancore = link.map((m) => m[1]).filter((h) => h.startsWith('#') && h.length > 1 && !new RegExp(`\\bid="${h.slice(1)}"`).test(corpo));
   vero(`${chi}: nessuna ancora che non porta da nessuna parte`, ancore.length === 0, [...new Set(ancore)].join(' '));
+  // il testo di un link dice dove porta: un numero attaccato in fondo («Maglieria20») lo sporca
+  const sporchi = link.filter((m) => /[a-zà-ù]\d+\s*$/i.test(m[2].replace(/<[^>]+>/g, ''))).map((m) => senzaTag(m[2]));
+  vero(`${chi}: nessun link con un numero attaccato al nome`, sporchi.length === 0, sporchi.join(' · '));
+  p.link = link.map((m) => m[1].split('#')[0]);
   const muti = link.filter((m) => !senzaTag(m[2]) && !/aria-label="[^"]+"/.test(m[0]) && !/<img\b[^>]*\balt="[^"]+"/.test(m[2])).map((m) => m[1]);
   vero(`${chi}: ogni link ha un nome`, muti.length === 0, muti.join(' '));
   const immagini = [...corpo.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((i) => !/data-visore-img/.test(i));
@@ -141,6 +165,8 @@ for (const p of pagine) {
   const mancanti = immagini.map((i) => attr(i, 'src')).filter((s) => s && s.startsWith('/') && !esiste(s));
   vero(`${chi}: nessuna immagine mancante`, mancanti.length === 0, mancanti.join(' '));
   vero(`${chi} sta nella mappa del sito`, inMappa.includes(dominio + percorso));
+  // la foto più grande della prima schermata non aspetta: nelle pagine di categoria è la prima del lookbook
+  if (/pagina-categoria/.test(html)) vero(`${chi}: la prima foto si carica subito`, /fetchpriority="high"/.test((corpo.match(/<ul class="lookbook__griglia">[\s\S]*?<img\b[^>]*>/) || [''])[0].match(/<img\b[^>]*>$/)?.[0] || ''));
   const parole = senzaTag(corpo.replace(/<script[\s\S]*?<\/script>|<svg[\s\S]*?<\/svg>|<dialog[\s\S]*?<\/dialog>|<footer[\s\S]*?<\/footer>|<header class="testata"[\s\S]*?<\/header>/g, ' ')).split(' ').length;
   p.parole = parole;
   const segnaposto = [...corpo.replace(/<footer[\s\S]*?<\/footer>/, '').matchAll(/class="da-confermare">([^<]*)/g)].map((m) => senzaTag(m[1]));
@@ -156,6 +182,15 @@ vero('la mappa del sito elenca solo pagine che esistono', inMappa.every((u) => u
 vero('la mappa del sito non ripete indirizzi', new Set(inMappa).size === inMappa.length);
 const fotoMappa = [...mappa.matchAll(/<image:loc>([^<]+)<\/image:loc>/g)].map((m) => m[1]);
 vero('la mappa del sito porta le foto, e le foto esistono', fotoMappa.length >= 40 && fotoMappa.every((u) => esiste(u.slice(dominio.length))), `${fotoMappa.length} foto`);
+const tutteLePagine = pagine.map((p) => p.html).join('\n');
+const soloInMappa = fotoMappa.map((u) => u.slice(dominio.length)).filter((u) => !tutteLePagine.includes(`src="${u}"`));
+vero('nella mappa ogni foto ha lo stesso indirizzo che ha nella sua pagina', soloInMappa.length === 0, soloInMappa.slice(0, 3).join(' '));
+// le pagine di categoria si raggiungono dalla pagina iniziale e dalla collezione
+const categorie = pagine.filter((p) => /pagina-categoria/.test(p.html)).map((p) => p.percorso);
+for (const da of ['/', '/collezione/']) {
+  const sue = pagine.find((p) => p.percorso === da)?.link || [];
+  vero(`${da} porta a tutte le pagine di categoria`, categorie.length >= 4 && categorie.every((c) => sue.includes(c)), categorie.filter((c) => !sue.includes(c)).join(' '));
+}
 vero('la mappa del sito dice quando sono cambiate le pagine', (mappa.match(/<lastmod>\d{4}-\d\d-\d\d<\/lastmod>/g) || []).length >= inMappa.length - 1);
 const robots = leggi('robots.txt');
 if (pubblico) vero('robots.txt apre il sito e indica la mappa', /Allow: \//.test(robots) && robots.includes(`Sitemap: ${dominio}/sitemap.xml`) && !/Disallow: \/\s*$/m.test(robots));
@@ -163,7 +198,11 @@ else vero('in anteprima robots.txt chiude il sito', /Disallow: \/\s*$/m.test(rob
 const reindirizzamenti = leggi('_redirects').trim().split('\n').map((r) => r.split(/\s+/));
 vero('ogni vecchio indirizzo porta a una pagina che esiste, per sempre', reindirizzamenti.length >= 10 && reindirizzamenti.every(([da, a, come]) => da.startsWith('/') && esiste(a) && come === '301' && !esiste(da)), JSON.stringify(reindirizzamenti.filter(([da, a]) => !esiste(a) || esiste(da))));
 vero('c\'è la pagina «non trovata»', existsSync(join(cartella, '404.html')) && /noindex/.test(leggi('404.html')));
-vero('icona e logo per Google', existsSync(join(cartella, 'favicon.svg')) && existsSync(join(cartella, 'logo.svg')));
+vero('il sito che oggi risponde su endero.it ha una pagina /configuratore/: porta al nostro configuratore', reindirizzamenti.some(([da, a]) => da === '/configuratore/' && a === '/camicie-su-misura/configuratore/'));
+const icona = existsSync(join(cartella, 'favicon.svg')) ? leggi('favicon.svg') : '';
+const quadro = (icona.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/) || []).slice(1).map(Number);
+vero('l\'icona del sito è quadrata (Google la mostra nei risultati solo così)', quadro.length === 2 && quadro[0] === quadro[1], quadro.join(' x '));
+vero('icone e logo per Google ci sono', ['favicon.svg', 'favicon.ico', 'icona-192.png', 'icona-180.png', 'logo-endero.png', 'logo.svg'].every((f) => existsSync(join(cartella, f))));
 // pagine con poco testo: non è un errore, ma Google le considera deboli
 for (const p of pagine) if (p.parole !== undefined && p.parole < 150) note.push(`${p.percorso} ha poco testo (${p.parole} parole): regge sulle foto e sui dati, ma più avanti le serve più contenuto.`);
 if (!pubblico) note.push('Questa è la versione di anteprima (non indicizzabile): per il controllo vero lanciare il comando senza argomenti.');

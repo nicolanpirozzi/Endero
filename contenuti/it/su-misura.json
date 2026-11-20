@@ -1,8 +1,8 @@
 {
-  "_nota": "Pagina /camicie-su-misura/: tutto il su misura (punto 10 della direzione creativa). Bozza da approvare. Le parti tra [[ ]] sono segnaposto. La scheda misure serve anche alla porta sul su misura della pagina iniziale. Il configuratore (punto 12) si accende con configuratore.attivo: true quando la sua pagina esiste; allora compaiono l'ingresso in cima a questa pagina e la pillola 'Crea la tua camicia' in pagina iniziale.",
+  "_nota": "Pagina /camicie-su-misura/: tutto il su misura (punto 10 della direzione creativa). Bozza da approvare. Le parti tra [[ ]] sono segnaposto. Le voci della scheda misure sono quelle che il configuratore chiede (configuratore.json), cioè quelle del foglio 'Camicie su misura' di Endero: se là cambia un nome, cambia anche qui e nella domanda 'Quali misure servono?'. Il configuratore (punto 12) si accende con configuratore.attivo: true quando la sua pagina esiste; allora compaiono l'ingresso in cima a questa pagina e la pillola 'Crea la tua camicia' in pagina iniziale.",
   "meta": {
     "titolo": "Camicie su misura a Giugliano, Napoli · Endero",
-    "descrizione": "Camicie su misura a Giugliano in Campania, provincia di Napoli: presa misure su appuntamento in Viale del Toro 22, oppure la crei online. Fatte in Italia.",
+    "descrizione": "Camicie su misura a Giugliano in Campania (Napoli): presa misure su appuntamento in Viale del Toro 22, oppure online con le tue misure. Fatte in Italia.",
     "immagine": "/anteprime/camicie-su-misura.jpg",
     "immagine_alt": "Il sarto prende le misure a un cliente in camicia bianca, nel negozio Endero"
   },
@@ -18,7 +18,7 @@
   "configuratore": {
     "attivo": true,
     "titolo": "Crea la tua camicia",
-    "testo": "Da casa: guardi la camicia in 3D e scrivi le tue misure.",
+    "testo": "Da casa: scrivi le tue misure e il sarto le ricontrolla prima del taglio.",
     "invito": "Crea la tua camicia",
     "href": "/camicie-su-misura/configuratore/"
   },
@@ -81,19 +81,23 @@
         {
           "titolo": "Busto",
           "voci": [
-            "Collo",
-            "Spalle",
+            "Taglia",
+            "Spalla",
+            "Spallina",
             "Torace",
-            "Vita",
-            "Fianchi"
+            "Pancia",
+            "Bacino"
           ]
         },
         {
           "titolo": "Braccia e lunghezze",
           "voci": [
             "Lunghezza manica",
+            "Braccio",
+            "Avambraccio",
             "Polso",
-            "Lunghezza camicia"
+            "Lunghezza davanti",
+            "Lunghezza dietro"
           ]
         }
       ],
@@ -163,7 +167,7 @@
       },
       {
         "domanda": "Quali misure servono?",
-        "risposta": "Giro collo, spalla, spallina, torace, pancia, bacino, lunghezza della manica, braccio, avambraccio, polso e lunghezza della camicia, davanti e dietro. In sede le prende il sarto; da casa le scrivi tu, una per una."
+        "risposta": "La taglia (il giro del collo), spalla, spallina, torace, pancia, bacino, lunghezza della manica, braccio, avambraccio, polso e lunghezza della camicia, davanti e dietro. In sede le prende il sarto; da casa le scrivi tu, una per una."
       },
       {
         "domanda": "Quanto costa una camicia su misura?",

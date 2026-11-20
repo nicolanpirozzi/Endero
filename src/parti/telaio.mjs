@@ -111,8 +111,9 @@ export function briciola(sito, percorso, nome = '') {
   return { nome: nome || sito.menu.voci.find((v) => v.link === percorso)?.testo || percorso, percorso };
 }
 
-// I tipi di schema.org che descrivono una pagina: se la pagina ne porta già uno, è quello che si completa.
-const TIPI_PAGINA = ['WebPage', 'AboutPage', 'ContactPage', 'CollectionPage', 'ItemPage'];
+// I tipi di schema.org che descrivono una pagina: se la pagina ne porta già uno, è quello che si completa
+// (una pagina con le domande frequenti è una FAQPage, non una WebPage con una FAQPage accanto).
+const TIPI_PAGINA = ['WebPage', 'AboutPage', 'ContactPage', 'CollectionPage', 'ItemPage', 'FAQPage'];
 
 /**
  * Completa i dati strutturati di una pagina con ciò che vale per tutte: il nodo della pagina (titolo, descrizione,
@@ -133,10 +134,14 @@ function datiDiPagina(dati, { sito, meta, url, briciole }) {
   }
   let nodo = tutti.find((x) => TIPI_PAGINA.includes(x['@type']) && (!x.url || x.url === url));
   if (!nodo) { nodo = { '@context': 'https://schema.org', '@type': 'WebPage' }; tutti.push(nodo); }
+  // il nome è sempre il titolo della pagina, come in <title>; se la pagina ne aveva dato uno suo (il titolo che si
+  // legge in cima), resta come titolo breve
+  const suo = nodo.name && nodo.name !== piano(meta.titolo) ? nodo.name : '';
   Object.assign(nodo, {
     '@id': nodo['@id'] || `${url}#pagina`,
     url,
-    name: nodo.name || piano(meta.titolo),
+    name: piano(meta.titolo),
+    ...(suo ? { headline: suo } : {}),
     description: piano(meta.descrizione),
     inLanguage: 'it-IT',
     isPartOf: { '@id': `${d}/#sito` },
@@ -193,7 +198,10 @@ ${immagine ? `<meta property="og:image" content="${esc(immagine)}">
 ${misure ? `<meta property="og:image:width" content="${misure[0]}">\n<meta property="og:image:height" content="${misure[1]}">\n` : ''}<meta property="og:image:alt" content="${esc(meta.immagine_alt || '')}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${esc(immagine)}">
-` : ''}<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+` : ''}<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icona-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/icona-180.png">
 <link rel="preload" href="/font/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
 ${(risorse.precarica || []).join('\n')}
 ${risorse.css.map((h) => `<link rel="stylesheet" href="${h}">`).join('\n')}
