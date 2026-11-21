@@ -110,6 +110,24 @@ function salta(da, a, tratti, libera, vecchia) {
   requestAnimationFrame(passo);
 }
 
+/**
+ * Sposta la pagina di `di` punti per conto di un altro script (la guida alle misure del configuratore: la riga cliccata
+ * resta sotto il puntatore, la nota sale in vista). Passa da Lenis, che altrimenti annullerebbe uno spostamento fatto
+ * mentre la rotella sta ancora finendo la sua corsa, e vale come scorrimento guidato: la testata non torna come barra.
+ * `subito`: in un colpo (e ferma la corsa della rotella); se no, morbido.
+ */
+function scorriDi({ di = 0, subito = false } = {}) {
+  if (!di) return;
+  const y = Math.min(Math.max(0, scrollY + di), Math.max(0, document.documentElement.scrollHeight - innerHeight));
+  guidato = true;
+  clearTimeout(fineGuida);
+  const libera = () => { clearTimeout(fineGuida); fineGuida = setTimeout(() => { guidato = false; }, 150); };
+  if (lenis) lenis.scrollTo(y, { immediate: subito, duration: 0.7, force: true, onComplete: libera });
+  else { scrollTo({ top: y, behavior: subito || ridotto ? 'auto' : 'smooth' }); fineGuida = setTimeout(() => { guidato = false; }, subito ? 150 : 900); }
+  if (subito) libera();
+}
+document.addEventListener('endero:scorri', (e) => scorriDi(e.detail || {}));
+
 /** Porta un elemento in cima allo schermo, rispettando il suo scroll-margin-top. */
 function vaiA(el, { subito = false } = {}) {
   let y;

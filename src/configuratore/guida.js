@@ -14,6 +14,9 @@
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
 const SVG = 'http://www.w3.org/2000/svg';
 
+/** Sposta la pagina di `di` punti: lo fa src/sito.js, passando dallo scorrimento morbido (che se no lo annullerebbe). */
+const scorri = (di, subito = false) => document.dispatchEvent(new CustomEvent('endero:scorri', { detail: { di, subito } }));
+
 /** Ferma la pagina sotto una finestra: lo scorrimento morbido sta in src/sito.js, che ascolta questo avviso. */
 function blocca(si) {
   document.documentElement.classList.toggle('dialogo-aperto', si);
@@ -244,17 +247,34 @@ export function guida(palco, camicia) {
     const titolo = Object.assign(document.createElement('p'), { className: 'configura__nota-titolo', textContent: etichetta(b) });
     const testo = Object.assign(document.createElement('p'), { className: 'configura__nota-frase', innerHTML: frase(b.dataset.guida) });
     nota.replaceChildren(titolo, testo, chiudi);
-    // la nota si sposta sotto la riga nuova: la «i» appena cliccata resta dov'era sotto il puntatore
+    // La nota si sposta sotto la riga nuova. Se era aperta più su, le righe in mezzo salirebbero di colpo sotto il
+    // puntatore: la pagina sale con loro, in un colpo, così la «i» appena cliccata resta dov'era. In cima alla pagina
+    // non si può: lì il posto della nota vecchia si chiude piano (un segnaposto che si stringe), senza scatti.
     const primaY = b.getBoundingClientRect().top;
+    const dovEra = !nota.hidden && nota.isConnected ? nota.previousElementSibling : null;
     nota.hidden = true;
     sottoLaRiga(b);
     nota.hidden = false;
-    const salto = b.getBoundingClientRect().top - primaY;
-    if (Math.abs(salto) > 1) scrollBy({ top: salto, behavior: 'auto' });
+    const salto = b.getBoundingClientRect().top - primaY;            // < 0: la nota vecchia stava sopra
+    let siChiude = 0;
+    if (salto < -1) {
+      const posso = Math.min(-salto, scrollY);
+      if (posso > 1) scorri(-posso, true);
+      siChiude = -salto - posso;
+      if (siChiude > 1 && dovEra && !ridotto.matches) {
+        const fantasma = Object.assign(document.createElement('div'), { className: 'configura__nota-fantasma' });
+        fantasma.setAttribute('aria-hidden', 'true');
+        // nella griglia del modulo ogni riga ha il suo spazio sotto: il segnaposto lo toglie, conta solo la sua altezza
+        fantasma.style.cssText = `grid-column:1/-1;height:${siChiude}px;margin-bottom:-${parseFloat(getComputedStyle(dovEra.parentElement).rowGap) || 0}px`;
+        dovEra.after(fantasma);
+        fantasma.animate([{ height: `${siChiude}px` }, { height: '0px' }], { duration: 260, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' }).finished
+          .catch(() => {}).then(() => fantasma.remove());
+      } else siChiude = 0;
+    }
     // e se la nota finisce sotto il bordo dello schermo, la pagina sale quanto basta (non oltre la riga del campo)
-    const sotto = nota.getBoundingClientRect().bottom - (innerHeight - 16);
-    const margine = b.getBoundingClientRect().top - 96;
-    if (sotto > 0 && margine > 0) scrollBy({ top: Math.min(sotto, margine), behavior: ridotto.matches ? 'auto' : 'smooth' });
+    const sotto = nota.getBoundingClientRect().bottom - siChiude - (innerHeight - 16);
+    const margine = b.getBoundingClientRect().top - siChiude - 96;
+    if (sotto > 0 && margine > 0) scorri(Math.min(sotto, margine), ridotto.matches);
     const [d] = await Promise.all([linee(), controllo ? controllo.ferma() : null]);
     if (mio !== turno) return;
     const misura = d?.misure?.[b.dataset.guida];

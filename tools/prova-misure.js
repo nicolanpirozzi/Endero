@@ -211,6 +211,35 @@ const FORMATI = [
     await a.contesto.close();
   }
 
+  for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'palco')) {
+    // in cima alla pagina, una nota aperta più su: la «i» cliccata più giù non salta sotto il puntatore (il posto della
+    // nota vecchia si chiude piano); e cliccando mentre la rotella sta finendo la sua corsa la nota arriva lo stesso in vista
+    const a = await nuovo(opzioni), { page } = a;
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(500);
+    await page.click('[data-guida="giro_collo"]');
+    await page.waitForTimeout(1200);
+    const sotto = await page.evaluate(() => { const b = [...document.querySelectorAll('.misura__info')].find((x) => { const r = x.getBoundingClientRect(); return r.top > innerHeight * 0.45 && r.bottom < innerHeight - 10; }); return b?.dataset.guida; });
+    if (sotto) {
+      const primaY = await page.evaluate((m) => document.querySelector(`[data-guida="${m}"]`).getBoundingClientRect().top, sotto);
+      await page.click(`[data-guida="${sotto}"]`);
+      const dopoY = await page.evaluate((m) => new Promise((f) => requestAnimationFrame(() => f(document.querySelector(`[data-guida="${m}"]`).getBoundingClientRect().top))), sotto);
+      controlla(`${nome}: in cima alla pagina, da giro collo a ${sotto}: la «i» non salta sotto il puntatore`, Math.abs(dopoY - primaY) <= 4, JSON.stringify({ primaY: Math.round(primaY), dopoY: Math.round(dopoY) }));
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(700);
+    await page.evaluate(() => { const b = document.querySelector('[data-guida="polso"]'); scrollBy(0, b.getBoundingClientRect().bottom - innerHeight + 120); });
+    await page.waitForTimeout(1200);
+    await page.mouse.move(opzioni.viewport.width - 250, opzioni.viewport.height / 2);
+    await page.mouse.wheel(0, 100);
+    await page.waitForTimeout(300);
+    await page.click('[data-guida="polso"]');
+    await page.waitForTimeout(1800);
+    const v = await page.evaluate(() => { const n = document.querySelector('.configura__nota-guida:not([hidden])'); return { nota: n ? Math.round(n.getBoundingClientRect().bottom) : null, alto: innerHeight, testata: document.querySelector('[data-stato]')?.dataset.stato || '' }; });
+    controlla(`${nome}: clic sulla «i» mentre la rotella finisce la corsa: la nota arriva in vista, la testata non torna`, v.nota != null && v.nota <= v.alto + 1 && v.testata !== 'barra', JSON.stringify(v));
+    await a.contesto.close();
+  }
+
   // ---------------------------------------------------------------- 3. le «i» nella finestra (telefono, tablet)
   console.log('Le «i» nella finestra sopra il modulo');
   for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'finestra')) {

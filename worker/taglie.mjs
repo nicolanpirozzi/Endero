@@ -78,7 +78,15 @@ export function leggiConfigurazione(testo) {
     const riga = c.misure[v.campo];
     if (!Array.isArray(riga) || riga.length !== c.taglie.length || !riga.every(finito)) throw new Error(`Nella configurazione delle taglie la misura "${v.campo}" deve avere un numero per ogni taglia.`);
   }
-  return { taglie: c.taglie, misure: c.misure, regole: c.regole && typeof c.regole === 'object' ? c.regole : {} };
+  const regole = c.regole && typeof c.regole === 'object' ? c.regole : {};
+  // la soglia scritta male (un testo, un nome di misura che non c'è) si dice subito, invece di essere ignorata
+  const v = regole.verifica;
+  if (v != null) {
+    const campi = new Set(CONFRONTATE.map((x) => x.campo));
+    const buona = finito(v) || (typeof v === 'object' && !Array.isArray(v) && Object.entries(v).every(([k, n]) => campi.has(k) && finito(n)));
+    if (!buona) throw new Error(`Nella configurazione delle taglie "regole.verifica" deve essere un numero o un elenco { misura: numero } con le misure: ${[...campi].join(', ')}.`);
+  }
+  return { taglie: c.taglie, misure: c.misure, regole };
 }
 
 /**
@@ -142,7 +150,8 @@ export function scegliTaglia(misure, configurazione) {
     const cm = Math.sign(differenza) * Math.max(passo, Math.round(Math.abs(differenza) / passo) * passo);
     variazioni.push({ campo: v.campo, voce: v.riga, cm });
   }
-  // la soglia del sarto: un numero per tutte le misure, o uno per misura ({ manica: 6, torace: 4 }). Finché non c'è,
+  // la soglia del sarto: un numero per tutte le misure, o uno per misura con i nomi dei campi ({ lunghezza_manica: 6,
+  // torace: 4 }). Finché non c'è,
   // ogni ordine con variazioni arriva da verificare: un numero del sarto non si inventa
   const sogliaDi = (campo) => (finito(regole.verifica) ? regole.verifica : regole.verifica && typeof regole.verifica === 'object' && finito(regole.verifica[campo]) ? regole.verifica[campo] : null);
   const grandi = variazioni.filter((v) => sogliaDi(v.campo) != null && Math.abs(v.cm) >= sogliaDi(v.campo));

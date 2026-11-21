@@ -112,6 +112,12 @@ controlla('senza soglia del sarto: una variazione segna l\'ordine da verificare,
 controlla('senza soglia del sarto: chi veste una taglia esatta non è da verificare', !scegliTaglia(corpo(41), senzaSoglia).daVerificare);
 r = scegliTaglia({ ...corpo(41), lunghezza_manica: corpo(41).lunghezza_manica - 3 }, { ...finta, regole: { verifica: { lunghezza_manica: 2 } } });
 controlla('soglia per misura: manica −3 con soglia 2 della manica è da verificare', r.daVerificare && r.motivi.some((x) => x.includes('variazione grande')), r.motivi.join('; '));
+let sbagliata = '';
+try { leggiConfigurazione({ taglie: finta.taglie, misure: finta.misure, regole: { verifica: { manica: 6 } } }); } catch (e) { sbagliata = e.message; }
+controlla('soglia con un nome di misura che non c\'è: la configurazione lo dice subito', /regole\.verifica/.test(sbagliata), sbagliata);
+sbagliata = '';
+try { leggiConfigurazione({ taglie: finta.taglie, misure: finta.misure, regole: { verifica: '6' } }); } catch (e) { sbagliata = e.message; }
+controlla('soglia scritta come testo: la configurazione lo dice subito', /regole\.verifica/.test(sbagliata), sbagliata);
 
 console.log('Come arriva scritto');
 controlla('"41,5" con la virgola', centimetri('41,5') === 41.5 && centimetri(' 104 ') === 104 && centimetri('abc') === undefined && centimetri('') === undefined);
