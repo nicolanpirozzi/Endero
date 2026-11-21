@@ -219,7 +219,13 @@ const FORMATI = [
     await page.waitForTimeout(500);
     await page.click('[data-guida="giro_collo"]');
     await page.waitForTimeout(1200);
-    const sotto = await page.evaluate(() => { const b = [...document.querySelectorAll('.misura__info')].find((x) => { const r = x.getBoundingClientRect(); return r.top > innerHeight * 0.45 && r.bottom < innerHeight - 10; }); return b?.dataset.guida; });
+    // una «i» in una riga sotto la nota aperta, già nello schermo
+    const sotto = await page.evaluate(() => {
+      const n = document.querySelector('.configura__nota-guida:not([hidden])')?.getBoundingClientRect();
+      const b = n && [...document.querySelectorAll('.misura__info')].find((x) => { const r = x.getBoundingClientRect(); return r.top > n.bottom && r.bottom < innerHeight - 10; });
+      return b?.dataset.guida;
+    });
+    if (!sotto) console.log(`  --  ${nome}: in cima alla pagina nessuna «i» sotto la nota è nello schermo: controllo saltato`);
     if (sotto) {
       const primaY = await page.evaluate((m) => document.querySelector(`[data-guida="${m}"]`).getBoundingClientRect().top, sotto);
       await page.click(`[data-guida="${sotto}"]`);
