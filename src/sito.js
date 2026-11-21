@@ -280,7 +280,9 @@ function selettore() {
   const nav = document.querySelector('[data-selettore]');
   if (!nav) return;
   const voci = [...nav.querySelectorAll('[data-voce]')];
-  const sezioni = [...document.querySelectorAll('[data-gruppo]')];
+  // contano solo le sezioni che hanno una voce nel selettore: il piè di pagina («Dove siamo») non ce l'ha più
+  // dal 2026-11-20, e arrivati in fondo resta accesa l'ultima voce
+  const sezioni = [...document.querySelectorAll('[data-gruppo]')].filter((s) => voci.some((v) => v.dataset.voce === s.dataset.gruppo));
   const apri = nav.querySelector('.selettore__apri');
   const attuale = nav.querySelector('[data-selettore-attuale]');
   let gruppo = '';

@@ -55,7 +55,7 @@
       "id": "rivenditore-endero",
       "etichetta": "Rivenditore Endero",
       "interesse": "Rivenditore Endero",
-      "titolo": "Camicie e capi uomo all'ingrosso, a marchio Endero",
+      "titolo": "Camicie e capi uomo a marchio Endero",
       "testo": "Porta nel tuo negozio la collezione Endero: camicie e capi uomo fatti in Italia, con il nostro marchio. Listino e condizioni te li mandiamo per email dopo la richiesta.",
       "foto": "La collezione in un negozio, foto orizzontale",
       "immagine": { "file": "negozio-capi", "alt": "Giacche appese in primo piano nel negozio Endero, con le buste del marchio sugli scaffali" }
@@ -65,16 +65,16 @@
       "etichetta": "Conto terzi",
       "interesse": "Produzione conto terzi",
       "titolo": "Produzione conto terzi, con il tuo marchio",
-      "testo": "I capi li produce Endero, ma portano il marchio del tuo negozio o della tua azienda, non il nostro. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto.",
+      "testo": "Noi realizziamo i capi ma con il marchio del tuo brand o della tua azienda. Modelli, tessuti e quantità li definiamo insieme dopo il primo contatto.",
       "foto": "Etichetta di un cliente cucita su una camicia",
       "immagine": { "file": "etichetta-gruccia", "alt": "Una camicia bianca su una gruccia di legno, con l'etichetta cucita nel collo" }
     },
     {
       "id": "su-misura",
-      "etichetta": "In più",
+      "etichetta": "Servizi esclusivi",
       "interesse": "Su misura per i miei clienti",
-      "titolo": "Su misura per i tuoi clienti",
-      "testo": "Un servizio in più, qualunque strada tu scelga: tu prendi le misure ai tuoi clienti, noi cuciamo la camicia. Offri il su misura nel tuo negozio senza avere un laboratorio.",
+      "titolo": "Il su misura per i tuoi clienti",
+      "testo": "Un servizio in più da offrire ai tuoi clienti: tu prendi le misure e noi realizziamo il tuo capo personalizzato. Offri il su misura nel tuo negozio, al resto ci pensiamo noi.",
       "foto": "Una camicia su misura consegnata in negozio",
       "immagine": { "file": "giacca-in-prova", "alt": "Una giacca gessata in prova su un manichino, con il metro da sarto sul rever" }
     }

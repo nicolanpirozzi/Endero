@@ -834,7 +834,9 @@ body[data-barra] .selettore {
   margin-bottom: 60px;
 }
 
-#su-misura {
+/* la sezione del su misura in pagina iniziale. Solo la sezione: nella pagina dei rivenditori anche il capitolo del
+   su misura si chiama così, e lo spazio in più lo allontanava dagli altri due */
+.sezione#su-misura {
   padding-top: 96px;
 }
 
@@ -3524,7 +3526,7 @@ html.dialogo-aperto {
     padding-top: var(--spazio-sezione);
   }
 
-  #su-misura {
+  .sezione#su-misura {
     padding-top: 112px;
   }
 

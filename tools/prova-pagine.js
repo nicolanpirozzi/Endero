@@ -262,7 +262,11 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
       h1: document.querySelectorAll('h1').length, testo: document.body.textContent.toLowerCase(),
     }));
     controlla(`${nome}: la pagina si apre con le due scelte, che portano ai loro capitoli`, JSON.stringify(p.schede) === JSON.stringify(DUE.map(([n, id]) => [n, '#' + id])), JSON.stringify(p.schede));
-    controlla(`${nome}: tre capitoli: le due strade e, in più, il su misura per i clienti del negozio`, p.capitoli.map((c) => c[0]).join() === 'rivenditore-endero,conto-terzi,su-misura' && /in più/i.test(p.capitoli[2][1]), JSON.stringify(p.capitoli));
+    // dal 2026-11-21 il terzo si chiama «Servizi esclusivi» (proprietario)
+    controlla(`${nome}: tre capitoli: le due strade e i servizi esclusivi (il su misura per i clienti del negozio)`, p.capitoli.map((c) => c[0]).join() === 'rivenditore-endero,conto-terzi,su-misura' && /servizi esclusivi/i.test(p.capitoli[2][1]), JSON.stringify(p.capitoli));
+    // i tre capitoli sono alla stessa distanza l'uno dall'altro (il terzo aveva 96 punti in più sopra)
+    const distanze = await page.evaluate(() => { const k = [...document.querySelectorAll('.capitoli--rivenditori .capitolo')].map((x) => [x.querySelector('.capitolo__foto').getBoundingClientRect().top, x.getBoundingClientRect().bottom]); return k.slice(1).map((x, i) => Math.round(x[0] - k[i][1])); });
+    controlla(`${nome}: i tre capitoli sono alla stessa distanza`, distanze.length === 2 && distanze[0] === distanze[1], distanze.join(' e '));
     controlla(`${nome}: nel modulo si sceglie tra le stesse voci`, JSON.stringify(p.voci) === JSON.stringify(['Rivenditore Endero', 'Produzione conto terzi', 'Su misura per i miei clienti']), JSON.stringify(p.voci));
     controlla(`${nome}: un solo titolo principale, e «white label» non compare`, p.h1 === 1 && !p.testo.includes('white label'));
     // la scritta grande di ogni capitolo: nessuna parola spezzata a metà (ogni parola sta su una riga sola)
