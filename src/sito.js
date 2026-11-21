@@ -24,6 +24,8 @@ function scorrimento() {
     if (corsa) corsa.fermata = true;
     if (guidato) { clearTimeout(fineGuida); guidato = false; }
   });
+  // le finestre aperte da altri script (la guida alle misure del configuratore) fermano la pagina sotto di sé
+  document.addEventListener('endero:blocca', (e) => { if (e.detail) lenis.stop(); else lenis.start(); });
 }
 
 // Durante uno scorrimento guidato (selettore, collegamenti interni) la testata non torna come barra:

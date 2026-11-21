@@ -17,7 +17,6 @@ function controlla(nome, vero, dettaglio = '') {
 
 const TAGLIE = [38, 39, 40, 41, 42, 43, 44, 45];
 const cresce = (da, passo) => TAGLIE.map((_, i) => Math.round((da + passo * i) * 10) / 10);
-const AGIO = { giro_collo: 1, spalla: 0, spallina: 0, torace: 10, pancia: 10, bacino: 8, lunghezza_manica: 2, braccio: 6, avambraccio: 5, lunghezza_davanti: 0, lunghezza_dietro: 0 };
 const finta = leggiConfigurazione(JSON.stringify({
   taglie: TAGLIE,
   misure: {
@@ -25,15 +24,18 @@ const finta = leggiConfigurazione(JSON.stringify({
     lunghezza_manica: cresce(64, 1), braccio: cresce(34, 1.5), avambraccio: cresce(28, 1),
     lunghezza_davanti: cresce(66, 1), lunghezza_dietro: cresce(76, 1.5),
   },
-  regole: { agio: AGIO, verifica: 8 },
+  regole: { verifica: 8 },
 }));
-/** Il corpo di chi veste esattamente una taglia: la camicia campione meno l'agio. */
-function corpo(taglia, configurazione = finta, agio = AGIO) {
+/**
+ * Le misure che scrive chi ha in mano la camicia campione di una taglia, stesa su un tavolo: le lunghezze come sono,
+ * e dove si misura una larghezza (torace, pancia, bacino, braccio, avambraccio) la metà del giro.
+ */
+function corpo(taglia, configurazione = finta) {
   const i = configurazione.taglie.indexOf(taglia), m = { polso: 17 };
   for (const v of VOCI) {
     if (v.confronto === false) continue;
     const campione = v.campo === 'giro_collo' ? configurazione.taglie : configurazione.misure[v.campo];
-    m[v.campo] = Math.round((campione[i] - (agio[v.campo] || 0)) * 100) / 100;
+    m[v.campo] = Math.round((v.giro ? campione[i] / 2 : campione[i]) * 100) / 100;
   }
   return m;
 }
@@ -53,14 +55,23 @@ controlla('le variazioni escono anche come dati', r.variazioni.length === 2 && r
 
 console.log('Mezzo centimetro');
 const con = (campo, piu) => { const x = { ...corpo(41) }; x[campo] = Math.round((x[campo] + piu) * 100) / 100; return scegliTaglia(x, finta).riga; };
-controlla('+0,4 non si scrive', con('torace', 0.4) === 'Taglia 41', con('torace', 0.4));
-controlla('+0,5 si scrive', con('torace', 0.5) === 'Taglia 41 · torace +0,5 cm', con('torace', 0.5));
-controlla('+0,7 diventa +0,5', con('torace', 0.7) === 'Taglia 41 · torace +0,5 cm', con('torace', 0.7));
-controlla('+0,8 diventa +1', con('torace', 0.8) === 'Taglia 41 · torace +1 cm', con('torace', 0.8));
-controlla('+1,5 resta +1,5', con('torace', 1.5) === 'Taglia 41 · torace +1,5 cm', con('torace', 1.5));
-controlla('−1,3 diventa −1,5', con('bacino', -1.3) === 'Taglia 41 · bacino −1,5 cm', con('bacino', -1.3));
-controlla('−0,4 non si scrive', con('bacino', -0.4) === 'Taglia 41', con('bacino', -0.4));
-controlla('−1,25 e +1,25 si arrotondano allo stesso modo', con('pancia', -1.25) === 'Taglia 41 · pancia −1,5 cm' && con('pancia', 1.25) === 'Taglia 41 · pancia +1,5 cm', con('pancia', -1.25) + ' / ' + con('pancia', 1.25));
+controlla('+0,4 non si scrive', con('spalla', 0.4) === 'Taglia 41', con('spalla', 0.4));
+controlla('+0,5 si scrive', con('spalla', 0.5) === 'Taglia 41 · spalla +0,5 cm', con('spalla', 0.5));
+controlla('+0,7 diventa +0,5', con('spalla', 0.7) === 'Taglia 41 · spalla +0,5 cm', con('spalla', 0.7));
+controlla('+0,8 diventa +1', con('spalla', 0.8) === 'Taglia 41 · spalla +1 cm', con('spalla', 0.8));
+controlla('+1,5 resta +1,5', con('spalla', 1.5) === 'Taglia 41 · spalla +1,5 cm', con('spalla', 1.5));
+controlla('−1,3 diventa −1,5', con('lunghezza_davanti', -1.3) === 'Taglia 41 · lunghezza davanti −1,5 cm', con('lunghezza_davanti', -1.3));
+controlla('−0,4 non si scrive', con('lunghezza_davanti', -0.4) === 'Taglia 41', con('lunghezza_davanti', -0.4));
+controlla('−1,25 e +1,25 si arrotondano allo stesso modo', con('lunghezza_dietro', -1.25) === 'Taglia 41 · lunghezza dietro −1,5 cm' && con('lunghezza_dietro', 1.25) === 'Taglia 41 · lunghezza dietro +1,5 cm', con('lunghezza_dietro', -1.25) + ' / ' + con('lunghezza_dietro', 1.25));
+
+console.log('Le larghezze della camicia stesa');
+// il cliente scrive la metà del giro: un centimetro in più sul metro sono due centimetri di giro
+controlla('torace stesa +1 cm: torace +2 cm', con('torace', 1) === 'Taglia 41 · torace +2 cm', con('torace', 1));
+controlla('torace stesa +0,2 cm: +0,4 di giro, non si scrive', con('torace', 0.2) === 'Taglia 41', con('torace', 0.2));
+controlla('torace stesa +0,3 cm: +0,6 di giro, diventa +0,5', con('torace', 0.3) === 'Taglia 41 · torace +0,5 cm', con('torace', 0.3));
+controlla('braccio stesa −1,5 cm: braccio −3 cm', con('braccio', -1.5) === 'Taglia 41 · braccio −3 cm', con('braccio', -1.5));
+controlla('il giro collo non si raddoppia', con('giro_collo', 1) === 'Taglia 41 · collo +1 cm', con('giro_collo', 1));
+controlla('le lunghezze non si raddoppiano', con('lunghezza_manica', 2) === 'Taglia 41 · manica +2 cm', con('lunghezza_manica', 2));
 
 console.log('Tutte le misure insieme');
 m = { ...corpo(42) }; m.giro_collo = corpo(40).giro_collo;
@@ -88,9 +99,10 @@ controlla('manica −9 con soglia 8: da verificare, e dice quale', r.daVerificar
 m = { ...corpo(41) }; delete m.bacino; delete m.avambraccio;
 r = scegliTaglia(m, finta);
 controlla('misure non scritte: calcola lo stesso e lo segnala', r.taglia === 41 && r.daVerificare && r.motivi.some((x) => x.includes('bacino') && x.includes('avambraccio')), r.motivi.join('; '));
-const senza = leggiConfigurazione({ taglie: finta.taglie, misure: finta.misure, regole: { agio: { giro_collo: 1 } } });
-r = scegliTaglia(corpo(41), senza);
-controlla('agio non impostato: lo dice, non fa finta di niente', r.daVerificare && r.motivi.some((x) => x.includes('agio non ancora impostato') && x.includes('torace')), r.motivi.join('; '));
+// un vecchio agio rimasto nella configurazione non cambia niente: le misure sono già quelle di una camicia
+const vecchia = leggiConfigurazione({ taglie: finta.taglie, misure: finta.misure, regole: { agio: { giro_collo: 1, torace: 10 } } });
+r = scegliTaglia(corpo(41), vecchia);
+controlla('un vecchio agio nella configurazione non conta', r.riga === 'Taglia 41' && !r.daVerificare, r.riga + ' ' + r.motivi.join('; '));
 r = scegliTaglia({}, finta);
 controlla('nessuna misura: nessuna taglia, da verificare', r.taglia === null && r.daVerificare);
 
@@ -102,7 +114,7 @@ m = { ...corpo(41) }; m.taglia = m.giro_collo; delete m.giro_collo;
 controlla('vale anche il vecchio nome «taglia» per il giro collo', scegliTaglia(m, finta).riga === 'Taglia 41', scegliTaglia(m, finta).riga);
 m = { ...corpo(41) }; m.giro_collo += 2; m.lunghezza_manica -= 9;
 const blocco = perIlReparto(m, finta).testo.split('\n');
-controlla('per il reparto: riga, avviso, misure del cliente', blocco.length === 3 && blocco[0].startsWith('Taglia 41 · collo +2 cm') && blocco[1].startsWith('DA VERIFICARE CON IL CLIENTE: ') && blocco[2].startsWith('Misure scritte dal cliente: giro collo 42 · spalla 47'), blocco.join(' | '));
+controlla('per il reparto: riga, avviso, misure della camicia con i giri', blocco.length === 3 && blocco[0].startsWith('Taglia 41 · collo +2 cm') && blocco[1].startsWith('DA VERIFICARE CON IL CLIENTE: ') && blocco[2].startsWith('Misure della camicia del cliente: giro collo 43 · spalla 47 · spallina 16,5 · torace 56 (giro 112)'), blocco.join(' | '));
 controlla('senza variazioni grandi niente avviso', perIlReparto(corpo(41), finta).testo.split('\n').length === 2);
 
 console.log('Configurazione sbagliata');
@@ -116,14 +128,11 @@ controlla('una misura che manca', rifiuta({ taglie: TAGLIE, misure: { ...finta.m
 if (process.argv[2]) {
   console.log('Configurazione vera');
   const vera = leggiConfigurazione(readFileSync(process.argv[2], 'utf8'));
-  const agio = vera.regole.agio || {};
   controlla(`si legge: ${vera.taglie.length} taglie`, vera.taglie.length >= 2);
   for (const t of vera.taglie) {
-    const x = scegliTaglia(corpo(t, vera, agio), vera);
+    const x = scegliTaglia(corpo(t, vera), vera);
     controlla(`la camicia campione della ${t} ritrova «Taglia ${t}»`, x.riga === `Taglia ${t}`, x.riga);
   }
-  const mancano = VOCI.filter((v) => v.confronto !== false && !(typeof agio[v.campo] === 'number')).map((v) => v.campo);
-  console.log(mancano.length ? `  (agio ancora da impostare: ${mancano.join(', ')})` : '  (agio impostato per tutte le misure)');
 }
 
 console.log(`\n${passati} controlli passati, ${falliti.length} falliti`);

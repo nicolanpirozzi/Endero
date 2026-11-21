@@ -2,8 +2,10 @@
 // che il reparto legge nell'ordine: «Taglia 41 · collo +2 cm · manica −6 cm».
 //
 // Regole confermate dal titolare di Endero (novembre 2026):
-// - il cliente misura il proprio corpo; i fogli riportano la camicia campione di ogni taglia: prima del confronto
-//   a ogni misura del cliente si aggiunge l'agio, che decide il sarto;
+// - i fogli riportano la camicia campione di ogni taglia; dal 2026-11-21 (il sarto, tramite il proprietario) anche il
+//   cliente misura una camicia, quella che gli sta meglio, abbottonata e stesa su un tavolo: il confronto è diretto,
+//   senza agio. Dove si misura una larghezza (torace, pancia, bacino, braccio, avambraccio) il cliente scrive quella
+//   della camicia stesa e qui la si raddoppia, perché i fogli riportano il giro intero;
 // - la taglia si sceglie con tutte le misure insieme, e pesano di più collo, spalle e torace;
 // - la taglia è il giro collo in centimetri (41 = 41 cm);
 // - una differenza diventa variazione da mezzo centimetro in su, arrotondata al mezzo centimetro;
@@ -16,17 +18,20 @@
 // configurazione riservata del Worker (un JSON, vedi `leggiConfigurazione`), mai nel repository.
 // Scelte nostre, da far vedere al sarto: come si misura "la più vicina" (vedi `scegliTaglia`) e il peso doppio.
 
-/** Le misure del riquadro, nell'ordine del foglio. `riga` è il nome nella riga per il reparto. */
+/**
+ * Le misure del riquadro, nell'ordine del foglio. `riga` è il nome nella riga per il reparto; `giro`: il cliente scrive
+ * la larghezza della camicia stesa, che si raddoppia per avere il giro (contenuti/it/configuratore.json, campi con giro).
+ */
 export const VOCI = [
   { campo: 'giro_collo', nome: 'Giro collo', riga: 'collo', peso: 2 },
   { campo: 'spalla', nome: 'Spalla', riga: 'spalla', peso: 2 },
   { campo: 'spallina', nome: 'Spallina', riga: 'spallina', peso: 1 },
-  { campo: 'torace', nome: 'Torace', riga: 'torace', peso: 2 },
-  { campo: 'pancia', nome: 'Pancia', riga: 'pancia', peso: 1 },
-  { campo: 'bacino', nome: 'Bacino', riga: 'bacino', peso: 1 },
+  { campo: 'torace', nome: 'Torace', riga: 'torace', peso: 2, giro: true },
+  { campo: 'pancia', nome: 'Pancia', riga: 'pancia', peso: 1, giro: true },
+  { campo: 'bacino', nome: 'Bacino', riga: 'bacino', peso: 1, giro: true },
   { campo: 'lunghezza_manica', nome: 'Lunghezza manica', riga: 'manica', peso: 1 },
-  { campo: 'braccio', nome: 'Braccio', riga: 'braccio', peso: 1 },
-  { campo: 'avambraccio', nome: 'Avambraccio', riga: 'avambraccio', peso: 1 },
+  { campo: 'braccio', nome: 'Braccio', riga: 'braccio', peso: 1, giro: true },
+  { campo: 'avambraccio', nome: 'Avambraccio', riga: 'avambraccio', peso: 1, giro: true },
   { campo: 'polso', nome: 'Polso', riga: 'polso', confronto: false },
   { campo: 'lunghezza_davanti', nome: 'Lunghezza davanti', riga: 'lunghezza davanti', peso: 1 },
   { campo: 'lunghezza_dietro', nome: 'Lunghezza dietro', riga: 'lunghezza dietro', peso: 1 },
@@ -44,6 +49,9 @@ export function centimetri(v) {
   return parseFloat(t);
 }
 
+/** La misura della camicia del cliente come la riportano i fogli: le larghezze diventano giri. */
+const comeIlFoglio = (v, cm) => (v.giro ? cm * 2 : cm);
+
 /** 2 → "2", 1.5 → "1,5". */
 const cifra = (n) => String(Math.round(n * 100) / 100).replace('.', ',');
 /** +2 → "+2 cm", -6 → "−6 cm" (con il segno meno vero, come nell'esempio del titolare). */
@@ -54,8 +62,7 @@ const conSegno = (n) => `${n < 0 ? '−' : '+'}${cifra(Math.abs(n))} cm`;
  *   taglie   [38, 39, …]                      i numeri delle taglie, in ordine
  *   misure   { spalla: [..], torace: [..] }   per ogni misura confrontata, la camicia campione taglia per taglia
  *                                             (il collo non serve: è il numero della taglia)
- *   regole   { agio: { giro_collo: n, … },    centimetri da aggiungere alla misura del corpo (0 se non serve)
- *              verifica: n,                    da quanti centimetri una variazione va controllata (facoltativo)
+ *   regole   { verifica: n,                    da quanti centimetri una variazione va controllata (facoltativo)
  *              soglia: 0.5, passo: 0.5,        facoltativi
  *              pesi: { campo: n } }            facoltativi: sostituiscono i pesi scritti qui sopra
  * Restituisce la configurazione controllata, o lancia un errore che dice cosa manca.
@@ -79,30 +86,30 @@ export function leggiConfigurazione(testo) {
  * `misure` è ciò che ha scritto il cliente ({ giro_collo: '41', torace: 104.5, … }; vale anche il vecchio nome
  * "taglia" per il giro collo). `configurazione` è quella di `leggiConfigurazione`.
  *
- * Come si misura la taglia più vicina: per ogni taglia, a ogni misura del cliente si aggiunge l'agio e si guarda
- * quanto dista dalla camicia campione. La distanza si conta in taglie, non in centimetri (un centimetro di collo
+ * Come si misura la taglia più vicina: per ogni taglia si guarda quanto ogni misura della camicia del cliente (con le
+ * larghezze raddoppiate) dista dalla camicia campione. La distanza si conta in taglie, non in centimetri (un centimetro di collo
  * è una taglia intera, un centimetro di torace è un quinto di taglia), si moltiplica per il peso della misura e
  * si somma: vince la taglia con la somma più bassa. A parità, quella con il collo più vicino.
  */
 export function scegliTaglia(misure, configurazione) {
   const { taglie, misure: tabella, regole } = configurazione;
   const soglia = finito(regole.soglia) ? regole.soglia : 0.5, passo = finito(regole.passo) ? regole.passo : 0.5;
-  const agio = regole.agio || {}, pesi = regole.pesi || {};
+  // un vecchio `regole.agio` rimasto nella configurazione non conta più: le misure sono già quelle di una camicia
+  const pesi = regole.pesi || {};
   const n = taglie.length;
   const scritte = { ...misure };
   if (scritte.giro_collo == null && scritte.taglia != null) scritte.giro_collo = scritte.taglia;
 
   const motivi = [];
-  const voci = [];           // le misure che entrano nel confronto, già con l'agio
-  const mancanti = [], senzaAgio = [];
+  const voci = [];           // le misure che entrano nel confronto, come le riportano i fogli
+  const mancanti = [];
   for (const v of CONFRONTATE) {
-    const corpo = centimetri(scritte[v.campo]);
-    if (corpo === undefined) { mancanti.push(v.nome.toLowerCase()); continue; }
-    if (!finito(agio[v.campo])) senzaAgio.push(v.nome.toLowerCase());
+    const scritta = centimetri(scritte[v.campo]);
+    if (scritta === undefined) { mancanti.push(v.nome.toLowerCase()); continue; }
     const campione = v.campo === 'giro_collo' && !tabella.giro_collo ? taglie : tabella[v.campo];
     // quanto cambia la misura da una taglia alla successiva, in media: è il metro con cui si contano le distanze
     const scala = Math.abs(campione[n - 1] - campione[0]) / (n - 1);
-    voci.push({ ...v, camicia: corpo + (finito(agio[v.campo]) ? agio[v.campo] : 0), campione, scala, peso: finito(pesi[v.campo]) ? pesi[v.campo] : v.peso });
+    voci.push({ ...v, camicia: comeIlFoglio(v, scritta), campione, scala, peso: finito(pesi[v.campo]) ? pesi[v.campo] : v.peso });
   }
   if (!voci.length) return { taglia: null, variazioni: [], riga: '', daVerificare: true, motivi: ['non c\'è nessuna misura da confrontare'] };
 
@@ -139,17 +146,16 @@ export function scegliTaglia(misure, configurazione) {
     if (grandi.length) motivi.push(`variazione grande: ${grandi.map((v) => `${v.voce} ${conSegno(v.cm)}`).join(', ')}`);
   }
   if (mancanti.length) motivi.push(`misure non scritte: ${mancanti.join(', ')}`);
-  if (senzaAgio.length) motivi.push(`agio non ancora impostato: ${senzaAgio.join(', ')}`);
 
   const riga = [`Taglia ${taglie[scelta]}`, ...variazioni.map((v) => `${v.voce} ${conSegno(v.cm)}`)].join(' · ');
   return { taglia: taglie[scelta], variazioni, riga, daVerificare: motivi.length > 0, motivi };
 }
 
-/** Tutte le misure scritte dal cliente, nell'ordine del foglio: vanno sotto la riga, per controllo. */
+/** Tutte le misure scritte dal cliente, nell'ordine del foglio: vanno sotto la riga, per controllo. `giro`: il doppio. */
 export function misureScritte(misure) {
   const scritte = { ...misure };
   if (scritte.giro_collo == null && scritte.taglia != null) scritte.giro_collo = scritte.taglia;
-  return VOCI.map((v) => ({ nome: v.nome, cm: centimetri(scritte[v.campo]) })).filter((m) => m.cm !== undefined);
+  return VOCI.map((v) => ({ nome: v.nome, cm: centimetri(scritte[v.campo]), ...(v.giro ? { giro: true } : {}) })).filter((m) => m.cm !== undefined);
 }
 
 /** Il blocco di testo per l'ordine che arriva in azienda: la riga, l'eventuale avviso, e sotto le misure del cliente. */
@@ -157,6 +163,7 @@ export function perIlReparto(misure, configurazione) {
   const r = scegliTaglia(misure, configurazione);
   const righe = [r.riga || 'Taglia non calcolata'];
   if (r.daVerificare) righe.push(`DA VERIFICARE CON IL CLIENTE: ${r.motivi.join('; ')}`);
-  righe.push(`Misure scritte dal cliente: ${misureScritte(misure).map((m) => `${m.nome.toLowerCase()} ${cifra(m.cm)}`).join(' · ')}`);
+  // le larghezze come le ha scritte il cliente, e tra parentesi il giro che si confronta con i fogli
+  righe.push(`Misure della camicia del cliente: ${misureScritte(misure).map((m) => `${m.nome.toLowerCase()} ${cifra(m.cm)}${m.giro ? ` (giro ${cifra(m.cm * 2)})` : ''}`).join(' · ')}`);
   return { ...r, testo: righe.join('\n') };
 }

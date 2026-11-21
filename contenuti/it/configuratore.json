@@ -1,10 +1,10 @@
 {
-  "_nota": "Configuratore, passo 1: la camicia appesa (un film calcolato prima) e il riquadro in vetro con i campi del foglio 'Camicie su misura' di Endero. Le misure si compilano; 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. Le righe d'aiuto delle misure sono le note scritte a mano sul foglio: restano tra [[ ]] finché il proprietario non le conferma. 'min' e 'max' sono i limiti che il campo accetta, in centimetri (per la taglia, il numero): scelti da noi, larghi, da rivedere con il sarto. 'domande' sta sotto la camicia e il riquadro: tre risposte per chi cerca la camicia su misura online, scritte da noi il 2026-11-20 solo con ciò che è già deciso (il sarto ricontrolla le misure prima del taglio e scrive su WhatsApp se qualcosa non torna; le misure sono quelle del riquadro; la presa misure in sede). Bozza da far vedere al proprietario. Niente prezzi, tempi, pagamento o consegna finché non sono confermati.",
+  "_nota": "Configuratore, passo 1 e guida alle misure. Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, abbottonata e stesa su un tavolo, non il corpo (il sarto, riferito dal proprietario). Ogni campo ha 'guida', la frase che si legge toccando la «i» (scritta da noi, tra [[ ]] finché il sarto non la conferma nel suo questionario), e 'vista': 'davanti' o 'dietro' (la camicia si gira). 'giro': true vuol dire che il cliente scrive la larghezza della camicia stesa e il calcolo della taglia la raddoppia (worker/taglie.mjs). 'min' e 'max' sono i limiti che il campo accetta, in centimetri, per la camicia stesa: scelti da noi, larghi, da rivedere con il sarto. Le linee tratteggiate stanno in public/camicia/guide.json (camicia/guide/linee.py). 'come_misurare' è la finestra in vetro che si apre ogni volta che si entra (scelta del proprietario): i primi tre passi sono parole sue, il secondo l'abbiamo aggiunto noi per la camicia stesa. 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. 'domande' sta sotto la camicia e il riquadro: risposte scritte da noi solo con ciò che è già deciso. Niente prezzi, tempi, pagamento o consegna finché non sono confermati.",
   "meta": {
     "titolo": "Camicia su misura online · Crea la tua con Endero",
     "briciola": "Crea la tua camicia",
     "servizio": "Camicia su misura online",
-    "descrizione": "Crea online la tua camicia su misura Endero: guardi la camicia, scrivi le tue misure da casa e il sarto le ricontrolla prima del taglio. Fatta in Italia.",
+    "descrizione": "Crea online la tua camicia su misura Endero: misuri la camicia che ti sta meglio e il sarto ricontrolla le misure prima del taglio. Fatta in Italia.",
     "immagine": "/anteprime/configuratore.jpg",
     "immagine_alt": "Camicia bianca a maniche lunghe appesa a una gruccia di legno, davanti a una parete blu"
   },
@@ -15,58 +15,70 @@
   },
   "scheda": {
     "titolo": "La tua camicia su misura",
-    "testo": "Online, da casa: scrivi le tue misure in centimetri, con la virgola se serve.",
+    "testo": "Online, da casa: misura la camicia che ti sta meglio, stesa su un tavolo. In centimetri, con la virgola se serve.",
     "errore_misura": "Scrivi un numero tra {min} e {max}.",
     "gruppi": [
       {
         "id": "misure",
-        "titolo": "Le tue misure",
+        "titolo": "Le misure della tua camicia",
         "tipo": "misure",
         "campi": [
           {
-            "nome": "taglia",
-            "etichetta": "Taglia",
-            "unita": "",
+            "nome": "giro_collo",
+            "etichetta": "Giro collo",
+            "unita": "cm",
             "min": 30,
-            "max": 70
+            "max": 55,
+            "vista": "davanti",
+            "guida": "[[Apri il colletto e stendilo: misura dal centro del bottone alla fine dell'asola.]]"
           },
           {
             "nome": "spalla",
             "etichetta": "Spalla",
             "unita": "cm",
             "min": 30,
-            "max": 70
+            "max": 70,
+            "vista": "dietro",
+            "guida": "[[Gira la camicia sul retro: misura in linea retta da una spalla all'altra, tra le due cuciture dove attaccano le maniche.]]"
           },
           {
             "nome": "spallina",
             "etichetta": "Spallina",
             "unita": "cm",
             "min": 5,
-            "max": 30
+            "max": 30,
+            "vista": "davanti",
+            "guida": "[[Lungo la cucitura della spalla: dal colletto a dove attacca la manica.]]"
           },
           {
             "nome": "torace",
             "etichetta": "Torace",
             "unita": "cm",
-            "min": 60,
-            "max": 180,
-            "aiuto": "[[da sotto il giromanica]]"
+            "min": 30,
+            "max": 90,
+            "giro": true,
+            "vista": "davanti",
+            "guida": "[[Camicia abbottonata: la larghezza appena sotto le maniche, da un fianco all'altro. Scrivi quello che leggi sul metro: la raddoppiamo noi.]]"
           },
           {
             "nome": "pancia",
             "etichetta": "Pancia",
             "unita": "cm",
-            "min": 50,
-            "max": 180,
-            "aiuto": "[[al quarto bottone dal fondo]]"
+            "min": 25,
+            "max": 90,
+            "giro": true,
+            "vista": "davanti",
+            "guida": "[[La larghezza all'altezza del terzo bottone dal fondo, da un fianco all'altro. La raddoppiamo noi.]]"
           },
           {
             "nome": "bacino",
             "etichetta": "Bacino",
             "unita": "cm",
-            "min": 60,
-            "max": 180,
-            "aiuto": "[[al primo bottone dal fondo]]"
+            "min": 30,
+            "max": 90,
+            "giro": true,
+            "vista": "davanti",
+            "guida": "[[La larghezza all'altezza del primo bottone dal fondo, da un fianco all'altro. La raddoppiamo noi.]]"
           },
           {
             "nome": "lunghezza_manica",
@@ -74,44 +86,55 @@
             "unita": "cm",
             "min": 40,
             "max": 95,
-            "aiuto": "[[polso compreso, dalla cucitura della spallina]]"
+            "vista": "davanti",
+            "guida": "[[Dalla cucitura in cima alla spalla, lungo la manica, fino al fondo del polsino.]]"
           },
           {
             "nome": "braccio",
             "etichetta": "Braccio",
             "unita": "cm",
-            "min": 15,
-            "max": 70,
-            "aiuto": "[[a 10 cm dalla cucitura del giromanica]]"
+            "min": 8,
+            "max": 40,
+            "giro": true,
+            "vista": "davanti",
+            "guida": "[[La larghezza della manica stesa, 10 cm sotto l'attaccatura con il corpo. La raddoppiamo noi.]]"
           },
           {
             "nome": "avambraccio",
             "etichetta": "Avambraccio",
             "unita": "cm",
-            "min": 12,
-            "max": 60,
-            "aiuto": "[[a 15 cm dalla cucitura del fintino, con il polso]]"
+            "min": 6,
+            "max": 30,
+            "giro": true,
+            "vista": "davanti",
+            "guida": "[[La larghezza della manica stesa, 15 cm sopra il polsino. La raddoppiamo noi.]]"
           },
           {
             "nome": "polso",
             "etichetta": "Polso",
             "unita": "cm",
-            "min": 10,
-            "max": 40
+            "min": 15,
+            "max": 35,
+            "vista": "davanti",
+            "guida": "[[Apri il polsino e stendilo: dal centro del bottone alla fine dell'asola.]]"
           },
           {
             "nome": "lunghezza_davanti",
             "etichetta": "Lunghezza totale davanti",
             "unita": "cm",
             "min": 50,
-            "max": 120
+            "max": 120,
+            "vista": "davanti",
+            "guida": "[[Sul davanti: dal punto più alto della spalla, accanto al colletto, fino al fondo della camicia.]]"
           },
           {
             "nome": "lunghezza_dietro",
             "etichetta": "Lunghezza totale dietro",
             "unita": "cm",
             "min": 50,
-            "max": 120
+            "max": 120,
+            "vista": "dietro",
+            "guida": "[[Sul retro: dalla cucitura del colletto, al centro, fino al fondo della camicia.]]"
           }
         ]
       },
@@ -223,18 +246,32 @@
       }
     ],
     "continua": "Continua",
-    "continua_nota": "Per ora il modulo non invia nulla."
+    "continua_nota": "Per ora il modulo non invia nulla.",
+    "come_misurare": {
+      "titolo": "Come prendere le misure",
+      "passi": [
+        "Indossa la camicia che ti sta meglio.",
+        "Toglila, abbottonala e stendila su un tavolo, ben distesa.",
+        "Armati di un metro.",
+        "Prendi le misure come indicato per ogni campo: tocca la «i» per vedere dove."
+      ],
+      "inizia": "Inizia",
+      "riapri": "Come misurare",
+      "chiudi": "Chiudi",
+      "info": "Dove si misura: {etichetta}",
+      "sul_retro": "Sul retro della camicia"
+    }
   },
   "domande": {
     "titolo": "Camicia su misura online: come funziona",
     "voci": [
       {
-        "domanda": "Come do le mie misure da casa?",
-        "risposta": "Le scrivi in questa pagina, in centimetri. Il sarto le ricontrolla prima del taglio e, se qualcosa non torna, ti scrive su WhatsApp."
+        "domanda": "Come do le misure da casa?",
+        "risposta": "Prendi la camicia che ti sta meglio, abbottonala e stendila su un tavolo: poi misurala come indicato in ogni campo. Il sarto ricontrolla le misure prima del taglio e, se qualcosa non torna, ti scrive su WhatsApp."
       },
       {
         "domanda": "Quali misure devo prendere?",
-        "risposta": "La taglia (il giro del collo), spalla, spallina, torace, pancia, bacino, lunghezza della manica, braccio, avambraccio, polso e lunghezza della camicia, davanti e dietro."
+        "risposta": "Quelle della camicia che ti sta meglio: giro collo, spalla, spallina, torace, pancia, bacino, lunghezza della manica, braccio, avambraccio, polso e lunghezza della camicia, davanti e dietro."
       },
       {
         "domanda": "E se preferisco farmi prendere le misure?",

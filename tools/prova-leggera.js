@@ -8,7 +8,9 @@
 const { chromium } = require('playwright');
 
 const BASE = (process.argv[2] || 'http://localhost:8766').replace(/\/$/, '');
-const PAGINA = BASE + '/camicie-su-misura/configuratore/';
+// ?senza-passi: la finestra dei passi per prendere le misure (guida.js) non si apre da sola; qui si prova la camicia,
+// e la finestra la prova tools/prova-misure.js
+const PAGINA = BASE + '/camicie-su-misura/configuratore/?senza-passi';
 let falliti = 0, fatti = 0;
 const vedi = (ok, cosa, dettaglio = '') => { fatti++; if (!ok) falliti++; console.log(`${ok ? '  ok ' : '  NO '} ${cosa}${dettaglio ? ' · ' + dettaglio : ''}`); };
 
@@ -47,7 +49,7 @@ const SCHERMI = [
     page.on('pageerror', (e) => errori.push(String(e)));
     let peso = 0;
     page.on('response', async (r) => { if (r.url().includes('/camicia/leggera/')) { try { peso += (await r.body()).length; } catch { /* la pagina si è chiusa */ } } });
-    await page.goto(PAGINA + '?manuale', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '&manuale', { waitUntil: 'networkidle' });
     const pronta = await page.waitForFunction(() => window.__camicia && document.querySelector('.configura__posa--strati.configura__posa--viva'), null, { timeout: 15000 }).then(() => true, () => false);
     vedi(pronta, 'i pezzi si caricano e compaiono', `${Math.round(peso / 1024)} KB`);
     if (!pronta) { await ctx.close(); continue; }
@@ -165,7 +167,7 @@ const SCHERMI = [
     const errori = [];
     page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
     page.on('pageerror', (e) => errori.push(String(e)));
-    await page.goto(PAGINA + '?comunque&manuale', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '&comunque&manuale', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => window.__camicia && 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
     const ferma = () => page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 4000); return n * 16.67 / 1000; });
     const c = await page.evaluate(() => { const t = document.querySelector('canvas.configura__onda'), r = document.querySelectorAll('.configura__strati img')[2].getBoundingClientRect(); return { tela: !!t, nascosta: getComputedStyle(document.querySelectorAll('.configura__strati img')[2]).visibility === 'hidden', onda: window.__camicia.onda, r: [r.left, r.top, r.width, r.height], larga: document.documentElement.scrollWidth }; });
@@ -196,7 +198,7 @@ const SCHERMI = [
     const errori = [];
     page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
     page.on('pageerror', (e) => errori.push(String(e)));
-    await page.goto(PAGINA + '?rigida&manuale', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '&rigida&manuale', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => window.__camicia && 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
     const c = await page.evaluate(() => { const im = document.querySelectorAll('.configura__strati img')[2], r = im.getBoundingClientRect(); return { tele: document.querySelectorAll('canvas').length, visibile: getComputedStyle(im).visibility === 'visible', onda: window.__camicia.onda, r: [r.left, r.top, r.width, r.height] }; });
     vedi(c.tele === 0 && c.visibile && c.onda === null, `${nome}: niente stoffa, la camicia è l'immagine ritagliata`);
@@ -232,7 +234,7 @@ const SCHERMI = [
   // Quanti fotogrammi al secondo. Il browser di prova non ha scheda grafica e disegna tutto col processore: la camicia
   // rigida (immagini spostate) deve andare liscia anche così; il tessuto che ondeggia qui va lento per forza, e allora
   // deve rinunciare da solo e lasciare il posto alla camicia rigida. Su una scheda grafica vera lo giudica il proprietario.
-  for (const [titolo, domanda, stoffa] of [['fluidità della camicia rigida', '?rigida', false], ['il tessuto, se va lento, rinuncia da solo', '?comunque', true]]) {
+  for (const [titolo, domanda, stoffa] of [['fluidità della camicia rigida', '&rigida', false], ['il tessuto, se va lento, rinuncia da solo', '&comunque', true]]) {
     console.log(titolo);
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 790 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();

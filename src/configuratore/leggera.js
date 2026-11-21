@@ -46,9 +46,14 @@ const stringi = (v, a, b) => Math.max(a, Math.min(b, v));
  * @param {string} dove        la cartella dei file, per esempio "/camicia/leggera/"
  * @param {string} versione    l'impronta dei file, messa dal build: quando i pezzi si rifanno il browser non usa i vecchi
  * @param {object} tessuto     { onda: quanto ondeggia il tessuto (0 no, 1 la misura scelta dal proprietario; vedi onda.js),
- *                             comunque: anche senza accelerazione grafica (per i controlli) }
+ *                             comunque: anche senza accelerazione grafica (per i controlli),
+ *                             aspetta: una promessa; il saluto della camicia aspetta che si compia (la finestra dei
+ *                             passi per prendere le misure, che si apre sopra la pagina: sotto, il saluto non si vedrebbe) }
+ * @returns {Promise<{ ferma: () => Promise<void>, riparti: () => void } | undefined>} per la guida alle misure (guida.js):
+ *   `ferma` raddrizza la camicia e smette di farla rispondere alla mano, `riparti` la fa rispondere di nuovo.
+ *   Niente (undefined) dove la camicia che si muove non c'è: resta l'immagine ferma, che è già dritta.
  */
-export async function leggera(palco, dove, versione = '', { onda = 0, comunque = false } = {}) {
+export async function leggera(palco, dove, versione = '', { onda = 0, comunque = false, aspetta = null } = {}) {
   const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
   if (ridotto.matches || navigator.connection?.saveData) return;
   const v = versione ? '?v=' + versione : '';
@@ -143,7 +148,13 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   const energia = () => Math.abs(p.lato) + Math.abs(p.fondo) + Math.abs(p.torce) * 0.3 + (Math.abs(p.vLato) + Math.abs(p.vFondo) + Math.abs(p.vTorce) * 0.3) * 0.5;
   // dove la mano vorrebbe la camicia, finché la tocca
   const meta = { lato: 0, fondo: 0, torce: 0 };
+  // durante una guida alle misure la camicia si raddrizza in fretta e non risponde alla mano (vedi `ferma`)
+  let inGuida = false;
   const fisica = (dt) => {
+    if (inGuida) {
+      const via = Math.exp(-9 * dt);
+      for (const k of ['lato', 'fondo', 'torce', 'vLato', 'vFondo', 'vTorce']) p[k] *= via;
+    }
     if (mano.preme > 0.02) {
       if (!mano.tiene) { mano.tiene = true; meta.lato = p.lato; }               // un tocco nuovo parte da dove la camicia si trova
       // la strada fatta dalla mano dall'ultimo conto, vista dal punto in cui il nastro è fissato (il petto sta un metro sotto)
@@ -190,8 +201,8 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     mano.preme += (vuole - mano.preme) * Math.min(1, vero * (vuole > mano.preme ? 12 : 5));
     if (manoFerma) { mano.vx *= 0.8; mano.vy *= 0.8; }
     // con la stoffa: l'aria la muove finché il mouse le sta sopra (e si è mosso da poco), e la mano la fa cedere dove passa
-    const soffia = mano.sopra && ora - mano.mossa < 2500 ? 1 : 0;
-    const laMano = stoffa && mano.preme > 0.02 ? { x: mano.px, y: mano.py, vx: mano.vx, vy: -mano.vy, preme: mano.preme } : null;
+    const soffia = !inGuida && mano.sopra && ora - mano.mossa < 2500 ? 1 : 0;
+    const laMano = stoffa && !inGuida && mano.preme > 0.02 ? { x: mano.px, y: mano.py, vx: mano.vx, vy: -mano.vy, preme: mano.preme } : null;
     let resta = vero * RITMO;
     while (resta > 1e-5) {
       const dt = Math.min(resta, 1 / 120);
@@ -202,10 +213,18 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     quieta = energia() + mano.preme * 0.01 + (stoffa ? stoffa.energia() : 0) < 0.00015 ? quieta + vero : 0;
     if (quieta < 0.3) { disegna(); corre = prossimo(); return; }
     // ferma: i pezzi tornano esattamente al loro posto e non si calcola più niente
+    aRiposo();
+  };
+  /** La camicia esattamente com'è nell'immagine ferma: niente più calcoli, i pezzi al loro posto. */
+  function aRiposo() {
+    if (corre > 0) cancelAnimationFrame(corre);
     corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
     camicia.style.transform = ''; ombra.style.transform = '';
     if (stoffa) { stoffa.stendi(null); stoffa.disegna(null); }
-  };
+    const fatto = attesaRiposo; attesaRiposo = null;
+    fatto?.();
+  }
+  let attesaRiposo = null;
   let attiva = false;                                  // i pezzi sono in vista e la camicia risponde
   const sveglia = () => {
     quieta = 0;
@@ -240,7 +259,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   };
   /** La mano è nel punto dello schermo dell'evento. */
   const tocca = (e) => {
-    if (!attiva || ridotto.matches) return;
+    if (!attiva || ridotto.matches || inGuida) return;
     const ora = adesso(), q = sulFotogramma(e);
     if (mano.sopra && q.sopra) {
       const dt = Math.max(0.004, (ora - mano.mossa) / 1000), vx = (e.clientX - mano.x) * q.metri / dt, vy = (e.clientY - mano.y) * q.metri / dt;
@@ -258,7 +277,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   /** Un tocco fermo (un clic, un dito appoggiato e tolto): un colpetto leggero. Toccata da un lato, va verso l'altro. */
   let premuto = null;
   const colpetto = (e) => {
-    if (!attiva || ridotto.matches) return;
+    if (!attiva || ridotto.matches || inGuida) return;
     if (premuto && Math.hypot(e.clientX - premuto.x, e.clientY - premuto.y) > 6) return;     // era una passata, non un tocco
     const q = sulFotogramma(e);
     if (!q.sopra) return;
@@ -308,8 +327,11 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   // Appena pronta la camicia si muove una volta da sola, così chi apre la pagina la trova che dondola. Solo se la si
   // sta guardando: se la scheda è nascosta o il palco è fuori dallo schermo, quando torna in vista.
   let salutata = false;
+  // il saluto aspetta la finestra dei passi (opzione `aspetta`), e non parte durante una guida
+  let puoiSalutare = !aspetta;
+  aspetta?.then(() => { puoiSalutare = true; saluta(); });
   const saluta = () => {
-    if (salutata || !attiva || document.hidden || ridotto.matches) return;
+    if (salutata || !puoiSalutare || inGuida || !attiva || document.hidden || ridotto.matches) return;
     const r = riquadro.getBoundingClientRect();
     if (r.bottom < 80 || r.top > innerHeight - 80) return;
     salutata = true;
@@ -331,4 +353,21 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   //     quando la si tocca non cambia niente se non il movimento; poi compare l'invito a passarci sopra
   mostra();
   if (manuale) window.__camicia = { p, mano, sveglia, get taglia() { return taglia; }, get onda() { return stoffa ? stoffa.energia() : null; }, get scarto() { return stoffa ? stoffa.scarto() : null; }, passo: (ms) => { finto += ms; if (corre) passo(finto); return !!corre; } };
+
+  // --- per la guida alle misure (guida.js): la camicia si raddrizza, così la linea tratteggiata le sta addosso
+  return {
+    /** Smette di rispondere alla mano e torna dritta: in fretta se dondola, subito se è già ferma. */
+    ferma() {
+      inGuida = true;
+      mano.sopra = false; mano.preme = 0; mano.tiene = false;
+      if (!corre) { aRiposo(); return Promise.resolve(); }
+      return new Promise((fatto) => {
+        attesaRiposo = fatto;
+        // al più tre quarti di secondo: poi si posa di colpo (a quel punto si muove di un millimetro, non si vede)
+        setTimeout(() => { if (attesaRiposo === fatto) aRiposo(); }, manuale ? 0 : 750);
+      });
+    },
+    /** Risponde di nuovo alla mano. */
+    riparti() { inGuida = false; },
+  };
 }

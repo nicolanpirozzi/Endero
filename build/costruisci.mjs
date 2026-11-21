@@ -148,6 +148,10 @@ if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) {
   for (const nome of readdirSync(join(RADICE, 'public/camicia/leggera')).sort()) impronta.update(nome).update(readFileSync(join(RADICE, 'public/camicia/leggera', nome)));
   camicia.leggeraV = impronta.digest('hex').slice(0, 10);
 }
+// la guida alle misure (src/configuratore/guida.js): le linee tratteggiate (camicia/guide/linee.py) e la camicia vista
+// da dietro con il giro per arrivarci (camicia/guide/retro.py). Se mancano, le «i» mostrano solo la frase.
+camicia.guide = conVersione('guide.json');
+camicia.retro = { dietro: conVersione('retro/dietro.webp'), dietro2x: conVersione('retro/dietro-2x.webp'), giro: conVersione('retro/giro.mp4'), ritorno: conVersione('retro/ritorno.mp4') };
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/, il configuratore mostra solo la camicia ferma');
 const testiConfiguratore = leggi('configuratore.json');
