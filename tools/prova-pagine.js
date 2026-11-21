@@ -485,7 +485,8 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
   for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO]]) {
     const a = await nuovo(opzioni), { page } = a;
     await page.goto(base + '/camicie-su-misura/configuratore/?senza-passi', { waitUntil: 'networkidle' });
-    const c = await page.evaluate(() => ({ h1: document.querySelectorAll('h1').length, domande: document.querySelectorAll('.configura__sotto details').length, titolo: document.querySelector('.configura__sotto h2')?.textContent || '', online: /online/i.test(document.querySelector('.configura__testo')?.textContent || '') }));
+    const c = await page.evaluate(() => ({ h1: document.querySelectorAll('h1').length, domande: document.querySelectorAll('.configura__sotto details').length, titolo: document.querySelector('.configura__sotto h2')?.textContent || '', online: /online/i.test(document.querySelector('meta[name="description"]')?.content || '') }));
+    // «online» sta nel titolo delle domande e nella descrizione per Google; il testo sotto il titolo è corto apposta
     controlla(`${nome}: sotto il riquadro ci sono le domande sul su misura online`, c.h1 === 1 && c.domande >= 3 && /online/i.test(c.titolo) && c.online, JSON.stringify(c));
     await a.vai('.configura__sotto', -120);
     await page.locator('.configura__sotto summary').first().click();
