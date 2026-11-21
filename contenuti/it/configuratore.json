@@ -48,7 +48,7 @@
             "min": 5,
             "max": 30,
             "vista": "davanti",
-            "guida": "[[Lungo la spalla: dal colletto all'attaccatura della manica.]]"
+            "guida": "[[Lungo la spalla: dal colletto alla cucitura della manica.]]"
           },
           {
             "nome": "torace",
@@ -58,7 +58,7 @@
             "max": 90,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[Appena sotto le maniche, da un fianco all'altro.]]"
+            "guida": "[[Appena sotto le ascelle, da un fianco all'altro.]]"
           },
           {
             "nome": "pancia",
@@ -97,7 +97,7 @@
             "max": 40,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[La larghezza della manica, 10 cm sotto l'attaccatura.]]"
+            "guida": "[[La larghezza della manica, 10 cm sotto l'ascella.]]"
           },
           {
             "nome": "avambraccio",

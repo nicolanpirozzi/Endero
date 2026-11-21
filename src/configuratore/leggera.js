@@ -225,6 +225,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     fatto?.();
   }
   let attesaRiposo = null;
+  let inCorso = null, timerFerma = 0;                  // per `ferma`, più sotto
   let attiva = false;                                  // i pezzi sono in vista e la camicia risponde
   const sveglia = () => {
     quieta = 0;
@@ -361,13 +362,22 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
       inGuida = true;
       mano.sopra = false; mano.preme = 0; mano.tiene = false;
       if (!corre) { aRiposo(); return Promise.resolve(); }
-      return new Promise((fatto) => {
+      if (attesaRiposo) return inCorso;            // una seconda «i» mentre si raddrizza: la stessa attesa
+      inCorso = new Promise((fatto) => {
         attesaRiposo = fatto;
         // al più tre quarti di secondo: poi si posa di colpo (a quel punto si muove di un millimetro, non si vede)
-        setTimeout(() => { if (attesaRiposo === fatto) aRiposo(); }, manuale ? 0 : 750);
+        clearTimeout(timerFerma);
+        timerFerma = setTimeout(() => { if (attesaRiposo === fatto) aRiposo(); }, manuale ? 0 : 750);
       });
+      return inCorso;
     },
-    /** Risponde di nuovo alla mano. */
-    riparti() { inGuida = false; },
+    /** Risponde di nuovo alla mano. Se si stava ancora raddrizzando, il conto alla rovescia per posarla si annulla:
+     *  chi apre e chiude una «i» in fretta la ritrova che dondola, senza scatti. */
+    riparti() {
+      inGuida = false;
+      clearTimeout(timerFerma);
+      const fatto = attesaRiposo; attesaRiposo = null;
+      fatto?.();
+    },
   };
 }

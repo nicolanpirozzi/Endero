@@ -62,7 +62,8 @@ const conSegno = (n) => `${n < 0 ? '−' : '+'}${cifra(Math.abs(n))} cm`;
  *   taglie   [38, 39, …]                      i numeri delle taglie, in ordine
  *   misure   { spalla: [..], torace: [..] }   per ogni misura confrontata, la camicia campione taglia per taglia
  *                                             (il collo non serve: è il numero della taglia)
- *   regole   { verifica: n,                    da quanti centimetri una variazione va controllata (facoltativo)
+ *   regole   { verifica: n | { campo: n },     da quanti centimetri una variazione va controllata, per tutte le misure
+ *                                             o per misura; dove manca, ogni variazione segna l'ordine da verificare
  *              soglia: 0.5, passo: 0.5,        facoltativi
  *              pesi: { campo: n } }            facoltativi: sostituiscono i pesi scritti qui sopra
  * Restituisce la configurazione controllata, o lancia un errore che dice cosa manca.
@@ -141,10 +142,13 @@ export function scegliTaglia(misure, configurazione) {
     const cm = Math.sign(differenza) * Math.max(passo, Math.round(Math.abs(differenza) / passo) * passo);
     variazioni.push({ campo: v.campo, voce: v.riga, cm });
   }
-  if (finito(regole.verifica)) {
-    const grandi = variazioni.filter((v) => Math.abs(v.cm) >= regole.verifica);
-    if (grandi.length) motivi.push(`variazione grande: ${grandi.map((v) => `${v.voce} ${conSegno(v.cm)}`).join(', ')}`);
-  }
+  // la soglia del sarto: un numero per tutte le misure, o uno per misura ({ manica: 6, torace: 4 }). Finché non c'è,
+  // ogni ordine con variazioni arriva da verificare: un numero del sarto non si inventa
+  const sogliaDi = (campo) => (finito(regole.verifica) ? regole.verifica : regole.verifica && typeof regole.verifica === 'object' && finito(regole.verifica[campo]) ? regole.verifica[campo] : null);
+  const grandi = variazioni.filter((v) => sogliaDi(v.campo) != null && Math.abs(v.cm) >= sogliaDi(v.campo));
+  if (grandi.length) motivi.push(`variazione grande: ${grandi.map((v) => `${v.voce} ${conSegno(v.cm)}`).join(', ')}`);
+  const senzaSoglia = variazioni.filter((v) => sogliaDi(v.campo) == null);
+  if (senzaSoglia.length) motivi.push(`soglia del sarto per le variazioni non ancora impostata (${senzaSoglia.map((v) => v.voce).join(', ')})`);
   if (mancanti.length) motivi.push(`misure non scritte: ${mancanti.join(', ')}`);
 
   const riga = [`Taglia ${taglie[scelta]}`, ...variazioni.map((v) => `${v.voce} ${conSegno(v.cm)}`)].join(' · ');

@@ -28,6 +28,7 @@ const FORMATI = [
   ['tablet', { viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, 'finestra'],
   ['telefono', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, 'finestra'],
   ['telefono basso', { viewport: { width: 375, height: 548 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, 'finestra'],
+  ['telefono di traverso', { viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, 'finestra'],
 ];
 
 (async () => {
@@ -60,7 +61,7 @@ const FORMATI = [
       return { aperta: d.open, passi: [...d.querySelectorAll('li')].map((x) => x.textContent.trim()), fuoco: document.activeElement?.textContent.trim(), dentro: r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1, h1: document.querySelectorAll('h1').length, largo: document.documentElement.scrollWidth <= innerWidth, viva: 'viva' in document.querySelector('.configura__palco').dataset };
     });
     controlla(`${nome}: entrando si apre la finestra con i quattro passi, «Inizia» ha il fuoco, sta tutta nello schermo`, s.aperta && s.passi.length === 4 && /camicia che ti sta meglio/.test(s.passi[0]) && /metro/.test(s.passi[2]) && /Inizia/i.test(s.fuoco || '') && s.dentro && s.h1 === 1 && s.largo, JSON.stringify(s));
-    await foto(page, `passi-${nome.replace(' ', '-')}`);
+    await foto(page, `passi-${nome.replaceAll(' ', '-')}`);
     // sotto la finestra la camicia non saluta: il saluto parte quando la si chiude
     const prima = await page.evaluate(() => [...document.querySelectorAll('.configura__strati img')].map((x) => x.style.transform).join('|') + (document.querySelector('canvas.configura__onda') ? 'onda' : ''));
     await page.keyboard.press('Enter');
@@ -128,7 +129,7 @@ const FORMATI = [
       const vuoleDietro = DIETRO.includes(misura);
       controlla(`${nome}: «i» di ${misura}: linea tratteggiata sulla camicia, nota sotto il campo, camicia ferma${vuoleDietro ? ', girata sul retro' : ''}`,
         s.esp === 'true' && s.aperta === misura && s.nota && s.notaSotto && s.ferma && (!dati.guide || (s.tratti >= 1 && s.lunghezza > 40 && s.allineato)) && (!dati.dietro || s.dietro === vuoleDietro), JSON.stringify(s));
-      if (['torace', 'spalla', 'lunghezza_manica'].includes(misura)) await foto(page, `palco-${nome.replace(' ', '-')}-${misura}`);
+      if (['torace', 'spalla', 'lunghezza_manica'].includes(misura)) await foto(page, `palco-${nome.replaceAll(' ', '-')}-${misura}`);
     }
     // chiudendo: torna di fronte, la camicia risponde di nuovo alla mano
     await page.keyboard.press('Escape');
@@ -153,6 +154,63 @@ const FORMATI = [
     await a.contesto.close();
   }
 
+
+  // ---------------------------------------------------------------- 2b. i casi trovati dalla revisione del 21 novembre
+  console.log('Rete lenta, nota in fondo allo schermo');
+  {
+    // la «i» aperta prima che arrivino i pezzi della camicia: quando arrivano, la camicia non saluta né segue la mano
+    const a = await nuovo(), { page } = a;
+    await page.route(/\/camicia\/leggera\/.*\.webp/, async (r) => { await new Promise((f) => setTimeout(f, 3500)); await r.continue(); });
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-guida="torace"]').scrollIntoViewIfNeeded();
+    await page.click('[data-guida="torace"]');
+    await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 20000 }).catch(() => {});
+    const mossa = () => page.evaluate(() => [...document.querySelectorAll('.configura__strati img')].some((x) => x.style.transform && x.style.transform !== 'none') || !!document.querySelector('canvas.configura__onda:not([hidden])[style*="opacity: 1"]'));
+    let mai = true;
+    for (let k = 0; k < 10; k++) { await page.waitForTimeout(150); if (await mossa()) mai = false; }
+    await page.mouse.move(420, 450); await page.mouse.move(640, 470, { steps: 8 });
+    for (let k = 0; k < 6; k++) { await page.waitForTimeout(120); if (await mossa()) mai = false; }
+    controlla('computer, rete lenta: la «i» aperta prima della camicia la tiene ferma anche quando arriva (niente saluto, niente mano)', mai);
+    await a.contesto.close();
+  }
+  {
+    // la camicia da dietro che non arriva: le altre «i» disegnano lo stesso, chiudendo la camicia risponde
+    const a = await nuovo(), { page } = a;
+    await page.route(/\/camicia\/retro\/dietro.*\.webp/, async (r) => { await new Promise((f) => setTimeout(f, 15000)); await r.continue().catch(() => {}); });
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 15000 }).catch(() => {});
+    await page.locator('[data-guida="spalla"]').scrollIntoViewIfNeeded();
+    await page.click('[data-guida="spalla"]');
+    await page.waitForTimeout(1500);
+    await page.click('[data-guida="torace"]');
+    await page.waitForTimeout(1800);
+    const torace = await page.evaluate(() => ({ aperta: document.querySelector('.configura__palco').dataset.guidaAperta, tratti: document.querySelectorAll('.configura__linee .linea__tratto').length }));
+    controlla('computer, retro che non arriva: la «i» del torace disegna subito la sua linea', torace.aperta === 'torace' && torace.tratti >= 1, JSON.stringify(torace));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+    await page.mouse.move(420, 450); await page.mouse.move(640, 470, { steps: 8 });
+    await page.waitForTimeout(300);
+    const risponde = await page.evaluate(() => [...document.querySelectorAll('.configura__posa img')].some((x) => x.style.transform && x.style.transform !== 'none') || !!document.querySelector('canvas.configura__onda'));
+    controlla('computer, retro che non arriva: chiusa la guida la camicia risponde alla mano', risponde);
+    await a.contesto.close();
+  }
+  for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'palco')) {
+    // una «i» in fondo allo schermo: la nota sale in vista, la «i» resta visibile
+    const a = await nuovo(opzioni), { page } = a;
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    for (const misura of ['pancia', 'polso']) {
+      await page.evaluate((m) => { const b = document.querySelector(`[data-guida="${m}"]`); scrollBy(0, b.getBoundingClientRect().bottom - innerHeight + 40); }, misura);
+      await page.waitForTimeout(500);
+      await page.click(`[data-guida="${misura}"]`);
+      await page.waitForTimeout(1400);
+      const v = await page.evaluate((m) => { const n = document.querySelector('.configura__nota-guida:not([hidden])'), b = document.querySelector(`[data-guida="${m}"]`).getBoundingClientRect(); return { nota: n ? Math.round(n.getBoundingClientRect().bottom) : null, i: Math.round(b.top), alto: innerHeight }; }, misura);
+      controlla(`${nome}: «i» di ${misura} in fondo allo schermo: la nota sale in vista e la «i» resta visibile`, v.nota != null && v.nota <= v.alto + 1 && v.i > 0, JSON.stringify(v));
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(600);
+    }
+    await a.contesto.close();
+  }
+
   // ---------------------------------------------------------------- 3. le «i» nella finestra (telefono, tablet)
   console.log('Le «i» nella finestra sopra il modulo');
   for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'finestra')) {
@@ -172,13 +230,14 @@ const FORMATI = [
         return {
           aperta: d.open, titolo: d.querySelector('.finestra__titolo').textContent, frase: d.querySelector('[data-guida-frase]').textContent.slice(0, 30),
           dentro: r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1,
+          scorre: (() => { const c = d.querySelector('.finestra__corpo'); return c.scrollHeight > c.clientHeight + 1; })(),
           immagine: im?.getAttribute('href') || '', tratti: tratti.length, retro: /dietro/.test(im?.getAttribute('href') || ''),
           largo: document.documentElement.scrollWidth <= innerWidth,
         };
       }, misura);
-      controlla(`${nome}: «i» di ${misura}: finestra con il nome, la frase${dati.guide ? ', la camicia e la linea' : ''}, tutta nello schermo`,
-        s.aperta && s.titolo.length > 2 && s.frase.length > 10 && s.dentro && s.largo && (!dati.guide || (s.tratti >= 1 && (!dati.dietro || s.retro === DIETRO.includes(misura)))), JSON.stringify(s));
-      if (['torace', 'spalla'].includes(misura)) await foto(page, `finestra-${nome.replace(' ', '-')}-${misura}`);
+      controlla(`${nome}: «i» di ${misura}: finestra con il nome, la frase${dati.guide ? ', la camicia e la linea' : ''}, tutta nello schermo, senza scorrere dentro`,
+        s.aperta && s.titolo.length > 2 && s.frase.length > 10 && s.dentro && !s.scorre && s.largo && (!dati.guide || (s.tratti >= 1 && (!dati.dietro || s.retro === DIETRO.includes(misura)))), JSON.stringify(s));
+      if (['torace', 'spalla'].includes(misura)) await foto(page, `finestra-${nome.replaceAll(' ', '-')}-${misura}`);
       await page.locator('#guida-finestra .finestra__chiudi').tap();
       await page.waitForTimeout(400);
       const dopo = await page.evaluate((m) => ({ aperta: document.getElementById('guida-finestra').open, fuoco: document.activeElement?.dataset?.guida === m, y: scrollY, esp: document.querySelector(`[data-guida="${m}"]`).getAttribute('aria-expanded') }), misura);

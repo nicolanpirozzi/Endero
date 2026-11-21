@@ -43,6 +43,10 @@ function crea(nome, attributi = {}) {
   for (const [k, v] of Object.entries(attributi)) el.setAttribute(k, v);
   return el;
 }
+/** «Sul retro della camicia.» davanti alla frase, dove la camicia non si può girare: solo se la frase non lo dice già. */
+function sulRetro(testo, parole) {
+  if (parole && !/^\s*sul retro/i.test(testo.textContent)) testo.insertAdjacentHTML('afterbegin', `<strong>${parole}.</strong> `);
+}
 const tracciato = (t) => t.punti.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('') + (t.chiuso ? 'Z' : '');
 
 /**
@@ -98,17 +102,22 @@ export function guida(palco, camicia) {
   const etichetta = (b) => document.querySelector(`label[for="campo-${b.dataset.guida}"]`)?.textContent.trim() || '';
 
   // le linee: si scaricano quando la pagina è ferma, o al primo tocco su una «i»
+  // (se la rete cade, la «i» dopo riprova: un errore non resta in memoria)
   let dati = null;
-  const linee = () => (dati ||= palco.dataset.guide ? fetch(palco.dataset.guide).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null));
+  const linee = () => (dati ||= palco.dataset.guide
+    ? fetch(palco.dataset.guide).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).catch(() => { dati = null; return null; })
+    : Promise.resolve(null));
   if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => linee());
 
+  // la camicia che si muove arriva quando i suoi pezzi sono scaricati: se intanto una guida è aperta, si ferma subito
+  // (prima che saluti o segua la mano sotto la linea)
   let controllo = null;
-  camicia.then((c) => { controllo = c || null; }, () => {});
+  let aperta = null;             // il bottone della guida in vista sul palco
+  camicia.then((c) => { controllo = c || null; if (controllo && aperta) controllo.ferma(); }, () => {});
 
   // ------------------------------------------------------------ sul palco (computer: la camicia resta accanto ai campi)
   let svg = null, nota = null, video = null, retro = null;
   let vista = 'davanti';
-  let aperta = null;             // il bottone della guida in vista
   let turno = 0;                 // ogni guida nuova annulla i passi rimasti a quella di prima
   const prima = () => palco.querySelector('.configura__invito');
   const preparaPalco = () => {
@@ -134,10 +143,17 @@ export function guida(palco, camicia) {
     video.setAttribute('aria-hidden', 'true');
     if (!video.isConnected) svg.before(video);
     let partito = false;
-    const via = () => { if (!partito) { partito = true; parte(); } };
-    const finito = () => { clearTimeout(scaduto); video.removeEventListener('ended', finito); video.removeEventListener('playing', via); via(); fatto(); };
-    // se il video non parte (rete, risparmio energetico), dopo tre secondi si va avanti senza
-    const scaduto = setTimeout(finito, 3000);
+    // se il video non parte (rete, risparmio energetico), dopo tre secondi si va avanti senza; partito, si aspetta
+    // la sua fine (con mezzo secondo di riserva, se 'ended' non arrivasse)
+    let scaduto = setTimeout(() => finito(), 3000);
+    const via = () => {
+      if (partito) return;
+      partito = true;
+      clearTimeout(scaduto);
+      scaduto = setTimeout(() => finito(), ((video.duration || 1) - video.currentTime) * 1000 + 500);
+      parte();
+    };
+    const finito = () => { clearTimeout(scaduto); video.removeEventListener('ended', finito); video.removeEventListener('playing', via); via(); clearTimeout(scaduto); fatto(); };
     video.addEventListener('ended', finito);
     video.addEventListener('playing', via, { once: true });
     if (!video.src.endsWith(indirizzo)) video.src = indirizzo;
@@ -153,36 +169,45 @@ export function guida(palco, camicia) {
       retro.src = palco.dataset.dietro;
       svg.before(retro);
     }
-    return retro.decode().catch(() => {});
+    // vero se la camicia da dietro è pronta; se non arriva in tre secondi (rete lenta) o non c'è, la camicia non si gira
+    const pronta = retro.decode().then(() => retro.naturalWidth > 0, () => false);
+    return Promise.race([pronta, new Promise((fatto) => setTimeout(() => fatto(false), 3000))]);
   };
   // La camicia si gira un giro alla volta, verso la vista chiesta per ultima: chi clicca in fretta su più «i» non la
   // lascia mai a metà né di spalle sotto la linea di una misura davanti. Un giro cominciato finisce; poi, se intanto
   // è stata chiesta l'altra vista, si gira di nuovo.
   let desiderata = 'davanti';
   let girando = null;
+  let ruota = false;             // la camicia si sta girando davvero (non solo aspetta l'immagine del retro)
   async function ciclo() {
     while (vista !== desiderata) {
       if (desiderata === 'dietro') {
         if (!palco.dataset.dietro) return;
-        await fotoRetro();
+        const pronta = await fotoRetro();
         if (desiderata !== 'dietro') continue;
+        if (!pronta) return;
+        ruota = true;
         if (!ridotto.matches && palco.dataset.giro) await suona(palco.dataset.giro);
         retro.hidden = false;
         if (video) video.hidden = true;
         vista = 'dietro';
       } else {
+        ruota = true;
         // la camicia di spalle resta finché il video del ritorno non è sullo schermo: niente lampo della camicia davanti
         if (!ridotto.matches && palco.dataset.ritorno) await suona(palco.dataset.ritorno, () => { if (retro) retro.hidden = true; });
         if (retro) retro.hidden = true;
         if (video) video.hidden = true;
         vista = 'davanti';
       }
+      ruota = false;
     }
   }
   /** Gira la camicia verso `verso`. Vero se alla fine è girata così; falso se nel frattempo è stata chiesta l'altra
    *  vista, o se il retro non c'è. */
   async function gira(verso) {
     desiderata = verso;
+    // già girata così e ferma: niente da aspettare (un giro che stava solo scaricando il retro se ne accorge da sé)
+    if (vista === verso && !ruota) return true;
     while (girando) await girando;             // il giro in corso vede da sé la vista nuova
     if (desiderata !== verso) return false;
     if (vista !== verso) {
@@ -219,16 +244,24 @@ export function guida(palco, camicia) {
     const titolo = Object.assign(document.createElement('p'), { className: 'configura__nota-titolo', textContent: etichetta(b) });
     const testo = Object.assign(document.createElement('p'), { className: 'configura__nota-frase', innerHTML: frase(b.dataset.guida) });
     nota.replaceChildren(titolo, testo, chiudi);
+    // la nota si sposta sotto la riga nuova: la «i» appena cliccata resta dov'era sotto il puntatore
+    const primaY = b.getBoundingClientRect().top;
     nota.hidden = true;
     sottoLaRiga(b);
     nota.hidden = false;
+    const salto = b.getBoundingClientRect().top - primaY;
+    if (Math.abs(salto) > 1) scrollBy({ top: salto, behavior: 'auto' });
+    // e se la nota finisce sotto il bordo dello schermo, la pagina sale quanto basta (non oltre la riga del campo)
+    const sotto = nota.getBoundingClientRect().bottom - (innerHeight - 16);
+    const margine = b.getBoundingClientRect().top - 96;
+    if (sotto > 0 && margine > 0) scrollBy({ top: Math.min(sotto, margine), behavior: ridotto.matches ? 'auto' : 'smooth' });
     const [d] = await Promise.all([linee(), controllo ? controllo.ferma() : null]);
     if (mio !== turno) return;
     const misura = d?.misure?.[b.dataset.guida];
     if (b.dataset.vista === 'dietro') {
       const girata = await gira('dietro');
       if (mio !== turno) return;
-      if (!girata) { testo.insertAdjacentHTML('afterbegin', `<strong>${frase('sul-retro')}.</strong> `); return; }
+      if (!girata) { sulRetro(testo, frase('sul-retro')); return; }
     } else {
       await gira('davanti');
       if (mio !== turno) return;
@@ -262,7 +295,7 @@ export function guida(palco, camicia) {
     const foto = dietro ? palco.dataset.dietro : palco.dataset.ferma;
     if (daFinestra !== b) return;
     if (!misura || !foto) {
-      if (dietro) testo.insertAdjacentHTML('afterbegin', `<strong>${frase('sul-retro')}.</strong> `);
+      if (dietro) sulRetro(testo, frase('sul-retro'));
       return;
     }
     const svgF = crea('svg', { class: 'guida-finestra__camicia', viewBox: inquadra(misura.riquadro).join(' '), role: 'img', 'aria-label': `${etichetta(b)}: ${testo.textContent}` });
@@ -274,8 +307,13 @@ export function guida(palco, camicia) {
     // la linea si disegna quando la camicia è caricata, così la si vede comparire
     const im = new Image();
     im.src = foto;
-    await im.decode().catch(() => {});
+    const caricata = await im.decode().then(() => im.naturalWidth > 0, () => false);
     if (daFinestra !== b) return;
+    if (!caricata) {
+      figura.replaceChildren();
+      if (dietro) sulRetro(testo, frase('sul-retro'));
+      return;
+    }
     const g = crea('svg', { viewBox: '0 0 1800 1000', x: 0, y: 0, width: 1800, height: 1000, overflow: 'visible' });
     sopra.append(g);
     disegnaLinea(g, misura, 'finestra');

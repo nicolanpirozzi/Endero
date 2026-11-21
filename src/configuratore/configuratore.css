@@ -838,3 +838,33 @@
   --linea: #3d7bff;
   width: min(520px, calc(100% - 2 * var(--margine)));
 }
+
+/* telefono di traverso (poca altezza): la camicia a sinistra, la frase a destra, tutto senza scorrere nella finestra */
+@media (orientation: landscape) and (max-height: 520px) {
+  .finestra--guida {
+    width: min(760px, calc(100% - 2 * var(--margine)));
+  }
+  .finestra--guida .finestra__corpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: 20px;
+    align-items: start;
+    padding: 16px 20px 18px;
+  }
+  .finestra--guida .finestra__testa {
+    grid-column: 1 / -1;
+    align-items: center;
+  }
+  .finestra--guida .finestra__titolo {
+    font-size: 20px;
+  }
+  .finestra--guida .guida-finestra__figura {
+    margin-top: 12px;
+  }
+  .finestra--guida .guida-finestra__camicia {
+    max-height: calc(100svh - 32px - 34px - 56px - 12px);
+  }
+  .finestra--guida .guida-finestra__frase {
+    margin-top: 12px;
+  }
+}
