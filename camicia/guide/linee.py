@@ -72,6 +72,12 @@ MARGINE = 40             # intorno alla linea, nel riquadro per l'ingrandimento
 SOTTO_ASCELLA = 0.015    # il torace si prende 1,5 cm sotto il punto più basso delle cuciture del giromanica
 BRACCIO = 0.10           # il braccio 10 cm sotto l'ascella, lungo la manica
 AVAMBRACCIO = 0.15       # l'avambraccio 15 cm sopra il polsino
+STACCO = 3.5             # una linea che passa a meno di 3,5 punti dal bordo della camicia (la parete, la gruccia) si
+                         # sposta verso l'interno: il tratteggio e l'alone restano sul tessuto
+PUNTA = 150              # una punta (la linea torna indietro di più di 150 gradi) con lati sotto PUNTA_LATO si toglie
+PUNTA_LATO = 30
+LISCIA = 15              # torace, pancia e bacino: media mobile di y su 15 campioni (1,5 cm), contro i dentini delle pieghe
+DRITTE = ('torace', 'pancia', 'bacino')
 
 # I pezzi del cartamodello, numerati come li trova scena._pezzi (sempre gli stessi per questo file). "Sinistra" e
 # "destra" sono di chi guarda la camicia di fronte: la destra di chi guarda è la sinistra di chi la indossa.
@@ -326,6 +332,8 @@ class Vista:
             if nome != 'nastro':
                 sagoma.append(self.proietta(c))
         self.ostacoli = albero(np.concatenate(tutte), np.concatenate(tri))
+        self.stoffa = albero(np.concatenate(tutte[:2]), np.concatenate(tri[:2]))     # solo camicia e bottoni
+        self.inversa = np.linalg.inv(self.PV)
         s = np.concatenate(sagoma)
         self.sagoma = [float(s[:, 0].min()), float(s[:, 1].min()), float(s[:, 0].max()), float(s[:, 1].max())]
         # la proiezione a matrice deve dare gli stessi punti di Blender
@@ -336,6 +344,18 @@ class Vista:
     def proietta(self, punti):
         h = np.c_[punti, np.ones(len(punti))] @ self.PV.T
         return np.c_[(h[:, 0] / h[:, 3] + 1) * L / 2, (1 - h[:, 1] / h[:, 3]) * A / 2]
+
+    def sulla_camicia(self, px):
+        """Per ogni punto del fotogramma: lì si vede la camicia (o un bottone), non la parete né la gruccia?"""
+        px = np.atleast_2d(px)
+        ndc = np.c_[px[:, 0] * 2 / L - 1, 1 - px[:, 1] * 2 / A, np.full(len(px), 0.5), np.ones(len(px))]
+        w = ndc @ self.inversa.T
+        w = w[:, :3] / w[:, 3:]
+        out = np.zeros(len(px), bool)
+        for i, q in enumerate(w):
+            verso = Vector(q) - self.occhio
+            out[i] = self.stoffa.ray_cast(self.occhio, verso.normalized(), 100.0)[0] is not None
+        return out
 
     def si_vede(self, punti):
         out = np.zeros(len(punti), bool)
@@ -425,9 +445,10 @@ def tagli(cam, pezzi, punto, normale):
     return a, b, cam.ev_pezzo[tri[:, 0]]
 
 
-def sezione(cam, pezzi, punto, normale):
+def sezione(cam, pezzi, punto, normale, metro=False):
     """La sezione della superficie calcolata dei pezzi con un piano: il contorno esterno, chiuso, sul tessuto.
-    Restituisce i punti del contorno (nel mondo) e il pezzo di ognuno."""
+    Restituisce i punti del contorno (nel mondo) e il pezzo di ognuno. Con `metro` il giro è quello di un metro da
+    sarta stretto intorno alla stoffa: il contorno convesso, che passa sopra le pieghe (il pezzo è None)."""
     normale = np.asarray(normale, float) / np.linalg.norm(normale)
     e1 = np.cross(normale, [0.0, 0.0, 1.0] if abs(normale[2]) < 0.9 else [1.0, 0.0, 0.0]); e1 /= np.linalg.norm(e1)
     e2 = np.cross(normale, e1)
@@ -439,6 +460,11 @@ def sezione(cam, pezzi, punto, normale):
     figura = MultiLineString([[tuple(x), tuple(y)] for x, y in zip(a2, b2)]).buffer(0.002, quad_segs=4)
     figura = max(getattr(figura, 'geoms', [figura]), key=lambda g: g.area)
     assert len(figura.interiors) > 0, 'la sezione non fa un giro chiuso'
+    if metro:
+        guscio = figura.convex_hull.buffer(-0.0015).exterior          # sulla stoffa, non 2 mm fuori
+        g = np.array(guscio.coords)
+        g = ricampiona(g, int(guscio.length / (PASSO / 2)))[:-1]
+        return punto + g[:, :1] * e1 + g[:, 1:] * e2, None
     esterno = np.array(figura.exterior.coords)[:-1]
     esterno = ricampiona(np.r_[esterno, esterno[:1]], int(figura.exterior.length / (PASSO / 2)))[:-1]
     dd = b2 - a2
@@ -598,16 +624,25 @@ def misure_3d(cam):
     # braccio e avambraccio: giri chiusi di traverso sulla manica
     v_ascella = float(np.mean([bm[i][1] for i in ascelle]))
     v_fondo = float(manica.taglio([u_mezzo, bm[:, 1].mean()], [0, -1])[1][1])
-    # la quota si prende sul cartamodello (10 cm sotto l'ascella, 15 cm sopra il polsino); il giro è la sezione della
-    # manica con il piano perpendicolare alla manica in quel punto (l'asse: tra i centri dei giri 3 cm sopra e sotto),
-    # sullo strato esterno. Una riga orizzontale del cartamodello seguirebbe le pieghe sotto l'ascella a zig-zag
+    # l'avambraccio si prende sul cartamodello, 15 cm sopra il polsino. Il braccio no: sulla camicia appesa la manica
+    # sotto l'ascella si raccoglie in pieghe, e la riga del cartamodello 10 cm sotto l'ascella cade 3 cm sotto, dove a
+    # vederla sembra l'ascella stessa. Si prende 10 cm più giù lungo la manica appesa, come sulla camicia stesa: lungo
+    # l'asse della manica (la fila dei centri dei giri) dal giro all'altezza dell'ascella.
+    # Il giro è la sezione della manica con il piano perpendicolare alla manica in quel punto (l'asse: tra i centri dei
+    # giri 3 cm sopra e sotto), stretto come un metro intorno alla stoffa. Una riga orizzontale del cartamodello
+    # seguirebbe le pieghe sotto l'ascella a zig-zag
     def centro_giro(v):
         a, b = manica.taglio([u_mezzo, v], [1, 0])
         return manica.linea(a, b).mean(axis=0)
-    for nome, v in (('braccio', v_ascella - BRACCIO / manica.scala), ('avambraccio', v_fondo + AVAMBRACCIO / manica.scala)):
+    vv = np.linspace(v_ascella - 1e-3, v_fondo + 0.01 / manica.scala, 160)
+    centri = np.array([centro_giro(v) for v in vv])
+    lungo_asse = np.r_[0, np.cumsum(np.linalg.norm(np.diff(centri, axis=0), axis=1))]
+    v_braccio = float(np.interp(BRACCIO, lungo_asse, vv))
+    print(f'  braccio: {BRACCIO * 100:.0f} cm lungo la manica appesa = {(v_ascella - v_braccio) * manica.scala * 100:.1f} cm di cartamodello')
+    for nome, v in (('braccio', v_braccio), ('avambraccio', v_fondo + AVAMBRACCIO / manica.scala)):
         dv = 0.03 / manica.scala
         asse = centro_giro(v + dv) - centro_giro(v - dv)
-        giro, _ = sezione(cam, (manica.k,) + SOTTO_MANICA[LATO], centro_giro(v), asse)
+        giro, _ = sezione(cam, (manica.k,) + SOTTO_MANICA[LATO], centro_giro(v), asse, metro=True)
         a, b = manica.taglio([u_mezzo, v], [1, 0])
         riga = lunghezza(manica.linea(a, b), chiuso=True)          # la larghezza del cartamodello lì: il giro vero
         print(f'  {nome}: giro disegnato {lunghezza(giro, True) * 100:.1f} cm, cartamodello {riga * 100:.1f} cm')
@@ -653,11 +688,91 @@ def misure_3d(cam):
 
 # ------------------------------------------------------------------------------------------------- dalla 3D al fotogramma
 
-def tratti(vista, punti, chiuso):
+def media_mobile(v, k):
+    if k < 2 or len(v) <= k:
+        return v
+    pad = np.r_[np.full(k // 2, v[0]), v, np.full(k - 1 - k // 2, v[-1])]
+    return np.convolve(pad, np.ones(k) / k, mode='valid')
+
+
+def avanti_in_x(q):
+    """Torace, pancia e bacino vanno da un fianco all'altro: dove le pieghe fanno tornare indietro la linea
+    proiettata (un dentino di qualche punto), si tengono solo i punti che vanno avanti."""
+    verso = 1 if q[-1, 0] >= q[0, 0] else -1
+    xs = q[:, 0] * verso
+    # si parte dal punto più indietro e si arriva al più avanti: le code che ci tornano sopra non contano
+    i0, i1 = int(xs.argmin()), int(xs.argmax())
+    tieni = np.zeros(len(q), bool)
+    piu = -np.inf
+    for i, x in enumerate(xs):
+        if i0 <= i <= i1 and x > piu + 1e-6:
+            tieni[i] = True
+            piu = x
+    return tieni
+
+
+def stacca(vista, q, vede, chiuso):
+    """Una linea che corre sul bordo della camicia (la spallina, la manica in alto) avrebbe metà tratteggio sulla
+    parete; una che passa sotto la gruccia, l'alone sul legno. Dove la parete o la gruccia sono a meno di STACCO punti
+    da una parte sola, il punto si sposta dall'altra, quanto basta. Solo il disegno: le lunghezze restano quelle vere."""
+    n = len(q)
+    if n < 3:
+        return q
+    idx = np.arange(n)
+    avanti, dietro = (idx + 3) % n if chiuso else np.minimum(idx + 3, n - 1), (idx - 3) % n if chiuso else np.maximum(idx - 3, 0)
+    t = q[avanti] - q[dietro]
+    t /= np.maximum(np.linalg.norm(t, axis=1, keepdims=True), 1e-9)
+    nrm = np.c_[-t[:, 1], t[:, 0]]
+    passi = np.arange(0.5, 2 * STACCO + 0.01, 0.5)
+    sposta = np.zeros(n)
+    da_vedere = np.nonzero(vede)[0]
+    if not len(da_vedere):
+        return q
+    # per ogni punto visibile: quanta camicia c'è da una parte e dall'altra, fino a 2 STACCO
+    prove = (q[da_vedere, None, None, :] + np.array([1, -1])[None, :, None, None] * passi[None, None, :, None] * nrm[da_vedere, None, None, :])
+    su = vista.sulla_camicia(prove.reshape(-1, 2)).reshape(len(da_vedere), 2, len(passi))
+    libero = np.where(su.all(axis=2), 2 * STACCO, passi[np.argmin(su, axis=2)] - 0.5)   # camicia fino al primo buco
+    for j, i in enumerate(da_vedere):
+        piu, meno = libero[j]
+        if piu < STACCO <= meno:
+            sposta[i] = -min(STACCO - piu, meno - STACCO)
+        elif meno < STACCO <= piu:
+            sposta[i] = min(STACCO - meno, piu - STACCO)
+    if chiuso:
+        sposta = np.convolve(np.r_[sposta[-7:], sposta, sposta[:7]], np.ones(15) / 15, mode='same')[7:-7]
+    else:
+        sposta = media_mobile(sposta, 15)
+    return q + nrm * sposta[:, None]
+
+
+def senza_punte(punti):
+    """Toglie le punte: un vertice dove la linea torna indietro (più di PUNTA gradi) con lati corti. Sono le pieghe
+    viste di taglio, che a disegnarle fanno un dentino o un ricciolo."""
+    p = [list(x) for x in punti]
+    cambiato = True
+    while cambiato and len(p) > 2:
+        cambiato = False
+        for i in range(1, len(p) - 1):
+            a, b, c = np.array(p[i - 1]), np.array(p[i]), np.array(p[i + 1])
+            u, v = a - b, c - b
+            lu, lv = np.linalg.norm(u), np.linalg.norm(v)
+            if lu < 1e-6 or lv < 1e-6:
+                del p[i]; cambiato = True; break
+            angolo = math.degrees(math.acos(np.clip(np.dot(u, v) / (lu * lv), -1, 1)))
+            if 180 - angolo > PUNTA and min(lu, lv) < PUNTA_LATO:
+                del p[i]; cambiato = True; break
+    return p
+
+
+def tratti(vista, punti, chiuso, nome=''):
     """Proietta, divide in parti visibili e nascoste, semplifica. Restituisce i tratti e le lunghezze in cm."""
     punti = fitta(np.r_[punti, punti[:1]])[:-1] if chiuso else fitta(punti)
     q = vista.proietta(punti)
     vede = vista.si_vede(punti)
+    if nome in DRITTE:
+        tieni = avanti_in_x(q)
+        punti, q, vede = punti[tieni], q[tieni], vede[tieni]
+        q = np.c_[q[:, 0], media_mobile(q[:, 1], LISCIA)]
     n = len(q)
     passo3 = np.linalg.norm(np.diff(np.r_[punti, punti[:1]] if chiuso else punti, axis=0), axis=1)
 
@@ -702,14 +817,14 @@ def tratti(vista, punti, chiuso):
         idx = np.arange(a, b + piu) % n                    # ogni tratto finisce dove inizia il prossimo
         if len(cc) == 1 and chiuso:
             idx = np.arange(n)
-        pezzo = semplifica(q[idx])
+        pezzo = senza_punte(semplifica(q[idx]))
         out.append({'punti': [[round(float(x), 1), round(float(y), 1)] for x, y in pezzo], 'visibile': bool(vede[a % n]),
                     'chiuso': bool(chiuso and len(cc) == 1)})
     return out, cm, q, vede
 
 
-def scheda(vista, misura, chiuso):
-    tt, cm, q, vede = tratti(vista, misura['punti'], chiuso)
+def scheda(vista, misura, chiuso, nome=''):
+    tt, cm, q, vede = tratti(vista, misura['punti'], chiuso, nome)
     tutti = np.array([p for t in tt for p in t['punti']])
     x0, y0 = tutti.min(axis=0) - MARGINE
     x1, y1 = tutti.max(axis=0) + MARGINE
@@ -760,11 +875,14 @@ def main():
         chiuso = m.get('chiuso', False)
         vista = davanti if m['vista'] == 'davanti' else dietro
         punti = m['punti'] if m['vista'] == 'davanti' else nel_mondo(m['punti'], giro)
-        s, cm = scheda(vista, dict(m, punti=punti), chiuso)
+        s, cm = scheda(vista, dict(m, punti=punti), chiuso, nome)
         dati['misure'][nome] = s
         tot = cm['visibile'] + cm['nascosto']
         print(f'{nome:18} {m["vista"]:8} {cm["visibile"]:9.1f} {cm["nascosto"]:9.1f} {tot:8.1f}   tratti {len(s["tratti"])}, punti {sum(len(t["punti"]) for t in s["tratti"])}')
+        # cm: quanto del disegno si vede e quanto no; cm_tessuto: la linea intera sulla stoffa (torace, pancia e bacino
+        # anche nelle code dietro le maniche, che non si disegnano)
         controllo[nome] = {'cm': {k: round(v, 2) for k, v in cm.items()}, 'cm_totale': round(tot, 2), 'chiuso': chiuso,
+                           'cm_tessuto': round(lunghezza(m['punti'], chiuso) * 100, 2),
                            'punti_3d_riposo': np.round(m['punti'], 5).tolist()}
         if 'quota' in m:
             controllo[nome]['quota'] = round(m['quota'], 5)

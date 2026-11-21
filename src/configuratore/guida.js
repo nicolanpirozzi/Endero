@@ -46,6 +46,24 @@ function crea(nome, attributi = {}) {
 const tracciato = (t) => t.punti.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('') + (t.chiuso ? 'Z' : '');
 
 /**
+ * La zona della camicia da mostrare nella finestra: il riquadro della linea, un terzo più largo, a 4:3 (3:4 per le
+ * linee in piedi) e mai sotto i 340 punti del fotogramma. Così torace, pancia e bacino non diventano una striscia senza
+ * ascelle né colletto, e le linee piccole (polso, braccio) non si ingrandiscono fino a sembrare grosse.
+ */
+const MINIMO = 340;
+const ATTORNO = 1.3;           // un po' di camicia in più intorno alla linea: le maniche ai lati del torace, il colletto
+function inquadra([x0, y0, x1, y1]) {
+  let w = x1 - x0;
+  let h = y1 - y0;
+  if (h > w) { h = Math.max(h * ATTORNO, MINIMO); w = Math.max(w, h * 0.75); } else { w = Math.max(w * ATTORNO, MINIMO); h = Math.max(h, w * 0.75); }
+  w = Math.min(w, 1800);
+  h = Math.min(h, 1000);
+  const x = Math.min(Math.max((x0 + x1) / 2 - w / 2, 0), 1800 - w);
+  const y = Math.min(Math.max((y0 + y1) / 2 - h / 2, 0), 1000 - h);
+  return [x, y, w, h].map((v) => Math.round(v * 10) / 10);
+}
+
+/**
  * Disegna la linea di una misura dentro `svg` (che misura in punti del fotogramma): sotto un alone chiaro, perché
  * si veda anche dove passa sul blu della parete; sopra il tratteggio blu, che si disegna dall'inizio alla fine. Le
  * parti nascoste (dietro una manica, sul retro) più sottili e trasparenti; ai due capi un punto.
@@ -109,15 +127,19 @@ export function guida(palco, camicia) {
     for (let x = campo.nextElementSibling; x && x.classList.contains('misura') && x.offsetTop === campo.offsetTop; x = x.nextElementSibling) ultimo = x;
     ultimo.after(nota);
   };
-  /** Un video del giro, sopra la camicia, con le misure dell'immagine ferma: parte quando è pronto, finisce e basta. */
-  const suona = (indirizzo) => new Promise((fatto) => {
+  /** Un video del giro, sopra la camicia, con le misure dell'immagine ferma: parte quando è pronto, finisce e basta.
+   *  `parte` si chiama quando il primo fotogramma è sullo schermo (o quando si rinuncia al video). */
+  const suona = (indirizzo, parte = () => {}) => new Promise((fatto) => {
     video ||= Object.assign(document.createElement('video'), { muted: true, playsInline: true, preload: 'auto', className: 'configura__giro' });
     video.setAttribute('aria-hidden', 'true');
     if (!video.isConnected) svg.before(video);
-    const finito = () => { clearTimeout(scaduto); video.removeEventListener('ended', finito); fatto(); };
+    let partito = false;
+    const via = () => { if (!partito) { partito = true; parte(); } };
+    const finito = () => { clearTimeout(scaduto); video.removeEventListener('ended', finito); video.removeEventListener('playing', via); via(); fatto(); };
     // se il video non parte (rete, risparmio energetico), dopo tre secondi si va avanti senza
     const scaduto = setTimeout(finito, 3000);
     video.addEventListener('ended', finito);
+    video.addEventListener('playing', via, { once: true });
     if (!video.src.endsWith(indirizzo)) video.src = indirizzo;
     video.currentTime = 0;
     video.hidden = false;
@@ -133,27 +155,41 @@ export function guida(palco, camicia) {
     }
     return retro.decode().catch(() => {});
   };
-  async function giraDietro(mio) {
-    if (vista === 'dietro') return true;
-    if (!palco.dataset.dietro) return false;
-    await fotoRetro();
-    if (mio !== turno) return false;
-    if (!ridotto.matches && palco.dataset.giro) await suona(palco.dataset.giro);
-    retro.hidden = false;
-    if (video) video.hidden = true;
-    vista = 'dietro';
-    return mio === turno;
-  }
-  async function giraDavanti() {
-    if (vista === 'davanti') return;
-    vista = 'davanti';
-    if (!ridotto.matches && palco.dataset.ritorno) {
-      const parte = suona(palco.dataset.ritorno);
-      retro.hidden = true;
-      await parte;
+  // La camicia si gira un giro alla volta, verso la vista chiesta per ultima: chi clicca in fretta su più «i» non la
+  // lascia mai a metà né di spalle sotto la linea di una misura davanti. Un giro cominciato finisce; poi, se intanto
+  // è stata chiesta l'altra vista, si gira di nuovo.
+  let desiderata = 'davanti';
+  let girando = null;
+  async function ciclo() {
+    while (vista !== desiderata) {
+      if (desiderata === 'dietro') {
+        if (!palco.dataset.dietro) return;
+        await fotoRetro();
+        if (desiderata !== 'dietro') continue;
+        if (!ridotto.matches && palco.dataset.giro) await suona(palco.dataset.giro);
+        retro.hidden = false;
+        if (video) video.hidden = true;
+        vista = 'dietro';
+      } else {
+        // la camicia di spalle resta finché il video del ritorno non è sullo schermo: niente lampo della camicia davanti
+        if (!ridotto.matches && palco.dataset.ritorno) await suona(palco.dataset.ritorno, () => { if (retro) retro.hidden = true; });
+        if (retro) retro.hidden = true;
+        if (video) video.hidden = true;
+        vista = 'davanti';
+      }
     }
-    if (retro) retro.hidden = true;
-    if (video) video.hidden = true;
+  }
+  /** Gira la camicia verso `verso`. Vero se alla fine è girata così; falso se nel frattempo è stata chiesta l'altra
+   *  vista, o se il retro non c'è. */
+  async function gira(verso) {
+    desiderata = verso;
+    while (girando) await girando;             // il giro in corso vede da sé la vista nuova
+    if (desiderata !== verso) return false;
+    if (vista !== verso) {
+      girando = ciclo();
+      try { await girando; } finally { girando = null; }
+    }
+    return vista === verso;
   }
   function chiudiPalco({ resta = false } = {}) {
     turno++;
@@ -164,7 +200,7 @@ export function guida(palco, camicia) {
     if (nota) { nota.hidden = true; nota.replaceChildren(); }
     if (resta) return;
     const mio = turno;
-    giraDavanti().then(() => { if (mio === turno) controllo?.riparti(); });
+    gira('davanti').then(() => { if (mio === turno) controllo?.riparti(); });
   }
   async function apriPalco(b) {
     preparaPalco();
@@ -190,11 +226,11 @@ export function guida(palco, camicia) {
     if (mio !== turno) return;
     const misura = d?.misure?.[b.dataset.guida];
     if (b.dataset.vista === 'dietro') {
-      const girata = await giraDietro(mio);
+      const girata = await gira('dietro');
       if (mio !== turno) return;
       if (!girata) { testo.insertAdjacentHTML('afterbegin', `<strong>${frase('sul-retro')}.</strong> `); return; }
     } else {
-      await giraDavanti();
+      await gira('davanti');
       if (mio !== turno) return;
     }
     if (misura) disegnaLinea(svg, misura, 'palco');
@@ -229,9 +265,7 @@ export function guida(palco, camicia) {
       if (dietro) testo.insertAdjacentHTML('afterbegin', `<strong>${frase('sul-retro')}.</strong> `);
       return;
     }
-    // si inquadra la zona della misura, con la forma che la finestra può tenere senza scorrere
-    const [x0, y0, x1, y1] = misura.riquadro;
-    const svgF = crea('svg', { class: 'guida-finestra__camicia', viewBox: `${x0} ${y0} ${x1 - x0} ${y1 - y0}`, role: 'img', 'aria-label': `${etichetta(b)}: ${testo.textContent}` });
+    const svgF = crea('svg', { class: 'guida-finestra__camicia', viewBox: inquadra(misura.riquadro).join(' '), role: 'img', 'aria-label': `${etichetta(b)}: ${testo.textContent}` });
     svgF.append(crea('image', { href: foto, x: 0, y: 0, width: 1800, height: 1000, preserveAspectRatio: 'none' }));
     const sopra = crea('g');
     svgF.append(sopra);

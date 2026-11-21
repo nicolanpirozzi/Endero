@@ -17,7 +17,7 @@ python3 con numpy e Pillow, e ffmpeg:
         dietro.png (1800 x 1000) e dietro-2x.png (3600 x 2000), l'immagine ferma di dietro, come ferma.png e ferma-2x.png
 
     <venv>/bin/python camicia/guide/retro.py giro <file .blend comprato> <cartella> [--fotogrammi 30] [--campioni 32]
-        [--bordo 0.04 0.68] [--da 1 --a 28] [--intero]
+        [--bordo 0.04 1.0] [--da 1 --a 28] [--intero]
         giro/0001.png … giro/0028.png, i fotogrammi del giro tra le due immagini ferme. Il primo (0000) e l'ultimo
         (0029) non si calcolano: sono ferma.png e dietro.png, così il film parte e arriva identico alle immagini ferme.
         Il giro accelera e frena piano (una curva "smoothstep" sul tempo). Con `--bordo` (fatto di norma) si calcola
@@ -44,12 +44,15 @@ import time
 QUI = os.path.dirname(os.path.abspath(__file__))
 FOTOGRAMMI = 30                  # il giro dura un secondo a 30 fotogrammi al secondo
 AL_SECONDO = 30
-BORDO = (0.04, 0.68)             # la fascia calcolata, in frazioni della larghezza: camicia, gruccia e ombra stanno
-                                 # tra il 9 e il 56% in ogni momento del giro (controllato con --intero)
+# La fascia calcolata, in frazioni della larghezza. Camicia, gruccia e ombra stanno tra il 9 e il 56% in ogni momento
+# del giro; ma la camicia vista di fianco rimanda luce sulla parete in ombra alla sua destra (fino a 2 livelli su 255,
+# misurato con --intero), che di fronte e di dietro non c'è: a destra si calcola quindi fino al bordo. A sinistra della
+# fascia la parete non cambia (meno di un decimo di livello).
+BORDO = (0.04, 1.0)
 SFUMA = 40                       # pixel in cui la fascia calcolata sfuma nell'immagine ferma, come in film/monta.py
 # Come film/monta.py: la fascia verticale del telefono sta intorno alla camicia, al 39,5% della larghezza.
 CENTRO_CAMICIA = 0.395
-QUALITA = 26                     # di ffmpeg (crf): più basso, più fedele e più pesante. 26 tiene il giro sotto i 600 KB
+QUALITA = 18                     # di ffmpeg (crf): più basso, più fedele e più pesante. Con 18 un video pesa circa 370 KB
 MARGINE = 0.002                  # quanto il tessuto deve stare fuori dalla gruccia (vedi scosta_dalla_gruccia)
 
 
