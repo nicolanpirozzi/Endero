@@ -6,7 +6,9 @@ gira e la linea si disegna sul dietro. Qui si calcolano le immagini che servono,
 riposo (`camicia/film/scena.py`): stessa camera, stesse luci, stessa parete, stessa esposizione, stesso ripulitore.
 La camicia gira intorno alla verticale del gancio (il perno): a riposo sta a RIPOSO, di dietro a RIPOSO + pi greco,
 cioè girata dello stesso angolo di prima ma dall'altra parte. L'ombra sulla parete gira con lei, perché si calcola
-tutta la scena.
+tutta la scena. Una sola differenza dalla scena delle immagini a riposo: nel file comprato la gruccia buca il tessuto
+dietro il collo, e di dietro si vedrebbe il legno; qui il tessuto si scosta di 2 mm (`scosta_dalla_gruccia`). Di
+fronte cambia meno di un pixel, dentro il colletto.
 
 Tre comandi. I primi due vogliono il Python con Blender (vedi CLAUDE.md, "Problemi già incontrati"), il terzo basta
 python3 con numpy e Pillow, e ffmpeg:
@@ -24,7 +26,9 @@ python3 con numpy e Pillow, e ffmpeg:
 
     python3 camicia/guide/retro.py monta <cartella> <ferma.png> public/camicia/retro
         dietro.webp, dietro-2x.webp, dietro-telefono.webp, dietro-telefono-2x.webp, giro.mp4 (davanti → dietro),
-        ritorno.mp4 (gli stessi fotogrammi al contrario) e retro.json per la pagina.
+        ritorno.mp4 (gli stessi fotogrammi al contrario) e retro.json per la pagina. `ferma.png` è l'immagine a riposo
+        da cui sono nate le immagini del sito (`camicia/film/produci.py --scena ferma`). I fotogrammi finiti restano in
+        <cartella>/montati/, per i controlli. Senza i fotogrammi del giro scrive solo le immagini ferme.
 
 Ogni comando salta ciò che ha già fatto: se si interrompe, si rilancia. I file si scrivono con un nome provvisorio e
 poi si rinominano, così non restano immagini a metà.
