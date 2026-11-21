@@ -62,6 +62,7 @@ In `.claude/skills/`, versioni fissate in `skills-lock.json`.
 - Foto e video: dal 2026-11-19 sul sito possono stare anche immagini generate con l'AI («Cambio la regola: le immagini AI vanno bene», proprietario; prima la regola era solo foto vere) e il titolare lo sa («Il titolare sa tutto»). Ciò che carica non si discute né si rivede: «Non voglio che rileggi le foto, devi caricarle e basta. No analisi, no revisione». Perché: il giro a una foto per volta con le nostre obiezioni gli ha fatto perdere tempo. Resta un limite nostro, che gli è stato detto: non si pubblicano negozi inventati presentati come rivenditori Endero. Le foto le carica da sé dalla pagina del Worker `endero-domande` (`node domande/foto.mjs crea|scarica`), poi dice «fatto» e noi le ritagliamo e comprimiamo (`tools/comprimi-foto.py sede|dettagli`); quali sono generate sta in `docs/registro-foto.md`.
 - Email pubblica `info@endero.it`. L'indirizzo personale della casella del proprietario non va mai nel sito né nel repository: solo nella configurazione del Worker. (proprietario, 2026-11-14)
 - SEO strutturale: una pagina per ogni intento di ricerca, indirizzi in italiano leggibili, un solo H1, title e description unici, dati strutturati, sitemap, reindirizzamenti dai vecchi indirizzi PrestaShop. Prima di aggiornare l'anteprima si lancia `node tools/prova-seo.mjs`: deve dire «Nessun errore», e il suo elenco «da chiudere prima della messa online» è la lista di ciò che manca.
+- Al cliente poche informazioni, chiare e utili: si dice cosa fare, mai come funziona dietro (per esempio che le larghezze della camicia «le raddoppiamo noi»). Perché: «al Cliente poche informazioni, chiare ed utili. Non diciamo troppo». (proprietario, 2026-11-21)
 - Lingua del sito e del lavoro: italiano.
 
 ## Decisioni
@@ -144,8 +145,7 @@ Configuratore (riaperto il 2026-11-15, a passi)
 
 Strumenti
 
-- 2026-11-14 · Skill installate nel repository e non nella home. Perché: il container è effimero, solo il repository resta.
-- 2026-11-14 · `memoria` scritta da noi. Perché: non esiste una skill pubblica con questo nome e questa funzione.
+- 2026-11-14 · Skill installate nel repository e non nella home. Perché: il container è effimero, solo il repository resta. `memoria` l'abbiamo scritta noi: non esiste una skill pubblica con questo nome e questa funzione.
 
 ## Problemi già incontrati
 

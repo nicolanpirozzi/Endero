@@ -1,5 +1,5 @@
 {
-  "_nota": "Configuratore, passo 1 e guida alle misure. Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, abbottonata e stesa su un tavolo, non il corpo (il sarto, riferito dal proprietario). Ogni campo ha 'guida', la frase che si legge toccando la «i» (scritta da noi, tra [[ ]] finché il sarto non la conferma nel suo questionario), e 'vista': 'davanti' o 'dietro' (la camicia si gira). 'giro': true vuol dire che il cliente scrive la larghezza della camicia stesa e il calcolo della taglia la raddoppia (worker/taglie.mjs). 'min' e 'max' sono i limiti che il campo accetta, in centimetri, per la camicia stesa: scelti da noi, larghi, da rivedere con il sarto. Le linee tratteggiate stanno in public/camicia/guide.json (camicia/guide/linee.py). 'come_misurare' è la finestra in vetro che si apre ogni volta che si entra (scelta del proprietario): i primi tre passi sono parole sue, il secondo l'abbiamo aggiunto noi per la camicia stesa. 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. 'domande' sta sotto la camicia e il riquadro: risposte scritte da noi solo con ciò che è già deciso. Niente prezzi, tempi, pagamento o consegna finché non sono confermati.",
+  "_nota": "Configuratore, passo 1 e guida alle misure. Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, abbottonata e stesa su un tavolo, non il corpo (il sarto, riferito dal proprietario). Ogni campo ha 'guida', la frase che si legge toccando la «i» (scritta da noi, tra [[ ]] finché il sarto non la conferma nel suo questionario), e 'vista': 'davanti' o 'dietro' (la camicia si gira). 'giro': true vuol dire che il cliente scrive la larghezza della camicia stesa e il calcolo della taglia la raddoppia (worker/taglie.mjs). 'min' e 'max' sono i limiti che il campo accetta, in centimetri, per la camicia stesa: scelti da noi, larghi, da rivedere con il sarto. Le linee tratteggiate stanno in public/camicia/guide.json (camicia/guide/linee.py). 'come_misurare' è la finestra in vetro che si apre ogni volta che si entra (scelta del proprietario): primo, terzo e quarto passo sono parole sue, il secondo l'abbiamo aggiunto noi per la camicia stesa. 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. 'domande' sta sotto la camicia e il riquadro: risposte scritte da noi solo con ciò che è già deciso. Niente prezzi, tempi, pagamento o consegna finché non sono confermati. Al cliente poche informazioni, chiare e utili (proprietario, 2026-11-21: «Evita di dire troppo… Non servono al Cliente queste informazioni»): le frasi dicono solo dove si misura, mai come funziona il calcolo (per esempio che le larghezze si raddoppiano).",
   "meta": {
     "titolo": "Camicia su misura online · Crea la tua con Endero",
     "briciola": "Crea la tua camicia",
@@ -15,7 +15,7 @@
   },
   "scheda": {
     "titolo": "La tua camicia su misura",
-    "testo": "Online, da casa: misura la camicia che ti sta meglio, stesa su un tavolo. In centimetri, con la virgola se serve.",
+    "testo": "Misura la camicia che ti sta meglio, stesa su un tavolo. In centimetri.",
     "errore_misura": "Scrivi un numero tra {min} e {max}.",
     "gruppi": [
       {
@@ -30,7 +30,7 @@
             "min": 30,
             "max": 55,
             "vista": "davanti",
-            "guida": "[[Apri il colletto e stendilo: misura dal centro del bottone alla fine dell'asola.]]"
+            "guida": "[[Colletto aperto e steso: dal centro del bottone alla fine dell'asola.]]"
           },
           {
             "nome": "spalla",
@@ -39,7 +39,7 @@
             "min": 30,
             "max": 70,
             "vista": "dietro",
-            "guida": "[[Gira la camicia sul retro: misura in linea retta da una spalla all'altra, tra le due cuciture dove attaccano le maniche.]]"
+            "guida": "[[Sul retro: da una cucitura della spalla all'altra.]]"
           },
           {
             "nome": "spallina",
@@ -48,7 +48,7 @@
             "min": 5,
             "max": 30,
             "vista": "davanti",
-            "guida": "[[Lungo la cucitura della spalla: dal colletto a dove attacca la manica.]]"
+            "guida": "[[Lungo la spalla: dal colletto all'attaccatura della manica.]]"
           },
           {
             "nome": "torace",
@@ -58,7 +58,7 @@
             "max": 90,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[Camicia abbottonata: la larghezza appena sotto le maniche, da un fianco all'altro. Scrivi quello che leggi sul metro: la raddoppiamo noi.]]"
+            "guida": "[[Appena sotto le maniche, da un fianco all'altro.]]"
           },
           {
             "nome": "pancia",
@@ -68,7 +68,7 @@
             "max": 90,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[La larghezza all'altezza del terzo bottone dal fondo, da un fianco all'altro. La raddoppiamo noi.]]"
+            "guida": "[[All'altezza del terzo bottone dal fondo, da un fianco all'altro.]]"
           },
           {
             "nome": "bacino",
@@ -78,7 +78,7 @@
             "max": 90,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[La larghezza all'altezza del primo bottone dal fondo, da un fianco all'altro. La raddoppiamo noi.]]"
+            "guida": "[[All'altezza del primo bottone dal fondo, da un fianco all'altro.]]"
           },
           {
             "nome": "lunghezza_manica",
@@ -87,7 +87,7 @@
             "min": 40,
             "max": 95,
             "vista": "davanti",
-            "guida": "[[Dalla cucitura in cima alla spalla, lungo la manica, fino al fondo del polsino.]]"
+            "guida": "[[Dalla cucitura della spalla al fondo del polsino.]]"
           },
           {
             "nome": "braccio",
@@ -97,7 +97,7 @@
             "max": 40,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[La larghezza della manica stesa, 10 cm sotto l'attaccatura con il corpo. La raddoppiamo noi.]]"
+            "guida": "[[La larghezza della manica, 10 cm sotto l'attaccatura.]]"
           },
           {
             "nome": "avambraccio",
@@ -107,7 +107,7 @@
             "max": 30,
             "giro": true,
             "vista": "davanti",
-            "guida": "[[La larghezza della manica stesa, 15 cm sopra il polsino. La raddoppiamo noi.]]"
+            "guida": "[[La larghezza della manica, 15 cm sopra il polsino.]]"
           },
           {
             "nome": "polso",
@@ -116,7 +116,7 @@
             "min": 15,
             "max": 35,
             "vista": "davanti",
-            "guida": "[[Apri il polsino e stendilo: dal centro del bottone alla fine dell'asola.]]"
+            "guida": "[[Polsino aperto e steso: dal centro del bottone alla fine dell'asola.]]"
           },
           {
             "nome": "lunghezza_davanti",
@@ -125,7 +125,7 @@
             "min": 50,
             "max": 120,
             "vista": "davanti",
-            "guida": "[[Sul davanti: dal punto più alto della spalla, accanto al colletto, fino al fondo della camicia.]]"
+            "guida": "[[Dal punto più alto della spalla, accanto al colletto, al fondo della camicia.]]"
           },
           {
             "nome": "lunghezza_dietro",
@@ -134,7 +134,7 @@
             "min": 50,
             "max": 120,
             "vista": "dietro",
-            "guida": "[[Sul retro: dalla cucitura del colletto, al centro, fino al fondo della camicia.]]"
+            "guida": "[[Sul retro: dalla cucitura del colletto, al centro, al fondo della camicia.]]"
           }
         ]
       },
@@ -251,9 +251,9 @@
       "titolo": "Come prendere le misure",
       "passi": [
         "Indossa la camicia che ti sta meglio.",
-        "Toglila, abbottonala e stendila su un tavolo, ben distesa.",
+        "Toglila, abbottonala e stendila su un tavolo.",
         "Armati di un metro.",
-        "Prendi le misure come indicato per ogni campo: tocca la «i» per vedere dove."
+        "Prendi le misure come indicato per ogni campo."
       ],
       "inizia": "Inizia",
       "riapri": "Come misurare",
@@ -267,7 +267,7 @@
     "voci": [
       {
         "domanda": "Come do le misure da casa?",
-        "risposta": "Prendi la camicia che ti sta meglio, abbottonala e stendila su un tavolo: poi misurala come indicato in ogni campo. Il sarto ricontrolla le misure prima del taglio e, se qualcosa non torna, ti scrive su WhatsApp."
+        "risposta": "Misura la camicia che ti sta meglio, stesa su un tavolo, come indicato in ogni campo. Prima del taglio il sarto ricontrolla le misure."
       },
       {
         "domanda": "Quali misure devo prendere?",
