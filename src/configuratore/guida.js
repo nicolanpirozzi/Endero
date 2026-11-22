@@ -403,13 +403,13 @@ export function guida(palco, camicia) {
     };
     scivola = requestAnimationFrame(passo);
   });
-  /** La parte dello schermo libera: sotto la testata (se è in vista) e sopra la tastiera (visualViewport). */
+  /** La parte dello schermo libera: sotto la testata e sopra la tastiera (visualViewport). Il posto della testata si
+   *  lascia anche quando è nascosta: torna appena la pagina sale (anche quando il browser porta in vista il campo). */
   function libero() {
     const vv = window.visualViewport;
     const testata = document.querySelector('[data-testata]');
-    const t = testata?.getBoundingClientRect();
-    const sottoTestata = t && t.bottom > 0 && testata.dataset.stato !== 'via' ? t.bottom : 0;
-    return { su: Math.max(vv ? vv.offsetTop : 0, sottoTestata) + 8, giu: (vv ? vv.offsetTop + vv.height : innerHeight) - 8 };
+    const alta = testata ? testata.offsetHeight : 0;
+    return { su: (vv ? vv.offsetTop : 0) + alta + 8, giu: (vv ? vv.offsetTop + vv.height : innerHeight) - 8 };
   }
   /** Il fondo del campo, sullo schermo. */
   const fondoCampo = (m) => m.querySelector('input').getBoundingClientRect().bottom;
