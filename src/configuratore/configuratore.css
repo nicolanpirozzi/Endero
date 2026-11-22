@@ -492,66 +492,39 @@
 }
 
 /* ------------------------------------------------------------------ guida alle misure (src/configuratore/guida.js) */
-/* Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, stesa su un tavolo. Accanto al nome di ogni misura
-   una «i»: sulla camicia compare, tratteggiato in blu, dove si misura. Le linee sono in punti del fotogramma
-   1800 x 1000 e stanno su un SVG con le misure dell'immagine ferma; il video del giro e la camicia vista da dietro
-   anche. Senza script le «i» non ci sono e i passi si leggono nel riquadro. */
+/* Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, stesa su un tavolo. Dal 2026-11-22 (proprietario)
+   niente «i»: entrando in un campo di misura la camicia fa uno zoom sul punto in cui si misura, dove si disegna un
+   tratteggio blu sottile; sotto il campo compare la frase. Le linee sono in punti del fotogramma 1800 x 1000 e stanno
+   su un SVG con le misure dell'immagine ferma; il video del giro e la camicia vista da dietro anche. */
 
-.misura__testa {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 24px;
+.configura {
+  --linea: #2557e0;                    /* il blu del tratteggio: fine, sul bianco della camicia si legge senza gridare */
 }
 
-.misura__info {
+/* la frase su dove si misura: sotto il campo, piccola, mentre ci si scrive (anche senza script) */
+.misura__dove {
   display: none;
-  flex: none;
-  position: relative;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 1px solid rgba(251, 249, 244, 0.55);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--filo);
-  font: italic 600 11px/18px Georgia, 'Times New Roman', serif;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out, transform 120ms ease-out;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: rgba(251, 249, 244, 0.82);
 }
 
-/* 20 punti si vedono; per il dito ne servono almeno 44 */
-.misura__info::after {
-  content: '';
-  position: absolute;
-  inset: -12px;
+.misura:focus-within .misura__dove {
+  display: block;
 }
 
-.js .misura__info {
-  display: inline-block;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .misura__info:hover {
-    border-color: var(--filo);
-    background: rgba(251, 249, 244, 0.14);
+@media (prefers-reduced-motion: no-preference) {
+  .misura:focus-within .misura__dove {
+    animation: dove-compare 220ms ease-out both;
   }
 }
 
-.misura__info:active {
-  transform: scale(0.92);
-}
-
-.misura__info[aria-expanded="true"] {
-  border-color: var(--linea);
-  background: var(--linea);
-  color: #fff;
-}
-
-.misura__info:focus-visible {
-  outline: 2px solid var(--filo);
-  outline-offset: 3px;
+@keyframes dove-compare {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
 }
 
 .configura__come {
@@ -571,23 +544,6 @@
 
 .js .configura__come {
   display: inline-block;
-}
-
-.configura__senza-script dl {
-  display: grid;
-  gap: 8px;
-  margin: 12px 0 0;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-}
-
-.configura__senza-script dt {
-  font-weight: 600;
-}
-
-.configura__senza-script dd {
-  margin: 0;
-  opacity: 0.86;
 }
 
 /* --- i passi */
@@ -637,14 +593,11 @@
   width: 100%;
 }
 
-/* --- sul palco: le linee, il giro, la camicia da dietro, la nota */
-.configura {
-  --linea: #3d7bff;                    /* il blu del tratteggio: più acceso di quello del sito, per staccare dal bianco */
-}
-
+/* --- sul palco: lo zoom, le linee, la copia nitida, il giro, la camicia da dietro */
 .configura__linee,
 .configura__giro,
-.configura__retro {
+.configura__retro,
+.configura__nitida {
   position: absolute;
   top: var(--su);
   left: min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia)));
@@ -655,44 +608,65 @@
 }
 
 .configura__giro,
-.configura__retro {
+.configura__retro,
+.configura__nitida {
   object-fit: cover;
   -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
   mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
 
 .configura__giro[hidden],
-.configura__retro[hidden] {
+.configura__retro[hidden],
+.configura__nitida[hidden] {
   display: none;
 }
 
-.linea__alone {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.55);
-  stroke-width: 7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* Lo zoom: tutti i livelli della camicia con la stessa trasformazione, che guida.js scrive in --zoom sul palco */
+.configura__ferma,
+.configura__nitida,
+.configura__retro,
+.configura__giro,
+.configura__linee {
+  transform: var(--zoom, none);
+  transform-origin: 0 0;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .configura__ferma,
+  .configura__nitida,
+  .configura__retro,
+  .configura__giro,
+  .configura__linee {
+    transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* durante la guida la camicia è ferma: i pezzi che si muovono lasciano il posto all'immagine ferma, che è la stessa */
+.configura__palco[data-guida-ferma] .configura__posa {
+  visibility: hidden;
+}
+
+/* con una guida aperta l'invito a passarci sopra non c'è */
+.configura__palco[data-guida-aperta] .configura__invito {
+  opacity: 0;
+  transition-delay: 0ms;
+}
+
+/* il tratteggio: spessori e trattini li scrive guida.js, in punti dello schermo qualunque sia lo zoom */
 .linea__tratto {
   fill: none;
   stroke: var(--linea);
-  stroke-width: 3.5;
-  stroke-dasharray: 11 8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .linea__tratto--nascosto {
-  stroke-width: 2.2;
-  stroke-dasharray: 5 7;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .linea__scopri {
   fill: none;
   stroke: #fff;
-  stroke-width: 30;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -700,19 +674,17 @@
 .linea__capo {
   fill: var(--linea);
   stroke: #fff;
-  stroke-width: 2.5;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .linea--si-disegna .linea__scopri {
     stroke-dasharray: 1 1;
     stroke-dashoffset: 1;
-    animation: linea-si-disegna 900ms var(--ease-in-out, ease-in-out) forwards;
+    animation: linea-si-disegna 1000ms cubic-bezier(0.45, 0, 0.2, 1) forwards;
   }
-  .linea--si-disegna .linea__alone,
   .linea--si-disegna .linea__capo {
     opacity: 0;
-    animation: linea-compare 300ms ease-out 650ms forwards;
+    animation: linea-compare 320ms ease-out 700ms forwards;
   }
 }
 
@@ -728,143 +700,43 @@
   }
 }
 
-/* la nota nel riquadro, sotto la riga del campo: il nome della misura e come si prende. Sulla camicia resta solo la
-   linea, che così non viene coperta */
-.configura__nota-guida {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 12px;
-  padding: 14px 12px 16px 16px;
-  border: 1px solid color-mix(in srgb, var(--linea) 70%, transparent);
-  border-radius: 14px;
-  background: rgba(61, 123, 255, 0.14);
+/* --- sopra il campo (telefono, tablet): il riquadro con lo zoom sulla zona e il tratteggio */
+.configura__campi {
+  position: relative;
 }
 
-.configura__nota-guida[hidden] {
+.misura-lente {
+  position: absolute;
+  left: 0;
+  z-index: 2;
+  overflow: hidden;
+  border: 1px solid rgba(251, 249, 244, 0.22);
+  border-radius: 14px;
+  background: var(--parete-in-ombra, #041036);
+  box-shadow: 0 18px 40px rgba(5, 15, 43, 0.45);
+  pointer-events: none;
+}
+
+.misura-lente[hidden] {
   display: none;
 }
 
-.configura__nota-titolo {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.configura__nota-frase {
-  grid-column: 1;
-  margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.45;
-}
-
-.configura__nota-chiudi {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: start;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid rgba(251, 249, 244, 0.35);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--filo);
-  cursor: pointer;
-  transition: background-color 150ms ease-out, transform 120ms ease-out;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .configura__nota-chiudi:hover {
-    background: rgba(251, 249, 244, 0.14);
-  }
-}
-
-.configura__nota-chiudi:active {
-  transform: scale(0.94);
-}
-
-.configura__nota-chiudi:focus-visible {
-  outline: 2px solid var(--filo);
-  outline-offset: 2px;
-}
-
-.configura__nota-chiudi .icona {
-  width: 13px;
-  height: 13px;
+.misura-lente__camicia {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .configura__nota-guida:not([hidden]) {
-    animation: finestra-entra 260ms var(--morbido);
+  .misura-lente {
+    transition: top 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    animation: lente-compare 260ms ease-out both;
   }
 }
 
-/* con una guida aperta l'invito a passarci sopra non c'è: la camicia è ferma */
-.configura__palco[data-guida-aperta] .configura__invito {
-  opacity: 0;
-  transition-delay: 0ms;
-}
-
-/* --- nella finestra (telefono, tablet, finestre strette): la camicia con la linea e la frase */
-.guida-finestra__figura {
-  margin: 16px 0 0;
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--parete-in-ombra, #041036);
-}
-
-.guida-finestra__figura:empty {
-  display: none;
-}
-
-.guida-finestra__camicia {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 56svh;
-}
-
-.guida-finestra__frase {
-  margin: 14px 0 0;
-  font-size: 1rem;
-  line-height: 1.45;
-}
-
-.finestra--guida {
-  --linea: #3d7bff;
-  width: min(520px, calc(100% - 2 * var(--margine)));
-}
-
-/* telefono di traverso (poca altezza): la camicia a sinistra, la frase a destra, tutto senza scorrere nella finestra */
-@media (orientation: landscape) and (max-height: 520px) {
-  .finestra--guida {
-    width: min(760px, calc(100% - 2 * var(--margine)));
-  }
-  .finestra--guida .finestra__corpo {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    column-gap: 20px;
-    align-items: start;
-    padding: 16px 20px 18px;
-  }
-  .finestra--guida .finestra__testa {
-    grid-column: 1 / -1;
-    align-items: center;
-  }
-  .finestra--guida .finestra__titolo {
-    font-size: 20px;
-  }
-  .finestra--guida .guida-finestra__figura {
-    margin-top: 12px;
-  }
-  .finestra--guida .guida-finestra__camicia {
-    max-height: calc(100svh - 32px - 34px - 56px - 12px);
-  }
-  .finestra--guida .guida-finestra__frase {
-    margin-top: 12px;
+@keyframes lente-compare {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
   }
 }

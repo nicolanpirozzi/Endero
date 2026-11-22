@@ -1,18 +1,29 @@
-// La guida alle misure del configuratore (proprietario, 2026-11-21). Il cliente misura la camicia che gli sta meglio,
-// abbottonata e stesa su un tavolo:
+// La guida alle misure del configuratore (proprietario, 2026-11-21 e 22). Il cliente misura la camicia che gli sta
+// meglio, abbottonata e stesa su un tavolo:
 // - entrando, ogni volta, una finestra in vetro con i passi; si chiude con «Inizia» e si riapre da «Come misurare»;
-// - accanto a ogni campo una «i»: sulla camicia compare, tratteggiato in blu, dove si misura, con una frase. Prima la
-//   camicia smette di dondolare e si raddrizza (leggera.js, `ferma`); per spalla e lunghezza dietro si gira e mostra
-//   il retro (un breve video calcolato con Blender, camicia/guide/retro.py), poi torna di fronte quando la guida si chiude.
-//   La frase compare nel riquadro, sotto la riga del campo: sulla camicia resta solo la linea, che non va coperta;
-// - dove la camicia non resta in vista accanto ai campi (telefono, tablet, finestre strette) la «i» apre una finestra
-//   in vetro sopra il modulo, con la camicia, la linea e la frase.
+// - quando entra in un campo di misura (clic, dito, tasto Tab) la camicia smette di dondolare (leggera.js, `ferma`)
+//   e la pagina fa uno zoom sulla zona in cui si misura, dove si disegna un tratteggio blu sottile. Per spalla e
+//   lunghezza dietro la camicia prima si gira e mostra il retro (un breve video calcolato con Blender,
+//   camicia/guide/retro.py). Passando a un'altra misura lo zoom scivola sulla zona nuova; uscendo dalle misure torna
+//   indietro, la camicia si rigira di fronte e risponde di nuovo alla mano. La frase su dove misurare compare sotto il
+//   campo: la mostra il CSS, anche senza script;
+// - dove la camicia non resta accanto ai campi (telefono, tablet, finestre strette) sopra il campo compare un riquadro
+//   con lo zoom sulla zona e il tratteggio, che resta in vista anche con la tastiera aperta.
 // Le linee sono calcolate sulla camicia vera, in Blender (camicia/guide/linee.py): punti del fotogramma 1800 x 1000,
-// lo stesso dell'immagine ferma. Le frasi stanno nella pagina (<template id="guida-frasi">), scritte dal build.
-// Con il movimento ridotto niente giro né linee che si disegnano: compaiono e basta.
+// lo stesso dell'immagine ferma. Con il movimento ridotto niente giro, zoom animato né linee che si disegnano.
+// Lo zoom ha tre misure da provare: ?zoom=a (leggero), ?zoom=b (di mezzo, quello normale), ?zoom=c (forte).
 
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
 const SVG = 'http://www.w3.org/2000/svg';
+
+// quanto si ingrandisce al più sul computer, e quanto è grande al minimo la zona inquadrata (punti del fotogramma)
+const ZOOM = { a: { massimo: 1.6, minimo: 460 }, b: { massimo: 2.2, minimo: 340 }, c: { massimo: 3, minimo: 250 } };
+const zoom = ZOOM[new URLSearchParams(location.search).get('zoom')] || ZOOM.b;
+const ATTORNO = 1.3;           // intorno alla linea, un terzo di camicia in più: le maniche ai lati del torace, il colletto
+const DURATA = 1100;           // lo zoom sul palco, in millisecondi (la curva sta nel CSS)
+const SCIVOLA = 750;           // lo zoom nel riquadro del telefono
+// il tratteggio, in punti dello schermo qualunque sia lo zoom: sottile, come una linea di cartamodello
+const TRATTO = { largo: 1.5, pieno: 5, vuoto: 4, nascostoLargo: 1, nascostoPieno: 2, nascostoVuoto: 4, capo: 2.6, bordoCapo: 1 };
 
 /** Sposta la pagina di `di` punti: lo fa src/sito.js, passando dallo scorrimento morbido (che se no lo annullerebbe). */
 const scorri = (di, subito = false) => document.dispatchEvent(new CustomEvent('endero:scorri', { detail: { di, subito } }));
@@ -46,66 +57,73 @@ function crea(nome, attributi = {}) {
   for (const [k, v] of Object.entries(attributi)) el.setAttribute(k, v);
   return el;
 }
-/** «Sul retro della camicia.» davanti alla frase, dove la camicia non si può girare: solo se la frase non lo dice già. */
-function sulRetro(testo, parole) {
-  if (parole && !/^\s*sul retro/i.test(testo.textContent)) testo.insertAdjacentHTML('afterbegin', `<strong>${parole}.</strong> `);
-}
 const tracciato = (t) => t.punti.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('') + (t.chiuso ? 'Z' : '');
+const r1 = (v) => Math.round(v * 10) / 10;
+const r2 = (v) => Math.round(v * 100) / 100;
 
 /**
- * La zona della camicia da mostrare nella finestra: il riquadro della linea, un terzo più largo, a 4:3 (3:4 per le
- * linee in piedi) e mai sotto i 340 punti del fotogramma. Così torace, pancia e bacino non diventano una striscia senza
- * ascelle né colletto, e le linee piccole (polso, braccio) non si ingrandiscono fino a sembrare grosse.
+ * La zona da inquadrare intorno alla linea (il suo riquadro, in punti del fotogramma), con la forma `aspetto`
+ * (larghezza / altezza): un terzo più grande della linea, mai sotto `zoom.minimo`, dentro il fotogramma.
+ * Restituisce [x, y, larghezza, altezza].
  */
-const MINIMO = 340;
-const ATTORNO = 1.3;           // un po' di camicia in più intorno alla linea: le maniche ai lati del torace, il colletto
-function inquadra([x0, y0, x1, y1]) {
-  let w = x1 - x0;
-  let h = y1 - y0;
-  if (h > w) { h = Math.max(h * ATTORNO, MINIMO); w = Math.max(w, h * 0.75); } else { w = Math.max(w * ATTORNO, MINIMO); h = Math.max(h, w * 0.75); }
-  w = Math.min(w, 1800);
-  h = Math.min(h, 1000);
-  const x = Math.min(Math.max((x0 + x1) / 2 - w / 2, 0), 1800 - w);
-  const y = Math.min(Math.max((y0 + y1) / 2 - h / 2, 0), 1000 - h);
-  return [x, y, w, h].map((v) => Math.round(v * 10) / 10);
+function zona([x0, y0, x1, y1], aspetto) {
+  let w = Math.max(1, (x1 - x0) * ATTORNO);
+  let h = Math.max(1, (y1 - y0) * ATTORNO);
+  const grande = Math.max(w, h);
+  if (grande < zoom.minimo) { w *= zoom.minimo / grande; h *= zoom.minimo / grande; }
+  if (w / h > aspetto) h = w / aspetto; else w = h * aspetto;
+  if (w > 1800) { w = 1800; h = w / aspetto; }
+  if (h > 1000) { h = 1000; w = h * aspetto; }
+  const x = Math.min(Math.max((x0 + x1) / 2 - w / 2, 0), Math.max(0, 1800 - w));
+  const y = Math.min(Math.max((y0 + y1) / 2 - h / 2, 0), Math.max(0, 1000 - h));
+  return [x, y, w, h];
 }
 
 /**
- * Disegna la linea di una misura dentro `svg` (che misura in punti del fotogramma): sotto un alone chiaro, perché
- * si veda anche dove passa sul blu della parete; sopra il tratteggio blu, che si disegna dall'inizio alla fine. Le
- * parti nascoste (dietro una manica, sul retro) più sottili e trasparenti; ai due capi un punto.
+ * Disegna la linea di una misura dentro `svg` (che misura in punti del fotogramma): un tratteggio blu sottile che si
+ * disegna dall'inizio alla fine; le parti nascoste (dietro una manica, sul retro) più fini e trasparenti; ai due capi
+ * un punto piccolo. `u`: quanti punti del fotogramma fa un punto dello schermo, così il tratto resta sottile a ogni zoom.
  */
-function disegnaLinea(svg, misura, chiave) {
+function disegnaLinea(svg, misura, chiave, u) {
   svg.replaceChildren();
   const gruppo = crea('g', { class: 'linea' + (ridotto.matches ? '' : ' linea--si-disegna') });
   const defs = crea('defs');
   misura.tratti.forEach((t, i) => {
     const d = tracciato(t);
-    if (t.visibile) gruppo.append(crea('path', { d, class: 'linea__alone' }));
     // la maschera che scopre il tratteggio un po' alla volta (pathLength 1: la stessa durata per ogni tratto)
     const id = `scopri-${chiave}-${i}`;
     const maschera = crea('mask', { id, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: 1800, height: 1000 });
-    maschera.append(crea('path', { d, pathLength: 1, class: 'linea__scopri' }));
+    maschera.append(crea('path', { d, pathLength: 1, class: 'linea__scopri', 'stroke-width': r1(16 * u) }));
     defs.append(maschera);
-    gruppo.append(crea('path', { d, class: t.visibile ? 'linea__tratto' : 'linea__tratto linea__tratto--nascosto', mask: `url(#${id})` }));
+    const [largo, pieno, vuoto] = t.visibile ? [TRATTO.largo, TRATTO.pieno, TRATTO.vuoto] : [TRATTO.nascostoLargo, TRATTO.nascostoPieno, TRATTO.nascostoVuoto];
+    gruppo.append(crea('path', {
+      d, class: t.visibile ? 'linea__tratto' : 'linea__tratto linea__tratto--nascosto', mask: `url(#${id})`,
+      'stroke-width': r2(largo * u), 'stroke-dasharray': `${r2(pieno * u)} ${r2(vuoto * u)}`,
+    }));
   });
-  for (const [x, y] of misura.capi || []) gruppo.append(crea('circle', { cx: x, cy: y, r: 7, class: 'linea__capo' }));
+  for (const [x, y] of misura.capi || []) gruppo.append(crea('circle', { cx: x, cy: y, r: r2(TRATTO.capo * u), 'stroke-width': r2(TRATTO.bordoCapo * u), class: 'linea__capo' }));
   svg.append(defs, gruppo);
 }
+
+/** Aspetta la fine della transizione della trasformazione di `el` (o al più `ms` millisecondi). */
+const finoAllaFine = (el, ms) => new Promise((fatto) => {
+  const via = () => { clearTimeout(t); el.removeEventListener('transitionend', fine); fatto(); };
+  const fine = (e) => { if (e.target === el && e.propertyName === 'transform') via(); };
+  const t = setTimeout(via, ms);
+  el.addEventListener('transitionend', fine);
+});
 
 /**
  * @param {HTMLElement} palco     il palco della camicia, con i dati della guida (data-guide, data-dietro, …)
  * @param {Promise} camicia       quella di leggera(): si compie con { ferma, riparti }, o niente se la camicia non si muove
  */
 export function guida(palco, camicia) {
-  const bottoni = [...document.querySelectorAll('[data-guida]')];
-  if (!bottoni.length) return;
-  const frasi = document.getElementById('guida-frasi');
-  const frase = (nome) => frasi?.content.querySelector(`[data-frase="${nome}"]`)?.innerHTML || '';
-  const etichetta = (b) => document.querySelector(`label[for="campo-${b.dataset.guida}"]`)?.textContent.trim() || '';
+  const campi = [...document.querySelectorAll('.misura[data-guida]')];
+  if (!campi.length) return;
+  const scheda = campi[0].closest('form');
+  const sulPalco = () => getComputedStyle(palco).position === 'sticky';
 
-  // le linee: si scaricano quando la pagina è ferma, o al primo tocco su una «i»
-  // (se la rete cade, la «i» dopo riprova: un errore non resta in memoria)
+  // le linee: si scaricano quando la pagina è ferma, o al primo campo (se la rete cade, il campo dopo riprova)
   let dati = null;
   const linee = () => (dati ||= palco.dataset.guide
     ? fetch(palco.dataset.guide).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).catch(() => { dati = null; return null; })
@@ -113,31 +131,26 @@ export function guida(palco, camicia) {
   if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => linee());
 
   // la camicia che si muove arriva quando i suoi pezzi sono scaricati: se intanto una guida è aperta, si ferma subito
-  // (prima che saluti o segua la mano sotto la linea)
   let controllo = null;
-  let aperta = null;             // il bottone della guida in vista sul palco
-  camicia.then((c) => { controllo = c || null; if (controllo && aperta) controllo.ferma(); }, () => {});
+  let aperta = null;             // il campo (.misura) della guida in vista
+  camicia.then((c) => { controllo = c || null; if (controllo && aperta && sulPalco()) controllo.ferma(); }, () => {});
+  let turno = 0;                 // ogni guida nuova annulla i passi rimasti a quella di prima
 
   // ------------------------------------------------------------ sul palco (computer: la camicia resta accanto ai campi)
-  let svg = null, nota = null, video = null, retro = null;
+  // Si ingrandiscono insieme, con la stessa trasformazione (--zoom, nel CSS), l'immagine ferma, la sua copia a
+  // grandezza doppia (zoomata resta definita), la camicia vista da dietro, il video del giro e le linee. I pezzi che
+  // si muovono (leggera.js) intanto si nascondono: la camicia è ferma, e l'immagine ferma è la stessa.
+  let svg = null, video = null, retro = null, nitida = null;
   let vista = 'davanti';
-  let turno = 0;                 // ogni guida nuova annulla i passi rimasti a quella di prima
-  const prima = () => palco.querySelector('.configura__invito');
+  const ferma = () => palco.querySelector('.configura__ferma');
   const preparaPalco = () => {
     if (svg) return;
     svg = crea('svg', { class: 'configura__linee', viewBox: '0 0 1800 1000', preserveAspectRatio: 'none', 'aria-hidden': 'true' });
-    nota = document.createElement('div');
-    nota.className = 'configura__nota-guida';
-    nota.setAttribute('role', 'status');
-    nota.hidden = true;
-    prima().before(svg);
-  };
-  /** La nota va sotto la riga del campo (i campi stanno a due a due): dopo l'ultimo campo alla stessa altezza. */
-  const sottoLaRiga = (b) => {
-    const campo = b.closest('.misura');
-    let ultimo = campo;
-    for (let x = campo.nextElementSibling; x && x.classList.contains('misura') && x.offsetTop === campo.offsetTop; x = x.nextElementSibling) ultimo = x;
-    ultimo.after(nota);
+    nitida = Object.assign(document.createElement('img'), { alt: '', className: 'configura__nitida', decoding: 'async', draggable: false });
+    nitida.setAttribute('aria-hidden', 'true');
+    nitida.hidden = true;
+    if (palco.dataset.ferma) nitida.src = palco.dataset.ferma;
+    palco.querySelector('.configura__invito').before(nitida, svg);
   };
   /** Un video del giro, sopra la camicia, con le misure dell'immagine ferma: parte quando è pronto, finisce e basta.
    *  `parte` si chiama quando il primo fotogramma è sullo schermo (o quando si rinuncia al video). */
@@ -170,15 +183,15 @@ export function guida(palco, camicia) {
       retro.setAttribute('aria-hidden', 'true');
       retro.hidden = true;
       retro.src = palco.dataset.dietro;
-      svg.before(retro);
+      nitida.after(retro);
     }
     // vero se la camicia da dietro è pronta; se non arriva in tre secondi (rete lenta) o non c'è, la camicia non si gira
     const pronta = retro.decode().then(() => retro.naturalWidth > 0, () => false);
     return Promise.race([pronta, new Promise((fatto) => setTimeout(() => fatto(false), 3000))]);
   };
-  // La camicia si gira un giro alla volta, verso la vista chiesta per ultima: chi clicca in fretta su più «i» non la
-  // lascia mai a metà né di spalle sotto la linea di una misura davanti. Un giro cominciato finisce; poi, se intanto
-  // è stata chiesta l'altra vista, si gira di nuovo.
+  // La camicia si gira un giro alla volta, verso la vista chiesta per ultima: chi passa in fretta da un campo all'altro
+  // non la lascia mai a metà né di spalle sotto la linea di una misura davanti. Un giro cominciato finisce; poi, se
+  // intanto è stata chiesta l'altra vista, si gira di nuovo. Si gira sempre senza zoom.
   let desiderata = 'davanti';
   let girando = null;
   let ruota = false;             // la camicia si sta girando davvero (non solo aspetta l'immagine del retro)
@@ -219,141 +232,238 @@ export function guida(palco, camicia) {
     }
     return vista === verso;
   }
-  function chiudiPalco({ resta = false } = {}) {
-    turno++;
-    if (aperta) aperta.setAttribute('aria-expanded', 'false');
+
+  // --- lo zoom
+  let scala = 1;                 // l'ingrandimento di adesso (1: niente zoom)
+  /** Dove sta l'immagine ferma nel palco, senza zoom (in punti dello schermo). */
+  const base = () => { const f = ferma(); return { x: f.offsetLeft, y: f.offsetTop, w: f.offsetWidth, h: f.offsetHeight }; };
+  /** La parte del palco in cui si guarda la camicia: quella nello schermo, a sinistra del riquadro in vetro. */
+  function area() {
+    const p = palco.getBoundingClientRect();
+    const s = scheda.getBoundingClientRect();
+    const sinistra = Math.max(p.left, 0) + 24;
+    const destra = (s.left > sinistra + 240 ? s.left : Math.min(p.right, innerWidth)) - 24;
+    const su = Math.max(p.top, 0) + 64;          // sopra può tornare la testata
+    const giu = Math.min(p.bottom, innerHeight) - 24;
+    return { x: sinistra - p.left, y: su - p.top, w: Math.max(80, destra - sinistra), h: Math.max(80, giu - su) };
+  }
+  /** Lo zoom sulla zona `z` del fotogramma ([x, y, w, h]); si compie a zoom finito. */
+  async function zoomSu(z) {
+    const B = base(), A = area(), k = B.w / 1800;
+    let s = Math.min(A.w / (z[2] * k), A.h / (z[3] * k));
+    s = Math.max(1, Math.min(zoom.massimo, s));
+    const cx = z[0] + z[2] / 2, cy = z[1] + z[3] / 2;
+    let tx = A.x + A.w / 2 - B.x - s * k * cx;
+    let ty = A.y + A.h / 2 - B.y - s * k * cy;
+    // l'immagine ingrandita copre sempre almeno quello che copriva prima: niente bordi vuoti
+    tx = Math.max((1 - s) * B.w, Math.min(tx, Math.max(0, -B.x)));
+    ty = Math.max((1 - s) * B.h, Math.min(ty, Math.max(0, -B.y)));
+    scala = s;
+    const dopo = `translate(${r1(tx)}px, ${r1(ty)}px) scale(${Math.round(s * 1000) / 1000})`;
+    if (palco.style.getPropertyValue('--zoom') === dopo) return;
+    palco.style.setProperty('--zoom', dopo);
+    if (!ridotto.matches) await finoAllaFine(ferma(), DURATA + 150);
+  }
+  async function zoomVia() {
+    scala = 1;
+    if (!palco.style.getPropertyValue('--zoom')) return;
+    palco.style.removeProperty('--zoom');
+    if (!ridotto.matches) await finoAllaFine(ferma(), DURATA + 150);
+  }
+
+  async function apriPalco(m) {
+    preparaPalco();
+    const mio = ++turno;
+    aperta = m;
+    palco.dataset.guidaAperta = m.dataset.guida;
+    svg.replaceChildren();
+    const [d] = await Promise.all([linee(), controllo ? controllo.ferma() : null]);
+    if (mio !== turno) return;
+    palco.dataset.guidaFerma = '';             // via i pezzi che si muovono: resta l'immagine ferma, che è la stessa
+    const misura = d?.misure?.[m.dataset.guida];
+    const verso = m.dataset.vista === 'dietro' ? 'dietro' : 'davanti';
+    if (verso !== vista || ruota) {
+      // la camicia si gira senza zoom: prima si torna indietro, poi si gira, poi lo zoom sulla zona nuova
+      await zoomVia();
+      if (mio !== turno) return;
+      const girata = await gira(verso);
+      if (mio !== turno || !girata) return;
+    }
+    if (!misura) return;
+    // la copia a grandezza doppia dell'immagine ferma: davanti, appena è arrivata (da dietro c'è la camicia girata)
+    if (nitida.complete && nitida.naturalWidth) nitida.hidden = verso !== 'davanti';
+    else nitida.addEventListener('load', () => { if (aperta && vista === 'davanti') nitida.hidden = false; }, { once: true });
+    const A = area();
+    const fine = zoomSu(zona(misura.riquadro, A.w / A.h));
+    // la linea si disegna mentre lo zoom finisce (lo spessore è per l'ingrandimento finale, già calcolato)
+    setTimeout(() => { if (mio === turno) disegnaLinea(svg, misura, 'palco', 1800 / (base().w * scala)); }, ridotto.matches ? 0 : DURATA * 0.55);
+    await fine;
+  }
+  async function chiudiPalco() {
+    const mio = ++turno;
     aperta = null;
     delete palco.dataset.guidaAperta;
     if (svg) svg.replaceChildren();
-    if (nota) { nota.hidden = true; nota.replaceChildren(); }
-    if (resta) return;
-    const mio = turno;
-    gira('davanti').then(() => { if (mio === turno) controllo?.riparti(); });
-  }
-  async function apriPalco(b) {
-    preparaPalco();
-    const mio = ++turno;
-    if (aperta && aperta !== b) aperta.setAttribute('aria-expanded', 'false');
-    aperta = b;
-    b.setAttribute('aria-expanded', 'true');
-    palco.dataset.guidaAperta = b.dataset.guida;
-    svg.replaceChildren();
-    // la nota con il nome della misura e la frase, subito: la linea arriva appena la camicia è pronta
-    const chiudi = document.createElement('button');
-    chiudi.type = 'button'; chiudi.className = 'configura__nota-chiudi';
-    chiudi.setAttribute('aria-label', document.querySelector('#guida-finestra .finestra__chiudi')?.getAttribute('aria-label') || 'Chiudi');
-    chiudi.innerHTML = document.querySelector('#guida-finestra .finestra__chiudi')?.innerHTML || '×';
-    chiudi.addEventListener('click', () => { const torna = aperta; chiudiPalco(); torna?.focus(); });
-    const titolo = Object.assign(document.createElement('p'), { className: 'configura__nota-titolo', textContent: etichetta(b) });
-    const testo = Object.assign(document.createElement('p'), { className: 'configura__nota-frase', innerHTML: frase(b.dataset.guida) });
-    nota.replaceChildren(titolo, testo, chiudi);
-    // La nota si sposta sotto la riga nuova. Se era aperta più su, le righe in mezzo salirebbero di colpo sotto il
-    // puntatore: la pagina sale con loro, in un colpo, così la «i» appena cliccata resta dov'era. In cima alla pagina
-    // non si può: lì il posto della nota vecchia si chiude piano (un segnaposto che si stringe), senza scatti.
-    const primaY = b.getBoundingClientRect().top;
-    const dovEra = !nota.hidden && nota.isConnected ? nota.previousElementSibling : null;
-    nota.hidden = true;
-    sottoLaRiga(b);
-    nota.hidden = false;
-    const salto = b.getBoundingClientRect().top - primaY;            // < 0: la nota vecchia stava sopra
-    let siChiude = 0;
-    if (salto < -1) {
-      const posso = Math.min(-salto, scrollY);
-      if (posso > 1) scorri(-posso, true);
-      siChiude = -salto - posso;
-      if (siChiude > 1 && dovEra && !ridotto.matches) {
-        const fantasma = Object.assign(document.createElement('div'), { className: 'configura__nota-fantasma' });
-        fantasma.setAttribute('aria-hidden', 'true');
-        // nella griglia del modulo ogni riga ha il suo spazio sotto: il segnaposto lo toglie, conta solo la sua altezza
-        fantasma.style.cssText = `grid-column:1/-1;height:${siChiude}px;margin-bottom:-${parseFloat(getComputedStyle(dovEra.parentElement).rowGap) || 0}px`;
-        dovEra.after(fantasma);
-        fantasma.animate([{ height: `${siChiude}px` }, { height: '0px' }], { duration: 260, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' }).finished
-          .catch(() => {}).then(() => fantasma.remove());
-      } else siChiude = 0;
-    }
-    // e se la nota finisce sotto il bordo dello schermo, la pagina sale quanto basta (non oltre la riga del campo)
-    const sotto = nota.getBoundingClientRect().bottom - siChiude - (innerHeight - 16);
-    const margine = b.getBoundingClientRect().top - siChiude - 96;
-    if (sotto > 0 && margine > 0) scorri(Math.min(sotto, margine), ridotto.matches);
-    const [d] = await Promise.all([linee(), controllo ? controllo.ferma() : null]);
+    await zoomVia();
     if (mio !== turno) return;
-    const misura = d?.misure?.[b.dataset.guida];
-    if (b.dataset.vista === 'dietro') {
-      const girata = await gira('dietro');
-      if (mio !== turno) return;
-      if (!girata) { sulRetro(testo, frase('sul-retro')); return; }
-    } else {
-      await gira('davanti');
-      if (mio !== turno) return;
-    }
-    if (misura) disegnaLinea(svg, misura, 'palco');
+    if (nitida) nitida.hidden = true;
+    await gira('davanti');
+    if (mio !== turno) return;
+    delete palco.dataset.guidaFerma;
+    controllo?.riparti();
   }
 
-  // ------------------------------------------------------------ nella finestra (telefono, tablet, finestre strette)
-  const finestra = document.getElementById('guida-finestra');
-  let daFinestra = null;
-  finestra?.addEventListener('close', () => {
-    blocca(false);
-    daFinestra?.setAttribute('aria-expanded', 'false');
-    daFinestra = null;
-    finestra.querySelector('[data-guida-figura]').replaceChildren();
+  /** Il palco come senza guida, subito (la finestra è passata al riquadro sopra il campo). */
+  function azzeraPalco() {
+    turno++;
+    scala = 1;
+    palco.style.removeProperty('--zoom');
+    delete palco.dataset.guidaAperta;
+    delete palco.dataset.guidaFerma;
+    if (svg) svg.replaceChildren();
+    if (nitida) nitida.hidden = true;
+    if (retro) retro.hidden = true;
+    if (video) { video.pause(); video.hidden = true; }
+    vista = desiderata = 'davanti';
+    controllo?.riparti();
+  }
+
+  // ------------------------------------------------------------ sopra il campo (telefono, tablet, finestre strette)
+  // Un riquadro con la camicia: si apre sull'insieme e scivola con uno zoom sulla zona della misura, poi si disegna il
+  // tratteggio. Sta sopra il campo, sulle righe di prima, senza spostare niente nel modulo.
+  let carta = null, svgC = null, foto = null, sopra = null;
+  let quadro = null;             // la zona inquadrata adesso (viewBox)
+  let scivola = 0;
+  const preparaCarta = () => {
+    if (carta) return;
+    carta = Object.assign(document.createElement('div'), { className: 'misura-lente' });
+    carta.setAttribute('aria-hidden', 'true');
+    carta.hidden = true;
+    svgC = crea('svg', { class: 'misura-lente__camicia', preserveAspectRatio: 'xMidYMid slice' });
+    foto = crea('image', { x: 0, y: 0, width: 1800, height: 1000, preserveAspectRatio: 'none' });
+    sopra = crea('svg', { viewBox: '0 0 1800 1000', x: 0, y: 0, width: 1800, height: 1000, overflow: 'visible' });
+    svgC.append(foto, sopra);
+    carta.append(svgC);
+  };
+  const mettiQuadro = (q) => { quadro = q; svgC.setAttribute('viewBox', q.map(r1).join(' ')); };
+  /** Il riquadro scivola dalla zona di adesso a `verso`, in SCIVOLA millisecondi. */
+  const scivolaSu = (verso) => new Promise((fatto) => {
+    cancelAnimationFrame(scivola);
+    const da = quadro;
+    if (!da || ridotto.matches) { mettiQuadro(verso); fatto(); return; }
+    const t0 = performance.now();
+    const passo = (ora) => {
+      const t = Math.min(1, (ora - t0) / SCIVOLA);
+      const e = 1 - Math.pow(1 - t, 3);
+      mettiQuadro(da.map((v, i) => v + (verso[i] - v) * e));
+      if (t < 1) scivola = requestAnimationFrame(passo); else fatto();
+    };
+    scivola = requestAnimationFrame(passo);
   });
-  async function apriFinestra(b) {
-    if (!finestra || typeof finestra.showModal !== 'function') return;
-    daFinestra = b;
-    b.setAttribute('aria-expanded', 'true');
-    finestra.querySelector('.finestra__titolo').textContent = etichetta(b);
-    const testo = finestra.querySelector('[data-guida-frase]');
-    testo.innerHTML = frase(b.dataset.guida);
-    const figura = finestra.querySelector('[data-guida-figura]');
-    figura.replaceChildren();
-    finestra.showModal();
-    blocca(true);
+  /** Il riquadro e il campo in vista insieme, anche con la tastiera aperta (la parte visibile è visualViewport). */
+  function inVista(m) {
+    if (!carta || carta.hidden) return;
+    const vv = window.visualViewport;
+    const alto = (vv ? vv.offsetTop : 0) + 8;
+    const basso = (vv ? vv.offsetTop + vv.height : innerHeight) - 8;
+    const r = carta.getBoundingClientRect();
+    const campo = m.querySelector('input').getBoundingClientRect();
+    if (r.top < alto) {
+      const spazio = basso - campo.bottom;               // quanto può scendere il campo senza finire sotto la tastiera
+      const di = Math.min(alto - r.top, Math.max(0, spazio));
+      if (di > 1) scorri(-di, true);
+    }
+  }
+  async function apriCarta(m) {
+    preparaCarta();
+    const mio = ++turno;
+    aperta = m;
+    const contenitore = m.parentElement;
+    if (carta.parentElement !== contenitore) { contenitore.append(carta); quadro = null; }
+    const largo = contenitore.clientWidth;
+    const alto = Math.round(Math.min(240, largo * 0.62));
+    carta.style.width = `${largo}px`;
+    carta.style.height = `${alto}px`;
+    carta.style.top = `${m.offsetTop - alto - 10}px`;
+    if (carta.hidden) quadro = null;
+    carta.hidden = false;
+    sopra.replaceChildren();
+    inVista(m);
     const d = await linee();
-    const misura = d?.misure?.[b.dataset.guida];
-    const dietro = b.dataset.vista === 'dietro';
-    const foto = dietro ? palco.dataset.dietro : palco.dataset.ferma;
-    if (daFinestra !== b) return;
-    if (!misura || !foto) {
-      if (dietro) sulRetro(testo, frase('sul-retro'));
-      return;
+    if (mio !== turno) return;
+    const misura = d?.misure?.[m.dataset.guida];
+    const dietro = m.dataset.vista === 'dietro';
+    const indirizzo = dietro ? palco.dataset.dietro : palco.dataset.ferma;
+    if (!misura || !indirizzo) { chiudiCarta(); return; }
+    const aspetto = largo / alto;
+    // l'immagine (davanti o dietro): se cambia, il riquadro riparte dall'insieme della camicia
+    if (foto.getAttribute('href') !== indirizzo) {
+      const im = new Image();
+      im.src = indirizzo;
+      const caricata = await im.decode().then(() => im.naturalWidth > 0, () => false);
+      if (mio !== turno) return;
+      if (!caricata) { chiudiCarta(); return; }
+      foto.setAttribute('href', indirizzo);
+      quadro = null;
     }
-    const svgF = crea('svg', { class: 'guida-finestra__camicia', viewBox: inquadra(misura.riquadro).join(' '), role: 'img', 'aria-label': `${etichetta(b)}: ${testo.textContent}` });
-    svgF.append(crea('image', { href: foto, x: 0, y: 0, width: 1800, height: 1000, preserveAspectRatio: 'none' }));
-    const sopra = crea('g');
-    svgF.append(sopra);
-    figura.replaceChildren(svgF);
-    if (dietro) figura.dataset.vista = 'dietro'; else delete figura.dataset.vista;
-    // la linea si disegna quando la camicia è caricata, così la si vede comparire
-    const im = new Image();
-    im.src = foto;
-    const caricata = await im.decode().then(() => im.naturalWidth > 0, () => false);
-    if (daFinestra !== b) return;
-    if (!caricata) {
-      figura.replaceChildren();
-      if (dietro) sulRetro(testo, frase('sul-retro'));
-      return;
-    }
-    const g = crea('svg', { viewBox: '0 0 1800 1000', x: 0, y: 0, width: 1800, height: 1000, overflow: 'visible' });
-    sopra.append(g);
-    disegnaLinea(g, misura, 'finestra');
+    if (!quadro) mettiQuadro(zona(d.viste?.[dietro ? 'dietro' : 'davanti']?.sagoma || [420, 120, 1040, 960], aspetto));
+    const z = zona(misura.riquadro, aspetto);
+    await scivolaSu(z);
+    if (mio !== turno) return;
+    disegnaLinea(sopra, misura, 'carta', z[2] / largo);
+  }
+  function chiudiCarta() {
+    turno++;
+    aperta = null;
+    cancelAnimationFrame(scivola);
+    if (carta) { carta.hidden = true; sopra.replaceChildren(); quadro = null; }
   }
 
-  // ------------------------------------------------------------ le «i»
-  const sulPalco = () => getComputedStyle(palco).position === 'sticky';
-  for (const b of bottoni) {
-    b.addEventListener('click', () => {
-      if (sulPalco()) {
-        if (aperta === b) { chiudiPalco(); return; }
-        apriPalco(b);
-      } else apriFinestra(b);
-    });
+  // ------------------------------------------------------------ i campi
+  const apri = (m) => (sulPalco() ? apriPalco(m) : apriCarta(m));
+  const palcoInGuida = () => !!(palco.dataset.guidaAperta || 'guidaFerma' in palco.dataset || palco.style.getPropertyValue('--zoom'));
+  function chiudi() {
+    if (carta && !carta.hidden) chiudiCarta();
+    if (palcoInGuida()) chiudiPalco();
+    aperta = null;
   }
-  // Esc chiude la guida sul palco; toccare la camicia anche (e lei torna a rispondere alla mano)
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && aperta && !document.querySelector('dialog[open]')) { const torna = aperta; chiudiPalco(); torna.focus(); }
+  let uscita = 0;
+  scheda.addEventListener('focusin', (e) => {
+    const m = e.target.closest('.misura[data-guida]');
+    if (!m) return;
+    clearTimeout(uscita);
+    if (aperta !== m) apri(m);
   });
-  palco.addEventListener('click', () => { if (aperta) chiudiPalco(); });
-  // se la finestra si stringe con una guida aperta, la guida sul palco si chiude (la si riapre nella finestra)
-  addEventListener('resize', () => { if (aperta && !sulPalco()) chiudiPalco(); });
+  scheda.addEventListener('focusout', (e) => {
+    if (e.relatedTarget?.closest?.('.misura[data-guida]')) return;          // si passa a un'altra misura: ci pensa focusin
+    // se se ne va tutta la finestra (un'altra scheda del browser) la guida resta com'è; se no si chiude, dopo un attimo
+    clearTimeout(uscita);
+    uscita = setTimeout(() => {
+      if (!document.hasFocus()) return;
+      if (document.activeElement?.closest?.('.misura[data-guida]')) return;
+      chiudi();
+    }, 120);
+  });
+  // Esc mentre si scrive: la guida si chiude e il campo resta com'è; un clic sul campo la riapre
+  scheda.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aperta && e.target.closest('.misura[data-guida]')) chiudi();
+  });
+  scheda.addEventListener('click', (e) => {
+    const m = e.target.closest('.misura[data-guida]');
+    if (m && !aperta && m.contains(document.activeElement)) apri(m);
+  });
+  // con la tastiera del telefono che si apre o si chiude, il riquadro resta in vista
+  window.visualViewport?.addEventListener('resize', () => { if (aperta && carta && !carta.hidden) inVista(aperta); });
+  // se la finestra cambia forma con una guida aperta, la guida si rifà nel modo giusto (palco o riquadro) e con le misure nuove
+  let cambio = 0;
+  addEventListener('resize', () => {
+    if (!aperta) return;
+    clearTimeout(cambio);
+    cambio = setTimeout(() => {
+      const m = aperta;
+      if (!m) return;
+      if (sulPalco()) { if (carta && !carta.hidden) chiudiCarta(); apriPalco(m); }
+      else { if (palcoInGuida()) azzeraPalco(); apriCarta(m); }
+    }, 200);
+  });
 }

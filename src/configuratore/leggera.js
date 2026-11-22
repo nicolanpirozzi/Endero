@@ -362,7 +362,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
       inGuida = true;
       mano.sopra = false; mano.preme = 0; mano.tiene = false;
       if (!corre) { aRiposo(); return Promise.resolve(); }
-      if (attesaRiposo) return inCorso;            // una seconda «i» mentre si raddrizza: la stessa attesa
+      if (attesaRiposo) return inCorso;            // un secondo campo mentre si raddrizza: la stessa attesa
       inCorso = new Promise((fatto) => {
         attesaRiposo = fatto;
         // al più tre quarti di secondo: poi si posa di colpo (a quel punto si muove di un millimetro, non si vede)
@@ -372,7 +372,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
       return inCorso;
     },
     /** Risponde di nuovo alla mano. Se si stava ancora raddrizzando, il conto alla rovescia per posarla si annulla:
-     *  chi apre e chiude una «i» in fretta la ritrova che dondola, senza scatti. */
+     *  chi entra ed esce in fretta da un campo di misura la ritrova che dondola, senza scatti. */
     riparti() {
       inGuida = false;
       clearTimeout(timerFerma);

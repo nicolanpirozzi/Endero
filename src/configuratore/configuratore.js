@@ -2,8 +2,8 @@
 // nastro quando le si passa sopra, e il suo tessuto ondeggia come un telo (onda.js). Dove il browser non ha
 // l'accelerazione grafica il tessuto non ondeggia e la camicia dondola tutta insieme. Senza JavaScript, con il
 // movimento ridotto o con il risparmio dati resta l'immagine ferma, e il riquadro delle misure funziona lo stesso.
-// La guida alle misure (guida.js): la finestra dei passi all'apertura, e la «i» di ogni campo che mostra sulla
-// camicia dove si misura.
+// La guida alle misure (guida.js): la finestra dei passi all'apertura, e entrando in ogni campo di misura lo zoom
+// sulla camicia dove si misura.
 import { leggera } from './leggera.js';
 import { passi, guida } from './guida.js';
 

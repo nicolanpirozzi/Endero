@@ -1,9 +1,10 @@
 // Pagina /camicie-su-misura/configuratore/. La camicia appesa e il riquadro in vetro (docs/direzione-creativa.md,
 // punto 12). La camicia è l'immagine di Blender divisa in pezzi che si muovono (src/configuratore/leggera.js).
 // Dal 2026-11-21 la guida alle misure: si misura la camicia che sta meglio, stesa su un tavolo. All'apertura una
-// finestra in vetro con i passi; accanto a ogni campo una «i» che mostra sulla camicia, tratteggiato in blu, dove si
-// misura (src/configuratore/guida.js). Senza script resta l'immagine ferma, e passi e frasi si leggono nel riquadro.
-import { esc, t, icona } from '../parti/base.mjs';
+// finestra in vetro con i passi; entrando in un campo di misura la camicia fa uno zoom sul punto in cui si misura, con
+// un tratteggio blu, e sotto il campo compare la frase (src/configuratore/guida.js; dal 2026-11-22 senza la «i»).
+// Senza script resta l'immagine ferma; i passi si leggono nel riquadro e la frase compare lo stesso sotto il campo.
+import { esc, t } from '../parti/base.mjs';
 import { pagina, briciola } from '../parti/telaio.mjs';
 import { datiBase, domande } from '../parti/sezioni.mjs';
 
@@ -19,17 +20,17 @@ function gruppo(g, s) {
   if (g.tipo === 'misure') {
     campi = g.campi.map((c) => {
       const aiuto = c.aiuto ? `<span class="misura__aiuto" id="${id(c)}-aiuto">${t(c.aiuto)}</span>` : '';
+      // dove si misura: la frase compare sotto il campo mentre ci si scrive (la mostra il CSS, anche senza script);
+      // la camicia fa lo zoom sul punto (src/configuratore/guida.js, che trova la misura da data-guida)
+      const dove = c.guida ? `<span class="misura__dove" id="${id(c)}-dove">${t(c.guida)}</span>` : '';
       const errore = `<span class="misura__errore" id="${id(c)}-errore" aria-live="polite"></span>`;
-      const descritto = [c.aiuto ? `${id(c)}-aiuto` : '', `${id(c)}-errore`].filter(Boolean).join(' ');
+      const descritto = [c.guida ? `${id(c)}-dove` : '', c.aiuto ? `${id(c)}-aiuto` : '', `${id(c)}-errore`].filter(Boolean).join(' ');
       const messaggio = s.errore_misura.replace('{min}', c.min).replace('{max}', c.max);
-      // la «i»: la guida alla misura (src/configuratore/guida.js). La frase sta nel modello della pagina, non qui
-      const info = c.guida && s.come_misurare
-        ? `<button class="misura__info" type="button" data-guida="${esc(c.nome)}" data-vista="${esc(c.vista || 'davanti')}" aria-label="${esc(s.come_misurare.info.replace('{etichetta}', c.etichetta))}" aria-expanded="false">i</button>`
-        : '';
-      return `<div class="misura">
-        <span class="misura__testa"><label class="misura__nome" for="${id(c)}">${esc(c.etichetta)}</label>${info}</span>
+      const guida = c.guida ? ` data-guida="${esc(c.nome)}" data-vista="${esc(c.vista || 'davanti')}"` : '';
+      return `<div class="misura"${guida}>
+        <label class="misura__nome" for="${id(c)}">${esc(c.etichetta)}</label>
         <span class="misura__casella"><input id="${id(c)}" name="${esc(c.nome)}" type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]{1,3}([,.][0-9]{1,2})?" maxlength="6" data-min="${esc(c.min)}" data-max="${esc(c.max)}" data-errore="${esc(messaggio)}" aria-describedby="${descritto}">${c.unita ? `<span class="misura__unita" aria-hidden="true">${esc(c.unita)}</span>` : ''}</span>
-        ${aiuto}${errore}
+        ${dove}${aiuto}${errore}
       </div>`;
     });
   } else if (g.tipo === 'spento') {
@@ -64,34 +65,22 @@ function gruppo(g, s) {
  *   gli indirizzi dell'immagine ferma, la cartella dei tre pezzi che si muovono (se ci sono) e la loro impronta
  */
 /**
- * La guida alle misure, scritta nella pagina: la finestra dei passi (si apre da sola), quella che sul telefono mostra
- * la camicia con la linea, e le frasi delle «i» in un modello (<template>), che lo script legge quando servono.
- * Senza script la finestra non si apre: i passi stanno nel riquadro, dentro <noscript>, con le frasi di ogni misura.
+ * La guida alle misure, scritta nella pagina: la finestra dei passi, che si apre da sola, e il tasto che la riapre.
+ * Senza script la finestra non si apre: i passi stanno nel riquadro, dentro <noscript> (le frasi di ogni misura
+ * compaiono comunque sotto il campo, con il CSS).
  */
 function guida(s) {
   const g = s.come_misurare;
-  if (!g) return { finestre: '', frasi: '', senzaScript: '', riapri: '' };
-  const campi = s.gruppi.filter((x) => x.tipo === 'misure').flatMap((x) => x.campi).filter((c) => c.guida);
+  if (!g) return { finestre: '', senzaScript: '', riapri: '' };
   const passi = `<ol class="passi-misura">${g.passi.map((x) => `<li class="passi-misura__voce">${t(x)}</li>`).join('')}</ol>`;
   return {
     riapri: `<button class="collegamento configura__come" type="button" data-apri-passi aria-haspopup="dialog">${esc(g.riapri)}</button>`,
-    senzaScript: `<noscript><div class="configura__senza-script">${passi}<dl>${campi.map((c) => `<div><dt>${esc(c.etichetta)}</dt><dd>${t(c.guida)}</dd></div>`).join('')}</dl></div></noscript>`,
-    frasi: `<template id="guida-frasi">${campi.map((c) => `<p data-frase="${esc(c.nome)}">${t(c.guida)}</p>`).join('')}<p data-frase="sul-retro">${esc(g.sul_retro)}</p></template>`,
+    senzaScript: `<noscript><div class="configura__senza-script">${passi}</div></noscript>`,
     finestre: `<dialog class="finestra finestra--passi" id="come-misurare" aria-labelledby="come-misurare-titolo" data-lenis-prevent>
   <div class="vetro finestra__corpo">
     <h2 class="finestra__titolo" id="come-misurare-titolo">${t(g.titolo)}</h2>
     ${passi}
     <form method="dialog" class="finestra__azioni"><button class="pillola pillola--chiara pillola--grande" value="inizia" autofocus>${esc(g.inizia)}</button></form>
-  </div>
-</dialog>
-<dialog class="finestra finestra--guida" id="guida-finestra" aria-labelledby="guida-finestra-titolo" data-lenis-prevent>
-  <div class="vetro finestra__corpo">
-    <div class="finestra__testa">
-      <h2 class="finestra__titolo" id="guida-finestra-titolo"></h2>
-      <form method="dialog"><button class="pillola pillola--vetro finestra__chiudi" aria-label="${esc(g.chiudi)}" autofocus>${icona.chiudi}</button></form>
-    </div>
-    <div class="guida-finestra__figura" data-guida-figura></div>
-    <p class="guida-finestra__frase" data-guida-frase></p>
   </div>
 </dialog>`,
   };
@@ -129,7 +118,6 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
   </form>
 </section>
 ${g.finestre}
-${g.frasi}
 ${c.domande ? `<div class="corpo configura__sotto">
   ${domande(c.domande, { gruppo: '' })}
 </div>` : ''}
