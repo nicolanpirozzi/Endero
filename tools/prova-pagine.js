@@ -299,14 +299,15 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
   // nascoste per come funzionano, e non perché aspettano lo scorrimento: l'apertura a film, il selettore delle
   // sezioni chiuso sul telefono, le schede che compaiono al passaggio del mouse (.griglia__scheda) e i capitoli di
   // «Chi siamo» in pagina iniziale, che si vedono uno alla volta (gli stessi testi stanno interi in /chi-siamo/),
-  // «Endero» in cima alle briciole sui telefoni (è il logo in testata) e l'invito «Passaci sopra con il mouse»
-  // della camicia dove il mouse non c'è.
+  // «Endero» in cima alle briciole sui telefoni (è il logo in testata), l'invito «Passaci sopra con il mouse»
+  // della camicia dove il mouse non c'è e, nel configuratore, la frase su dove si misura, che compare sotto il campo
+  // quando ci si entra (.misura__dove).
   const nascoste = (page) => page.evaluate(() => {
     let tutte = 0, perse = 0;
     const cammina = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
     for (let n = cammina.nextNode(); n; n = cammina.nextNode()) {
       const parole = n.textContent.trim().split(/\s+/).filter(Boolean).length;
-      if (!parole || n.parentElement.closest('.apertura, .selettore, .griglia__scheda, .mestiere__scheda, .briciole, .configura__invito, script, style, dialog, .nascosto, details:not([open]) .domanda__risposta')) continue;
+      if (!parole || n.parentElement.closest('.apertura, .selettore, .griglia__scheda, .mestiere__scheda, .briciole, .configura__invito, .misura__dove, script, style, dialog, .nascosto, details:not([open]) .domanda__risposta')) continue;
       tutte += parole;
       for (let e = n.parentElement; e && e !== document.body; e = e.parentElement) {
         const s = getComputedStyle(e);
