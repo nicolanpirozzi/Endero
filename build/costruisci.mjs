@@ -152,6 +152,11 @@ if (existsSync(join(RADICE, 'public/camicia/leggera/leggera.json'))) {
 // da dietro con il giro per arrivarci (camicia/guide/retro.py). Se mancano, entrando in un campo si legge solo la frase.
 camicia.guide = conVersione('guide.json');
 camicia.retro = { dietro: conVersione('retro/dietro.webp'), dietro2x: conVersione('retro/dietro-2x.webp'), giro: conVersione('retro/giro.mp4'), ritorno: conVersione('retro/ritorno.mp4') };
+// la camicia a grandezza quadrupla, solo nel suo riquadro, per lo zoom forte (camicia/guide/nitide.py)
+if (existsSync(join(RADICE, 'public/camicia/nitide/nitide.json'))) {
+  const n = JSON.parse(readFileSync(join(RADICE, 'public/camicia/nitide/nitide.json'), 'utf8'));
+  camicia.nitide = { davanti: conVersione('nitide/davanti.webp'), dietro: conVersione('nitide/dietro.webp'), riquadro: n.riquadro, fotogramma: n.fotogramma };
+}
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/, il configuratore mostra solo la camicia ferma');
 const testiConfiguratore = leggi('configuratore.json');

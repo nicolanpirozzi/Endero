@@ -5,25 +5,29 @@
 //   e la pagina fa uno zoom sulla zona in cui si misura, dove si disegna un tratteggio blu sottile. Per spalla e
 //   lunghezza dietro la camicia prima si gira e mostra il retro (un breve video calcolato con Blender,
 //   camicia/guide/retro.py). Passando a un'altra misura lo zoom scivola sulla zona nuova; uscendo dalle misure torna
-//   indietro, la camicia si rigira di fronte e risponde di nuovo alla mano. La frase su dove misurare compare sotto il
-//   campo: la mostra il CSS, anche senza script;
+//   indietro, la camicia si rigira di fronte e risponde di nuovo alla mano. La frase su dove misurare non si vede
+//   (proprietario, 2026-11-22: «Non serve»): resta per chi usa un lettore di schermo;
 // - dove la camicia non resta accanto ai campi (telefono, tablet, finestre strette) sopra il campo compare un riquadro
 //   con lo zoom sulla zona e il tratteggio, che resta in vista anche con la tastiera aperta.
 // Le linee sono calcolate sulla camicia vera, in Blender (camicia/guide/linee.py): punti del fotogramma 1800 x 1000,
 // lo stesso dell'immagine ferma. Con il movimento ridotto niente giro, zoom animato né linee che si disegnano.
-// Lo zoom ha tre misure da provare: ?zoom=a (leggero), ?zoom=b (di mezzo, quello normale), ?zoom=c (forte).
+// Lo zoom ha tre misure: il proprietario ha scelto la forte («Mi piace forte», 2026-11-22), che è quella normale;
+// ?zoom=a (leggero) e ?zoom=b (di mezzo) restano per confrontarle.
 
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
 const SVG = 'http://www.w3.org/2000/svg';
 
 // quanto si ingrandisce al più sul computer, e quanto è grande al minimo la zona inquadrata (punti del fotogramma)
 const ZOOM = { a: { massimo: 1.6, minimo: 460 }, b: { massimo: 2.2, minimo: 340 }, c: { massimo: 3, minimo: 250 } };
-const zoom = ZOOM[new URLSearchParams(location.search).get('zoom')] || ZOOM.b;
+const zoom = ZOOM[new URLSearchParams(location.search).get('zoom')] || ZOOM.c;
 const ATTORNO = 1.3;           // intorno alla linea, un terzo di camicia in più: le maniche ai lati del torace, il colletto
 const DURATA = 1100;           // lo zoom sul palco, in millisecondi (la curva sta nel CSS)
 const SCIVOLA = 750;           // lo zoom nel riquadro del telefono
-// il tratteggio, in punti dello schermo qualunque sia lo zoom: sottile, come una linea di cartamodello
-const TRATTO = { largo: 1.5, pieno: 5, vuoto: 4, nascostoLargo: 1, nascostoPieno: 2, nascostoVuoto: 4, capo: 2.6, bordoCapo: 1 };
+// il tratteggio, in punti dello schermo qualunque sia lo zoom: fine come una linea di cartamodello, ma che si vede
+// (proprietario, 2026-11-22: «più visibile, leggermente luminosa e 1.5 più spessa»: da 1,5 a 2,25 punti), con un
+// alone di luce blu (LUCE: due ombre senza spostamento, una stretta e una larga)
+const TRATTO = { largo: 2.25, pieno: 7, vuoto: 5, nascostoLargo: 1.5, nascostoPieno: 3, nascostoVuoto: 5, capo: 3.9, bordoCapo: 1.5 };
+const LUCE = [[2.5, 'rgba(110, 165, 255, 0.95)'], [7, 'rgba(45, 105, 255, 0.5)']];
 
 /** Sposta la pagina di `di` punti: lo fa src/sito.js, passando dallo scorrimento morbido (che se no lo annullerebbe). */
 const scorri = (di, subito = false) => document.dispatchEvent(new CustomEvent('endero:scorri', { detail: { di, subito } }));
@@ -102,6 +106,8 @@ function disegnaLinea(svg, misura, chiave, u) {
     }));
   });
   for (const [x, y] of misura.capi || []) gruppo.append(crea('circle', { cx: x, cy: y, r: r2(TRATTO.capo * u), 'stroke-width': r2(TRATTO.bordoCapo * u), class: 'linea__capo' }));
+  // la luce intorno al tratteggio: le misure del filtro stanno nei punti del fotogramma, come il resto
+  gruppo.style.filter = LUCE.map(([raggio, colore]) => `drop-shadow(0 0 ${r2(raggio * u)}px ${colore})`).join(' ');
   svg.append(defs, gruppo);
 }
 
@@ -129,11 +135,12 @@ export function guida(palco, camicia) {
     ? fetch(palco.dataset.guide).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).catch(() => { dati = null; return null; })
     : Promise.resolve(null));
   // e con loro la copia a grandezza doppia dell'immagine ferma, che lo zoom usa sul computer (così è già pronta)
-  let nitidaPronta = null;
-  const scaricaNitida = () => (nitidaPronta ||= palco.dataset.ferma && sulPalco()
-    ? (() => { const im = new Image(); im.src = palco.dataset.ferma; return im.decode().then(() => im.naturalWidth > 0, () => false); })()
+  const pronte = {};
+  const scarica = (indirizzo) => (pronte[indirizzo] ||= indirizzo && sulPalco()
+    ? (() => { const im = new Image(); im.src = indirizzo; return im.decode().then(() => im.naturalWidth > 0, () => false); })()
     : Promise.resolve(false));
-  if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => { linee(); scaricaNitida(); });
+  const scaricaNitida = (verso = 'davanti') => scarica(verso === 'dietro' ? palco.dataset.nitidaDietro : (palco.dataset.nitida || palco.dataset.ferma));
+  if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => { linee(); scaricaNitida('davanti').then(() => scaricaNitida('dietro')); });
 
   // la camicia che si muove arriva quando i suoi pezzi sono scaricati: se intanto una guida è aperta, si ferma subito
   let controllo = null;
@@ -145,17 +152,30 @@ export function guida(palco, camicia) {
   // Si ingrandiscono insieme, con la stessa trasformazione (--zoom, nel CSS), l'immagine ferma, la sua copia a
   // grandezza doppia (zoomata resta definita), la camicia vista da dietro, il video del giro e le linee. I pezzi che
   // si muovono (leggera.js) intanto si nascondono: la camicia è ferma, e l'immagine ferma è la stessa.
-  let svg = null, video = null, retro = null, nitida = null;
+  let svg = null, video = null, retro = null, nitida = null, nitidaDietro = null;
   let vista = 'davanti';
   const ferma = () => palco.querySelector('.configura__ferma');
   const preparaPalco = () => {
     if (svg) return;
     svg = crea('svg', { class: 'configura__linee', viewBox: '0 0 1800 1000', preserveAspectRatio: 'none', 'aria-hidden': 'true' });
-    nitida = Object.assign(document.createElement('img'), { alt: '', className: 'configura__nitida', decoding: 'async', draggable: false });
-    nitida.setAttribute('aria-hidden', 'true');
-    nitida.hidden = true;
-    if (palco.dataset.ferma) nitida.src = palco.dataset.ferma;
-    palco.querySelector('.configura__invito').before(nitida, svg);
+    // la camicia a grandezza quadrupla nel suo riquadro (camicia/guide/nitide.py), davanti e dietro; se non c'è,
+    // davanti l'immagine ferma a grandezza doppia
+    const ritaglio = palco.dataset.nitidaRiquadro?.split(' ').map(Number);
+    if (ritaglio?.length === 4) {
+      const [x0, y0, x1, y1] = ritaglio;
+      palco.style.setProperty('--nx', x0 / 1800); palco.style.setProperty('--ny', y0 / 1000);
+      palco.style.setProperty('--nw', (x1 - x0) / 1800); palco.style.setProperty('--nh', (y1 - y0) / 1000);
+    }
+    const nuova = (indirizzo, ritagliata) => {
+      const im = Object.assign(document.createElement('img'), { alt: '', className: 'configura__nitida' + (ritagliata ? ' configura__nitida--ritaglio' : ''), decoding: 'async', draggable: false });
+      im.setAttribute('aria-hidden', 'true');
+      im.hidden = true;
+      if (indirizzo) im.src = indirizzo;
+      return im;
+    };
+    nitida = nuova(palco.dataset.nitida || palco.dataset.ferma, !!palco.dataset.nitida);
+    nitidaDietro = palco.dataset.nitidaDietro ? nuova(palco.dataset.nitidaDietro, true) : null;
+    palco.querySelector('.configura__invito').before(...[nitida, nitidaDietro, svg].filter(Boolean));
   };
   /** Un video del giro, sopra la camicia, con le misure dell'immagine ferma: parte quando è pronto, finisce e basta.
    *  `parte` si chiama quando il primo fotogramma è sullo schermo (o quando si rinuncia al video). */
@@ -188,7 +208,7 @@ export function guida(palco, camicia) {
       retro.setAttribute('aria-hidden', 'true');
       retro.hidden = true;
       retro.src = palco.dataset.dietro;
-      nitida.after(retro);
+      nitida.after(retro);                     // sopra la camicia nitida davanti, sotto quella dietro
     }
     // vero se la camicia da dietro è pronta; se non arriva in tre secondi (rete lenta) o non c'è, la camicia non si gira
     const pronta = retro.decode().then(() => retro.naturalWidth > 0, () => false);
@@ -295,15 +315,20 @@ export function guida(palco, camicia) {
     if (verso !== vista || ruota) {
       await zoomVia();
       if (mio !== turno) return;
+      nitida.hidden = true;
+      if (nitidaDietro) nitidaDietro.hidden = true;
     }
     const girata = await gira(verso);
     if (mio !== turno || !girata) return;
     if (!misura) return;
     // la copia a grandezza doppia dell'immagine ferma (davanti; da dietro c'è la camicia girata): solo se è già pronta
     // prima dello zoom, mai a metà, quando comparirebbe di colpo già ingrandita
-    const pronta = await Promise.race([scaricaNitida(), new Promise((f) => setTimeout(() => f(false), 60))]);
+    const pronta = await Promise.race([scaricaNitida(verso), new Promise((f) => setTimeout(() => f(false), 60))]);
     if (mio !== turno) return;
-    nitida.hidden = !(pronta && verso === 'davanti' && nitida.complete && nitida.naturalWidth);
+    const quella = verso === 'dietro' ? nitidaDietro : nitida;
+    nitida.hidden = true;
+    if (nitidaDietro) nitidaDietro.hidden = true;
+    if (quella && pronta && quella.complete && quella.naturalWidth) quella.hidden = false;
     const A = area();
     const fine = zoomSu(zona(misura.riquadro, A.w / A.h));
     // la linea si disegna mentre lo zoom finisce (lo spessore è per l'ingrandimento finale, già calcolato)
@@ -318,6 +343,7 @@ export function guida(palco, camicia) {
     await zoomVia();
     if (mio !== turno) return;
     if (nitida) nitida.hidden = true;
+    if (nitidaDietro) nitidaDietro.hidden = true;
     await gira('davanti');
     if (mio !== turno) return;
     delete palco.dataset.guidaFerma;
@@ -333,6 +359,7 @@ export function guida(palco, camicia) {
     delete palco.dataset.guidaFerma;
     if (svg) svg.replaceChildren();
     if (nitida) nitida.hidden = true;
+    if (nitidaDietro) nitidaDietro.hidden = true;
     if (retro) retro.hidden = true;
     if (video) { video.pause(); video.hidden = true; }
     vista = desiderata = 'davanti';
@@ -384,9 +411,9 @@ export function guida(palco, camicia) {
     const sottoTestata = t && t.bottom > 0 && testata.dataset.stato !== 'via' ? t.bottom : 0;
     return { su: Math.max(vv ? vv.offsetTop : 0, sottoTestata) + 8, giu: (vv ? vv.offsetTop + vv.height : innerHeight) - 8 };
   }
-  /** Il fondo del campo con la sua frase, sullo schermo. */
-  const fondoCampo = (m) => Math.max(m.querySelector('input').getBoundingClientRect().bottom, m.querySelector('.misura__dove')?.getBoundingClientRect().bottom || 0);
-  /** Il riquadro e il campo con la frase in vista insieme, anche con la tastiera aperta. Il riquadro si misura dove
+  /** Il fondo del campo, sullo schermo. */
+  const fondoCampo = (m) => m.querySelector('input').getBoundingClientRect().bottom;
+  /** Il riquadro e il campo in vista insieme, anche con la tastiera aperta. Il riquadro si misura dove
    *  arriva (dal campo), non dove sta ancora scivolando. */
   function inVista(m) {
     if (!carta || carta.hidden) return;
@@ -404,7 +431,7 @@ export function guida(palco, camicia) {
     aperta = m;
     const contenitore = m.parentElement;
     if (carta.parentElement !== contenitore) { contenitore.append(carta); quadro = null; }
-    // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro, il campo e la sua frase. Mai più
+    // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro e il campo. Mai più
     // largo di 1,8 volte l'alto: le misure lunghe (le lunghezze totali) ci stanno intere, con i loro capi
     const { su, giu } = libero();
     const blocco = fondoCampo(m) - m.getBoundingClientRect().top;

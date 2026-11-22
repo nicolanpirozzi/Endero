@@ -2,8 +2,8 @@
 // punto 12). La camicia è l'immagine di Blender divisa in pezzi che si muovono (src/configuratore/leggera.js).
 // Dal 2026-11-21 la guida alle misure: si misura la camicia che sta meglio, stesa su un tavolo. All'apertura una
 // finestra in vetro con i passi; entrando in un campo di misura la camicia fa uno zoom sul punto in cui si misura, con
-// un tratteggio blu, e sotto il campo compare la frase (src/configuratore/guida.js; dal 2026-11-22 senza la «i»).
-// Senza script resta l'immagine ferma; i passi si leggono nel riquadro e la frase compare lo stesso sotto il campo.
+// un tratteggio blu (src/configuratore/guida.js; dal 2026-11-22 senza la «i» e senza la frase sotto il campo).
+// Senza script resta l'immagine ferma e i passi si leggono nel riquadro.
 import { esc, t } from '../parti/base.mjs';
 import { pagina, briciola } from '../parti/telaio.mjs';
 import { datiBase, domande } from '../parti/sezioni.mjs';
@@ -20,9 +20,10 @@ function gruppo(g, s) {
   if (g.tipo === 'misure') {
     campi = g.campi.map((c) => {
       const aiuto = c.aiuto ? `<span class="misura__aiuto" id="${id(c)}-aiuto">${t(c.aiuto)}</span>` : '';
-      // dove si misura: la frase compare sotto il campo mentre ci si scrive (la mostra il CSS, anche senza script);
-      // la camicia fa lo zoom sul punto (src/configuratore/guida.js, che trova la misura da data-guida)
-      const dove = c.guida ? `<span class="misura__dove" id="${id(c)}-dove">${t(c.guida)}</span>` : '';
+      // dove si misura: la camicia fa lo zoom sul punto (src/configuratore/guida.js, che trova la misura da data-guida).
+      // La frase non si vede (proprietario, 2026-11-22: «elimina il testo che compare sotto ogni box… Non serve»):
+      // resta per chi usa un lettore di schermo, che la sente entrando nel campo
+      const dove = c.guida ? `<span class="misura__dove nascosto" id="${id(c)}-dove">${t(c.guida)}</span>` : '';
       const errore = `<span class="misura__errore" id="${id(c)}-errore" aria-live="polite"></span>`;
       const descritto = [c.guida ? `${id(c)}-dove` : '', c.aiuto ? `${id(c)}-aiuto` : '', `${id(c)}-errore`].filter(Boolean).join(' ');
       const messaggio = s.errore_misura.replace('{min}', c.min).replace('{max}', c.max);
@@ -66,8 +67,7 @@ function gruppo(g, s) {
  */
 /**
  * La guida alle misure, scritta nella pagina: la finestra dei passi, che si apre da sola, e il tasto che la riapre.
- * Senza script la finestra non si apre: i passi stanno nel riquadro, dentro <noscript> (le frasi di ogni misura
- * compaiono comunque sotto il campo, con il CSS).
+ * Senza script la finestra non si apre: i passi stanno nel riquadro, dentro <noscript>.
  */
 function guida(s) {
   const g = s.come_misurare;
@@ -91,8 +91,11 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
   const g = guida(s);
   // dove la guida trova le linee, la camicia da dietro e il giro per arrivarci (se il build li ha trovati)
   const r = camicia.retro || {};
+  // per lo zoom sul computer: la camicia a grandezza quadrupla, davanti e dietro, e il suo riquadro nel fotogramma
+  const n = camicia.nitide;
+  const nitide = n && n.davanti ? ` data-nitida="${esc(n.davanti)}"${n.dietro ? ` data-nitida-dietro="${esc(n.dietro)}"` : ''} data-nitida-riquadro="${esc(n.riquadro.join(' '))}"` : '';
   const datiGuida = camicia.guide
-    ? ` data-guide="${esc(camicia.guide)}" data-ferma="${esc(camicia.ferma.computer2x || camicia.ferma.computer)}"${r.dietro ? ` data-dietro="${esc(r.dietro2x || r.dietro)}"` : ''}${r.giro && r.ritorno ? ` data-giro="${esc(r.giro)}" data-ritorno="${esc(r.ritorno)}"` : ''}`
+    ? ` data-guide="${esc(camicia.guide)}" data-ferma="${esc(camicia.ferma.computer2x || camicia.ferma.computer)}"${r.dietro ? ` data-dietro="${esc(r.dietro2x || r.dietro)}"` : ''}${r.giro && r.ritorno ? ` data-giro="${esc(r.giro)}" data-ritorno="${esc(r.ritorno)}"` : ''}${nitide}`
     : '';
   // l'immagine ferma c'è sempre, e per gli schermi fitti anche a grandezza doppia, se il file c'è
   const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');

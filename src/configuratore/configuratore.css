@@ -494,53 +494,14 @@
 /* ------------------------------------------------------------------ guida alle misure (src/configuratore/guida.js) */
 /* Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, stesa su un tavolo. Dal 2026-11-22 (proprietario)
    niente «i»: entrando in un campo di misura la camicia fa uno zoom sul punto in cui si misura, dove si disegna un
-   tratteggio blu sottile; sotto il campo compare la frase. Le linee sono in punti del fotogramma 1800 x 1000 e stanno
+   tratteggio blu con un filo di luce (zoom forte, tratto più spesso, nessuna frase sotto il campo: proprietario, stesso giorno). Le linee sono in punti del fotogramma 1800 x 1000 e stanno
    su un SVG con le misure dell'immagine ferma; il video del giro e la camicia vista da dietro anche. */
 
 .configura {
-  --linea: #2557e0;                    /* il blu del tratteggio: fine, sul bianco della camicia si legge senza gridare */
+  --linea: #2a63f5;                    /* il blu del tratteggio: acceso quanto basta per vedersi sul bianco, con la sua luce */
 }
 
-/* la frase su dove si misura: sotto il campo, piccola, mentre ci si scrive (anche senza script). Sta sopra la riga
-   dopo, come un'etichetta, così comparendo non sposta il modulo sotto il puntatore */
-.misura[data-guida] {
-  position: relative;
-}
-
-.misura__dove {
-  display: none;
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
-  z-index: 3;
-  padding: 8px 10px;
-  border: 1px solid rgba(251, 249, 244, 0.16);
-  border-radius: 10px;
-  background: rgba(9, 24, 64, 0.95);
-  box-shadow: 0 10px 24px rgba(5, 15, 43, 0.35);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: rgba(251, 249, 244, 0.9);
-  pointer-events: none;
-}
-
-.misura:focus-within .misura__dove {
-  display: block;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .misura:focus-within .misura__dove {
-    animation: dove-compare 220ms ease-out both;
-  }
-}
-
-@keyframes dove-compare {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-}
+/* la frase su dove si misura non si vede (proprietario, 2026-11-22: «Non serve»): è .nascosto, per i lettori di schermo */
 
 .configura__come {
   display: none;
@@ -636,6 +597,17 @@
   display: none;
 }
 
+/* la camicia a grandezza quadrupla sta solo nel suo riquadro del fotogramma (--nx, --ny, --nw, --nh, in frazioni, li
+   scrive guida.js): l'origine della trasformazione è l'angolo del fotogramma, così lo zoom è lo stesso degli altri livelli */
+.configura__nitida--ritaglio {
+  left: calc(min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia))) + var(--largo) * var(--nx, 0));
+  top: calc(var(--su) + var(--alto) * var(--ny, 0));
+  width: calc(var(--largo) * var(--nw, 1));
+  height: calc(var(--alto) * var(--nh, 1));
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
 /* Lo zoom: tutti i livelli della camicia con la stessa trasformazione, che guida.js scrive in --zoom sul palco */
 .configura__ferma,
 .configura__nitida,
@@ -644,6 +616,10 @@
 .configura__linee {
   transform: var(--zoom, none);
   transform-origin: 0 0;
+}
+
+.configura__nitida--ritaglio {
+  transform-origin: calc(var(--largo) * var(--nx, 0) * -1) calc(var(--alto) * var(--ny, 0) * -1);
 }
 
 @media (prefers-reduced-motion: no-preference) {

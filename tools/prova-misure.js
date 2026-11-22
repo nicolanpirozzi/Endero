@@ -108,7 +108,7 @@ const FORMATI = [
     const k = svg ? svg.getBoundingClientRect().width / 1800 : 0;          // punti dello schermo per punto del fotogramma (zoom compreso)
     const spessore = visibili[0] ? Number(visibili[0].getAttribute('stroke-width')) * k : 0;
     const ferma = document.querySelector('.configura__ferma'), retro = document.querySelector('.configura__retro');
-    const dove = [...document.querySelectorAll('.misura__dove')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.closest('.misura').dataset.guida);
+    const dove = [...document.querySelectorAll('.misura__dove')].filter((x) => { const r = x.getBoundingClientRect(); return getComputedStyle(x).display !== 'none' && r.width > 2 && r.height > 2; }).map((x) => x.closest('.misura').dataset.guida);
     return {
       aperta: pal.dataset.guidaAperta, zoom: pal.style.getPropertyValue('--zoom'),
       stessoZoom: !!svg && getComputedStyle(svg).transform === getComputedStyle(ferma).transform,
@@ -135,8 +135,8 @@ const FORMATI = [
       prima = misura;
       const s = await stato(page, misura);
       const vuoleDietro = DIETRO.includes(misura);
-      controlla(`${nome}: campo ${misura}: zoom sulla camicia, tratteggio sottile tutto in vista accanto al riquadro, frase sotto il campo${vuoleDietro ? ', camicia girata' : ''}`,
-        s.aperta === misura && s.zoom && s.stessoZoom && s.pezziNascosti && s.dove.join() === misura && (!dati.guide || (s.tratti >= 1 && s.lunghezza > 40 && s.inVista && s.spessore > 1 && s.spessore < 2.2)) && (!dati.dietro || s.dietro === vuoleDietro), JSON.stringify(s));
+      controlla(`${nome}: campo ${misura}: zoom sulla camicia, tratteggio (2,25 punti) tutto in vista accanto al riquadro, nessuna frase sotto il campo${vuoleDietro ? ', camicia girata' : ''}`,
+        s.aperta === misura && s.zoom && s.stessoZoom && s.pezziNascosti && s.dove.length === 0 && (!dati.guide || (s.tratti >= 1 && s.lunghezza > 40 && s.inVista && s.spessore > 1.9 && s.spessore < 2.7)) && (!dati.dietro || s.dietro === vuoleDietro), JSON.stringify(s));
       if (['torace', 'spalla', 'polso', 'lunghezza_manica'].includes(misura)) await foto(page, `palco-${nome.replaceAll(' ', '-')}-${misura}`);
     }
     // Tab: da una misura alla successiva, dello stesso lato, lo zoom scivola senza tornare indietro
@@ -153,7 +153,7 @@ const FORMATI = [
     await page.click('#campo-nome');
     await page.waitForTimeout(3600);
     const fuori = await stato(page);
-    controlla(`${nome}: uscendo dalle misure lo zoom torna indietro, la linea e la frase spariscono, la camicia è di fronte`, !fuori.aperta && !fuori.zoom && fuori.tratti === 0 && !fuori.dietro && !fuori.pezziNascosti && fuori.dove.length === 0, JSON.stringify(fuori));
+    controlla(`${nome}: uscendo dalle misure lo zoom torna indietro, la linea sparisce, la camicia è di fronte`, !fuori.aperta && !fuori.zoom && fuori.tratti === 0 && !fuori.dietro && !fuori.pezziNascosti && fuori.dove.length === 0, JSON.stringify(fuori));
     await page.mouse.move(420, 450); await page.mouse.move(600, 470, { steps: 8 });
     await page.waitForTimeout(400);
     const risponde = await page.evaluate(() => [...document.querySelectorAll('.configura__posa img')].some((x) => x.style.transform && x.style.transform !== 'none') || !!document.querySelector('canvas.configura__onda'));
@@ -182,16 +182,16 @@ const FORMATI = [
   console.log('Tre misure dello zoom, rete lenta');
   {
     const scale = {};
-    for (const v of ['a', 'b', 'c']) {
+    for (const v of ['a', 'b', 'c', '']) {
       const a = await nuovo(), { page } = a;
-      await page.goto(PAGINA + `?senza-passi&zoom=${v}`, { waitUntil: 'networkidle' });
+      await page.goto(PAGINA + `?senza-passi${v ? '&zoom=' + v : ''}`, { waitUntil: 'networkidle' });
       await page.click('#campo-polso');
       await page.waitForTimeout(2300);
       const z = await page.evaluate(() => document.querySelector('.configura__palco').style.getPropertyValue('--zoom'));
-      scale[v] = Number((z.match(/scale\(([\d.]+)\)/) || [])[1] || 0);
+      scale[v || 'normale'] = Number((z.match(/scale\(([\d.]+)\)/) || [])[1] || 0);
       await a.contesto.close();
     }
-    controlla('?zoom=a, b, c: tre ingrandimenti diversi, dal più leggero al più forte (polso)', scale.a > 1 && scale.a <= 1.6 && scale.b > scale.a && scale.c > scale.b, JSON.stringify(scale));
+    controlla('?zoom=a, b, c: tre ingrandimenti diversi, dal più leggero al più forte (polso); senza niente, il forte', scale.a > 1 && scale.a <= 1.6 && scale.b > scale.a && scale.c > scale.b && scale.normale === scale.c, JSON.stringify(scale));
   }
   {
     // il campo aperto prima che arrivino i pezzi della camicia: quando arrivano, la camicia non saluta né segue la mano
@@ -246,7 +246,7 @@ const FORMATI = [
     await page.click('#campo-pancia');
     await page.waitForTimeout(400);
     const y1 = await page.evaluate(() => document.getElementById('campo-bacino').getBoundingClientRect().top);
-    controlla('computer: la frase sotto il campo compare senza spostare i campi', Math.abs(y1 - y0) < 1, JSON.stringify({ y0, y1 }));
+    controlla('computer: entrando in un campo gli altri campi non si spostano', Math.abs(y1 - y0) < 1, JSON.stringify({ y0, y1 }));
     await a.contesto.close();
   }
 
@@ -274,14 +274,14 @@ const FORMATI = [
         const capi = c ? [...c.querySelectorAll('.linea__capo')].map((x) => x.getBoundingClientRect()) : [];
         const capiDentro = !!r && capi.every((q) => q.left >= r.left - 1 && q.right <= r.right + 1 && q.top >= r.top - 1 && q.bottom <= r.bottom + 1);
         const im = c?.querySelector('image');
-        const dove = [...document.querySelectorAll('.misura__dove')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.closest('.misura').dataset.guida);
+        const dove = [...document.querySelectorAll('.misura__dove')].filter((x) => { const r = x.getBoundingClientRect(); return getComputedStyle(x).display !== 'none' && r.width > 2 && r.height > 2; }).map((x) => x.closest('.misura').dataset.guida);
         return {
           lente: !!r, sopra: !!r && r.bottom <= campo.top + 1, sottoTestata, capiDentro, inVista: !!r && r.top >= -1 && campo.bottom <= innerHeight + 1, largo: document.documentElement.scrollWidth <= innerWidth,
           tratti: c ? c.querySelectorAll('.linea__tratto').length : 0, retro: /dietro/.test(im?.getAttribute('href') || ''), dove, palco: document.querySelector('.configura__palco').style.getPropertyValue('--zoom'),
         };
       }, misura);
-      controlla(`${nome}: campo ${misura}: sopra il campo il riquadro con lo zoom e il tratteggio, in vista con il campo; frase sotto il campo`,
-        s.lente && s.sopra && s.inVista && s.sottoTestata && s.capiDentro && s.largo && !s.palco && s.dove.join() === misura && (!dati.guide || (s.tratti >= 1 && (!dati.dietro || s.retro === DIETRO.includes(misura)))), JSON.stringify(s));
+      controlla(`${nome}: campo ${misura}: sopra il campo il riquadro con lo zoom e il tratteggio, in vista con il campo; nessuna frase sotto`,
+        s.lente && s.sopra && s.inVista && s.sottoTestata && s.capiDentro && s.largo && !s.palco && s.dove.length === 0 && (!dati.guide || (s.tratti >= 1 && (!dati.dietro || s.retro === DIETRO.includes(misura)))), JSON.stringify(s));
       if (['torace', 'spalla', 'polso'].includes(misura)) await foto(page, `lente-${nome.replaceAll(' ', '-')}-${misura}`);
     }
     // risalendo: dal polso al giro collo, e un campo appena sotto il bordo alto dello schermo
@@ -310,8 +310,8 @@ const FORMATI = [
     controlla(`${nome}: un tocco sul riquadro lo chiude e lascia la scrittura nel campo aperto`, dopoTocco.fuoco === 'campo-torace' && !dopoTocco.lente, JSON.stringify(dopoTocco));
     await tocca(page, '#campo-nome');
     await page.waitForTimeout(700);
-    const via = await page.evaluate(() => ({ lente: !!document.querySelector('.misura-lente:not([hidden])'), dove: [...document.querySelectorAll('.misura__dove')].filter((x) => getComputedStyle(x).display !== 'none').length }));
-    controlla(`${nome}: uscendo dalle misure il riquadro e la frase spariscono`, !via.lente && via.dove === 0, JSON.stringify(via));
+    const via = await page.evaluate(() => ({ lente: !!document.querySelector('.misura-lente:not([hidden])'), dove: [...document.querySelectorAll('.misura__dove')].filter((x) => { const r = x.getBoundingClientRect(); return getComputedStyle(x).display !== 'none' && r.width > 2 && r.height > 2; }).length }));
+    controlla(`${nome}: uscendo dalle misure il riquadro sparisce`, !via.lente && via.dove === 0, JSON.stringify(via));
     controlla(`${nome}: nessun errore, nessun file mancante`, a.errori.length === 0 && a.rotte.length === 0, [...a.errori, ...a.rotte].join(' | ').slice(0, 300));
     await a.contesto.close();
   }
@@ -334,8 +334,10 @@ const FORMATI = [
     const a = await nuovo({ javaScriptEnabled: false }), { page } = a;
     await page.goto(PAGINA, { waitUntil: 'load' });
     await page.focus('#campo-torace');
-    const s = await page.evaluate(() => ({ come: document.querySelector('[data-apri-passi]').getBoundingClientRect().width, passi: [...document.querySelectorAll('.configura__senza-script li')].length, aperta: document.getElementById('come-misurare').open, dove: [...document.querySelectorAll('.misura__dove')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.closest('.misura').dataset.guida) }));
-    controlla('senza JavaScript: niente «Come misurare»; i passi si leggono nel riquadro e la frase compare sotto il campo', s.come === 0 && s.passi === 4 && !s.aperta && s.dove.join() === 'torace', JSON.stringify(s));
+    const s = await page.evaluate(() => ({ come: document.querySelector('[data-apri-passi]').getBoundingClientRect().width, passi: [...document.querySelectorAll('.configura__senza-script li')].length, aperta: document.getElementById('come-misurare').open, dove: [...document.querySelectorAll('.misura__dove')].filter((x) => { const r = x.getBoundingClientRect(); return getComputedStyle(x).display !== 'none' && r.width > 2 && r.height > 2; }).map((x) => x.closest('.misura').dataset.guida) }));
+    // la frase su dove si misura non si vede, ma il campo la porta con sé per i lettori di schermo
+    const descritto = await page.evaluate(() => document.getElementById(document.getElementById('campo-torace').getAttribute('aria-describedby').split(' ')[0])?.textContent.trim().length || 0);
+    controlla('senza JavaScript: niente «Come misurare»; i passi si leggono nel riquadro; la frase non si vede ma il campo la legge ai lettori di schermo', s.come === 0 && s.passi === 4 && !s.aperta && s.dove.length === 0 && descritto > 10, JSON.stringify({ ...s, descritto }));
     await foto(page, 'senza-script');
     await a.contesto.close();
   }
