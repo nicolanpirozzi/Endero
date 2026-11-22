@@ -250,6 +250,20 @@ const FORMATI = [
     await a.contesto.close();
   }
 
+  {
+    // aperta col tablet in verticale e poi girato: lo zoom usa la camicia nitida lo stesso
+    const a = await nuovo({ viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }), { page } = a;
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(3500);
+    await page.setViewportSize({ width: 1180, height: 820 });
+    await page.waitForTimeout(1500);
+    await page.locator('#campo-polso').tap();
+    await page.waitForTimeout(3500);
+    const n = await page.evaluate(() => ({ palco: getComputedStyle(document.querySelector('.configura__palco')).position, nitida: [...document.querySelectorAll('.configura__nitida')].some((x) => !x.hidden), ritaglio: !!document.querySelector('.configura__nitida--ritaglio') }));
+    controlla('tablet girato da verticale a orizzontale: lo zoom usa la camicia nitida', n.palco === 'sticky' && (!n.ritaglio || n.nitida), JSON.stringify(n));
+    await a.contesto.close();
+  }
+
   // ---------------------------------------------------------------- 3. sopra il campo (telefono, tablet)
   // toccare un campo: se il riquadro lo copre, come farebbe chi guarda, prima si tocca il riquadro (che si chiude)
   const tocca = async (page, sel) => {

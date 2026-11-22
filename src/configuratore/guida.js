@@ -136,9 +136,10 @@ export function guida(palco, camicia) {
     : Promise.resolve(null));
   // e con loro la copia a grandezza doppia dell'immagine ferma, che lo zoom usa sul computer (così è già pronta)
   const pronte = {};
-  const scarica = (indirizzo) => (pronte[indirizzo] ||= indirizzo && sulPalco()
-    ? (() => { const im = new Image(); im.src = indirizzo; return im.decode().then(() => im.naturalWidth > 0, () => false); })()
-    : Promise.resolve(false));
+  // (solo dove la camicia sta accanto ai campi: sul telefono non serve. Un «no» per questo non si ricorda: se la
+  // finestra si allarga o il tablet si gira, la si scarica allora)
+  const scarica = (indirizzo) => (!indirizzo || !sulPalco() ? Promise.resolve(false)
+    : (pronte[indirizzo] ||= (() => { const im = new Image(); im.src = indirizzo; return im.decode().then(() => im.naturalWidth > 0, () => false); })()));
   const scaricaNitida = (verso = 'davanti') => scarica(verso === 'dietro' ? palco.dataset.nitidaDietro : (palco.dataset.nitida || palco.dataset.ferma));
   if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => { linee(); scaricaNitida('davanti').then(() => scaricaNitida('dietro')); });
 
@@ -231,7 +232,8 @@ export function guida(palco, camicia) {
         if (!ridotto.matches && palco.dataset.giro) await suona(palco.dataset.giro);
         if (video) video.hidden = true;
         if (!sulPalco()) { ruota = false; return; }                // nel frattempo la finestra è passata al riquadro
-        if (desiderata !== 'dietro') { ruota = false; continue; }  // nel frattempo è stata chiesta la vista davanti
+        // il giro è finito di spalle: il retro resta, e se intanto è stata chiesta la vista davanti il giro dopo la
+        // riporta indietro con il video del ritorno (niente scatto)
         retro.hidden = false;
         vista = 'dietro';
       } else {
@@ -323,9 +325,9 @@ export function guida(palco, camicia) {
     if (!misura) return;
     // la copia a grandezza doppia dell'immagine ferma (davanti; da dietro c'è la camicia girata): solo se è già pronta
     // prima dello zoom, mai a metà, quando comparirebbe di colpo già ingrandita
-    const pronta = await Promise.race([scaricaNitida(verso), new Promise((f) => setTimeout(() => f(false), 60))]);
-    if (mio !== turno) return;
     const quella = verso === 'dietro' ? nitidaDietro : nitida;
+    const pronta = (quella?.complete && quella.naturalWidth > 0) || await Promise.race([scaricaNitida(verso), new Promise((f) => setTimeout(() => f(false), 60))]);
+    if (mio !== turno) return;
     nitida.hidden = true;
     if (nitidaDietro) nitidaDietro.hidden = true;
     if (quella && pronta && quella.complete && quella.naturalWidth) quella.hidden = false;
