@@ -229,30 +229,86 @@ const FORMATI = [
     await a.contesto.close();
   }
 
+  {
+    // da Spalla a una misura davanti mentre il retro si sta ancora scaricando: la camicia non deve girarsi dopo
+    const a = await nuovo(), { page } = a;
+    await page.route(/\/camicia\/retro\/dietro.*\.webp/, async (r) => { await new Promise((f) => setTimeout(f, 2000)); await r.continue().catch(() => {}); });
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 15000 }).catch(() => {});
+    await page.click('#campo-spalla');
+    await page.waitForTimeout(700);
+    await page.click('#campo-torace');
+    await page.waitForTimeout(5000);
+    const s = await stato(page);
+    controlla('computer: da Spalla al Torace mentre il retro arriva: la camicia resta di fronte sotto la linea del torace', s.aperta === 'torace' && !s.dietro && s.tratti >= 1, JSON.stringify(s));
+    // la frase che compare sotto il campo non sposta il modulo
+    const y0 = await page.evaluate(() => document.getElementById('campo-bacino').getBoundingClientRect().top);
+    await page.click('#campo-pancia');
+    await page.waitForTimeout(400);
+    const y1 = await page.evaluate(() => document.getElementById('campo-bacino').getBoundingClientRect().top);
+    controlla('computer: la frase sotto il campo compare senza spostare i campi', Math.abs(y1 - y0) < 1, JSON.stringify({ y0, y1 }));
+    await a.contesto.close();
+  }
+
   // ---------------------------------------------------------------- 3. sopra il campo (telefono, tablet)
+  // toccare un campo: se il riquadro lo copre, come farebbe chi guarda, prima si tocca il riquadro (che si chiude)
+  const tocca = async (page, sel) => {
+    await page.locator(sel).scrollIntoViewIfNeeded();
+    const coperto = await page.evaluate((sel) => { const r = document.querySelector(sel).getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!e?.closest('.misura-lente'); }, sel);
+    if (coperto) { const b = await page.locator('.misura-lente').boundingBox(); await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); await page.waitForTimeout(150); }
+    await page.locator(sel).tap();
+  };
   console.log('Telefono e tablet: il riquadro con lo zoom sopra il campo');
   for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'finestra')) {
     const a = await nuovo(opzioni), { page } = a;
     await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
     await page.waitForTimeout(600);
     for (const misura of MISURE) {
-      await page.locator(`#campo-${misura}`).tap();
+      await tocca(page, `#campo-${misura}`);
       await page.waitForTimeout(1500);
       const s = await page.evaluate((m) => {
         const c = document.querySelector('.misura-lente'), campo = document.getElementById(`campo-${m}`).getBoundingClientRect();
         const r = c && !c.hidden ? c.getBoundingClientRect() : null;
+        const t = document.querySelector('[data-testata]'), tr = t?.getBoundingClientRect();
+        const sottoTestata = !!r && !(tr && t.dataset.stato !== 'via' && tr.bottom > 0 && r.top < tr.bottom - 1);
+        const capi = c ? [...c.querySelectorAll('.linea__capo')].map((x) => x.getBoundingClientRect()) : [];
+        const capiDentro = !!r && capi.every((q) => q.left >= r.left - 1 && q.right <= r.right + 1 && q.top >= r.top - 1 && q.bottom <= r.bottom + 1);
         const im = c?.querySelector('image');
         const dove = [...document.querySelectorAll('.misura__dove')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.closest('.misura').dataset.guida);
         return {
-          lente: !!r, sopra: !!r && r.bottom <= campo.top + 1, inVista: !!r && r.top >= -1 && campo.bottom <= innerHeight + 1, largo: document.documentElement.scrollWidth <= innerWidth,
+          lente: !!r, sopra: !!r && r.bottom <= campo.top + 1, sottoTestata, capiDentro, inVista: !!r && r.top >= -1 && campo.bottom <= innerHeight + 1, largo: document.documentElement.scrollWidth <= innerWidth,
           tratti: c ? c.querySelectorAll('.linea__tratto').length : 0, retro: /dietro/.test(im?.getAttribute('href') || ''), dove, palco: document.querySelector('.configura__palco').style.getPropertyValue('--zoom'),
         };
       }, misura);
       controlla(`${nome}: campo ${misura}: sopra il campo il riquadro con lo zoom e il tratteggio, in vista con il campo; frase sotto il campo`,
-        s.lente && s.sopra && s.inVista && s.largo && !s.palco && s.dove.join() === misura && (!dati.guide || (s.tratti >= 1 && (!dati.dietro || s.retro === DIETRO.includes(misura)))), JSON.stringify(s));
+        s.lente && s.sopra && s.inVista && s.sottoTestata && s.capiDentro && s.largo && !s.palco && s.dove.join() === misura && (!dati.guide || (s.tratti >= 1 && (!dati.dietro || s.retro === DIETRO.includes(misura)))), JSON.stringify(s));
       if (['torace', 'spalla', 'polso'].includes(misura)) await foto(page, `lente-${nome.replaceAll(' ', '-')}-${misura}`);
     }
-    await page.locator('#campo-nome').tap();
+    // risalendo: dal polso al giro collo, e un campo appena sotto il bordo alto dello schermo
+    for (const [da, a2] of [['polso', 'giro_collo'], ['lunghezza_davanti', 'torace']]) {
+      await tocca(page, `#campo-${da}`);
+      await page.waitForTimeout(900);
+      if (da === 'lunghezza_davanti') await page.evaluate(() => { const b = document.getElementById('campo-torace'); scrollBy(0, b.getBoundingClientRect().top - 90); });
+      await page.waitForTimeout(600);
+      await tocca(page, `#campo-${a2}`);
+      await page.waitForTimeout(1500);
+      const su = await page.evaluate(() => {
+        const c = document.querySelector('.misura-lente:not([hidden])')?.getBoundingClientRect();
+        const t = document.querySelector('[data-testata]'), tr = t?.getBoundingClientRect();
+        const limite = tr && t.dataset.stato !== 'via' && tr.bottom > 0 ? tr.bottom : 0;
+        return { cima: c && Math.round(c.top), fondo: c && Math.round(c.bottom), limite: Math.round(limite), alto: innerHeight };
+      });
+      controlla(`${nome}: risalendo da ${da} a ${a2} il riquadro è tutto in vista, sotto la testata`, su.cima != null && su.cima >= su.limite - 1 && su.fondo <= su.alto + 1, JSON.stringify(su));
+    }
+    // un tocco sul riquadro lo chiude e lascia la scrittura nel campo aperto (non in un campo nascosto sotto)
+    await tocca(page, '#campo-torace');
+    await page.waitForTimeout(1300);
+    const box = await page.locator('.misura-lente').boundingBox();
+    if (box) await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(400);
+    const dopoTocco = await page.evaluate(() => ({ fuoco: document.activeElement?.id, lente: !!document.querySelector('.misura-lente:not([hidden])') }));
+    controlla(`${nome}: un tocco sul riquadro lo chiude e lascia la scrittura nel campo aperto`, dopoTocco.fuoco === 'campo-torace' && !dopoTocco.lente, JSON.stringify(dopoTocco));
+    await tocca(page, '#campo-nome');
     await page.waitForTimeout(700);
     const via = await page.evaluate(() => ({ lente: !!document.querySelector('.misura-lente:not([hidden])'), dove: [...document.querySelectorAll('.misura__dove')].filter((x) => getComputedStyle(x).display !== 'none').length }));
     controlla(`${nome}: uscendo dalle misure il riquadro e la frase spariscono`, !via.lente && via.dove === 0, JSON.stringify(via));

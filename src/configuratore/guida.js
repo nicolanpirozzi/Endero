@@ -128,7 +128,12 @@ export function guida(palco, camicia) {
   const linee = () => (dati ||= palco.dataset.guide
     ? fetch(palco.dataset.guide).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).catch(() => { dati = null; return null; })
     : Promise.resolve(null));
-  if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => linee());
+  // e con loro la copia a grandezza doppia dell'immagine ferma, che lo zoom usa sul computer (così è già pronta)
+  let nitidaPronta = null;
+  const scaricaNitida = () => (nitidaPronta ||= palco.dataset.ferma && sulPalco()
+    ? (() => { const im = new Image(); im.src = palco.dataset.ferma; return im.decode().then(() => im.naturalWidth > 0, () => false); })()
+    : Promise.resolve(false));
+  if (palco.dataset.guide) (window.requestIdleCallback || ((f) => setTimeout(f, 2500)))(() => { linee(); scaricaNitida(); });
 
   // la camicia che si muove arriva quando i suoi pezzi sono scaricati: se intanto una guida è aperta, si ferma subito
   let controllo = null;
@@ -204,8 +209,10 @@ export function guida(palco, camicia) {
         if (!pronta) return;
         ruota = true;
         if (!ridotto.matches && palco.dataset.giro) await suona(palco.dataset.giro);
-        retro.hidden = false;
         if (video) video.hidden = true;
+        if (!sulPalco()) { ruota = false; return; }                // nel frattempo la finestra è passata al riquadro
+        if (desiderata !== 'dietro') { ruota = false; continue; }  // nel frattempo è stata chiesta la vista davanti
+        retro.hidden = false;
         vista = 'dietro';
       } else {
         ruota = true;
@@ -282,17 +289,21 @@ export function guida(palco, camicia) {
     palco.dataset.guidaFerma = '';             // via i pezzi che si muovono: resta l'immagine ferma, che è la stessa
     const misura = d?.misure?.[m.dataset.guida];
     const verso = m.dataset.vista === 'dietro' ? 'dietro' : 'davanti';
+    // la camicia si gira senza zoom: prima si torna indietro, poi si gira, poi lo zoom sulla zona nuova. La vista si
+    // chiede sempre, anche quando la camicia è già da quel lato: un giro che stava ancora scaricando il retro per la
+    // misura di prima così lo sa, e non si gira più
     if (verso !== vista || ruota) {
-      // la camicia si gira senza zoom: prima si torna indietro, poi si gira, poi lo zoom sulla zona nuova
       await zoomVia();
       if (mio !== turno) return;
-      const girata = await gira(verso);
-      if (mio !== turno || !girata) return;
     }
+    const girata = await gira(verso);
+    if (mio !== turno || !girata) return;
     if (!misura) return;
-    // la copia a grandezza doppia dell'immagine ferma: davanti, appena è arrivata (da dietro c'è la camicia girata)
-    if (nitida.complete && nitida.naturalWidth) nitida.hidden = verso !== 'davanti';
-    else nitida.addEventListener('load', () => { if (aperta && vista === 'davanti') nitida.hidden = false; }, { once: true });
+    // la copia a grandezza doppia dell'immagine ferma (davanti; da dietro c'è la camicia girata): solo se è già pronta
+    // prima dello zoom, mai a metà, quando comparirebbe di colpo già ingrandita
+    const pronta = await Promise.race([scaricaNitida(), new Promise((f) => setTimeout(() => f(false), 60))]);
+    if (mio !== turno) return;
+    nitida.hidden = !(pronta && verso === 'davanti' && nitida.complete && nitida.naturalWidth);
     const A = area();
     const fine = zoomSu(zona(misura.riquadro, A.w / A.h));
     // la linea si disegna mentre lo zoom finisce (lo spessore è per l'ingrandimento finale, già calcolato)
@@ -325,6 +336,7 @@ export function guida(palco, camicia) {
     if (retro) retro.hidden = true;
     if (video) { video.pause(); video.hidden = true; }
     vista = desiderata = 'davanti';
+    ruota = false;
     controllo?.riparti();
   }
 
@@ -339,6 +351,10 @@ export function guida(palco, camicia) {
     carta = Object.assign(document.createElement('div'), { className: 'misura-lente' });
     carta.setAttribute('aria-hidden', 'true');
     carta.hidden = true;
+    // toccare il riquadro lo chiude e scopre i campi che copre; la scrittura resta nel campo aperto (non finisce in un
+    // campo nascosto sotto). Si riapre entrando in un altro campo, o toccando di nuovo questo
+    for (const tipo of ['pointerdown', 'mousedown']) carta.addEventListener(tipo, (e) => e.preventDefault());
+    carta.addEventListener('click', () => chiudiCarta());
     svgC = crea('svg', { class: 'misura-lente__camicia', preserveAspectRatio: 'xMidYMid slice' });
     foto = crea('image', { x: 0, y: 0, width: 1800, height: 1000, preserveAspectRatio: 'none' });
     sopra = crea('svg', { viewBox: '0 0 1800 1000', x: 0, y: 0, width: 1800, height: 1000, overflow: 'visible' });
@@ -360,19 +376,27 @@ export function guida(palco, camicia) {
     };
     scivola = requestAnimationFrame(passo);
   });
-  /** Il riquadro e il campo in vista insieme, anche con la tastiera aperta (la parte visibile è visualViewport). */
+  /** La parte dello schermo libera: sotto la testata (se è in vista) e sopra la tastiera (visualViewport). */
+  function libero() {
+    const vv = window.visualViewport;
+    const testata = document.querySelector('[data-testata]');
+    const t = testata?.getBoundingClientRect();
+    const sottoTestata = t && t.bottom > 0 && testata.dataset.stato !== 'via' ? t.bottom : 0;
+    return { su: Math.max(vv ? vv.offsetTop : 0, sottoTestata) + 8, giu: (vv ? vv.offsetTop + vv.height : innerHeight) - 8 };
+  }
+  /** Il fondo del campo con la sua frase, sullo schermo. */
+  const fondoCampo = (m) => Math.max(m.querySelector('input').getBoundingClientRect().bottom, m.querySelector('.misura__dove')?.getBoundingClientRect().bottom || 0);
+  /** Il riquadro e il campo con la frase in vista insieme, anche con la tastiera aperta. Il riquadro si misura dove
+   *  arriva (dal campo), non dove sta ancora scivolando. */
   function inVista(m) {
     if (!carta || carta.hidden) return;
-    const vv = window.visualViewport;
-    const alto = (vv ? vv.offsetTop : 0) + 8;
-    const basso = (vv ? vv.offsetTop + vv.height : innerHeight) - 8;
-    const r = carta.getBoundingClientRect();
-    const campo = m.querySelector('input').getBoundingClientRect();
-    if (r.top < alto) {
-      const spazio = basso - campo.bottom;               // quanto può scendere il campo senza finire sotto la tastiera
-      const di = Math.min(alto - r.top, Math.max(0, spazio));
-      if (di > 1) scorri(-di, true);
-    }
+    const { su, giu } = libero();
+    const cima = m.parentElement.getBoundingClientRect().top + parseFloat(carta.style.top);
+    const fondo = fondoCampo(m);
+    let di = 0;
+    if (cima < su) di = -Math.min(su - cima, Math.max(0, giu - fondo));       // la pagina scende, il campo non va sotto la tastiera
+    else if (fondo > giu) di = Math.min(fondo - giu, cima - su);              // la pagina sale, il riquadro non va sotto la testata
+    if (Math.abs(di) > 1) scorri(di, true);
   }
   async function apriCarta(m) {
     preparaCarta();
@@ -380,10 +404,18 @@ export function guida(palco, camicia) {
     aperta = m;
     const contenitore = m.parentElement;
     if (carta.parentElement !== contenitore) { contenitore.append(carta); quadro = null; }
-    const largo = contenitore.clientWidth;
-    const alto = Math.round(Math.min(240, largo * 0.62));
+    // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro, il campo e la sua frase. Mai più
+    // largo di 1,8 volte l'alto: le misure lunghe (le lunghezze totali) ci stanno intere, con i loro capi
+    const { su, giu } = libero();
+    const blocco = fondoCampo(m) - m.getBoundingClientRect().top;
+    const largoTutto = contenitore.clientWidth;
+    const alto = Math.round(Math.max(110, Math.min(240, largoTutto * 0.62, giu - su - blocco - 10)));
+    const largo = Math.min(largoTutto, Math.round(alto * 1.8));
     carta.style.width = `${largo}px`;
     carta.style.height = `${alto}px`;
+    // più stretto del modulo: sopra il campo, non in mezzo
+    const centro = m.offsetLeft + m.offsetWidth / 2;
+    carta.style.left = `${Math.round(Math.min(Math.max(centro - largo / 2, 0), largoTutto - largo))}px`;
     carta.style.top = `${m.offsetTop - alto - 10}px`;
     if (carta.hidden) quadro = null;
     carta.hidden = false;
@@ -452,8 +484,12 @@ export function guida(palco, camicia) {
     const m = e.target.closest('.misura[data-guida]');
     if (m && !aperta && m.contains(document.activeElement)) apri(m);
   });
-  // con la tastiera del telefono che si apre o si chiude, il riquadro resta in vista
-  window.visualViewport?.addEventListener('resize', () => { if (aperta && carta && !carta.hidden) inVista(aperta); });
+  // con la tastiera del telefono che si apre o si chiude il riquadro cambia misura e resta in vista con il campo
+  let tastiera = 0;
+  window.visualViewport?.addEventListener('resize', () => {
+    clearTimeout(tastiera);
+    tastiera = setTimeout(() => { if (aperta && carta && !carta.hidden && !sulPalco()) apriCarta(aperta); }, 150);
+  });
   // se la finestra cambia forma con una guida aperta, la guida si rifà nel modo giusto (palco o riquadro) e con le misure nuove
   let cambio = 0;
   addEventListener('resize', () => {

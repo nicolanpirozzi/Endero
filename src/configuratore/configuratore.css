@@ -501,13 +501,28 @@
   --linea: #2557e0;                    /* il blu del tratteggio: fine, sul bianco della camicia si legge senza gridare */
 }
 
-/* la frase su dove si misura: sotto il campo, piccola, mentre ci si scrive (anche senza script) */
+/* la frase su dove si misura: sotto il campo, piccola, mentre ci si scrive (anche senza script). Sta sopra la riga
+   dopo, come un'etichetta, così comparendo non sposta il modulo sotto il puntatore */
+.misura[data-guida] {
+  position: relative;
+}
+
 .misura__dove {
   display: none;
-  margin-top: 6px;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 3;
+  padding: 8px 10px;
+  border: 1px solid rgba(251, 249, 244, 0.16);
+  border-radius: 10px;
+  background: rgba(9, 24, 64, 0.95);
+  box-shadow: 0 10px 24px rgba(5, 15, 43, 0.35);
   font-size: 0.8125rem;
   line-height: 1.4;
-  color: rgba(251, 249, 244, 0.82);
+  color: rgba(251, 249, 244, 0.9);
+  pointer-events: none;
 }
 
 .misura:focus-within .misura__dove {
@@ -641,6 +656,25 @@
   }
 }
 
+/* con lo zoom la camicia bianca può arrivare sotto il logo bianco della testata: un velo blu nell'angolo lo tiene leggibile */
+.configura__palco::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: min(560px, 60%);
+  height: 200px;
+  background: radial-gradient(110% 100% at 0 0, rgba(4, 16, 54, 0.62), rgba(4, 16, 54, 0) 72%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms ease;
+}
+
+.configura__palco[data-guida-aperta]::before {
+  opacity: 1;
+}
+
 /* durante la guida la camicia è ferma: i pezzi che si muovono lasciano il posto all'immagine ferma, che è la stessa */
 .configura__palco[data-guida-ferma] .configura__posa {
   visibility: hidden;
@@ -714,7 +748,6 @@
   border-radius: 14px;
   background: var(--parete-in-ombra, #041036);
   box-shadow: 0 18px 40px rgba(5, 15, 43, 0.45);
-  pointer-events: none;
 }
 
 .misura-lente[hidden] {
