@@ -170,7 +170,7 @@ export function pagina({ sito, meta, percorso, corpo, risorse, dati = [], antepr
   dati = datiDiPagina(dati, { sito, meta, url, briciole });
   // le misure dell'immagine di anteprima le legge il build dal file: i social la mostrano grande solo se le conoscono
   const misure = (meta.immagine && risorse.misure?.(meta.immagine)) || null;
-  // in anteprima la scheda del link punta all'indirizzo provvisorio, così immagine e titolo si vedono; canonical resta su endero.it
+  // in anteprima la scheda del link punta all'indirizzo provvisorio, così immagine e titolo si vedono; canonical resta sul dominio vero (sito.json, dominio)
   const origine = (anteprima && risorse.origineAnteprima) || sito.dominio;
   const immagine = meta.immagine ? origine + meta.immagine : '';
   const ld = dati.length

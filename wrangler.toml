@@ -16,6 +16,12 @@ binding = "DB"
 database_name = "endero"
 database_id = "00000000-0000-0000-0000-000000000000"   # da sostituire dopo `wrangler d1 create endero`
 
+# Le email dei moduli (worker/email.mjs). I segreti RESEND_API_KEY ed EMAIL_DESTINATARIO si mettono con
+# `npx wrangler secret put …`, mai qui.
+[vars]
+EMAIL_MITTENTE = "Endero <noreply@endero.men>"
+EMAIL_RISPOSTE = "info@endero.men"
+
 [observability]
 enabled = true
 

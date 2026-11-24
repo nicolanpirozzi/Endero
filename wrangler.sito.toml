@@ -1,0 +1,38 @@
+# Il sito su endero.men (proprietario, 2026-11-24: «ho acquistato direttamente endero.men su Cloudflare… mettiamo
+# tutto su quel dominio»). Per ora chiuso a Google («Prima chiuso»): stesse pagine dell'anteprima, ma il modulo salva
+# le richieste nel database e le manda per email a Endero (worker/email.mjs).
+#
+#   URL_ANTEPRIMA=https://endero.men TURNSTILE_SITE_KEY=<chiave pubblica> node build/costruisci.mjs
+#   npx wrangler deploy --config wrangler.sito.toml
+#
+# Come l'anteprima, i file stanno nell'archivio KV (Workers Sites): nell'ambiente di lavoro il caricamento degli
+# "assets" viene rifiutato (CLAUDE.md, 2026-11-15). Segreti, mai qui: TURNSTILE_SECRET, RESEND_API_KEY,
+# EMAIL_DESTINATARIO (`npx wrangler secret put <nome> --config wrangler.sito.toml`).
+name = "endero-sito"
+main = "worker/anteprima.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+routes = [
+  { pattern = "endero.men", custom_domain = true },
+  { pattern = "www.endero.men", custom_domain = true },
+]
+
+[site]
+bucket = "./dist"
+exclude = ["_headers", "_redirects"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "endero-sito"
+database_id = "00000000-0000-0000-0000-000000000000"   # da sostituire dopo `npx wrangler d1 create endero-sito`
+
+[vars]
+EMAIL_MITTENTE = "Endero <noreply@endero.men>"
+EMAIL_RISPOSTE = "info@endero.men"
+
+[observability]
+enabled = true
+
+# Ogni notte via le richieste più vecchie di 24 mesi dall'ultima (worker/conservazione.mjs), come promette l'informativa.
+[triggers]
+crons = ["17 3 * * *"]

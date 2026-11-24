@@ -1,9 +1,11 @@
-// Worker dell'anteprima: stesse pagine e stesso modulo del sito, ma i file arrivano dall'archivio KV
-// (vedi wrangler.toml, [env.anteprima]). Serve solo a mostrare il sito prima della messa online:
-// ogni risposta dice ai motori di ricerca di non indicizzare.
+// Worker del sito chiuso a Google: stesse pagine e stesso modulo del sito, ma i file arrivano dall'archivio KV, e
+// ogni risposta dice ai motori di ricerca di non indicizzare. Lo usano l'anteprima su workers.dev
+// (wrangler.anteprima.toml: senza database, il modulo avvisa che non salva) ed endero.men finché non si apre a Google
+// (wrangler.sito.toml: con il database, le email e la pulizia di ogni notte).
 import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { contatto } from './index.js';
+import { dimentica } from './conservazione.mjs';
 import { INTESTAZIONI } from './intestazioni.mjs';
 import { destinazione } from './reindirizzamenti.mjs';
 
@@ -56,9 +58,14 @@ async function aPezzi(request, risposta) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    // un indirizzo solo: www.endero.men porta a endero.men
+    if (url.hostname.startsWith('www.')) {
+      url.hostname = url.hostname.slice(4);
+      return new Response(null, { status: 301, headers: { Location: url.toString(), 'X-Robots-Tag': 'noindex, nofollow' } });
+    }
     if (url.pathname === '/api/contatto') {
       if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
-      const risposta = await contatto(request, env);
+      const risposta = await contatto(request, env, ctx);
       // le risposte del modulo non passano dalle pagine: almeno queste due intestazioni le portano sempre
       const r = new Response(risposta.body, risposta);
       r.headers.set('X-Robots-Tag', 'noindex, nofollow');
@@ -85,5 +92,10 @@ export default {
         return new Response('Pagina non trovata', { status: 404 });
       }
     }
+  },
+  // dove c'è il database (endero.men), ogni notte via le richieste più vecchie di 24 mesi dall'ultima, come dice
+  // l'informativa privacy (worker/conservazione.mjs)
+  async scheduled(evento, env, ctx) {
+    if (env.DB) ctx.waitUntil(dimentica(env.DB));
   },
 };

@@ -1,7 +1,7 @@
 // Genera il sito in dist/: pagine HTML complete, script e stili compilati con esbuild, file per Google.
 //
 //   node build/costruisci.mjs              anteprima: pagine non indicizzabili (noindex, robots chiuso)
-//   node build/costruisci.mjs --pubblico   messa online su endero.it: solo dopo l'ok del proprietario
+//   node build/costruisci.mjs --pubblico   messa online aperta a Google (endero.men): solo dopo l'ok del proprietario
 //
 // Variabili facoltative: TURNSTILE_SITE_KEY (chiave pubblica dell'antispam del modulo),
 // URL_ANTEPRIMA (indirizzo provvisorio dell'anteprima, per esempio https://endero-anteprima.xxx.workers.dev).

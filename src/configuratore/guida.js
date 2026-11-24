@@ -61,7 +61,24 @@ function crea(nome, attributi = {}) {
   for (const [k, v] of Object.entries(attributi)) el.setAttribute(k, v);
   return el;
 }
-const tracciato = (t) => t.punti.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('') + (t.chiuso ? 'Z' : '');
+/**
+ * Il tracciato di un tratto: una curva morbida che passa per tutti i punti (Catmull-Rom, scritta come curve di Bézier),
+ * non una spezzata. Così la linea segue il tessuto e le cuciture senza angoli (proprietario, 2026-11-24: la linea era
+ * «un po' troppo rigida»).
+ */
+function tracciato(t) {
+  const p = t.punti;
+  if (p.length < 3) return p.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('') + (t.chiuso ? 'Z' : '');
+  const n = p.length;
+  const a = (i) => (t.chiuso ? p[(i + n) % n] : p[Math.min(Math.max(i, 0), n - 1)]);
+  const r = (v) => Math.round(v * 10) / 10;
+  let d = `M${p[0][0]} ${p[0][1]}`;
+  for (let i = 0; i < (t.chiuso ? n : n - 1); i++) {
+    const [p0, p1, p2, p3] = [a(i - 1), a(i), a(i + 1), a(i + 2)];
+    d += `C${r(p1[0] + (p2[0] - p0[0]) / 6)} ${r(p1[1] + (p2[1] - p0[1]) / 6)} ${r(p2[0] - (p3[0] - p1[0]) / 6)} ${r(p2[1] - (p3[1] - p1[1]) / 6)} ${p2[0]} ${p2[1]}`;
+  }
+  return d + (t.chiuso ? 'Z' : '');
+}
 const r1 = (v) => Math.round(v * 10) / 10;
 const r2 = (v) => Math.round(v * 100) / 100;
 

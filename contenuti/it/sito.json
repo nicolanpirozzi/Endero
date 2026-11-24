@@ -2,7 +2,7 @@
   "_nota": "Testi comuni a tutte le pagine. Le parti tra [[ ]] sono segnaposto: vanno confermate dal proprietario prima della messa online.",
   "lingua": "it",
   "nome": "Endero",
-  "dominio": "https://www.endero.it",
+  "dominio": "https://endero.men",
   "fondazione": "1996",
   "societa": {
     "_nota": "Dati della società, confermati dal proprietario il 2026-11-20. La sede legale è la stessa del negozio. Gli stessi dati sono scritti nel piè di pagina (piede.legale: le parti separate da ' · ' vanno su righe diverse sul telefono, e tra Endero e S.r.l.s. c'è uno spazio che non va a capo) e nell'informativa privacy (legale.json): tools/prova-seo.mjs controlla che coincidano.",
@@ -18,7 +18,7 @@
     "whatsapp": "333 854 8712",
     "whatsapp_internazionale": "+39 333 854 8712",
     "whatsapp_link": "https://wa.me/393338548712",
-    "email": "info@endero.it",
+    "email": "info@endero.men",
     "via": "Viale del Toro 22",
     "cap": "80014",
     "citta": "Giugliano in Campania",
@@ -74,7 +74,7 @@
     ],
     "contatti": [
       { "testo": "WhatsApp 333 854 8712", "link": "https://wa.me/393338548712" },
-      { "testo": "info@endero.it", "link": "mailto:info@endero.it" }
+      { "testo": "info@endero.men", "link": "mailto:info@endero.men" }
     ]
   },
   "pillola_fissa": "Scrivici su WhatsApp",
@@ -100,8 +100,8 @@
             "link": "https://wa.me/393338548712"
           },
           {
-            "testo": "info@endero.it",
-            "link": "mailto:info@endero.it"
+            "testo": "info@endero.men",
+            "link": "mailto:info@endero.men"
           },
           {
             "testo": "Instagram",

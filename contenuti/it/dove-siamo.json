@@ -2,7 +2,7 @@
   "_nota": "Pagina /dove-siamo/. Le parti tra [[ ]] sono segnaposto. Gli orari sono una domanda aperta. La foto del riquadro con l'indirizzo è quella del negozio mandata dal proprietario il 2026-11-19 ('inserisci come foto in sede', scelta: solo quel riquadro); l'apertura della pagina resta senza foto.",
   "meta": {
     "titolo": "Dove siamo e contatti · Endero, Giugliano in Campania",
-    "descrizione": "Endero è in Viale del Toro 22, 80014 Giugliano in Campania (NA). Presa misure su appuntamento. Scrivici su WhatsApp al 333 854 8712 o a info@endero.it.",
+    "descrizione": "Endero è in Viale del Toro 22, 80014 Giugliano in Campania (NA). Presa misure su appuntamento. Scrivici su WhatsApp al 333 854 8712 o a info@endero.men.",
     "immagine": "/foto/sede/negozio-anteprima.jpg",
     "immagine_alt": "L'interno del negozio Endero: giacche appese, camicie sugli scaffali e il banco bianco"
   },
@@ -39,8 +39,8 @@
       },
       {
         "titolo": "Email",
-        "testo": "info@endero.it",
-        "link": "mailto:info@endero.it"
+        "testo": "info@endero.men",
+        "link": "mailto:info@endero.men"
       },
       {
         "titolo": "Presa misure",

@@ -71,7 +71,7 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     await page.waitForTimeout(200);
     await fermo();
     const subito = await invito();
-    await page.waitForTimeout(2300);
+    await page.waitForTimeout(2900);                  // 1,5 s fermi, poi compare piano
     const dopo = await invito();
     await page.evaluate(() => window.scrollTo(0, innerHeight * 2.8));
     await page.waitForTimeout(250);

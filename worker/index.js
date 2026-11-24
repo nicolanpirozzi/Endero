@@ -1,15 +1,15 @@
 // Worker di Endero: serve le pagine generate in dist/ e riceve il modulo di contatto.
 //
 // Collegamenti (wrangler.toml): ASSETS (i file del sito), DB (database D1 "endero").
-// Segreti, mai nel repository: TURNSTILE_SECRET (antispam). Più avanti, per le email con Resend:
-// RESEND_API_KEY ed EMAIL_DESTINATARIO (la casella del proprietario, che non va scritta da nessun'altra parte).
+// Segreti, mai nel repository: TURNSTILE_SECRET (antispam), RESEND_API_KEY ed EMAIL_DESTINATARIO (le email dei
+// moduli: worker/email.mjs; la casella di Endero non va scritta da nessun'altra parte).
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === '/api/contatto') {
       if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
-      return contatto(request, env);
+      return contatto(request, env, ctx);
     }
     return env.ASSETS.fetch(request);
   },
@@ -25,6 +25,7 @@ const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
 import { dimentica, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
+import { avvisa } from './email.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];
 // i campi propri delle richieste dei rivenditori: nomi, scelte ammesse e lunghezze vengono dai contenuti della pagina,
@@ -51,7 +52,7 @@ function percorsoInterno(indirizzo, request) {
   }
 }
 
-export async function contatto(request, env) {
+export async function contatto(request, env, ctx) {
   const vuoleJson = (request.headers.get('Accept') || '').includes('application/json');
   const rispondi = (ok, stato, errore) => {
     if (vuoleJson) return Response.json(ok ? { ok: true } : { ok: false, errore }, { status: stato });
@@ -136,15 +137,19 @@ export async function contatto(request, env) {
   // nell'anteprima il database può non esserci ancora: meglio dirlo che fingere di aver salvato
   if (!env.DB) return rispondi(false, 503, 'In questa anteprima il modulo non salva ancora le richieste. Per ora scrivici su WhatsApp.');
 
+  r.pagina = percorsoInterno(request.headers.get('Referer') || '', request);
+  r.paese = request.cf?.country || '';
   try {
     await env.DB.prepare(
       'INSERT INTO richieste (tipo, nome, telefono, email, giorno, fascia, messaggio, dettagli, pagina, paese, chiave_telefono, chiave_email) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)'
-    ).bind(r.tipo, r.nome, r.telefono, r.email, r.giorno, r.fascia, r.messaggio, r.dettagli, percorsoInterno(request.headers.get('Referer') || '', request), request.cf?.country || '', chiaveTelefono(r.telefono), chiaveEmail(r.email)).run();
+    ).bind(r.tipo, r.nome, r.telefono, r.email, r.giorno, r.fascia, r.messaggio, r.dettagli, r.pagina, r.paese, chiaveTelefono(r.telefono), chiaveEmail(r.email)).run();
   } catch (errore) {
     console.error('salvataggio non riuscito', errore);
     return rispondi(false, 500, 'Non siamo riusciti a salvare la richiesta. Scrivici su WhatsApp.');
   }
-  // L'avviso per email con Resend si aggiunge quando i DNS di endero.it sono pronti (docs/direzione-creativa.md, punto 6).
+  // salvata: l'avviso a Endero e la conferma al cliente partono dopo la risposta (worker/email.mjs)
+  const email = avvisa(env, r);
+  if (ctx?.waitUntil) ctx.waitUntil(email); else await email;
   return rispondi(true, 200);
 }
 

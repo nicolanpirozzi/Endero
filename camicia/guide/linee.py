@@ -63,7 +63,8 @@ from shapely.geometry import LineString, MultiLineString, Point, Polygon  # noqa
 L, A = scena.LARGA, scena.ALTA
 TELEFONO = {'x': 336, 'larga': 750}   # la fascia del fotogramma che il telefono mostra (film/monta.py)
 TOLLERANZA = 0.004       # un punto si vede se sul raggio della camera non c'è niente più di 4 mm prima di lui
-SCARTO = 0.5             # semplificazione: scarto massimo dalla linea vera, in punti del fotogramma
+SCARTO = 0.3             # semplificazione: scarto massimo dalla linea vera, in punti del fotogramma (fine: la linea segue
+                         # il tessuto e le cuciture; sulla pagina si disegna con curve morbide)
 PASSO = 0.001            # le linee si campionano ogni millimetro
 CORTO = 8.0              # un tratto visibile o nascosto che sta tutto in 8 punti (1 cm) si unisce ai vicini: è una
                          # piega che nasconde il tessuto per un attimo, o un filo che spunta
@@ -76,7 +77,9 @@ STACCO = 3.5             # una linea che passa a meno di 3,5 punti dal bordo del
                          # sposta verso l'interno: il tratteggio e l'alone restano sul tessuto
 PUNTA = 150              # una punta (la linea torna indietro di più di 150 gradi) con lati sotto PUNTA_LATO si toglie
 PUNTA_LATO = 30
-LISCIA = 15              # torace, pancia e bacino: media mobile di y su 15 campioni (1,5 cm), contro i dentini delle pieghe
+LISCIA = 4               # torace, pancia e bacino: media mobile di y su 4 campioni (4 mm), solo contro i dentini delle pieghe
+                         # (con 15 la linea veniva dritta come un righello: «un po' troppo rigida», proprietario 2026-11-24)
+LISCIA_GIRO = 0.012      # braccio e avambraccio: la sezione vera della manica, ammorbidita su 1,2 cm
 DRITTE = ('torace', 'pancia', 'bacino')
 
 # I pezzi del cartamodello, numerati come li trova scena._pezzi (sempre gli stessi per questo file). "Sinistra" e
@@ -642,7 +645,9 @@ def misure_3d(cam):
     for nome, v in (('braccio', v_braccio), ('avambraccio', v_fondo + AVAMBRACCIO / manica.scala)):
         dv = 0.03 / manica.scala
         asse = centro_giro(v + dv) - centro_giro(v - dv)
-        giro, _ = sezione(cam, (manica.k,) + SOTTO_MANICA[LATO], centro_giro(v), asse, metro=True)
+        # la sezione vera della manica (segue le pieghe come un metro appoggiato), ammorbidita: niente ellisse perfetta
+        giro, _ = sezione(cam, (manica.k,) + SOTTO_MANICA[LATO], centro_giro(v), asse)
+        giro = liscia_chiuso(giro, LISCIA_GIRO)
         a, b = manica.taglio([u_mezzo, v], [1, 0])
         riga = lunghezza(manica.linea(a, b), chiuso=True)          # la larghezza del cartamodello lì: il giro vero
         print(f'  {nome}: giro disegnato {lunghezza(giro, True) * 100:.1f} cm, cartamodello {riga * 100:.1f} cm')
@@ -687,6 +692,18 @@ def misure_3d(cam):
 
 
 # ------------------------------------------------------------------------------------------------- dalla 3D al fotogramma
+
+def liscia_chiuso(punti, lungo):
+    """Un giro chiuso (punti nel mondo, ogni mezzo millimetro circa) ammorbidito con una media mobile lunga `lungo` metri."""
+    passo = np.linalg.norm(np.diff(np.r_[punti, punti[:1]], axis=0), axis=1).mean()
+    k = max(3, int(round(lungo / max(passo, 1e-6))) | 1)
+    n = len(punti)
+    if n <= k:
+        return punti
+    giro = np.r_[punti[-(k // 2):], punti, punti[:k // 2]]
+    nucleo = np.ones(k) / k
+    return np.stack([np.convolve(giro[:, i], nucleo, mode='valid') for i in range(3)], axis=1)[:n]
+
 
 def media_mobile(v, k):
     if k < 2 or len(v) <= k:
