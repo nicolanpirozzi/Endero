@@ -210,7 +210,8 @@
 }
 
 /* Invito a scorrere: l'icona classica (il mouse con la rotella sul computer, due frecce sul telefono)
-   e due parole. Si spegne appena si comincia a scorrere. */
+   e due parole. Si spegne appena si comincia a scorrere e torna quando ci si ferma un secondo e mezzo, finché la
+   cucitura non è finita (apertura.js, `invito`). */
 .apertura__invito {
   position: absolute;
   left: 50%;

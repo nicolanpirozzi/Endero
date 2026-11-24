@@ -56,6 +56,30 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     await a.page.waitForFunction(() => { const v = document.querySelector('[data-video-eroe] video'); return v && !v.paused && v.currentTime > 0.4; }, null, { timeout: 15000 }).catch(() => {});
   };
 
+  // ---------------------------------------------------------------- 0. l'invito a scorrere nell'apertura
+  // c'è in cima, sparisce mentre si scorre, torna dopo un secondo e mezzo fermi finché la cucitura non è finita
+  // (proprietario, 2026-11-24)
+  console.log('L\'invito a scorrere');
+  for (const [nome, opzioni] of [['computer', {}], ['telefono', TELEFONO]]) {
+    const a = await nuovo(opzioni), { page } = a;
+    await page.goto(base + '/', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1500);
+    const invito = () => page.evaluate(() => Number(getComputedStyle(document.querySelector('.apertura__invito')).opacity));
+    const inCima = await invito();
+    const fermo = async () => { let y = -1; for (let k = 0; k < 40; k++) { const n = await page.evaluate(() => scrollY); if (Math.abs(n - y) < 1) break; y = n; await page.waitForTimeout(150); } };
+    await page.evaluate(() => window.scrollTo(0, innerHeight * 2.2));
+    await page.waitForTimeout(200);
+    await fermo();
+    const subito = await invito();
+    await page.waitForTimeout(2300);
+    const dopo = await invito();
+    await page.evaluate(() => window.scrollTo(0, innerHeight * 2.8));
+    await page.waitForTimeout(250);
+    const riprende = await invito();
+    controlla(`${nome}: l'invito c'è in cima, sparisce scorrendo, torna dopo 1,5 s fermi e risparisce quando si riprende`, inCima > 0.9 && subito < 0.2 && dopo > 0.8 && riprende < 0.5, JSON.stringify({ inCima, subito, dopo, riprende }));
+    await a.contesto.close();
+  }
+
   // ---------------------------------------------------------------- 1. il video sotto il titolo
   console.log('Il video dell\'apertura');
   for (const [nome, opzioni, atteso, forma] of [['computer', {}, 'eroe-computer.mp4', [1080, 1440]], ['tablet', { viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, 'eroe-computer.mp4', [1080, 1440]], ['telefono', TELEFONO, 'eroe-telefono.mp4', [720, 1280]]]) {

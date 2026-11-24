@@ -241,7 +241,7 @@ export async function avviaApertura(radice) {
     let kk = k;
     tessuto.toggleAttribute('data-visibile', sotto);
     telaMacchina.toggleAttribute('data-visibile', sotto);
-    radice.style.setProperty('--apertura-invito', (1 - liscio(y / (0.3 * vh))).toFixed(3));
+    radice.style.setProperty('--apertura-invito', invito(y).toFixed(3));
     if (!sotto) {
       // la pozza di luce scende verso l'ago mentre la camera sale: all'arrivo è già al suo posto
       luce.style.setProperty('--luce-x', '50%');
@@ -311,6 +311,24 @@ export async function avviaApertura(radice) {
     }
     luce.style.setProperty('--luce-x', (nx + pan * kk).toFixed(0) + 'px');
     luce.style.setProperty('--luce-y', ay.toFixed(0) + 'px');
+  }
+
+  // ---------------------------------------------------------------- invito a scorrere
+  // In cima c'è sempre e si spegne appena si scorre. Poi torna ogni volta che chi guarda si ferma per un secondo e
+  // mezzo, finché la cucitura non è finita (proprietario, 2026-11-24: «vorrei che continuasse perché fa capire che
+  // devo continuare a scorrere»): mentre si scorre sparisce di nuovo.
+  const INVITO_DOPO = 1500;          // millisecondi fermi prima che torni
+  let fermaY = -1, fermoDa = 0, invitoTorna = 0, invitoPrima = 0;
+  function invito(y) {
+    const ora = performance.now();
+    const dt = invitoPrima ? Math.min(0.1, (ora - invitoPrima) / 1000) : 0;
+    invitoPrima = ora;
+    if (Math.abs(y - fermaY) > 0.5) { fermaY = y; fermoDa = ora; }
+    // torna solo dopo l'inizio (in cima c'è già) e prima della fine (quando la macchina comincia ad andarsene)
+    const vuole = ora - fermoDa >= INVITO_DOPO && y > 0.3 * vh && y < LA + LB + LC * 0.95 ? 1 : 0;
+    // compare piano (0,35 s), se ne va svelto (0,12 s)
+    invitoTorna += (vuole - invitoTorna) * (1 - Math.exp(-dt / (vuole ? 0.35 : 0.12)));
+    return Math.max(1 - liscio(y / (0.3 * vh)), invitoTorna);
   }
 
   // ---------------------------------------------------------------- ciclo
