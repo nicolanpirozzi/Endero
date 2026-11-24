@@ -280,6 +280,8 @@ const FORMATI = [
     for (const misura of MISURE) {
       await tocca(page, `#campo-${misura}`);
       await page.waitForTimeout(1500);
+      // sul sito vero, alla prima misura di spalle, il retro arriva dalla rete: si aspetta la linea fino a 3 s in più
+      if (dati.guide) await page.waitForFunction(() => document.querySelector('.misura-lente:not([hidden]) .linea__tratto'), null, { timeout: 3000 }).catch(() => {});
       const s = await page.evaluate((m) => {
         const c = document.querySelector('.misura-lente'), campo = document.getElementById(`campo-${m}`).getBoundingClientRect();
         const r = c && !c.hidden ? c.getBoundingClientRect() : null;
