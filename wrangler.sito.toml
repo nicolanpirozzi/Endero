@@ -24,7 +24,7 @@ exclude = ["_headers", "_redirects"]
 [[d1_databases]]
 binding = "DB"
 database_name = "endero-sito"
-database_id = "00000000-0000-0000-0000-000000000000"   # da sostituire dopo `npx wrangler d1 create endero-sito`
+database_id = "9cd0a738-00d2-4d2d-997a-bf0a12a43ac2"
 
 [vars]
 EMAIL_MITTENTE = "Endero <noreply@endero.men>"
