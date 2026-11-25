@@ -1,3 +1,4 @@
+@import './vesti.css';
 /* Configuratore, passo 1: la camicia appesa e il riquadro in vetro.
    La camicia è un'immagine calcolata con Blender, sempre presente; lo script le sovrappone gli stessi punti divisi
    in tre pezzi (parete, ombra, camicia) e fa dondolare la camicia quando il mouse le passa sopra. Senza JavaScript,

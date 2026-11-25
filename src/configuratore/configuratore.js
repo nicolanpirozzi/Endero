@@ -6,6 +6,7 @@
 // sulla camicia dove si misura.
 import { leggera } from './leggera.js';
 import { passi, guida } from './guida.js';
+import { vesti } from './vesti.js';
 
 const palco = document.querySelector('.configura__palco');
 // Per i controlli (tools/prova-leggera.js): ?rigida spegne il tessuto che ondeggia, per provare la camicia che si
@@ -18,3 +19,5 @@ const camicia = palco?.dataset.leggera
   ? leggera(palco, palco.dataset.leggera, palco.dataset.leggeraV, { onda: cerca.has('rigida') ? 0 : 1, comunque: cerca.has('comunque'), aspetta: chiusa }).catch((e) => { console.error(e); })
   : Promise.resolve();
 if (palco) guida(palco, camicia);
+// ciò che si sceglie nel riquadro si vede sulla camicia: collo, taschino, iniziali (vesti.js ascolta `endero:camicia`)
+if (palco) vesti(palco, camicia);

@@ -1,5 +1,5 @@
 {
-  "_nota": "Configuratore, passo 1 e guida alle misure. Dal 2026-11-21 il cliente misura la camicia che gli sta meglio, abbottonata e stesa su un tavolo, non il corpo (il sarto, riferito dal proprietario). Ogni campo ha 'guida', la frase che compare sotto il campo mentre ci si scrive (e la camicia fa lo zoom sul punto: dal 2026-11-22 la «i» non c'è più) (scritta da noi, tra [[ ]] finché il sarto non la conferma nel suo questionario), e 'vista': 'davanti' o 'dietro' (la camicia si gira). 'giro': true vuol dire che il cliente scrive la larghezza della camicia stesa e il calcolo della taglia la raddoppia (worker/taglie.mjs). 'min' e 'max' sono i limiti che il campo accetta, in centimetri, per la camicia stesa: scelti da noi, larghi, da rivedere con il sarto. Le linee tratteggiate stanno in public/camicia/guide.json (camicia/guide/linee.py). 'come_misurare' è la finestra in vetro che si apre ogni volta che si entra (scelta del proprietario): primo, terzo e quarto passo sono parole sue, il secondo l'abbiamo aggiunto noi per la camicia stesa. 'La camicia' e 'Contrasti' si vedono ma restano spenti finché il proprietario non dice cosa metterci; il pulsante Continua resta spento e il modulo non invia nulla. N. ordine, agente, date, prezzo, acconto e saldo li compila Endero e non stanno qui. 'domande' sta sotto la camicia e il riquadro: risposte scritte da noi solo con ciò che è già deciso. Niente prezzi, tempi, pagamento o consegna finché non sono confermati. Al cliente poche informazioni, chiare e utili (proprietario, 2026-11-21: «Evita di dire troppo… Non servono al Cliente queste informazioni»): le frasi dicono solo dove si misura, mai come funziona il calcolo (per esempio che le larghezze si raddoppiano).",
+  "_nota": "Configuratore a passi (proprietario, 2026-11-25: «Dividi così la configurazione a step: Configurazione prodotto, misure, dati clienti, dati spedizione e pagamento. Divisi a step in modo chiaro»). Opzioni, prezzi e spedizione sono parole sue; come li abbiamo interpretati dove non erano univoci sta in docs/direzione-creativa.md, punto 16, ed è da fargli confermare. PASSO CAMICIA: quantità per prima (1); tessuto da una finestra con i campioni (contenuti/it/tessuti.json: nomi inventati da noi, i nomi veri delle cartelle colori non stanno nel repository e compaiono solo nell'email dell'ordine); collo, menu a tendina con otto colli, che cambia anche sulla camicia; taschino sì/no con il suo tessuto; asola sì/no con il colore; bottone tinta su tinta, contrasto o personalizzato («Ordine minimo 100 pz»); filato bottone, un colore; iniziali sì/no, posizione e al più tre lettere; interno collo, interno polso e polsino standard o personalizzati con il loro tessuto. «Colori ricamo carré» tolto («Elimina per ora»). 'parte' dice quale parte della camicia si evidenzia con lo zoom mentre si sceglie (public/camicia/opzioni/opzioni.json). 'personalizzazione': true per le otto voci che fanno salire il prezzo. PREZZI: 90 base, 100 con una personalizzazione, 120 con tre, 150 con tutte (parole sue); due personalizzazioni valgono come una, da tre a sette come tre: interpretazione nostra. SPEDIZIONE: ritiro in laboratorio, oppure 5 giorni lavorativi 15 euro, oppure 7 giorni lavorativi 30 euro, gratis sopra i 200 euro di spesa (parole sue, importi come li ha scritti). Le regole stanno in src/configuratore/ordine.mjs e valgono uguali in pagina e nel Worker. MISURE: come prima (2026-11-21: la camicia che sta meglio, stesa su un tavolo); la finestra «Come prendere le misure» si apre entrando nel passo delle misure. Tra [[ ]] ciò che non è confermato. Al cliente poche informazioni, chiare e utili.",
   "meta": {
     "titolo": "Camicia su misura online · Crea la tua con Endero",
     "briciola": "Crea la tua camicia",
@@ -15,248 +15,662 @@
   },
   "scheda": {
     "titolo": "La tua camicia su misura",
-    "testo": "Misura la camicia che ti sta meglio, stesa su un tavolo. In centimetri.",
-    "errore_misura": "Scrivi un numero tra {min} e {max}.",
-    "gruppi": [
-      {
-        "id": "misure",
-        "titolo": "Le misure della tua camicia",
-        "tipo": "misure",
-        "campi": [
-          {
-            "nome": "giro_collo",
-            "etichetta": "Giro collo",
-            "unita": "cm",
-            "min": 30,
-            "max": 55,
-            "vista": "davanti",
-            "guida": "[[Colletto aperto e steso: dal centro del bottone alla fine dell'asola.]]"
-          },
-          {
-            "nome": "spalla",
-            "etichetta": "Spalla",
-            "unita": "cm",
-            "min": 30,
-            "max": 70,
-            "vista": "dietro",
-            "guida": "[[Sul retro: da una cucitura della spalla all'altra.]]"
-          },
-          {
-            "nome": "spallina",
-            "etichetta": "Spallina",
-            "unita": "cm",
-            "min": 5,
-            "max": 30,
-            "vista": "davanti",
-            "guida": "[[Lungo la spalla: dal colletto alla cucitura della manica.]]"
-          },
-          {
-            "nome": "torace",
-            "etichetta": "Torace",
-            "unita": "cm",
-            "min": 30,
-            "max": 90,
-            "giro": true,
-            "vista": "davanti",
-            "guida": "[[Appena sotto le ascelle, da un fianco all'altro.]]"
-          },
-          {
-            "nome": "pancia",
-            "etichetta": "Pancia",
-            "unita": "cm",
-            "min": 25,
-            "max": 90,
-            "giro": true,
-            "vista": "davanti",
-            "guida": "[[All'altezza del terzo bottone dal fondo, da un fianco all'altro.]]"
-          },
-          {
-            "nome": "bacino",
-            "etichetta": "Bacino",
-            "unita": "cm",
-            "min": 30,
-            "max": 90,
-            "giro": true,
-            "vista": "davanti",
-            "guida": "[[All'altezza del primo bottone dal fondo, da un fianco all'altro.]]"
-          },
-          {
-            "nome": "lunghezza_manica",
-            "etichetta": "Lunghezza manica",
-            "unita": "cm",
-            "min": 40,
-            "max": 95,
-            "vista": "davanti",
-            "guida": "[[Dalla cucitura della spalla al fondo del polsino.]]"
-          },
-          {
-            "nome": "braccio",
-            "etichetta": "Braccio",
-            "unita": "cm",
-            "min": 8,
-            "max": 40,
-            "giro": true,
-            "vista": "davanti",
-            "guida": "[[La larghezza della manica, 10 cm sotto l'ascella.]]"
-          },
-          {
-            "nome": "avambraccio",
-            "etichetta": "Avambraccio",
-            "unita": "cm",
-            "min": 6,
-            "max": 30,
-            "giro": true,
-            "vista": "davanti",
-            "guida": "[[La larghezza della manica, 15 cm sopra il polsino.]]"
-          },
-          {
-            "nome": "polso",
-            "etichetta": "Polso",
-            "unita": "cm",
-            "min": 15,
-            "max": 35,
-            "vista": "davanti",
-            "guida": "[[Polsino aperto e steso: dal centro del bottone alla fine dell'asola.]]"
-          },
-          {
-            "nome": "lunghezza_davanti",
-            "etichetta": "Lunghezza totale davanti",
-            "unita": "cm",
-            "min": 50,
-            "max": 120,
-            "vista": "davanti",
-            "guida": "[[Dal punto più alto della spalla, accanto al colletto, al fondo della camicia.]]"
-          },
-          {
-            "nome": "lunghezza_dietro",
-            "etichetta": "Lunghezza totale dietro",
-            "unita": "cm",
-            "min": 50,
-            "max": 120,
-            "vista": "dietro",
-            "guida": "[[Sul retro: dalla cucitura del colletto, al centro, al fondo della camicia.]]"
-          }
-        ]
-      },
+    "passo": "Passo {n} di {tot}",
+    "avanti": "Continua",
+    "indietro": "Indietro",
+    "modifica": "Modifica",
+    "si": "Sì",
+    "no": "No",
+    "standard": "Standard",
+    "personalizzato": "Personalizzato",
+    "passi": [
       {
         "id": "camicia",
-        "titolo": "La camicia",
-        "tipo": "spento",
-        "nota": "Per ora non si compila.",
-        "campi": [
-          {
-            "nome": "tessuto",
-            "etichetta": "Tessuto"
-          },
-          {
-            "nome": "collo",
-            "etichetta": "Collo"
-          },
-          {
-            "nome": "colori_ricamo_carre",
-            "etichetta": "Colori ricamo carré"
-          },
-          {
-            "nome": "taschino",
-            "etichetta": "Taschino"
-          },
-          {
-            "nome": "asola",
-            "etichetta": "Asola"
-          },
-          {
-            "nome": "bottone",
-            "etichetta": "Bottone"
-          },
-          {
-            "nome": "filato_bottone",
-            "etichetta": "Filato bottone"
-          },
-          {
-            "nome": "iniziali",
-            "etichetta": "Iniziali"
-          },
-          {
-            "nome": "note",
-            "etichetta": "Note",
-            "righe": 3
-          }
-        ]
+        "nome": "Camicia",
+        "titolo": "Configura la tua camicia"
       },
       {
-        "id": "contrasti",
-        "titolo": "Contrasti",
-        "tipo": "spento",
-        "nota": "Per ora non si compila.",
-        "campi": [
-          {
-            "nome": "tessuto_contrasto",
-            "etichetta": "Tessuto di contrasto",
-            "largo": true
-          },
-          {
-            "nome": "interno_collo",
-            "etichetta": "Interno collo",
-            "sino": true
-          },
-          {
-            "nome": "interno_polso",
-            "etichetta": "Interno polso",
-            "sino": true
-          },
-          {
-            "nome": "fintone_bottoni",
-            "etichetta": "Fintone bottoni",
-            "sino": true
-          },
-          {
-            "nome": "carre",
-            "etichetta": "Carré",
-            "sino": true
-          }
-        ]
+        "id": "misure",
+        "nome": "Misure",
+        "titolo": "Le misure della tua camicia",
+        "testo": "Misura la camicia che ti sta meglio, stesa su un tavolo. In centimetri."
       },
       {
         "id": "dati",
-        "titolo": "I tuoi dati",
-        "tipo": "dati",
+        "nome": "Dati",
+        "titolo": "I tuoi dati"
+      },
+      {
+        "id": "spedizione",
+        "nome": "Spedizione",
+        "titolo": "Ritiro o spedizione"
+      },
+      {
+        "id": "pagamento",
+        "nome": "Pagamento",
+        "titolo": "Riepilogo e pagamento"
+      }
+    ],
+    "camicia": {
+      "campi": [
+        {
+          "nome": "quantita",
+          "tipo": "quantita",
+          "etichetta": "Quantità",
+          "min": 1,
+          "max": 999,
+          "predefinita": 1,
+          "meno": "Una in meno",
+          "piu": "Una in più"
+        },
+        {
+          "nome": "tessuto",
+          "tipo": "tessuto",
+          "etichetta": "Tessuto",
+          "scegli": "Scegli il tessuto",
+          "cambia": "Cambia"
+        },
+        {
+          "nome": "collo",
+          "tipo": "tendina",
+          "etichetta": "Collo",
+          "parte": "collo",
+          "predefinita": "italiano",
+          "opzioni": [
+            {
+              "id": "italiano",
+              "nome": "Italiano"
+            },
+            {
+              "id": "francese",
+              "nome": "Francese"
+            },
+            {
+              "id": "mezzo_francese",
+              "nome": "Mezzo francese"
+            },
+            {
+              "id": "small",
+              "nome": "Small"
+            },
+            {
+              "id": "button_down",
+              "nome": "Button down"
+            },
+            {
+              "id": "coreano",
+              "nome": "Coreano"
+            },
+            {
+              "id": "diplomatico",
+              "nome": "Diplomatico"
+            },
+            {
+              "id": "club",
+              "nome": "Club"
+            }
+          ]
+        },
+        {
+          "nome": "taschino",
+          "tipo": "sino",
+          "etichetta": "Taschino",
+          "parte": "taschino",
+          "personalizzazione": true,
+          "se_si": [
+            {
+              "nome": "taschino_tessuto",
+              "tipo": "tessuto",
+              "etichetta": "Tessuto del taschino",
+              "scegli": "Scegli il tessuto",
+              "cambia": "Cambia"
+            }
+          ]
+        },
+        {
+          "nome": "asola",
+          "tipo": "sino",
+          "etichetta": "Asola colorata",
+          "personalizzazione": true,
+          "se_si": [
+            {
+              "nome": "asola_colore",
+              "tipo": "colore",
+              "etichetta": "Colore dell'asola",
+              "scegli": "Scegli il colore",
+              "cambia": "Cambia"
+            }
+          ]
+        },
+        {
+          "nome": "bottone",
+          "tipo": "scelta",
+          "etichetta": "Bottone",
+          "parte": "bottoni",
+          "personalizzazione": true,
+          "predefinita": "tinta",
+          "opzioni": [
+            {
+              "id": "tinta",
+              "nome": "Tinta su tinta"
+            },
+            {
+              "id": "contrasto",
+              "nome": "Contrasto"
+            },
+            {
+              "id": "personalizzato",
+              "nome": "Personalizzato",
+              "avviso": "Ordine minimo: 100 pezzi.",
+              "quantita_minima": 100
+            }
+          ]
+        },
+        {
+          "nome": "filato_bottone",
+          "tipo": "colore",
+          "etichetta": "Filato bottone",
+          "facoltativo": true,
+          "personalizzazione": true,
+          "scegli": "Scegli il colore",
+          "cambia": "Cambia",
+          "togli": "Togli"
+        },
+        {
+          "nome": "iniziali",
+          "tipo": "sino",
+          "etichetta": "Iniziali",
+          "parte": "iniziali",
+          "personalizzazione": true,
+          "se_si": [
+            {
+              "nome": "iniziali_posizione",
+              "tipo": "scelta",
+              "etichetta": "Posizione",
+              "opzioni": [
+                {
+                  "id": "polso",
+                  "nome": "Polso"
+                },
+                {
+                  "id": "collo",
+                  "nome": "Collo"
+                },
+                {
+                  "id": "cuore",
+                  "nome": "Lato cuore"
+                }
+              ]
+            },
+            {
+              "nome": "iniziali_lettere",
+              "tipo": "lettere",
+              "etichetta": "Iniziali",
+              "massimo": 3,
+              "aiuto": "Al più 3 lettere."
+            }
+          ]
+        },
+        {
+          "nome": "interno_collo",
+          "tipo": "standard",
+          "etichetta": "Interno collo",
+          "parte": "interno_collo",
+          "personalizzazione": true,
+          "se_si": [
+            {
+              "nome": "interno_collo_tessuto",
+              "tipo": "tessuto",
+              "etichetta": "Tessuto dell'interno collo",
+              "scegli": "Scegli il tessuto",
+              "cambia": "Cambia"
+            }
+          ]
+        },
+        {
+          "nome": "interno_polso",
+          "tipo": "standard",
+          "etichetta": "Interno polso",
+          "parte": "interno_polso",
+          "personalizzazione": true,
+          "se_si": [
+            {
+              "nome": "interno_polso_tessuto",
+              "tipo": "tessuto",
+              "etichetta": "Tessuto dell'interno polso",
+              "scegli": "Scegli il tessuto",
+              "cambia": "Cambia"
+            }
+          ]
+        },
+        {
+          "nome": "polsino",
+          "tipo": "standard",
+          "etichetta": "Polsino",
+          "parte": "polsino",
+          "personalizzazione": true,
+          "se_si": [
+            {
+              "nome": "polsino_tessuto",
+              "tipo": "tessuto",
+              "etichetta": "Tessuto del polsino",
+              "scegli": "Scegli il tessuto",
+              "cambia": "Cambia"
+            }
+          ]
+        }
+      ]
+    },
+    "finestra_tessuti": {
+      "titolo": "Scegli il tessuto",
+      "cerca": "Cerca per nome",
+      "tutti": "Tutti",
+      "tipo": "Tipo",
+      "colore": "Colore",
+      "disegno": "Disegno",
+      "nessuno": "Nessun tessuto con questi filtri.",
+      "conferma": "Scegli questo tessuto",
+      "chiudi": "Chiudi",
+      "contati": "{n} tessuti"
+    },
+    "finestra_colori": {
+      "titolo": "Scegli il colore",
+      "conferma": "Scegli questo colore",
+      "chiudi": "Chiudi"
+    },
+    "colori_filo": [
+      {
+        "id": "bianco",
+        "nome": "Bianco",
+        "tinta": "#ffffff"
+      },
+      {
+        "id": "panna",
+        "nome": "Panna",
+        "tinta": "#f3ead8"
+      },
+      {
+        "id": "beige",
+        "nome": "Beige",
+        "tinta": "#d2bc98"
+      },
+      {
+        "id": "giallo",
+        "nome": "Giallo",
+        "tinta": "#f2c230"
+      },
+      {
+        "id": "arancione",
+        "nome": "Arancione",
+        "tinta": "#e8742a"
+      },
+      {
+        "id": "rosso",
+        "nome": "Rosso",
+        "tinta": "#c8202b"
+      },
+      {
+        "id": "bordeaux",
+        "nome": "Bordeaux",
+        "tinta": "#6d1a2c"
+      },
+      {
+        "id": "rosa",
+        "nome": "Rosa",
+        "tinta": "#eab0c0"
+      },
+      {
+        "id": "fucsia",
+        "nome": "Fucsia",
+        "tinta": "#d0267d"
+      },
+      {
+        "id": "viola",
+        "nome": "Viola",
+        "tinta": "#5d3a8e"
+      },
+      {
+        "id": "lilla",
+        "nome": "Lilla",
+        "tinta": "#b9a3d6"
+      },
+      {
+        "id": "celeste",
+        "nome": "Celeste",
+        "tinta": "#a9cdea"
+      },
+      {
+        "id": "azzurro",
+        "nome": "Azzurro",
+        "tinta": "#4d8fd1"
+      },
+      {
+        "id": "blu",
+        "nome": "Blu",
+        "tinta": "#1f3f9a"
+      },
+      {
+        "id": "blu_notte",
+        "nome": "Blu notte",
+        "tinta": "#101d42"
+      },
+      {
+        "id": "verde",
+        "nome": "Verde",
+        "tinta": "#2f8a4e"
+      },
+      {
+        "id": "verde_bosco",
+        "nome": "Verde bosco",
+        "tinta": "#1d4a35"
+      },
+      {
+        "id": "marrone",
+        "nome": "Marrone",
+        "tinta": "#5b3a26"
+      },
+      {
+        "id": "grigio_perla",
+        "nome": "Grigio perla",
+        "tinta": "#c9ccd1"
+      },
+      {
+        "id": "grigio",
+        "nome": "Grigio",
+        "tinta": "#7c8087"
+      },
+      {
+        "id": "nero",
+        "nome": "Nero",
+        "tinta": "#141414"
+      }
+    ],
+    "misure": {
+      "campi": [
+        {
+          "nome": "giro_collo",
+          "etichetta": "Giro collo",
+          "unita": "cm",
+          "min": 30,
+          "max": 55,
+          "vista": "davanti",
+          "guida": "[[Colletto aperto e steso: dal centro del bottone alla fine dell'asola.]]"
+        },
+        {
+          "nome": "spalla",
+          "etichetta": "Spalla",
+          "unita": "cm",
+          "min": 30,
+          "max": 70,
+          "vista": "dietro",
+          "guida": "[[Sul retro: da una cucitura della spalla all'altra.]]"
+        },
+        {
+          "nome": "spallina",
+          "etichetta": "Spallina",
+          "unita": "cm",
+          "min": 5,
+          "max": 30,
+          "vista": "davanti",
+          "guida": "[[Lungo la spalla: dal colletto alla cucitura della manica.]]"
+        },
+        {
+          "nome": "torace",
+          "etichetta": "Torace",
+          "unita": "cm",
+          "min": 30,
+          "max": 90,
+          "giro": true,
+          "vista": "davanti",
+          "guida": "[[Appena sotto le ascelle, da un fianco all'altro.]]"
+        },
+        {
+          "nome": "pancia",
+          "etichetta": "Pancia",
+          "unita": "cm",
+          "min": 25,
+          "max": 90,
+          "giro": true,
+          "vista": "davanti",
+          "guida": "[[All'altezza del terzo bottone dal fondo, da un fianco all'altro.]]"
+        },
+        {
+          "nome": "bacino",
+          "etichetta": "Bacino",
+          "unita": "cm",
+          "min": 30,
+          "max": 90,
+          "giro": true,
+          "vista": "davanti",
+          "guida": "[[All'altezza del primo bottone dal fondo, da un fianco all'altro.]]"
+        },
+        {
+          "nome": "lunghezza_manica",
+          "etichetta": "Lunghezza manica",
+          "unita": "cm",
+          "min": 40,
+          "max": 95,
+          "vista": "davanti",
+          "guida": "[[Dalla cucitura della spalla al fondo del polsino.]]"
+        },
+        {
+          "nome": "braccio",
+          "etichetta": "Braccio",
+          "unita": "cm",
+          "min": 8,
+          "max": 40,
+          "giro": true,
+          "vista": "davanti",
+          "guida": "[[La larghezza della manica, 10 cm sotto l'ascella.]]"
+        },
+        {
+          "nome": "avambraccio",
+          "etichetta": "Avambraccio",
+          "unita": "cm",
+          "min": 6,
+          "max": 30,
+          "giro": true,
+          "vista": "davanti",
+          "guida": "[[La larghezza della manica, 15 cm sopra il polsino.]]"
+        },
+        {
+          "nome": "polso",
+          "etichetta": "Polso",
+          "unita": "cm",
+          "min": 15,
+          "max": 35,
+          "vista": "davanti",
+          "guida": "[[Polsino aperto e steso: dal centro del bottone alla fine dell'asola.]]"
+        },
+        {
+          "nome": "lunghezza_davanti",
+          "etichetta": "Lunghezza totale davanti",
+          "unita": "cm",
+          "min": 50,
+          "max": 120,
+          "vista": "davanti",
+          "guida": "[[Dal punto più alto della spalla, accanto al colletto, al fondo della camicia.]]"
+        },
+        {
+          "nome": "lunghezza_dietro",
+          "etichetta": "Lunghezza totale dietro",
+          "unita": "cm",
+          "min": 50,
+          "max": 120,
+          "vista": "dietro",
+          "guida": "[[Sul retro: dalla cucitura del colletto, al centro, al fondo della camicia.]]"
+        }
+      ],
+      "errore_misura": "Scrivi un numero tra {min} e {max}.",
+      "come_misurare": {
+        "titolo": "Come prendere le misure",
+        "passi": [
+          "Indossa la camicia che ti sta meglio.",
+          "Toglila, abbottonala e stendila su un tavolo.",
+          "Armati di un metro.",
+          "Prendi le misure come indicato per ogni campo."
+        ],
+        "inizia": "Inizia",
+        "riapri": "Come misurare"
+      }
+    },
+    "dati": {
+      "campi": [
+        {
+          "nome": "nome",
+          "etichetta": "Nome e cognome",
+          "tipo": "text",
+          "completa": "name",
+          "massimo": 120
+        },
+        {
+          "nome": "telefono",
+          "etichetta": "Telefono o WhatsApp",
+          "tipo": "tel",
+          "completa": "tel",
+          "massimo": 40
+        },
+        {
+          "nome": "email",
+          "etichetta": "Email",
+          "tipo": "email",
+          "completa": "email",
+          "massimo": 160
+        }
+      ]
+    },
+    "spedizione": {
+      "domanda": "Come vuoi ricevere la camicia?",
+      "opzioni": [
+        {
+          "id": "ritiro",
+          "nome": "Ritiro in laboratorio",
+          "dettaglio": "[[Viale del Toro 22, Giugliano in Campania]]",
+          "prezzo": 0
+        },
+        {
+          "id": "cinque",
+          "nome": "Spedizione",
+          "dettaglio": "5 giorni lavorativi",
+          "giorni": 5,
+          "prezzo": 15
+        },
+        {
+          "id": "sette",
+          "nome": "Spedizione",
+          "dettaglio": "7 giorni lavorativi",
+          "giorni": 7,
+          "prezzo": 30
+        }
+      ],
+      "gratis_sopra": 200,
+      "gratis_nota": "Spedizione gratuita sopra i 200 € di spesa.",
+      "gratis": "Gratis",
+      "indirizzo": {
+        "titolo": "Dove la spediamo",
+        "nota": "[[Spediamo in Italia.]]",
         "campi": [
           {
-            "nome": "nome",
-            "etichetta": "Nome e cognome",
-            "tipo": "text",
-            "completa": "name",
+            "nome": "destinatario",
+            "etichetta": "Nome e cognome di chi riceve",
+            "completa": "shipping name",
             "massimo": 120
           },
           {
-            "nome": "telefono",
-            "etichetta": "Telefono o WhatsApp",
-            "tipo": "tel",
-            "completa": "tel",
-            "massimo": 40
+            "nome": "indirizzo",
+            "etichetta": "Via e numero civico",
+            "completa": "shipping street-address",
+            "massimo": 160
           },
           {
-            "nome": "email",
-            "etichetta": "Email",
-            "tipo": "email",
-            "completa": "email",
-            "massimo": 160
+            "nome": "cap",
+            "etichetta": "CAP",
+            "completa": "shipping postal-code",
+            "massimo": 5,
+            "tastiera": "numeric",
+            "stretto": true
+          },
+          {
+            "nome": "citta",
+            "etichetta": "Città",
+            "completa": "shipping address-level2",
+            "massimo": 80
+          },
+          {
+            "nome": "provincia",
+            "etichetta": "Provincia",
+            "completa": "shipping address-level1",
+            "massimo": 2,
+            "stretto": true,
+            "aiuto": "La sigla, per esempio NA."
+          },
+          {
+            "nome": "note_consegna",
+            "etichetta": "Note per il corriere",
+            "facoltativo": true,
+            "massimo": 200,
+            "largo": true
           }
         ]
       }
-    ],
-    "continua": "Continua",
-    "continua_nota": "Per ora il modulo non invia nulla.",
-    "come_misurare": {
-      "titolo": "Come prendere le misure",
-      "passi": [
-        "Indossa la camicia che ti sta meglio.",
-        "Toglila, abbottonala e stendila su un tavolo.",
-        "Armati di un metro.",
-        "Prendi le misure come indicato per ogni campo."
+    },
+    "pagamento": {
+      "riepilogo": "Il tuo ordine",
+      "voci": {
+        "camicia": "La camicia",
+        "misure": "Le misure",
+        "dati": "I tuoi dati",
+        "spedizione": "Ritiro o spedizione"
+      },
+      "nessuna": "Nessuna personalizzazione",
+      "consenso": "Ho letto l'<a href=\"/privacy/\">informativa privacy</a> e acconsento al trattamento dei dati per l'ordine.",
+      "paga": "Vai al pagamento",
+      "nota": "Paghi con carta sulla pagina sicura di Stripe.",
+      "non_attivo": "[[Il pagamento online non è ancora attivo: per ora l'ordine non parte.]]",
+      "attesa": "Un momento…",
+      "errore": "Non siamo riusciti a preparare il pagamento. Riprova tra poco, oppure scrivici su WhatsApp."
+    },
+    "prezzi": {
+      "base": 90,
+      "scaglioni": [
+        {
+          "da": 1,
+          "prezzo": 100
+        },
+        {
+          "da": 3,
+          "prezzo": 120
+        }
       ],
-      "inizia": "Inizia",
-      "riapri": "Come misurare"
+      "tutte": 150,
+      "valuta": "EUR",
+      "a_camicia": "a camicia",
+      "camicie": "{n} camicie",
+      "una": "1 camicia",
+      "totale": "Totale",
+      "spedizione": "Spedizione",
+      "ritiro": "Ritiro in laboratorio"
+    },
+    "errori": {
+      "quantita": "Scrivi quante camicie vuoi, da 1 a 999.",
+      "tessuto": "Scegli il tessuto.",
+      "collo": "Scegli il collo.",
+      "taschino_tessuto": "Scegli il tessuto del taschino.",
+      "asola_colore": "Scegli il colore dell'asola.",
+      "bottone_minimo": "Il bottone personalizzato si ordina da 100 pezzi in su.",
+      "iniziali_posizione": "Scegli dove ricamare le iniziali.",
+      "iniziali_lettere": "Scrivi da 1 a 3 lettere.",
+      "interno_collo_tessuto": "Scegli il tessuto dell'interno collo.",
+      "interno_polso_tessuto": "Scegli il tessuto dell'interno polso.",
+      "polsino_tessuto": "Scegli il tessuto del polsino.",
+      "scelta": "Scegli una voce.",
+      "misura_vuota": "Scrivi questa misura.",
+      "spedizione": "Scegli ritiro o spedizione.",
+      "indirizzo": "Scrivi via e numero civico.",
+      "cap": "Il CAP ha 5 cifre.",
+      "provincia": "Scrivi la sigla della provincia, per esempio NA.",
+      "privacy": "Per ordinare serve il consenso all'informativa privacy.",
+      "riepilogo": "Controlla i campi segnati in rosso."
     }
   },
   "domande": {

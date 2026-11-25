@@ -87,7 +87,11 @@ function guida(s) {
 }
 
 export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, anteprima }) {
-  const p = c.palco, s = c.scheda;
+  const p = c.palco;
+  // PONTE PROVVISORIO verso la struttura nuova dei testi (scheda.passi, scheda.misure, scheda.dati): la pagina a passi lo toglie
+  const n0 = c.scheda;
+  const s = { titolo: n0.titolo, testo: n0.passi[1].testo, errore_misura: n0.misure.errore_misura, come_misurare: n0.misure.come_misurare, continua: n0.avanti, continua_nota: '',
+    gruppi: [{ id: 'misure', titolo: n0.passi[1].titolo, tipo: 'misure', campi: n0.misure.campi }, { id: 'dati', titolo: n0.passi[2].titolo, tipo: 'dati', campi: n0.dati.campi }] };
   const g = guida(s);
   // dove la guida trova le linee, la camicia da dietro e il giro per arrivarci (se il build li ha trovati)
   const r = camicia.retro || {};
@@ -101,7 +105,7 @@ export default function paginaConfiguratore({ sito, testi: c, camicia, risorse, 
   const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
-  <div class="configura__palco"${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}${datiGuida}>
+  <div class="configura__palco"${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}${datiGuida}${camicia.opzioni ? ` data-opzioni="${esc(camicia.opzioni)}"` : ''}>
     <picture>
       <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 750, camicia.ferma.telefono2x))}" sizes="100vw" width="750" height="1000">
       <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 112vh, max(180vh, 90vw)" width="1800" height="1000" alt="${esc(p.alt)}" fetchpriority="high" draggable="false">

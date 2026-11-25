@@ -89,7 +89,7 @@ export default function home({ sito, testi: h, cultura, suMisura, configuratore 
   const porta = h.porta_su_misura;
   // finché il configuratore non è acceso la pillola porta alla pagina del su misura
   const invito = conf.attivo ? { testo: conf.invito, href: conf.href } : porta.invito;
-  const misure = (configuratore.scheda?.gruppi || []).find((g) => g.tipo === 'misure')?.campi.map((c) => c.etichetta) || [];
+  const misure = (configuratore.scheda?.misure?.campi || []).map((c) => c.etichetta);
   const corpo = `${apertura(h.apertura)}
 <main>
   ${eroe(h.eroe, sito)}

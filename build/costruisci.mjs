@@ -157,9 +157,14 @@ if (existsSync(join(RADICE, 'public/camicia/nitide/nitide.json'))) {
   const n = JSON.parse(readFileSync(join(RADICE, 'public/camicia/nitide/nitide.json'), 'utf8'));
   camicia.nitide = { davanti: conVersione('nitide/davanti.webp'), dietro: conVersione('nitide/dietro.webp'), riquadro: n.riquadro, fotogramma: n.fotogramma };
 }
+// ciò che cambia sulla camicia mentre si configura (src/configuratore/vesti.js): colli, taschino, iniziali e le parti
+// da evidenziare con lo zoom, calcolati da camicia/opzioni/
+camicia.opzioni = conVersione('opzioni/opzioni.json');
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/, il configuratore mostra solo la camicia ferma');
 const testiConfiguratore = leggi('configuratore.json');
+// i tessuti tra cui si sceglie (tools/tessuti.py): nomi inventati, i nomi veri delle cartelle colori non stanno qui
+const tessuti = existsSync(join(RADICE, 'contenuti/it/tessuti.json')) ? leggi('tessuti.json') : { tessuti: [] };
 
 // 3 · pagine
 /**
@@ -204,7 +209,7 @@ genera('/', home({
   },
 }), ['home.json', 'collezione.json', 'chi-siamo.json', FOTO.collezione, FOTO.artigianato]);
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }), ['su-misura.json', FOTO.sede, FOTO.suMisura]);
-genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, camicia, risorse: base, anteprima }), ['configuratore.json']);
+genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, tessuti, camicia, risorse: base, anteprima }), ['configuratore.json', 'tessuti.json']);
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }), ['collezione.json', 'prodotti.json', FOTO.collezione]);
 // una pagina per ogni categoria della collezione che ha i suoi testi (collezione.json, "categorie") e almeno una foto
 const visti = new Set();

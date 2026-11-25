@@ -1,0 +1,180 @@
+{
+ "_nota": "SEGNAPOSTO: dodici tessuti finti per costruire la pagina. Quelli veri (circa 450, dalle cartelle colori della cartella Drive «Tessuto») li scrive tools/tessuti.py: stesso formato. 'nome' è inventato da noi (tipo di tessuto + colore, proprietario 2026-11-25); il nome vero della cartella colori NON sta nel repository: lo conosce solo il Worker (configurazione riservata) e compare nell'email dell'ordine. Immagine: public/camicia/tessuti/<id>.webp, 320 x 214.",
+ "categorie": [
+  {
+   "id": "popeline",
+   "nome": "Popeline"
+  },
+  {
+   "id": "lino",
+   "nome": "Lino"
+  },
+  {
+   "id": "oxford",
+   "nome": "Oxford"
+  },
+  {
+   "id": "twill",
+   "nome": "Twill"
+  },
+  {
+   "id": "cotone",
+   "nome": "Cotone"
+  },
+  {
+   "id": "denim",
+   "nome": "Denim"
+  }
+ ],
+ "colori": [
+  {
+   "id": "bianco",
+   "nome": "Bianchi",
+   "tinta": "#f4f4f0"
+  },
+  {
+   "id": "azzurro",
+   "nome": "Azzurri",
+   "tinta": "#8fb4e0"
+  },
+  {
+   "id": "blu",
+   "nome": "Blu",
+   "tinta": "#1f3f9a"
+  },
+  {
+   "id": "beige",
+   "nome": "Beige e marroni",
+   "tinta": "#c9b08a"
+  },
+  {
+   "id": "rosa",
+   "nome": "Rosa",
+   "tinta": "#eab0c0"
+  },
+  {
+   "id": "rosso",
+   "nome": "Rossi",
+   "tinta": "#c8202b"
+  },
+  {
+   "id": "verde",
+   "nome": "Verdi",
+   "tinta": "#5f9a6a"
+  },
+  {
+   "id": "grigio",
+   "nome": "Grigi",
+   "tinta": "#9a9da3"
+  },
+  {
+   "id": "nero",
+   "nome": "Neri",
+   "tinta": "#141414"
+  }
+ ],
+ "disegni": [
+  {
+   "id": "unito",
+   "nome": "Tinta unita"
+  },
+  {
+   "id": "righe",
+   "nome": "Righe"
+  },
+  {
+   "id": "quadretti",
+   "nome": "Quadretti"
+  },
+  {
+   "id": "fantasia",
+   "nome": "Fantasia"
+  }
+ ],
+ "tessuti": [
+  {
+   "id": "t001",
+   "nome": "Popeline bianco",
+   "categoria": "popeline",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t002",
+   "nome": "Popeline celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t003",
+   "nome": "Lino sabbia",
+   "categoria": "lino",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t004",
+   "nome": "Lino blu notte",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t005",
+   "nome": "Oxford azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t006",
+   "nome": "Oxford rosa",
+   "categoria": "oxford",
+   "colore": "rosa",
+   "disegno": "unito"
+  },
+  {
+   "id": "t007",
+   "nome": "Twill grigio perla",
+   "categoria": "twill",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t008",
+   "nome": "Cotone a righe blu",
+   "categoria": "cotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t009",
+   "nome": "Cotone a quadretti rossi",
+   "categoria": "cotone",
+   "colore": "rosso",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t010",
+   "nome": "Denim chiaro",
+   "categoria": "denim",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t011",
+   "nome": "Lino verde salvia",
+   "categoria": "lino",
+   "colore": "verde",
+   "disegno": "unito"
+  },
+  {
+   "id": "t012",
+   "nome": "Twill nero",
+   "categoria": "twill",
+   "colore": "nero",
+   "disegno": "unito"
+  }
+ ]
+}
