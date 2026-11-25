@@ -9,7 +9,7 @@
     "ragione_sociale": "Produzione & Distribuzione Endero S.r.l.s.",
     "partita_iva": "08887031212"
   },
-  "email_moduli": false,
+  "email_moduli": true,
   "social": [
     { "nome": "Instagram", "link": "https://www.instagram.com/endero_official/" }
   ],

@@ -9,7 +9,7 @@
 // (i testi tra [[ ]], gli orari, i profili social) o un lavoro non ancora fatto (l'ordine del configuratore).
 // Finché ce ne sono il sito resta in anteprima.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, cpSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, statSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,12 +18,23 @@ const RADICE = join(dirname(fileURLToPath(import.meta.url)), '..');
 let cartella = process.argv[2];
 let daTogliere = '';
 if (!cartella) {
-  // la versione pubblica si costruisce in dist/, si copia da parte, e dist/ torna com'era (anteprima)
-  execFileSync('node', ['build/costruisci.mjs', '--pubblico'], { cwd: RADICE, stdio: 'ignore' });
-  daTogliere = mkdtempSync(join(tmpdir(), 'endero-seo-'));
-  cartella = join(daTogliere, 'dist');
-  cpSync(join(RADICE, 'dist'), cartella, { recursive: true });
-  execFileSync('node', ['build/costruisci.mjs'], { cwd: RADICE, stdio: 'ignore' });
+  // la versione pubblica si costruisce in dist/ e si copia da parte; poi torna il dist/ di prima, così com'era.
+  // Non si ricostruisce: senza le variabili del build di prima (TURNSTILE_SITE_KEY, URL_ANTEPRIMA) i moduli
+  // uscivano senza antispam e, pubblicati così, il Worker li rifiutava tutti (2026-11-25).
+  const DIST = join(RADICE, 'dist'), PRIMA = join(RADICE, '.dist-prima-seo');
+  rmSync(PRIMA, { recursive: true, force: true });
+  const cera = existsSync(DIST);
+  if (cera) renameSync(DIST, PRIMA);
+  try {
+    execFileSync('node', ['build/costruisci.mjs', '--pubblico'], { cwd: RADICE, stdio: 'ignore' });
+    daTogliere = mkdtempSync(join(tmpdir(), 'endero-seo-'));
+    cartella = join(daTogliere, 'dist');
+    cpSync(DIST, cartella, { recursive: true });
+  } finally {
+    rmSync(DIST, { recursive: true, force: true });
+    if (cera) renameSync(PRIMA, DIST);
+    else execFileSync('node', ['build/costruisci.mjs'], { cwd: RADICE, stdio: 'ignore' });
+  }
 }
 
 const errori = [], daChiudere = [], note = [];

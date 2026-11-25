@@ -19,3 +19,4 @@ __pycache__/
 
 # copie di lavoro degli agenti
 .claude/worktrees/
+/.dist-prima-seo/
