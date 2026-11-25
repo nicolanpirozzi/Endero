@@ -2,6 +2,7 @@
 // L'apertura ha un suo file (src/apertura/apertura.js), caricato solo nella pagina iniziale.
 
 import Lenis from 'lenis';
+import { controlla, suggerisciEmail, testi as avvisi } from './controlli.mjs';
 
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -664,12 +665,16 @@ function carosello(radice) {
 }
 
 // ---------------------------------------------------------------- modulo di prenotazione
-// Senza script il modulo si invia normalmente e il Worker risponde con una pagina di conferma.
+// Senza script il modulo si invia normalmente: i controlli li fa il browser con gli attributi dei campi, e il Worker
+// risponde con una pagina di conferma o con l'errore. Con lo script ogni campo ha il suo avviso sotto
+// (proprietario, 2026-11-25: «sotto il campo»): compare uscendo da un campo scritto male, sparisce appena è giusto;
+// premendo invia compaiono tutti e si va al primo. Le regole sono quelle del Worker (src/controlli.mjs).
 function modulo(form) {
   const bottone = form.querySelector('button[type="submit"]');
   const esito = form.querySelector('.modulo__esito');
   const giorno = form.querySelector('[data-giorno]');
   if (giorno) giorno.min = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  form.noValidate = true;     // gli avvisi li dà la pagina, sotto i campi, non le nuvolette del browser
 
   // l'antispam di Cloudflare si carica solo quando qualcuno inizia a compilare il modulo
   if (form.hasAttribute('data-turnstile')) {
@@ -681,20 +686,98 @@ function modulo(form) {
     }, { once: true });
   }
 
-  // "almeno una casella" non si impone con il solo HTML: lo si controlla qui (e il Worker lo ricontrolla sempre)
+  const campi = [...form.querySelectorAll('[data-controllo]')];
   const gruppi = [...form.querySelectorAll('[data-almeno-uno]')];
-  const controllaGruppi = () => {
-    for (const g of gruppi) {
-      const caselle = [...g.querySelectorAll('input[type="checkbox"]')];
-      caselle[0]?.setCustomValidity(caselle.some((c) => c.checked) ? '' : g.dataset.errore || 'Scegli almeno una voce.');
+  const privacy = form.querySelector('input[name="privacy"]');
+  const rigaDi = (el) => document.getElementById(el.getAttribute('aria-describedby')?.split(' ')[0] || '');
+  const paese = () => form.elements.nazione?.value || '';
+
+  /** Scrive (o toglie) l'avviso sotto un campo o un gruppo. */
+  function segna(el, testo) {
+    const riga = rigaDi(el);
+    if (riga && riga.textContent !== testo) riga.textContent = testo;
+    if (testo) el.setAttribute('aria-invalid', 'true');
+    else el.removeAttribute('aria-invalid');
+  }
+  const verifica = (el) => controlla(el.dataset.controllo, el.value, { obbligatorio: el.required, paese: paese() });
+
+  // l'email scritta con un dominio quasi giusto: «Forse intendevi …@gmail.com?», con il tasto che la corregge
+  function forse(el) {
+    let nota = el.parentElement.querySelector('.campo__forse');
+    const giusta = el.getAttribute('aria-invalid') ? '' : suggerisciEmail(el.value);
+    if (!giusta) { nota?.remove(); return; }
+    if (!nota) {
+      nota = document.createElement('p');
+      nota.className = 'campo__forse';
+      rigaDi(el).after(nota);
     }
-  };
-  gruppi.forEach((g) => g.addEventListener('change', controllaGruppi));
+    const [prima, dopo = ''] = avvisi.email.forse.split('{email}');
+    const tasto = Object.assign(document.createElement('button'), { type: 'button', className: 'campo__correggi', textContent: giusta });
+    tasto.setAttribute('aria-label', `${avvisi.email.correggi}: ${giusta}`);
+    tasto.addEventListener('click', () => {
+      el.value = giusta;
+      nota.remove();
+      segna(el, verifica(el));
+      el.focus();
+    });
+    nota.replaceChildren(prima, tasto, dopo);
+  }
+
+  for (const el of campi) {
+    // uscendo dal campo: avviso solo se c'è scritto qualcosa (un campo saltato si segnala all'invio, non prima)
+    el.addEventListener('blur', () => {
+      if (el.value.trim() || el.hasAttribute('aria-invalid')) segna(el, verifica(el));
+      if (el.dataset.controllo === 'email') forse(el);
+    });
+    // mentre si scrive: l'avviso si aggiorna solo se c'era già, e sparisce appena il valore è giusto
+    el.addEventListener('input', () => {
+      if (el.hasAttribute('aria-invalid')) segna(el, verifica(el));
+      if (el.dataset.controllo === 'email') el.parentElement.querySelector('.campo__forse')?.remove();
+    });
+  }
+  // il Paese cambia le regole della partita IVA: se era segnata, si ricontrolla
+  form.elements.nazione?.addEventListener?.('input', () => {
+    const iva = form.elements.partita_iva;
+    if (iva?.hasAttribute('aria-invalid')) segna(iva, verifica(iva));
+  });
+
+  // "almeno una casella" e il consenso: l'avviso sta sotto il gruppo o sotto la casella
+  const gruppoVuoto = (g) => ![...g.querySelectorAll('input[type="checkbox"]')].some((c) => c.checked);
+  const avvisoGruppo = (g) => g.dataset.errore || avvisi.scelta;
+  for (const g of gruppi) g.addEventListener('change', () => { if (g.hasAttribute('aria-invalid')) segna(g, gruppoVuoto(g) ? avvisoGruppo(g) : ''); });
+  privacy?.addEventListener('change', () => { if (privacy.hasAttribute('aria-invalid')) segna(privacy, privacy.checked ? '' : avvisi.privacy); });
+
+  /** Porta in vista e dà il fuoco al primo campo sbagliato. */
+  function vaiAlCampo(el) {
+    const bersaglio = el.matches('fieldset') ? el.querySelector('input') : el;
+    const r = (el.closest('.campo') || el).getBoundingClientRect();
+    const testata = document.querySelector('[data-testata]')?.getBoundingClientRect().bottom || 0;
+    if (r.top < Math.max(testata, 0) + 16 || r.bottom > innerHeight - 24) vaiA(el.closest('.campo') || el.closest('.consenso__riga') || el);
+    bersaglio?.focus({ preventScroll: true });
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    controllaGruppi();
-    if (!form.reportValidity()) return;
+    const sbagliati = [];
+    for (const el of campi) {
+      const testo = verifica(el);
+      segna(el, testo);
+      if (testo) sbagliati.push(el);
+    }
+    for (const g of gruppi) {
+      const testo = gruppoVuoto(g) ? avvisoGruppo(g) : '';
+      segna(g, testo);
+      if (testo) sbagliati.push(g);
+    }
+    if (privacy) {
+      segna(privacy, privacy.checked ? '' : avvisi.privacy);
+      if (!privacy.checked) sbagliati.push(privacy);
+    }
+    if (sbagliati.length) {
+      esito.textContent = avvisi.riepilogo;
+      vaiAlCampo(sbagliati[0]);
+      return;
+    }
     const testo = bottone.textContent;
     bottone.disabled = true;
     bottone.textContent = bottone.dataset.testoInvio;
@@ -702,7 +785,15 @@ function modulo(form) {
     try {
       const r = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
       const dati = await r.json().catch(() => ({}));
-      if (!r.ok || !dati.ok) { esito.textContent = dati.errore || esito.dataset.errore; return; }
+      if (!r.ok || !dati.ok) {
+        // il Worker dice quale campo non va: l'avviso va sotto quel campo, come se l'avesse trovato la pagina
+        const el = dati.campo && (form.querySelector(`[data-controllo][name="${CSS.escape(dati.campo)}"]`) || form.querySelector(`fieldset:has(input[name="${CSS.escape(dati.campo)}"])`) || (dati.campo === 'privacy' ? privacy : null));
+        if (el && dati.errore) { segna(el, dati.errore); esito.textContent = avvisi.riepilogo; vaiAlCampo(el); }
+        else esito.textContent = dati.errore || esito.dataset.errore;
+        // l'antispam vale una volta sola: per riprovare ne serve uno nuovo
+        globalThis.turnstile?.reset?.(form.querySelector('.cf-turnstile'));
+        return;
+      }
       form.dataset.stato = 'fatto';
       esito.textContent = esito.dataset.fatto;
     } catch (errore) {

@@ -26,6 +26,7 @@
   --vetro: rgba(10, 27, 69, 0.34);
   --vetro-chiaro: rgba(255, 255, 255, 0.16);
   --bordo-vetro: rgba(255, 255, 255, 0.22);
+  --errore: #b42318;          /* avvisi dei moduli: più di 5:1 sul campo bianco e sul pannello */
   --raggio-pillola: 999px;
   --raggio-scheda: 24px;
   --raggio-pannello: 12px;
@@ -1243,6 +1244,7 @@ body[data-barra] .selettore {
 
 .campo {
   display: grid;
+  align-content: start;       /* un avviso nel campo accanto non deve allungare questo */
   gap: 6px;
   min-width: 0;
   padding: 0;
@@ -1308,6 +1310,97 @@ body[data-barra] .selettore {
 
 .campo input[type="date"] {
   min-height: 48px;
+}
+
+/* l'avviso sotto il campo (src/sito.js): vuoto non occupa posto, ma resta nella pagina perché i lettori di schermo
+   lo leggano quando si riempie */
+.campo__errore {
+  align-self: start;          /* allungata dalla griglia, la riga vuota terrebbe il posto del margine */
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--errore);
+}
+
+.campo__errore:empty {
+  margin-top: -6px;
+}
+
+.campo__errore:not(:empty) {
+  animation: avviso-entra 180ms var(--morbido);
+}
+
+@keyframes avviso-entra {
+  from { opacity: 0; transform: translateY(-3px); }
+}
+
+.campo input[aria-invalid="true"],
+.campo textarea[aria-invalid="true"] {
+  border-color: var(--errore);
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.1);
+}
+
+.campo input[aria-invalid="true"]:focus,
+.campo textarea[aria-invalid="true"]:focus {
+  border-color: var(--errore);
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.2);
+}
+
+.campo[aria-invalid="true"] .scelta span {
+  box-shadow: inset 0 0 0 1px var(--errore);
+}
+
+/* «Forse intendevi …?»: l'indirizzo giusto è un tasto che lo mette nel campo */
+.campo__forse {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--blu-tenue);
+  animation: avviso-entra 180ms var(--morbido);
+}
+
+.campo__correggi {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 0 2px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--raggio-pillola);
+  background: var(--campo);
+  box-shadow: 0 1px 2px rgba(15, 40, 94, 0.08);
+  color: var(--blu);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease-out, transform 160ms var(--morbido);
+}
+
+.campo__correggi:active {
+  transform: scale(0.97);
+}
+
+.campo__correggi:focus-visible {
+  outline: 2px solid var(--blu);
+  outline-offset: 2px;
+}
+
+.consenso__riga {
+  display: grid;
+  gap: 6px;
+}
+
+.consenso input[aria-invalid="true"] {
+  outline: 2px solid var(--errore);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campo__errore:not(:empty),
+  .campo__forse {
+    animation: none;
+  }
 }
 
 .scelte {

@@ -20,12 +20,12 @@ export default {
   },
 };
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
 import { dimentica, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
 import { avvisa } from './email.mjs';
+import { controlla, testi as avvisi } from '../src/controlli.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];
 // i campi propri delle richieste dei rivenditori: nomi, scelte ammesse e lunghezze vengono dai contenuti della pagina,
@@ -54,8 +54,9 @@ function percorsoInterno(indirizzo, request) {
 
 export async function contatto(request, env, ctx) {
   const vuoleJson = (request.headers.get('Accept') || '').includes('application/json');
-  const rispondi = (ok, stato, errore) => {
-    if (vuoleJson) return Response.json(ok ? { ok: true } : { ok: false, errore }, { status: stato });
+  // campo: il nome del campo sbagliato, perché la pagina metta l'avviso sotto quel campo
+  const rispondi = (ok, stato, errore, campo) => {
+    if (vuoleJson) return Response.json(ok ? { ok: true } : { ok: false, errore, ...(campo ? { campo } : {}) }, { status: stato });
     if (ok) return Response.redirect(new URL('/grazie/', request.url).toString(), 303);
     return new Response(paginaErrore(errore, percorsoInterno(request.headers.get('Referer') || '', request)), { status: stato, headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex', 'X-Content-Type-Options': 'nosniff' } });
   };
@@ -93,9 +94,16 @@ export async function contatto(request, env, ctx) {
   if (!TIPI.includes(r.tipo)) r.tipo = 'contatto';
   if (!FASCE.includes(r.fascia)) r.fascia = '';
   if (!dataVera(r.giorno)) r.giorno = '';
-  if (!r.nome || !r.telefono) return rispondi(false, 422, 'Nome e telefono sono obbligatori.');
-  if (dati.get('privacy') !== 'si') return rispondi(false, 422, 'Serve il consenso all\'informativa privacy.');
-  if (r.email && !EMAIL.test(r.email)) return rispondi(false, 422, 'L\'indirizzo email non sembra corretto.');
+  // gli stessi controlli della pagina (src/controlli.mjs): valgono anche senza script
+  const sbagliato = (campo, valore, contesto) => {
+    const testo = controlla(campo, valore, contesto);
+    return testo ? rispondi(false, 422, testo, campo) : null;
+  };
+  const primo = sbagliato('nome', r.nome) || sbagliato('telefono', r.telefono)
+    || sbagliato('email', r.email, { obbligatorio: r.tipo === 'rivenditore' })
+    || sbagliato('messaggio', r.messaggio, { obbligatorio: r.tipo === 'contatto' });
+  if (primo) return primo;
+  if (dati.get('privacy') !== 'si') return rispondi(false, 422, avvisi.privacy, 'privacy');
 
   // richiesta di un rivenditore: solo i campi previsti, con le loro lunghezze e scelte; listino e condizioni
   // partono per email, quindi l'email serve; poi città e almeno un interesse
@@ -107,10 +115,11 @@ export async function contatto(request, env, ctx) {
       else if (c.tipo === 'scelta-singola') d[c.nome] = c.opzioni.includes(dati.get(c.nome)) ? dati.get(c.nome) : '';
       else d[c.nome] = campo(c.nome, c.max || 160, c.tipo === 'area');
     }
-    if (!r.email) return rispondi(false, 422, 'Serve l\'email: listino e condizioni te li mandiamo lì.');
-    if (!d.citta) return rispondi(false, 422, 'Scrivi la città del negozio o dell\'attività.');
+    const altro = sbagliato('citta', d.citta) || sbagliato('nazione', d.nazione)
+      || sbagliato('partita_iva', d.partita_iva, { paese: d.nazione }) || sbagliato('profilo', d.profilo);
+    if (altro) return altro;
     const interesse = CAMPI_RIVENDITORE.find((c) => c.nome === 'interesse');
-    if (interesse && !d.interesse.length) return rispondi(false, 422, `${interesse.etichetta}: ${interesse.errore || 'scegli almeno una voce.'}`);
+    if (interesse && !d.interesse.length) return rispondi(false, 422, interesse.errore || avvisi.scelta, 'interesse');
     r.giorno = r.fascia = '';
     r.dettagli = JSON.stringify(d);
   }

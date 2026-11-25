@@ -1,0 +1,43 @@
+{
+  "_nota": "Gli avvisi sotto i campi dei moduli (proprietario, 2026-11-25: «integrare dei controlli nei campi del modulo», «sotto il campo»). Li usano la pagina mentre si compila e il Worker a ogni invio (src/controlli.mjs). Frasi corte che dicono cosa fare, mai come funziona il controllo. {email} è l'indirizzo corretto che si propone.",
+  "nome": {
+    "vuoto": "Scrivi nome e cognome.",
+    "cognome": "Scrivi anche il cognome.",
+    "caratteri": "Usa solo lettere: niente numeri o simboli."
+  },
+  "telefono": {
+    "vuoto": "Scrivi un numero di telefono.",
+    "caratteri": "Usa solo cifre, spazi e il + davanti.",
+    "corto": "Il numero sembra incompleto: controlla le cifre.",
+    "lungo": "Il numero ha troppe cifre: controllalo.",
+    "estero": "Per un numero straniero metti il prefisso, per esempio +44."
+  },
+  "email": {
+    "vuota": "Scrivi la tua email.",
+    "formato": "Controlla l'email: deve essere come nome@esempio.it.",
+    "forse": "Forse intendevi {email}?",
+    "correggi": "Correggi"
+  },
+  "citta": {
+    "vuota": "Scrivi la città.",
+    "caratteri": "Usa solo lettere: niente numeri."
+  },
+  "nazione": {
+    "vuota": "Scrivi il Paese.",
+    "caratteri": "Usa solo lettere: niente numeri."
+  },
+  "partita_iva": {
+    "cifre": "La partita IVA italiana ha 11 cifre.",
+    "sbagliata": "Controlla la partita IVA: una cifra non torna.",
+    "estera": "Scrivi il numero di partita IVA (VAT) senza spazi."
+  },
+  "profilo": {
+    "formato": "Scrivi il sito (per esempio negozio.it) o il nome Instagram (per esempio @negozio)."
+  },
+  "messaggio": {
+    "vuoto": "Scrivi il tuo messaggio."
+  },
+  "scelta": "Scegli almeno una voce.",
+  "privacy": "Per inviare serve il consenso all'informativa privacy.",
+  "riepilogo": "Controlla i campi segnati in rosso."
+}

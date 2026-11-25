@@ -59,12 +59,34 @@ console.log('I moduli');
     const corpo = new URLSearchParams({ privacy: 'si', ...campi });
     return worker.default.fetch(new Request('https://www.endero.it/api/contatto', { method: 'POST', body: corpo, headers: { Accept: 'application/json', Origin: 'https://www.endero.it', 'Content-Type': 'application/x-www-form-urlencoded' } }), { DB: d1 });
   };
-  const r = await invia({ tipo: 'presa-misure', nome: 'Prova', telefono: '+39 333 000 0005', email: ' Mario@X.it ' });
+  const r = await invia({ tipo: 'presa-misure', nome: 'Mario Prova', telefono: '+39 333 000 0005', email: ' Mario@X.it ' });
   controlla('una prenotazione si salva', r.status === 200 && (await r.json()).ok === true, String(r.status));
   const riga = db.prepare('SELECT telefono, email, chiave_telefono, chiave_email FROM richieste').get();
   controlla('con telefono ed email come li ha scritti, e le chiavi per riconoscere la persona', riga?.telefono === '+39 333 000 0005' && riga?.chiave_telefono === '3330000005' && riga?.chiave_email === 'mario@x.it', JSON.stringify(riga));
-  const senza = await invia({ tipo: 'presa-misure', nome: 'Prova', telefono: '' });
-  controlla('senza telefono non si salva', senza.status === 422);
+  const senza = await invia({ tipo: 'presa-misure', nome: 'Mario Prova', telefono: '' });
+  const s = await senza.json();
+  controlla('senza telefono non si salva, e il Worker dice quale campo manca', senza.status === 422 && s.campo === 'telefono', JSON.stringify(s));
+  // gli stessi controlli della pagina (src/controlli.mjs): chi aggira lo script trova il Worker
+  const prove = [
+    [{ tipo: 'contatto', nome: 'Mario', telefono: '333 1234567', messaggio: 'x' }, 'nome'],
+    [{ tipo: 'contatto', nome: 'Mario Rossi', telefono: 'chiamami', messaggio: 'x' }, 'telefono'],
+    [{ tipo: 'contatto', nome: 'Mario Rossi', telefono: '000 000 0000', messaggio: 'x' }, 'telefono'],
+    [{ tipo: 'contatto', nome: 'Mario Rossi', telefono: '333 1234567', email: 'mario@gmail', messaggio: 'x' }, 'email'],
+    [{ tipo: 'contatto', nome: 'Mario Rossi', telefono: '333 1234567', messaggio: ' ' }, 'messaggio'],
+    [{ tipo: 'contatto', nome: 'Mario Rossi', telefono: '333 1234567', messaggio: 'x', privacy: '' }, 'privacy'],
+    [{ tipo: 'rivenditore', nome: 'Mario Rossi', telefono: '333 1234567', citta: 'Napoli', nazione: 'Italia', interesse: 'Rivenditore Endero' }, 'email'],
+    [{ tipo: 'rivenditore', nome: 'Mario Rossi', telefono: '333 1234567', email: 'a@b.it', citta: 'Napoli 3', nazione: 'Italia', interesse: 'Rivenditore Endero' }, 'citta'],
+    [{ tipo: 'rivenditore', nome: 'Mario Rossi', telefono: '333 1234567', email: 'a@b.it', citta: 'Napoli', nazione: 'Italia', interesse: 'Rivenditore Endero', partita_iva: '08887031213' }, 'partita_iva'],
+    [{ tipo: 'rivenditore', nome: 'Mario Rossi', telefono: '333 1234567', email: 'a@b.it', citta: 'Napoli', nazione: 'Italia', interesse: 'Rivenditore Endero', profilo: 'il mio negozio' }, 'profilo'],
+    [{ tipo: 'rivenditore', nome: 'Mario Rossi', telefono: '333 1234567', email: 'a@b.it', citta: 'Napoli', nazione: 'Italia' }, 'interesse'],
+  ];
+  for (const [campi, atteso] of prove) {
+    const x = await invia(campi);
+    const j = await x.json();
+    controlla(`${campi.tipo}: ${atteso} sbagliato → 422 con il campo`, x.status === 422 && j.campo === atteso && Boolean(j.errore), JSON.stringify(j));
+  }
+  const buono = await invia({ tipo: 'rivenditore', nome: "Anna D'Angelo", telefono: '+44 20 7946 0958', email: 'anna@negozio.co.uk', citta: 'London', nazione: 'Regno Unito', interesse: 'Produzione conto terzi', partita_iva: 'GB123456789', profilo: '@negozio_london' });
+  controlla('un rivenditore straniero scritto bene si salva', buono.status === 200, String(buono.status));
 }
 
 console.log('La stessa persona');

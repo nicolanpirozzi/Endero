@@ -146,6 +146,29 @@ export function comeFunziona(c, turnstile, { gruppo = 'su-misura', tipo = 'presa
 }
 
 const TIPO_INPUT = { testo: 'text', telefono: 'tel', email: 'email' };
+// i campi con un controllo (src/controlli.mjs, lo stesso elenco): la pagina li controlla mentre si compila, il Worker
+// a ogni invio. Qui l'elenco è scritto a mano perché il build gira in Node, che non importa JSON senza dichiararlo.
+const CONTROLLATI = ['nome', 'telefono', 'email', 'citta', 'nazione', 'partita_iva', 'profilo', 'messaggio'];
+// come si scrivono: tastiera giusta sul telefono, niente maiuscole o correttore dove non servono
+const SCRITTURA = {
+  nome: ' autocapitalize="words" spellcheck="false"',
+  telefono: ' inputmode="tel"',
+  email: ' inputmode="email" autocapitalize="off" spellcheck="false"',
+  citta: ' autocapitalize="words"',
+  nazione: ' autocapitalize="words"',
+  partita_iva: ' inputmode="text" autocapitalize="characters" spellcheck="false"',
+  profilo: ' autocapitalize="off" spellcheck="false"',
+};
+
+/**
+ * Un campo con la sua etichetta e, sotto, la riga dell'avviso (vuota finché il campo va bene: la riempie lo script,
+ * e la legge chi usa un lettore di schermo). `controllo`: il nome del controllo, se il campo ne ha uno.
+ */
+function casella({ id, etichetta, largo = false, controllo = '', html }) {
+  const errore = `${id}-errore`;
+  const attributi = ` id="${id}" aria-describedby="${errore}"${controllo ? ` data-controllo="${controllo}"` : ''}${SCRITTURA[controllo] || ''}`;
+  return `<div class="campo${largo ? ' campo--largo' : ''}"><label class="campo__nome" for="${id}">${etichetta}</label>${html(attributi)}<p class="campo__errore" id="${errore}" aria-live="polite"></p></div>`;
+}
 
 /**
  * Un campo descritto nei contenuti (modulo.campi): così i moduli nuovi non chiedono codice nuovo.
@@ -153,31 +176,32 @@ const TIPO_INPUT = { testo: 'text', telefono: 'tel', email: 'email' };
  * se obbligatoria: lo controllano lo script prima dell'invio e il Worker sempre).
  */
 function campoDescritto(c, id) {
-  const largo = c.largo ? ' campo--largo' : '';
   const max = c.max ? ` maxlength="${Number(c.max)}"` : '';
   const auto = c.autocomplete ? ` autocomplete="${esc(c.autocomplete)}"` : '';
   const obbl = c.obbligatorio ? ' required' : '';
   if (c.tipo === 'scelta-multipla' || c.tipo === 'scelta-singola') {
     const multipla = c.tipo === 'scelta-multipla';
     const almeno = multipla && c.obbligatorio ? ` data-almeno-uno data-errore="${esc(c.errore || '')}"` : '';
-    return `<fieldset class="campo${largo}"${almeno}>
+    const errore = `${id}-errore`;
+    return `<fieldset class="campo${c.largo ? ' campo--largo' : ''}"${almeno}${almeno ? ` aria-describedby="${errore}"` : ''}>
         <legend class="campo__nome">${esc(c.etichetta)}</legend>
         <div class="scelte">${c.opzioni.map((o) => `<label class="scelta"><input type="${multipla ? 'checkbox' : 'radio'}" name="${esc(c.nome)}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('')}</div>
+        ${almeno ? `<p class="campo__errore" id="${errore}" aria-live="polite"></p>` : ''}
       </fieldset>`;
   }
-  const etichetta = `<span class="campo__nome">${esc(c.etichetta)}</span>`;
+  const controllo = CONTROLLATI.includes(c.nome) ? c.nome : '';
   if (c.tipo === 'area') {
-    return `<label class="campo${largo}">${etichetta}<textarea name="${esc(c.nome)}" rows="4"${max}${obbl}${c.aiuto ? ` placeholder="${esc(c.aiuto)}"` : ''}></textarea></label>`;
+    return casella({ id, etichetta: esc(c.etichetta), largo: c.largo, controllo, html: (a) => `<textarea name="${esc(c.nome)}" rows="4"${a}${max}${obbl}${c.aiuto ? ` placeholder="${esc(c.aiuto)}"` : ''}></textarea>` });
   }
   const tipo = TIPO_INPUT[c.tipo] || 'text';
-  const extra = c.tipo === 'telefono' ? ' inputmode="tel"' : '';
   const valore = c.valore ? ` value="${esc(c.valore)}"` : '';
-  return `<label class="campo${largo}" for="${id}">${etichetta}<input id="${id}" type="${tipo}" name="${esc(c.nome)}"${auto}${extra}${max}${obbl}${valore}></label>`;
+  return casella({ id, etichetta: esc(c.etichetta), largo: c.largo, controllo, html: (a) => `<input type="${tipo}" name="${esc(c.nome)}"${a}${auto}${max}${obbl}${valore}>` });
 }
 
 /**
  * Il modulo: prenotazione della presa misure (con giorno e fascia), messaggio semplice, oppure, se i contenuti
- * descrivono i campi (m.campi), quei campi. Funziona anche senza JavaScript.
+ * descrivono i campi (m.campi), quei campi. Funziona anche senza JavaScript: allora i controlli li fa il browser con
+ * gli attributi dei campi, e sempre il Worker.
  */
 export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
   const prenotazione = tipo === 'presa-misure';
@@ -188,8 +212,12 @@ export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
     </div>
     <input type="hidden" name="tipo" value="${esc(tipo)}">
     <div class="modulo__esca" aria-hidden="true"><label>Non compilare<input type="text" name="sito_web" tabindex="-1" autocomplete="off"></label></div>`;
+  const privacy = `${tipo}-privacy-errore`;
   const piede = `${turnstile ? `<div class="cf-turnstile" data-sitekey="${esc(turnstile)}" data-language="it" data-size="flexible"></div>` : ''}
-    <label class="consenso"><input type="checkbox" name="privacy" value="si" required><span>${tConLink(m.privacy)}</span></label>
+    <div class="consenso__riga">
+      <label class="consenso"><input type="checkbox" name="privacy" value="si" required aria-describedby="${privacy}"><span>${tConLink(m.privacy)}</span></label>
+      <p class="campo__errore" id="${privacy}" aria-live="polite"></p>
+    </div>
     <div class="modulo__piede">
       <button class="pillola pillola--blu pillola--grande" type="submit" data-testo-invio="${esc(m.invio)}">${esc(m.invia)}</button>
       <p class="modulo__esito" role="status" aria-live="polite" data-fatto="${esc(m.fatto_testo)}" data-errore="${esc(m.errore)}"></p>
@@ -202,17 +230,18 @@ export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
     </div>
     ${piede}`;
   }
+  const id = (nome) => `${tipo}-${nome}`;
   return `${testa}
     <div class="modulo__campi">
-      <label class="campo"><span class="campo__nome">${esc(m.nome)}</span><input type="text" name="nome" autocomplete="name" required maxlength="120"></label>
-      <label class="campo"><span class="campo__nome">${esc(m.telefono)}</span><input type="tel" name="telefono" autocomplete="tel" inputmode="tel" required maxlength="40"></label>
-      <label class="campo"><span class="campo__nome">${esc(m.email)}</span><input type="email" name="email" autocomplete="email" maxlength="160"></label>
-      ${prenotazione ? `<label class="campo"><span class="campo__nome">${esc(m.giorno)}</span><input type="date" name="giorno" data-giorno></label>
+      ${casella({ id: id('nome'), etichetta: esc(m.nome), controllo: 'nome', html: (a) => `<input type="text" name="nome"${a} autocomplete="name" required maxlength="120">` })}
+      ${casella({ id: id('telefono'), etichetta: esc(m.telefono), controllo: 'telefono', html: (a) => `<input type="tel" name="telefono"${a} autocomplete="tel" required maxlength="40">` })}
+      ${casella({ id: id('email'), etichetta: esc(m.email), controllo: 'email', html: (a) => `<input type="email" name="email"${a} autocomplete="email" maxlength="160">` })}
+      ${prenotazione ? `<div class="campo"><label class="campo__nome" for="${id('giorno')}">${esc(m.giorno)}</label><input id="${id('giorno')}" type="date" name="giorno" data-giorno></div>
       <fieldset class="campo campo--largo">
         <legend class="campo__nome">${esc(m.fascia)}</legend>
         <div class="scelte">${m.fasce.map((f, i) => `<label class="scelta"><input type="radio" name="fascia" value="${esc(f)}"${i === m.fasce.length - 1 ? ' checked' : ''}><span>${esc(f)}</span></label>`).join('')}</div>
       </fieldset>` : ''}
-      <label class="campo campo--largo"><span class="campo__nome">${esc(m.note)}</span><textarea name="messaggio" rows="${prenotazione ? 3 : 5}" maxlength="2000" placeholder="${esc(m.note_aiuto)}"${prenotazione ? '' : ' required'}></textarea></label>
+      ${casella({ id: id('messaggio'), etichetta: esc(m.note), largo: true, controllo: 'messaggio', html: (a) => `<textarea name="messaggio"${a} rows="${prenotazione ? 3 : 5}" maxlength="2000" placeholder="${esc(m.note_aiuto)}"${prenotazione ? '' : ' required'}></textarea>` })}
     </div>
     ${piede}`;
 }

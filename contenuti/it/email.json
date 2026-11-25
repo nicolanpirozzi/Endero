@@ -1,15 +1,30 @@
 {
-  "_nota": "Le email dei moduli (proprietario, 2026-11-24): a Endero arriva ogni richiesta del sito (messaggio, presa misure, rivenditore); chi l'ha mandata riceve una conferma breve, se ha lasciato l'email. Il configuratore no: resta spento finché non c'è il pagamento con Stripe (scelta sua). L'indirizzo che riceve le richieste non sta qui né in nessun file del repository: è un segreto del Worker (EMAIL_DESTINATARIO). Al cliente poche parole, chiare e utili, e solo fatti confermati: numero di WhatsApp e info@endero.men. {nome} è il nome scritto nel modulo, {tipo} il nome del tipo di richiesta.",
+  "_nota": "Le email dei moduli (proprietario, 2026-11-24): a Endero arriva ogni richiesta del sito (messaggio, presa misure, rivenditore); chi l'ha mandata riceve una conferma breve, se ha lasciato l'email. Il configuratore no: resta spento finché non c'è il pagamento con Stripe (scelta sua). Aspetto (proprietario, 2026-11-25): in cima una foto con il logo, una per tipo di richiesta (tools/immagini-email.js); tasti invece dei numeri («invece di mettere il numero WA inserisci un tasto che ha il link che porta direttamente a WA»); a Endero i tasti per rispondere al cliente, al cliente il riepilogo di ciò che ha mandato e un rimando al sito, in fondo a tutte sede e Instagram. L'indirizzo che riceve le richieste non sta qui né in nessun file del repository: è un segreto del Worker (EMAIL_DESTINATARIO). Al cliente poche parole, chiare e utili, e solo fatti confermati. {nome} è il nome scritto nel modulo, {tipo} il nome del tipo di richiesta, {email} l'email del cliente, {quando} giorno e ora di arrivo.",
+  "comune": {
+    "alt_testata": "Endero",
+    "come_arrivare": "Come arrivare",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp"
+  },
   "a_endero": {
     "oggetto": "Nuova richiesta dal sito · {tipo} · {nome}",
+    "etichetta": "Nuova richiesta · {tipo}",
+    "arrivata": "Arrivata dal sito {quando}.",
     "tipi": {
       "contatto": "Messaggio",
       "presa-misure": "Presa misure",
       "rivenditore": "Rivenditore"
     },
-    "titolo": "Nuova richiesta dal sito",
-    "rispondi": "Per rispondere basta rispondere a questa email: arriva a {email}.",
-    "senza_email": "Non ha lasciato l'email: si ricontatta al telefono.",
+    "tasti": {
+      "whatsapp": "Rispondi su WhatsApp",
+      "chiama": "Chiama",
+      "email": "Rispondi per email"
+    },
+    "whatsapp_testo": "Ciao {nome}, ti scriviamo da Endero per la richiesta che ci hai mandato dal sito.",
+    "dati": "La richiesta",
+    "rispondi": "Rispondendo a questa email scrivi direttamente a {email}.",
+    "senza_email": "Non ha lasciato l'email: si ricontatta al telefono o su WhatsApp.",
+    "piede": "Email automatica del sito endero.men",
     "voci": {
       "nome": "Nome",
       "telefono": "Telefono",
@@ -18,18 +33,27 @@
       "fascia": "Fascia oraria",
       "messaggio": "Messaggio",
       "pagina": "Pagina del sito",
-      "paese": "Paese di collegamento"
+      "paese": "Collegato da"
     }
   },
   "al_cliente": {
     "oggetto": "Abbiamo ricevuto la tua richiesta · Endero",
+    "etichetta": "Richiesta ricevuta",
     "saluto": "Ciao {nome},",
     "testo": {
       "contatto": "grazie per averci scritto: abbiamo ricevuto il tuo messaggio e ti rispondiamo appena possibile.",
       "presa-misure": "grazie: abbiamo ricevuto la tua richiesta per la presa misure e ti richiamiamo per fissare l'appuntamento.",
       "rivenditore": "grazie: abbiamo ricevuto la tua richiesta e ti ricontattiamo per email con listino e condizioni."
     },
-    "contatti": "Per qualsiasi cosa: WhatsApp 333 854 8712 · info@endero.men",
-    "firma": "Endero"
+    "riepilogo": "Cosa ci hai mandato",
+    "whatsapp": "Scrivici su WhatsApp",
+    "whatsapp_testo": "Ciao Endero, vi scrivo per la richiesta che ho appena mandato dal sito.",
+    "rimandi": {
+      "contatto": { "testo": "Scopri la collezione", "href": "/collezione/" },
+      "presa-misure": { "testo": "Scopri il su misura", "href": "/camicie-su-misura/" },
+      "rivenditore": { "testo": "Guarda la collezione", "href": "/collezione/" }
+    },
+    "firma": "A presto,",
+    "piede": "Ricevi questa email perché hai mandato una richiesta dal sito di Endero."
   }
 }
