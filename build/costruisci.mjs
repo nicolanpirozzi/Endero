@@ -182,7 +182,8 @@ function ultimaModifica(file) {
  * Le immagini di una pagina, per la mappa del sito: le foto di Endero (public/foto/) e la camicia del configuratore
  * (public/camicia/), ognuna una volta e con lo stesso indirizzo che ha nella pagina, impronta compresa.
  */
-const fotoDi = (html) => [...new Set([...html.matchAll(/<img\b[^>]*\bsrc="(\/(?:foto|camicia)\/[^"]+)"/g)].map((m) => m[1]))];
+// (i campioni dei tessuti della finestra del configuratore no: sono centinaia di ritagli, non foto da trovare su Google)
+const fotoDi = (html) => [...new Set([...html.matchAll(/<img\b[^>]*\bsrc="(\/(?:foto|camicia(?!\/tessuti\/))\/[^"]+)"/g)].map((m) => m[1]))];
 // gli elenchi delle foto, cartella per cartella: se cambiano le foto di una pagina, cambia la sua data
 const FOTO = { collezione: 'public/foto/collezione/foto.json', artigianato: 'public/foto/artigianato/foto.json', sede: 'public/foto/sede/foto.json', suMisura: 'public/foto/su-misura/foto.json' };
 // la mappa del sito: per ogni pagina l'indirizzo, la data dell'ultima modifica dei suoi testi e le sue foto

@@ -262,7 +262,7 @@ function finestraTessuti(F, tessuti) {
     </div>
     <div class="raccolta__scorre">
       <div class="raccolta__griglia raccolta__griglia--tessuti" role="listbox" aria-labelledby="finestra-tessuti-titolo" data-griglia>
-        ${elenco.map((x) => `<div class="campione" role="option" aria-selected="false" tabindex="-1" data-id="${esc(x.id)}" data-tipo="${esc(x.categoria)}" data-colore="${esc(x.colore)}" data-disegno="${esc(x.disegno)}" data-cerca="${esc(perCercare(`${x.nome} ${nomi[x.categoria] || ''}`))}"><span class="campione__foto"><img src="/camicia/tessuti/${esc(x.id)}.webp" alt="" width="320" height="214" loading="lazy" decoding="async" draggable="false"></span><span class="campione__nome">${esc(x.nome)}</span>${ICONA.spunta.replace('class="icona"', 'class="icona campione__spunta"')}</div>`).join('\n        ')}
+        ${elenco.map((x) => `<div class="campione" role="option" aria-selected="false" tabindex="-1" data-id="${esc(x.id)}" data-tipo="${esc(x.categoria)}" data-colore="${esc(x.colore)}" data-disegno="${esc(x.disegno)}" data-cerca="${esc(perCercare(`${x.nome} ${nomi[x.categoria] || ''}`))}"><span class="campione__foto"><img src="/camicia/tessuti/${esc(x.id)}.webp" alt="${esc(x.nome)}" width="320" height="214" loading="lazy" decoding="async" draggable="false"></span><span class="campione__nome" aria-hidden="true">${esc(x.nome)}</span>${ICONA.spunta.replace('class="icona"', 'class="icona campione__spunta"')}</div>`).join('\n        ')}
       </div>
       <p class="raccolta__nessuno" data-nessuno${elenco.length ? ' hidden' : ''}>${esc(F.nessuno)}</p>
     </div>

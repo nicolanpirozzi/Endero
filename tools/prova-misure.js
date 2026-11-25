@@ -142,7 +142,8 @@ const FORMATI = [
     }
     // Tab: da una misura alla successiva, dello stesso lato, lo zoom scivola senza tornare indietro
     await page.click('#campo-torace');
-    await page.waitForTimeout(2600);
+    // l'ultima misura era lunghezza dietro: la camicia prima si rigira di fronte, ci vuole di più (come sopra)
+    await page.waitForTimeout(4500);
     const zoomPrima = (await stato(page, 'torace')).zoom;
     await page.keyboard.press('Tab');
     const campioni = [];
@@ -151,7 +152,7 @@ const FORMATI = [
     const dopoTab = await stato(page);
     controlla(`${nome}: con Tab da torace alla misura dopo lo zoom scivola sulla zona nuova, senza tornare indietro`, campioni.every(Boolean) && dopoTab.aperta && dopoTab.aperta !== 'torace' && dopoTab.zoom && dopoTab.zoom !== zoomPrima && dopoTab.tratti >= 1, JSON.stringify({ aperta: dopoTab.aperta, vuoti: campioni.filter((x) => !x).length }));
     // uscendo dalle misure: niente zoom, niente linea, di fronte; la camicia risponde di nuovo alla mano
-    await page.click('#campo-nome');
+    await page.click('[data-passo="misure"] .passo__titolo');   // fuori dalle misure (i dati stanno in un altro passo)
     await page.waitForTimeout(3600);
     const fuori = await stato(page);
     controlla(`${nome}: uscendo dalle misure lo zoom torna indietro, la linea sparisce, la camicia è di fronte`, !fuori.aperta && !fuori.zoom && fuori.tratti === 0 && !fuori.dietro && !fuori.pezziNascosti && fuori.dove.length === 0, JSON.stringify(fuori));
@@ -221,7 +222,7 @@ const FORMATI = [
     await page.waitForTimeout(2500);
     const torace = await stato(page);
     controlla('computer, retro che non arriva: il campo del torace fa lo zoom e disegna la sua linea', torace.aperta === 'torace' && !!torace.zoom && torace.tratti >= 1, JSON.stringify(torace));
-    await page.click('#campo-nome');
+    await page.click('[data-passo="misure"] .passo__titolo');   // fuori dalle misure (i dati stanno in un altro passo)
     await page.waitForTimeout(2500);
     await page.mouse.move(420, 450); await page.mouse.move(640, 470, { steps: 8 });
     await page.waitForTimeout(300);
@@ -325,7 +326,7 @@ const FORMATI = [
     await page.waitForTimeout(400);
     const dopoTocco = await page.evaluate(() => ({ fuoco: document.activeElement?.id, lente: !!document.querySelector('.misura-lente:not([hidden])') }));
     controlla(`${nome}: un tocco sul riquadro lo chiude e lascia la scrittura nel campo aperto`, dopoTocco.fuoco === 'campo-torace' && !dopoTocco.lente, JSON.stringify(dopoTocco));
-    await tocca(page, '#campo-nome');
+    await tocca(page, '[data-passo="misure"] .passo__titolo');
     await page.waitForTimeout(700);
     const via = await page.evaluate(() => ({ lente: !!document.querySelector('.misura-lente:not([hidden])'), dove: [...document.querySelectorAll('.misura__dove')].filter((x) => { const r = x.getBoundingClientRect(); return getComputedStyle(x).display !== 'none' && r.width > 2 && r.height > 2; }).length }));
     controlla(`${nome}: uscendo dalle misure il riquadro sparisce`, !via.lente && via.dove === 0, JSON.stringify(via));
