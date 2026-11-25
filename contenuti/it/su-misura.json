@@ -29,44 +29,32 @@
       {
         "foto": "Colletto, primo piano",
         "immagine": { "file": "colletto", "alt": "Il colletto di una camicia bianca con l'interno blu a rombi e i bottoni di madreperla" },
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
+        "etichetta": "Su misura"
       },
       {
         "foto": "Camicia indossata",
         "immagine": { "file": "camicia-indossata", "alt": "Uomo con camicia bianca e cravatta bordeaux a righe, appoggiato a un albero in un giardino" },
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
+        "etichetta": "Pronta"
       },
       {
         "foto": "Polsino e bottone",
         "immagine": { "file": "polsino", "alt": "Il polsino a quadretti blu di una camicia scura, con l'asola in vista, e un orologio al polso" },
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
+        "etichetta": "Su misura"
       },
       {
         "foto": "Capo della collezione",
         "immagine": { "file": "capo-collezione", "alt": "Uomo con maglione azzurro, pantaloni grigi e una giacca a quadri azzurri sulla spalla" },
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
+        "etichetta": "Pronta"
       },
       {
         "foto": "Tessuto da vicino",
         "immagine": { "file": "tessuto", "alt": "Tessuto blu da vicino, con l'etichetta Endero cucita: Made in Italy e il tricolore" },
-        "etichetta": "Su misura",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
+        "etichetta": "Su misura"
       },
       {
         "foto": "Camicia indossata, di spalle",
         "immagine": { "file": "camicia-giacca", "alt": "Camicia bianca con cravatta bordeaux a righe sotto una giacca di lino chiaro gessato: il polsino esce dalla manica" },
-        "etichetta": "Pronta",
-        "nome": "[[Nome del capo]]",
-        "tessuto": "[[Tessuto]]"
+        "etichetta": "Pronta"
       }
     ]
   },

@@ -9,19 +9,23 @@ degli articoli e codici dei tessuti) non entrano nel repository: la cartella di 
 
 RADDRIZZA. Le foto (in ordine di nome, numerate 01, 02...) sono cartelle su un tavolo, di sera, con la luce calda
 che cala verso i bordi, a volte capovolte e un po' di sbieco. Per ognuna:
-  1. trova il foglio: il pezzo chiaro e poco colorato più grande, i suoi quattro lati come rette (minimi quadrati
-     sui punti del contorno) e gli angoli dove si incrociano;
+  1. trova il foglio: per ogni lato la retta più esterna lungo la quale si passa dal tavolo alla carta (la carta è
+     più azzurra del tavolo beige sotto la stessa luce) o dal tavolo al nero dell'intestazione, che arriva al bordo;
+     poi ogni lato si rifinisce sulla foto intera, e gli angoli sono dove i lati si incrociano;
   2. lo porta a un rettangolo largo 2400 punti: l'altezza viene dalla forma vera del foglio, calcolata dalla
-     prospettiva (se è un A4 entro il 4% diventa 3394 esatti);
+     prospettiva. Le cartelle sono tutte dello stesso formato (un po' più lungo di un A4: circa 1,45 contro
+     1,414), quindi si usa la mediana delle forme misurate; chi se ne scosta più del 2% tiene la sua ed è segnata
+     come sospetta in cartelle.json (o è un formato diverso, o un lato è stato trovato male: va guardata);
   3. lo gira con la fascia nera dell'intestazione in alto;
   4. corregge luce e colore: dai soli punti di carta (chiari, lisci, poco colorati) stima per ogni canale come cade
-     la luce sul foglio, una superficie di terzo grado ai minimi quadrati con gli scarti tolti in tre giri, e
-     divide: la carta torna bianco neutro uniforme (CARTA, circa 240) e i campioni prendono la stessa correzione.
+     la luce sul foglio, una superficie di terzo grado ai minimi quadrati con gli scarti tolti (in due giri: il
+     secondo sceglie la carta sull'immagine già corretta una volta), e divide: la carta torna bianco neutro uniforme (CARTA, circa 240) e i campioni prendono la stessa correzione.
      Il conto è fatto in luce lineare, non sui valori sRGB, così i colori scuri non si sporcano.
 Scrive <lavoro>/cartelle/NN.png (piena qualità), NN-piccola.jpg (larga 1200) e <lavoro>/cartelle.json.
 Se un foglio non si trova da solo (un altro foglio accanto, il foglio tagliato dalla foto) gli angoli si danno a
-mano in <lavoro>/angoli.json: { "32": { "angoli": [[x, y], ...4], "tagliato": "alto" } }, in punti della foto
-già girata secondo l'EXIF, in qualunque ordine. Con "tagliato" il lato indicato non è il bordo del foglio ma quello
+mano in <lavoro>/angoli.json: { "07": { "angoli": [[x, y], ...4] }, "32": { "angoli": [...], "tagliato": "alto" } },
+in punti della foto già girata secondo l'EXIF, in qualunque ordine. Gli angoli dati a mano possono essere
+approssimati: ogni lato si cerca vicino a quello dato (con "esatti": true si usano così come sono). Con "tagliato" il lato indicato non è il bordo del foglio ma quello
 della foto: lì non si inventa niente, la cartella finisce dove finisce la foto (la sua altezza viene dalla
 prospettiva dei tre lati veri e dalla focale stimata sulle altre foto).
 
@@ -99,27 +103,44 @@ def punti_di_carta(rgb8):
     return chiari
 
 
-def correggi_luce(rgb8, grado=3):
-    """Divide per la luce stimata sui punti di carta, per canale e in luce lineare. Restituisce uint8 e i dati."""
-    h, w = rgb8.shape[:2]
-    passo = 8
-    piccola = cv2.resize(rgb8, (w // passo, h // passo), interpolation=cv2.INTER_AREA)
-    maschera = punti_di_carta(piccola)
+def stima_luce(lin, maschera, grado):
+    """Per ogni canale, i coefficienti della superficie di luce sui punti di carta (in luce lineare), ai minimi
+    quadrati con gli scarti oltre tre volte la deviazione robusta tolti in tre giri."""
+    hp, wp = maschera.shape
     ys, xs = np.nonzero(maschera)
-    lin = lineare(piccola.astype(np.float64) / 255)[ys, xs]
-    xn, yn = xs / (w / passo) * 2 - 1, ys / (h / passo) * 2 - 1
-    A = termini(xn, yn, grado)
-    tieni = np.ones(len(xs), bool)
+    v = lin[ys, xs]
+    A = termini(xs / wp * 2 - 1, ys / hp * 2 - 1, grado)
     coeff = []
     for c in range(3):
-        t = tieni.copy()
+        t = np.ones(len(xs), bool)
         for _ in range(3):
-            k, *_ = np.linalg.lstsq(A[t], lin[t, c], rcond=None)
-            res = lin[:, c] - A @ k
+            k, *_ = np.linalg.lstsq(A[t], v[t, c], rcond=None)
+            res = v[:, c] - A @ k
             s = 1.4826 * np.median(np.abs(res[t]))
             t = np.abs(res) < 3 * s + 1e-4
         coeff.append(k)
-        tieni &= t
+    return coeff, len(xs)
+
+
+def correggi_luce(rgb8, grado=3):
+    """Divide per la luce stimata sui punti di carta, per canale e in luce lineare. Restituisce uint8 e i dati.
+    Due giri: nel primo i punti di carta si scelgono tra i più chiari, quindi la carta ai bordi, dove la luce cala,
+    resta fuori e lì la superficie sbaglia; nel secondo si scelgono sull'immagine già corretta una volta, così
+    entra tutta la carta, e la superficie si rifà sui valori di partenza."""
+    h, w = rgb8.shape[:2]
+    passo = 8
+    piccola = cv2.resize(rgb8, (w // passo, h // passo), interpolation=cv2.INTER_AREA)
+    lin = lineare(piccola.astype(np.float64) / 255)
+    hp, wp = piccola.shape[:2]
+    maschera = punti_di_carta(piccola)
+    for giro in range(2):
+        coeff, quanti = stima_luce(lin, maschera, grado)
+        if giro == 0:
+            yy, xx = np.mgrid[0:hp, 0:wp]
+            T = termini((xx + 0.5) / wp * 2 - 1, (yy + 0.5) / hp * 2 - 1, grado)
+            luce = np.stack([np.maximum(T @ k, 1e-3) for k in coeff], -1)
+            prima = srgb(lin / luce * lineare(np.array(CARTA / 255)))
+            maschera = punti_di_carta(np.clip(np.round(prima * 255), 0, 255).astype(np.uint8))
     # la superficie della luce alla risoluzione piena, calcolata a righe per non tenere tutto in memoria
     obiettivo = lineare(np.array(CARTA / 255))
     esce = np.empty_like(rgb8)
@@ -134,7 +155,7 @@ def correggi_luce(rgb8, grado=3):
             luce = np.maximum(T @ coeff[c], 1e-3)
             blocco[..., c] = blocco[..., c] / luce * obiettivo
         esce[y0:y1] = np.clip(np.round(srgb(blocco) * 255), 0, 255).astype(np.uint8)
-    return esce, {'punti_di_carta': int(tieni.sum()), 'grado': grado}
+    return esce, {'punti_di_carta': int(quanti), 'grado': grado}
 
 
 def misura_carta(rgb8):
@@ -188,73 +209,206 @@ def ordina(angoli):
     return np.roll(p, -i, axis=0)
 
 
-def trova_foglio(img):
-    """Angoli del foglio nella foto (alto-sx, alto-dx, basso-dx, basso-sx), o None con il motivo."""
+def cromia(rgb):
+    """Il rapporto blu su rosso, la misura che separa la carta dal tavolo. Sotto la lampada calda il tavolo al centro
+    è chiaro quanto la carta ai bordi, quindi la luminosità non basta; ma il tavolo è beige e la carta bianca, così
+    la carta resta più azzurra del tavolo che le sta accanto (di qualche centesimo), e sul tavolo il rapporto
+    cambia piano, senza gradini."""
+    f = rgb.astype(np.float32)
+    return f[..., 2] / np.maximum(f[..., 0], 8), f.mean(-1)
+
+
+# le quattro viste: ogni lato si cerca come se fosse il sinistro, girando le immagini
+def in_vista(a, lato):
+    return {'sinistra': a, 'destra': a[:, ::-1], 'alto': a.T, 'basso': a.T[:, ::-1]}[lato]
+
+
+def da_vista(x, y, lato, w, h):
+    """Da punti della vista (x verso il centro) a punti dell'immagine."""
+    return {'sinistra': (x, y), 'destra': (w - 1 - x, y), 'alto': (y, x), 'basso': (y, h - 1 - x)}[lato]
+
+
+def a_vista(x, y, lato, w, h):
+    return {'sinistra': (x, y), 'destra': (w - 1 - x, y), 'alto': (y, x), 'basso': (h - 1 - y, x)}[lato]
+
+
+def cerca_bordo(cr, lum, ya, yb, xa=12, xb=None, pendenze=np.linspace(-0.1, 0.1, 41), modo='tutto', quota_nero=0.7):
+    """Nella vista (il lato cercato è a sinistra), la retta x = a + p (y - ym) più esterna lungo la quale si passa
+    dal tavolo al foglio. Le rette provate partono da ogni colonna tra xa e xb, con le pendenze date; lungo ognuna si
+    guardano 120 punti tra ya e yb, e si confronta una finestra appena dentro con una appena fuori. È un bordo se:
+      - il colore sale (carta più azzurra del tavolo) di almeno 0,009 in media e in più di metà dei punti, il gradino
+        è netto (poco più in là, dentro o fuori, non c'è: il tavolo invece cambia piano, su tratti lunghi) e la luce
+        cambia poco (un salto forte di luce è il bordo del tavolo, non del foglio);
+      - oppure dal tavolo chiaro si passa al nero: è l'intestazione, che arriva quasi al bordo del foglio.
+    In tutti e due i casi fuori dev'esserci il tavolo, non il pavimento scuro. Con modo 'colore' o 'nero' vale solo
+    uno dei due; quota_nero è la parte dei punti che devono passare al nero. Restituisce (a, p, ym) o None."""
+    H, W = cr.shape
+    xb = xb or W // 2
+    C = np.concatenate([np.zeros((H, 1), np.float32), np.cumsum(cr, 1)], 1)
+    Lc = np.concatenate([np.zeros((H, 1), np.float32), np.cumsum(lum, 1)], 1)
+    ys = np.linspace(ya, yb, 120).round().astype(int)
+    ym = (ya + yb) / 2
+    a = np.arange(max(14, xa - 16), min(W - 26, xb + 16))
+    X = a[:, None, None] + pendenze[None, :, None] * (ys[None, None, :] - ym)
+    X = np.clip(np.round(X).astype(int), 14, W - 9)
+    Y = np.broadcast_to(ys, X.shape)
+    passo = (C[Y, X + 7] - C[Y, X + 3]) / 4 - (C[Y, X - 3] - C[Y, X - 13]) / 10
+    luce_dentro = (Lc[Y, X + 7] - Lc[Y, X + 3]) / 4
+    luce_fuori = (Lc[Y, X - 3] - Lc[Y, X - 13]) / 10
+    media = passo.mean(-1)
+    quota = (passo > 0.008).mean(-1)
+    vicini = np.maximum(np.pad(media, ((15, 0), (0, 0)), 'edge')[:-15], np.pad(media, ((0, 15), (0, 0)), 'edge')[15:])
+    lf = np.median(luce_fuori, -1)
+    # fuori tutto tavolo: anche il punto più lontano della finestra è chiaro quanto il più vicino
+    piatto = np.median(lum[Y, X - 14] / np.maximum(lum[Y, X - 3], 1), -1) > 0.85
+    tavolo = (lf > 80) & (lf > 0.6 * np.median(luce_dentro, -1)) & piatto
+    # la carta è chiara quanto il tavolo, o poco più: un salto forte di luce è un altro bordo (il tavolo sul muro)
+    rapporto = np.median(luce_dentro, -1) / np.maximum(lf, 1)
+    colore = ((media > 0.009) & (quota > 0.5) & (media - vicini > 0.6 * media) & tavolo
+              & (rapporto > 0.85) & (rapporto < 1.15))
+    nero = (lf > 80) & piatto & ((luce_dentro < 0.45 * luce_fuori).mean(-1) > quota_nero)
+    if modo == 'colore':
+        nero[:] = False
+    elif modo == 'nero':
+        colore[:] = False
+    buone = colore | nero
+    buone[(a < xa) | (a >= xb)] = False
+    if not buone.any():
+        return None
+    # la colonna più esterna con una retta buona, poi la retta migliore lì vicino: una retta un po' storta che
+    # attraversa il bordo parte più fuori di quella giusta, ma lungo il percorso sale di meno
+    i = np.nonzero(buone.any(1))[0][0]
+    j = i + 14
+    if colore[i:j].any():
+        zona = np.where(colore[i:j], media[i:j], -1)
+    else:
+        # sul nero: la retta dove il salto di luce è più forte in media (fuori tutto tavolo, dentro tutto nero)
+        salto_luce = np.mean((luce_fuori - luce_dentro) / np.maximum(luce_fuori, 1), -1)
+        zona = np.where(nero[i:j], salto_luce[i:j], -9)
+    di, dp = np.unravel_index(np.argmax(zona), zona.shape)
+    return float(a[i + di]), float(pendenze[dp]), ym
+
+
+def trova_foglio(img, partenza=None):
+    """Angoli del foglio nella foto (alto-sx, alto-dx, basso-dx, basso-sx), o (angoli o None, motivo).
+    Su una copia piccola (lato lungo 1200) si cerca per ogni lato la retta più esterna lungo la quale si passa dal
+    tavolo alla carta; un gradino debole in un punto non si vede, ma lungo tutto il lato sì. Poi ogni lato si
+    rifinisce sulla foto intera, con un profilo ogni pochi punti e una retta per i punti trovati.
+    Con `partenza` (quattro angoli dati a mano, anche approssimati di qualche decina di punti) si salta il primo
+    giro: ogni lato si cerca solo vicino a quello dato."""
     h, w = img.shape[:2]
     s = 1200 / max(h, w)
     sm = cv2.resize(img, (round(w * s), round(h * s)), interpolation=cv2.INTER_AREA)
-    sm = cv2.GaussianBlur(sm, (5, 5), 0)
-    hsv = cv2.cvtColor(sm, cv2.COLOR_RGB2HSV)
-    sat, val = hsv[..., 1].astype(float), hsv[..., 2].astype(float)
-    # bianco del foglio contro beige del tavolo: chiaro e poco saturo; la soglia la sceglie Otsu su questa misura
-    misura = val - 1.5 * sat
-    misura = np.clip((misura - misura.min()) / (np.ptp(misura) + 1e-6) * 255, 0, 255).astype(np.uint8)
-    _, bianco = cv2.threshold(misura, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    bianco = cv2.morphologyEx(bianco, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    n, etichette, stat, _ = cv2.connectedComponentsWithStats(bianco)
-    if n < 2:
-        return None, 'nessun pezzo chiaro'
-    k = 1 + np.argmax(stat[1:, cv2.CC_STAT_AREA])
-    pezzo = (etichette == k).astype(np.uint8) * 255
-    # riempie i buchi (campioni scuri, intestazione nera) per avere la sagoma intera del foglio
-    contorni, _ = cv2.findContours(pezzo, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    c = max(contorni, key=cv2.contourArea)
-    scafo = cv2.convexHull(c)
-    perim = cv2.arcLength(scafo, True)
-    quad = None
-    for e in np.linspace(0.01, 0.08, 30):
-        a = cv2.approxPolyDP(scafo, e * perim, True)
-        if len(a) == 4:
-            quad = a[:, 0, :].astype(float)
-            break
-    if quad is None:
-        return None, 'sagoma senza quattro lati'
-    quad = ordina(quad)
-    # rifinitura: ogni lato è la retta dei punti del contorno che gli stanno vicini, lontano dagli angoli
-    pts = c[:, 0, :].astype(float)
-    rette = []
-    for i in range(4):
-        p0, p1 = quad[i], quad[(i + 1) % 4]
-        d = p1 - p0
-        L = np.linalg.norm(d)
-        u = d / L
-        nrm = np.array([-u[1], u[0]])
-        rel = pts - p0
-        t = rel @ u
-        dist = np.abs(rel @ nrm)
-        sel = (t > 0.12 * L) & (t < 0.88 * L) & (dist < 6)
-        if sel.sum() < 20:
-            return None, 'lato %d con pochi punti' % i
-        rette.append(retta(pts[sel]))
-    angoli = np.array([incrocio(rette[(i - 1) % 4], rette[i]) for i in range(4)]) / s
-    # controlli: dentro la foto, lati non troppo diversi, area ragionevole
+    sm = cv2.GaussianBlur(sm, (0, 0), 1.0)
+    cr, lum = cromia(sm)
+    hs, ws = cr.shape
+    lati = ('sinistra', 'destra', 'alto', 'basso')
+    rette = {}
+    if partenza is not None:
+        q = ordina(partenza) * s
+        rette = {'alto': np.cross([*q[0], 1], [*q[1], 1]), 'destra': np.cross([*q[1], 1], [*q[2], 1]),
+                 'basso': np.cross([*q[2], 1], [*q[3], 1]), 'sinistra': np.cross([*q[3], 1], [*q[0], 1])}
+    # primo giro: ogni lato sul tratto centrale; secondo giro: sul tratto tra gli angoli trovati, vicino al primo
+    for giro in range(1 if partenza is not None else 0, 2):
+        nuove = {}
+        for lato in lati:
+            crv, lv = in_vista(cr, lato), in_vista(lum, lato)
+            Hv = crv.shape[0]
+            if giro == 0:
+                ya, yb, xa, xb = 0.15 * Hv, 0.85 * Hv, 12, crv.shape[1] // 2
+            else:
+                # gli estremi del lato: dove incontra i due lati vicini, un po' rientrati
+                ang = angoli_da(rette)
+                coppie = {'sinistra': (0, 3), 'destra': (1, 2), 'alto': (0, 1), 'basso': (3, 2)}[lato]
+                p0 = a_vista(*ang[coppie[0]], lato, ws, hs)
+                p1 = a_vista(*ang[coppie[1]], lato, ws, hs)
+                y0, y1 = sorted((p0[1], p1[1]))
+                ya, yb = y0 + 0.06 * (y1 - y0), y1 - 0.06 * (y1 - y0)
+                xm = (p0[0] + p1[0]) / 2
+                xa, xb = int(max(14, xm - 12)), int(xm + 12)
+                # l'intestazione nera arriva quasi al bordo del foglio e lo attraversa tutto: se c'è, il bordo è lì
+                # o pochi punti più fuori (a volte il tavolo, più in là, ha un suo gradino che inganna)
+                testa = cerca_bordo(crv, lv, ya, yb, xa, int(xm + 0.12 * crv.shape[1]), modo='nero', quota_nero=0.85)
+                if testa is not None:
+                    r = cerca_bordo(crv, lv, ya, yb, int(max(14, testa[0] - 20)), int(testa[0] + 1), modo='colore')
+                    r = r or testa
+                    nuove[lato] = retta_in_foto(r, lato, ws, hs, Hv)
+                    continue
+            r = cerca_bordo(crv, lv, ya, yb, xa, xb)
+            if r is None:
+                return None, 'bordo %s non trovato' % lato
+            nuove[lato] = retta_in_foto(r, lato, ws, hs, Hv)
+        rette = nuove
+    angoli = angoli_da(rette) / s
+    angoli = rifinisci(img, angoli)
     if (angoli < -5).any() or (angoli[:, 0] > w + 5).any() or (angoli[:, 1] > h + 5).any():
-        return None, 'angoli fuori dalla foto'
+        return angoli, 'angoli fuori dalla foto'
     area = cv2.contourArea(angoli.astype(np.float32))
     if area < 0.12 * w * h:
-        return None, 'foglio troppo piccolo'
-    lati = [np.linalg.norm(angoli[(i + 1) % 4] - angoli[i]) for i in range(4)]
-    rapporto = (lati[1] + lati[3]) / (lati[0] + lati[2])
-    if not 1.2 < rapporto < 1.7:
-        return None, 'forma non da A4 (%.2f)' % rapporto
-    # un lato che corre sul bordo della foto vuol dire foglio tagliato
-    vicino = 0.004 * max(w, h)
+        return angoli, 'foglio troppo piccolo'
+    lung = [np.linalg.norm(angoli[(i + 1) % 4] - angoli[i]) for i in range(4)]
+    rapporto = (lung[1] + lung[3]) / (lung[0] + lung[2])
+    if not 1.2 < rapporto < 1.75:
+        return angoli, 'forma non da cartella (%.2f)' % rapporto
+    return angoli, None
+
+
+def retta_in_foto(r, lato, ws, hs, Hv):
+    """La retta trovata nella vista, riportata sull'immagine (per due suoi punti)."""
+    a, p, ym = r
+    q0 = da_vista(a + p * (0 - ym), 0, lato, ws, hs)
+    q1 = da_vista(a + p * (Hv - ym), Hv, lato, ws, hs)
+    return np.cross([*q0, 1.0], [*q1, 1.0])
+
+
+def angoli_da(rette):
+    """Gli incroci delle quattro rette: alto-sx, alto-dx, basso-dx, basso-sx."""
+    return np.array([incrocio(rette['sinistra'], rette['alto']), incrocio(rette['alto'], rette['destra']),
+                     incrocio(rette['destra'], rette['basso']), incrocio(rette['basso'], rette['sinistra'])])
+
+
+def rifinisci(img, angoli, mezzo=12, quanti=100):
+    """Sulla foto intera: per ogni lato, profili perpendicolari lunghi 2 x mezzo punti; in ognuno il bordo è dove la
+    cromia sale più in fretta andando verso il centro; una retta per quei punti (tolti in tre giri quelli lontani).
+    La retta nuova si tiene solo se è sostenuta da più di metà dei profili e resta vicina a quella di partenza."""
+    f = cv2.GaussianBlur(img, (0, 0), 1.5).astype(np.float32)
+    cr = f[..., 2] / np.maximum(f[..., 0], 8)
+    centro = angoli.mean(0)
+    rette = []
     for i in range(4):
         p0, p1 = angoli[i], angoli[(i + 1) % 4]
-        for asse, lim in ((0, 0), (0, w), (1, 0), (1, h)):
-            if abs(p0[asse] - lim) < vicino and abs(p1[asse] - lim) < vicino:
-                return None, 'lato sul bordo della foto'
-    return angoli, None
+        vecchia = np.cross([*p0, 1.0], [*p1, 1.0])
+        vecchia = vecchia / np.hypot(vecchia[0], vecchia[1])
+        d = (p1 - p0) / np.linalg.norm(p1 - p0)
+        nrm = np.array([-d[1], d[0]])
+        if np.dot(centro - p0, nrm) < 0:
+            nrm = -nrm                                   # verso il centro del foglio
+        t = np.linspace(0.05, 0.95, quanti)
+        base = p0[None] + t[:, None] * (p1 - p0)[None]
+        k = np.arange(-mezzo, mezzo + 1)
+        P = base[:, None, :] + k[None, :, None] * nrm[None, None, :]
+        prof = cv2.remap(cr, P[..., 0].astype(np.float32), P[..., 1].astype(np.float32), cv2.INTER_LINEAR,
+                         borderMode=cv2.BORDER_REPLICATE)
+        der = prof[:, 3:] - prof[:, :-3]
+        j = np.argmax(der, 1)
+        forza = der[np.arange(quanti), j]
+        punti = base + (k[j] + 1.5)[:, None] * nrm[None]
+        tieni = forza > 0.008
+        nuova = None
+        if tieni.sum() > quanti / 2:
+            for _ in range(3):
+                r = retta(punti[tieni])
+                dist = np.abs(punti @ r[:2] + r[2])
+                tieni = (forza > 0.008) & (dist < max(1.5, 2.5 * np.median(dist[tieni])))
+            if tieni.sum() > quanti / 2:
+                nuova = retta(punti[tieni])
+                scarto = max(abs(np.dot([*q, 1.0], nuova)) for q in (p0, p1))
+                if scarto > 0.7 * mezzo:
+                    nuova = None
+        rette.append(vecchia if nuova is None else nuova)
+    # rette[i] è il lato da angolo i a angolo i+1: alto, destra, basso, sinistra
+    return np.array([incrocio(rette[3], rette[0]), incrocio(rette[0], rette[1]),
+                     incrocio(rette[1], rette[2]), incrocio(rette[2], rette[3])])
 
 
 def focale_e_forma(angoli, w, h):
@@ -359,30 +513,47 @@ def raddrizza(originali, lavoro, rifai=False, solo=None):
     for nn, nome in lavori:
         img = carica(os.path.join(originali, nome))
         h, w = img.shape[:2]
-        voce = a_mano.get(nn)
-        if voce:
+        voce = a_mano.get(nn) or {}
+        if voce.get('esatti') or voce.get('tagliato'):
             angoli, motivo, origine = ordina(voce['angoli']), None, 'a mano'
+        elif voce:
+            # angoli approssimati: si cerca ogni lato lì vicino
+            angoli, motivo = trova_foglio(img, np.array(voce['angoli'], float))
+            origine = 'a mano, rifiniti'
+            if motivo:
+                print(nn, 'rifinitura non riuscita (%s): tengo gli angoli dati a mano' % motivo)
+                angoli, motivo, origine = ordina(voce['angoli']), None, 'a mano'
         else:
             angoli, motivo = trova_foglio(img)
             origine = 'trovati'
-        if angoli is None:
+        if motivo:
             print(nn, nome, 'NON TROVATO:', motivo, '(dare gli angoli a mano in angoli.json)')
             continue
         f, n2, n3 = focale_e_forma(angoli, w, h)
-        if f and 0.4 * max(w, h) < f < 1.5 * max(w, h) and not (voce and voce.get('tagliato')):
+        if f and 0.4 * max(w, h) < f < 1.5 * max(w, h) and not voce.get('tagliato'):
             focali.append(f / max(w, h))
-        trovati[nn] = (nome, angoli, origine, voce or {}, f, n2, n3, (w, h))
+        trovati[nn] = (nome, angoli, origine, voce, f, n2, n3, (w, h))
     focale = float(np.median(focali)) if len(focali) >= 3 else FOCALE_PREDEFINITA
+    # la forma vera: le cartelle sono tutte dello stesso formato, quindi si prende la mediana delle forme misurate
+    # (ognuna sbaglia di poco, la mediana quasi niente); chi se ne scosta più del 2% tiene la sua ed è segnalata
+    forme = {nn: forma_con_focale(v[5], v[6], focale * max(v[7]), *v[7])
+             for nn, v in trovati.items() if not v[3].get('tagliato')}
+    forme_vecchie = [v.get('forma_misurata') for k, v in dati.items() if k not in forme and not v.get('tagliato')]
+    tutte = list(forme.values()) + [x for x in forme_vecchie if x]
+    mediana = float(np.median(tutte)) if tutte else A4
     for nn, (nome, angoli, origine, voce, f, n2, n3, (w, h)) in trovati.items():
         img = carica(os.path.join(originali, nome))
         fpunti = focale * max(w, h)
         tagliato = voce.get('tagliato')
+        sospetta = False
         if tagliato:
             angoli, forma = rettifica_tagliata(angoli, tagliato, fpunti, w, h)
+            usata = forma
         else:
-            forma = forma_con_focale(n2, n3, fpunti, w, h)
-        a4 = not tagliato and abs(forma / A4 - 1) < 0.04
-        altezza = round(LARGHEZZA * (A4 if a4 else forma))
+            forma = forme[nn]
+            sospetta = abs(forma / mediana - 1) > 0.02
+            usata = forma if sospetta else mediana
+        altezza = round(LARGHEZZA * usata)
         dest = np.float32([[0, 0], [LARGHEZZA, 0], [LARGHEZZA, altezza], [0, altezza]])
         M = cv2.getPerspectiveTransform(np.float32(angoli), dest)
         dritta = cv2.warpPerspective(img, M, (LARGHEZZA, altezza), flags=cv2.INTER_LANCZOS4,
@@ -400,14 +571,16 @@ def raddrizza(originali, lavoro, rifai=False, solo=None):
         dati[nn] = {
             'file': nome, 'angoli': [[round(float(x), 1), round(float(y), 1)] for x, y in angoli],
             'angoli_da': origine, 'tagliato': tagliato, 'rotazione': 180 if capovolta else 0,
-            'misure': [LARGHEZZA, altezza], 'forma_misurata': round(forma, 4), 'a4': a4,
+            'misure': [LARGHEZZA, altezza], 'forma_misurata': round(forma, 4), 'forma_usata': round(usata, 4),
+            'forma_sospetta': sospetta,
             'foto': [w, h], 'punti_foto_per_punto': round(float(lato / LARGHEZZA), 3),
             'luce': luce, 'carta': misura_carta(pulita),
         }
-        print(nn, nome, origine, 'forma %.3f' % forma, 'capovolta' if capovolta else 'dritta',
+        print(nn, nome, origine, 'forma %.3f%s' % (forma, ' SOSPETTA' if sospetta else ''), 'capovolta' if capovolta else 'dritta',
               '%dx%d' % (LARGHEZZA, altezza), 'carta', dati[nn]['carta']['media'], '±', dati[nn]['carta']['scarto'])
         json.dump(dict(sorted(dati.items())), open(percorso_json, 'w'), indent=1, ensure_ascii=False)
-    print('focale stimata: %.3f del lato lungo (%d foto)' % (focale, len(focali)))
+    print('focale: %.3f del lato lungo (%s); forma delle cartelle (altezza su larghezza): %.4f'
+          % (focale, '%d foto' % len(focali) if len(focali) >= 3 else 'predefinita', mediana))
 
 
 # ---------------------------------------------------------------------------------------------- tassello e ritagli
@@ -421,6 +594,10 @@ def apri_cartella(lavoro, nn):
 
 def tassello(lavoro, nn, x0, y0, x1, y1, volte=2.0, uscita=None):
     im = apri_cartella(lavoro, nn)
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(im.width, x1), min(im.height, y1)
+    if x1 <= x0 or y1 <= y0:
+        sys.exit('zona vuota: servono x0 < x1 e y0 < y1 dentro la cartella (%d x %d)' % im.size)
     pezzo = im.crop((x0, y0, x1, y1))
     pezzo = pezzo.resize((round((x1 - x0) * volte), round((y1 - y0) * volte)), Image.LANCZOS)
     a = np.asarray(pezzo).astype(np.float32)

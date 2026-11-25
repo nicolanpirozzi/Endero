@@ -55,11 +55,11 @@ export function suMisura(s, sito, { id = 'su-misura', gruppo = 'su-misura' } = {
     <ul class="griglia">
       ${s.griglia.map((g) => `<li class="griglia__voce">
         ${fotoIntera(g.immagine, sito.foto?.['su-misura'], { sizes: '(max-width: 809px) 50vw, 17vw' }) || attesa({ nota: g.foto, etichetta: sito.foto_in_arrivo })}
-        <span class="etichetta">${esc(g.etichetta)}</span>
+        <span class="etichetta">${esc(g.etichetta)}</span>${g.nome || g.tessuto ? `
         <div class="vetro griglia__scheda">
-          <p class="griglia__nome">${t(g.nome)}</p>
-          <p class="griglia__dettaglio">${t(g.tessuto)}</p>
-        </div>
+          ${g.nome ? `<p class="griglia__nome">${t(g.nome)}</p>` : ''}
+          ${g.tessuto ? `<p class="griglia__dettaglio">${t(g.tessuto)}</p>` : ''}
+        </div>` : ''}
       </li>`).join('\n      ')}
     </ul>
   </section>`;
