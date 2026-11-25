@@ -68,7 +68,8 @@
           "tipo": "tessuto",
           "etichetta": "Tessuto",
           "scegli": "Scegli il tessuto",
-          "cambia": "Cambia"
+          "cambia": "Cambia",
+          "per": "Tessuto della camicia"
         },
         {
           "nome": "collo",
@@ -271,12 +272,18 @@
       "nessuno": "Nessun tessuto con questi filtri.",
       "conferma": "Scegli questo tessuto",
       "chiudi": "Chiudi",
-      "contati": "{n} tessuti"
+      "contati": "{n} tessuti",
+      "contati_uno": "1 tessuto",
+      "filtri": "Filtri",
+      "togli_filtri": "Togli i filtri",
+      "scelto": "Scelto",
+      "nessuno_scelto": "Tocca un tessuto per sceglierlo."
     },
     "finestra_colori": {
       "titolo": "Scegli il colore",
       "conferma": "Scegli questo colore",
-      "chiudi": "Chiudi"
+      "chiudi": "Chiudi",
+      "nessuno_scelto": "Tocca un colore per sceglierlo."
     },
     "colori_filo": [
       {
@@ -628,7 +635,11 @@
       "nota": "Paghi con carta sulla pagina sicura di Stripe.",
       "non_attivo": "[[Il pagamento online non è ancora attivo: per ora l'ordine non parte.]]",
       "attesa": "Un momento…",
-      "errore": "Non siamo riusciti a preparare il pagamento. Riprova tra poco, oppure scrivici su WhatsApp."
+      "errore": "Non siamo riusciti a preparare il pagamento. Riprova tra poco, oppure scrivici su WhatsApp.",
+      "annullato": "Il pagamento non è stato completato: puoi riprovare quando vuoi.",
+      "prezzo": "Prezzo a camicia",
+      "quantita": "Quantità",
+      "nessuno": "—"
     },
     "prezzi": {
       "base": 90,
@@ -671,6 +682,15 @@
       "provincia": "Scrivi la sigla della provincia, per esempio NA.",
       "privacy": "Per ordinare serve il consenso all'informativa privacy.",
       "riepilogo": "Controlla i campi segnati in rosso."
+    },
+    "navigazione": "I passi dell'ordine",
+    "grazie": {
+      "titolo": "Grazie per il tuo ordine",
+      "testo": "Il pagamento è andato a buon fine. Prima del taglio il sarto ricontrolla le misure.",
+      "link": {
+        "testo": "Torna alla pagina iniziale",
+        "href": "/"
+      }
     }
   },
   "domande": {

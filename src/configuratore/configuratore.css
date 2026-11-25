@@ -161,51 +161,27 @@
 
 /* ------------------------------------------------------------------ il riquadro in vetro */
 
-/* Il riquadro è un modulo lungo: scorre con la pagina mentre la camicia resta ferma accanto.
-   Quattro gruppi: le misure (si compilano), la camicia e i contrasti (spenti), i dati. */
+/* Il riquadro: cinque passi (src/configuratore/scheda.js), uno alla volta. Se un passo è lungo scorre con la pagina
+   mentre la camicia resta ferma accanto; il fondo con il prezzo e i tasti resta in vista. */
 .configura__scheda {
+  --dentro: 28px;                      /* il margine interno: il fondo con i tasti lo riprende per arrivare ai bordi */
   position: relative;
   z-index: 1;
   align-self: start;
   min-width: 0;
   margin: 104px 0 48px;
-  padding: 28px;
+  padding: 28px var(--dentro) 0;
 }
 
 .configura__titolo {
   margin: 0 0 6px;
 }
 
-.configura__testo {
-  margin: 0 0 6px;
-  color: rgba(251, 249, 244, 0.86);
-}
-
 .configura__gruppo {
   min-width: 0;
-  margin: 22px 0 0;
-  padding: 18px 0 0;
-  border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.configura__gruppo-titolo {
-  float: left;          /* così la legenda sta dentro il bordo, come un titolo qualsiasi */
-  width: 100%;
-  margin: 0 0 14px;
+  margin: 18px 0 0;
   padding: 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  font-stretch: 125%;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.configura__gruppo-nota {
-  clear: both;
-  margin: -6px 0 14px;
-  font-size: 0.75rem;
-  color: rgba(251, 249, 244, 0.78);
+  border: 0;
 }
 
 .configura__campi {
@@ -290,77 +266,6 @@
   box-shadow: 0 0 0 1px #ffb4a8;
 }
 
-.misura__aiuto,
-.misura__errore {
-  font-size: 0.75rem;
-  line-height: 1.35;
-  color: rgba(251, 249, 244, 0.82);
-}
-
-.misura__errore {
-  color: #ffc9c0;
-}
-
-.misura__errore:empty {
-  display: none;
-}
-
-/* campi spenti: si legge il nome, la casella è vuota, tratteggiata e chiaramente non compilabile */
-.misura--spenta .misura__nome {
-  color: rgba(251, 249, 244, 0.8);
-}
-
-.misura--spenta .misura__casella input,
-.misura--spenta .misura__casella textarea {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.28);
-  background: transparent;
-  cursor: not-allowed;
-  resize: none;
-}
-
-.misura--sino {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-}
-
-.misura--sino input {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  margin: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px dashed rgba(255, 255, 255, 0.38);
-  border-radius: 6px;
-  background: transparent;
-  cursor: not-allowed;
-}
-
-.configura__fondo {
-  margin-top: 26px;
-}
-
-.configura__scheda .pillola {
-  width: 100%;
-  justify-content: center;
-}
-
-.configura__scheda .pillola[disabled] {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.configura__nota {
-  margin: 10px 0 0;
-  font-size: 0.75rem;
-  text-align: center;
-  color: rgba(251, 249, 244, 0.78);
-}
-
 /* ------------------------------------------------------------------ telefono */
 
 /* Camicia sopra e riquadro sotto, quando la colonna della camicia sarebbe più stretta della camicia: sotto i 960 px,
@@ -416,8 +321,9 @@
   }
 
   .configura__scheda {
+    --dentro: 16px;
     margin: 0 16px;
-    padding: 22px 16px;
+    padding: 22px var(--dentro) 0;
   }
 }
 
@@ -749,4 +655,1751 @@
     opacity: 0;
     transform: translateY(6px) scale(0.98);
   }
+}
+
+/* ================================================================== il riquadro a cinque passi (dal 2026-11-25) */
+/* Camicia · Misure · Dati · Spedizione · Pagamento (src/configuratore/scheda.js). Senza script i passi si leggono uno
+   sotto l'altro, come un modulo solo; con lo script se ne vede uno alla volta. Sul vetro scuro: campi scuri con il
+   bordo chiaro, scelte a pillola, gli avvisi sotto i campi come negli altri moduli (stessa forma, colore per il blu). */
+
+.configura__scheda [hidden],
+.finestra [hidden] {
+  display: none !important;
+}
+
+.configura__scheda {
+  --tenue: rgba(251, 249, 244, 0.74);   /* le scritte secondarie: più di 4,5:1 sul vetro */
+  --riga: rgba(255, 255, 255, 0.12);
+  --fondo-campo: rgba(5, 15, 43, 0.38);
+  --bordo-campo: rgba(255, 255, 255, 0.3);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- in cima: «Passo n di 5» e i nomi dei passi, con una barra ciascuno */
+.tappe {
+  margin: 18px 0 0;
+}
+
+.tappe__conta {
+  margin: 0 0 4px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--tenue);
+}
+
+html:not(.js) .tappe__conta {
+  display: none;
+}
+
+.tappe__elenco {
+  display: grid;
+  grid-template-columns: repeat(5, auto);   /* ogni nome intero: le colonne prendono la sua misura e si spartiscono il resto */
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tappe__tasto {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-height: 44px;
+  padding: 8px 0 6px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tappe__barra {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(251, 249, 244, 0.18);
+}
+
+.tappe__barra::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--filo);
+  opacity: 0.5;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 420ms var(--morbido), opacity 200ms ease-out;
+}
+
+.tappe__tasto--fatto .tappe__barra::after {
+  transform: scaleX(1);
+}
+
+.tappe__tasto[aria-current="step"] .tappe__barra::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.tappe__nome {
+  overflow: hidden;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(251, 249, 244, 0.58);
+  transition: color 160ms ease-out;
+}
+
+.tappe__tasto--fatto .tappe__nome {
+  color: rgba(251, 249, 244, 0.86);
+}
+
+.tappe__tasto[aria-current="step"] .tappe__nome {
+  color: var(--filo);
+  font-weight: 600;
+}
+
+.tappe__tasto[aria-disabled="true"] {
+  cursor: default;
+}
+
+.tappe__tasto:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tappe__tasto--fatto:not([aria-current]):hover .tappe__nome {
+    color: var(--filo);
+  }
+}
+
+/* senza script i nomi portano ai passi, che stanno uno sotto l'altro: le barre restano tutte uguali */
+html:not(.js) .tappe__barra::after {
+  transform: scaleX(1);
+  opacity: 0.3;
+}
+
+/* --- un passo */
+.passo {
+  min-width: 0;
+}
+
+html:not(.js) .passo + .passo {
+  margin-top: 34px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.passo__titolo {
+  margin: 22px 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  outline: none;
+}
+
+.passo__testo {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgba(251, 249, 244, 0.84);
+  text-wrap: pretty;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .passo--entra {
+    animation: passo-entra 300ms var(--morbido) both;
+  }
+}
+
+.passo--da-sinistra {
+  --da: -14px;
+}
+
+@keyframes passo-entra {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--da, 14px), 0, 0);
+  }
+}
+
+/* --- le righe del passo Camicia: il nome a sinistra, la scelta a destra; i sotto-campi sotto, rientrati */
+.voci {
+  display: grid;
+  margin-top: 8px;
+}
+
+.voce {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 0;
+  border: 0;
+  border-top: 1px solid var(--riga);
+}
+
+.voci > .voce:first-child {
+  border-top: 0;
+}
+
+/* la legenda di un fieldset sta nella griglia come un'etichetta qualsiasi (con float non è più «la» legenda) */
+.voce__nome {
+  float: left;
+  grid-column: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.voce > *:not(.voce__nome) {
+  grid-column: 1 / -1;
+}
+
+/* le scelte corte stanno sulla riga del nome */
+.voce--quantita > .contatore,
+.voce--tendina > .tendina,
+.voce--sino > .pillole {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.voce__aiuto {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--tenue);
+}
+
+.voce__avviso {
+  justify-self: start;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(244, 187, 41, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(244, 187, 41, 0.34);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.voce__sotto {
+  display: grid;
+  margin: 2px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 1px solid rgba(251, 249, 244, 0.26);
+}
+
+.voce__sotto > .voce {
+  padding: 10px 0;
+  border-top: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voce__sotto:not([hidden]),
+  .indirizzo:not([hidden]),
+  .voce__avviso:not([hidden]) {
+    animation: avviso-entra 220ms var(--morbido);
+  }
+}
+
+/* gli avvisi sotto i campi: la stessa riga degli altri moduli (src/stili/sito.css), in un rosa chiaro che si legge
+   sul vetro blu */
+.configura__scheda .campo__errore {
+  color: #ffc9c0;
+}
+
+.configura__scheda .campo__forse {
+  color: rgba(251, 249, 244, 0.88);
+}
+
+.configura__scheda .campo__forse .campo__correggi {
+  background: var(--filo);
+}
+
+/* --- pillole a scelta singola (sì / no, standard / personalizzato, bottone, posizione) */
+.pillole {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--raggio-pillola);
+  background: rgba(5, 15, 43, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.pillole__voce {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+
+.pillole__voce input {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pillole__voce span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: var(--raggio-pillola);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  font-stretch: 115%;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgba(251, 249, 244, 0.8);
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 180ms ease-out, color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.pillole__voce input:checked + span {
+  background: var(--filo);
+  color: var(--blu);
+  box-shadow: 0 1px 3px rgba(5, 15, 43, 0.35);
+}
+
+.pillole__voce input:focus-visible + span {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pillole__voce input:not(:checked):hover + span {
+    color: var(--filo);
+    background: rgba(251, 249, 244, 0.08);
+  }
+}
+
+.pillole--larghe {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  border-radius: 14px;
+}
+
+.pillole--larghe .pillole__voce span {
+  padding: 4px 6px;
+  border-radius: 12px;
+}
+
+.voce[aria-invalid="true"] > .pillole {
+  box-shadow: inset 0 0 0 1px #ffb4a8;
+}
+
+/* --- quantità: − numero + */
+.contatore {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--raggio-pillola);
+  background: rgba(5, 15, 43, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  transition: box-shadow 150ms ease-out;
+}
+
+.contatore:focus-within {
+  box-shadow: inset 0 0 0 1px var(--filo), 0 0 0 3px rgba(251, 249, 244, 0.24);
+}
+
+.contatore__tasto {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--filo);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms ease-out, opacity 150ms ease-out, transform 120ms var(--morbido);
+}
+
+.contatore__tasto .icona {
+  width: 16px;
+  height: 16px;
+}
+
+.contatore__tasto:active:not([disabled]) {
+  transform: scale(0.92);
+}
+
+.contatore__tasto[disabled] {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.contatore__tasto:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .contatore__tasto:not([disabled]):hover {
+    background: rgba(251, 249, 244, 0.1);
+  }
+}
+
+.contatore__numero {
+  width: 4ch;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--filo);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+}
+
+.contatore__numero[aria-invalid="true"] {
+  color: #ffc9c0;
+}
+
+html:not(.js) .contatore__tasto {
+  display: none;
+}
+
+html:not(.js) .contatore__numero {
+  width: 8ch;
+}
+
+/* --- menu a tendina (collo; senza script anche tessuti e colori) */
+.tendina {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.voce--tendina > .tendina {
+  width: min(230px, 56vw);
+}
+
+.tendina select {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--bordo-campo);
+  border-radius: 10px;
+  background: var(--fondo-campo);
+  color: var(--filo);
+  font: inherit;
+  font-size: 1rem;              /* 16 px: il telefono non ingrandisce la pagina quando si tocca il campo */
+  text-overflow: ellipsis;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.tendina select option,
+.tendina select optgroup {
+  background: var(--bianco);
+  color: var(--blu);
+}
+
+.tendina .icona {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.tendina select:focus-visible {
+  outline: none;
+  border-color: var(--filo);
+  box-shadow: 0 0 0 3px rgba(251, 249, 244, 0.28);
+}
+
+/* --- il tasto che apre i tessuti o i colori: campione, nome, «Cambia» */
+.scegli {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+html:not(.js) .scegli {
+  display: none;
+}
+
+.scegli__tasto {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 58px;
+  margin: 0;
+  padding: 8px 14px 8px 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  background: rgba(5, 15, 43, 0.22);
+  color: var(--filo);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out, transform 140ms var(--morbido);
+}
+
+.scegli--fatto .scegli__tasto {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.24);
+  background: var(--fondo-campo);
+}
+
+.scegli__tasto:active {
+  transform: scale(0.985);
+}
+
+.scegli__tasto:focus-visible {
+  outline: none;
+  border-color: var(--filo);
+  box-shadow: 0 0 0 3px rgba(251, 249, 244, 0.28);
+}
+
+.scegli__tasto[aria-invalid="true"] {
+  border-color: #ffb4a8;
+  border-style: solid;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scegli__tasto:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(5, 15, 43, 0.48);
+  }
+}
+
+.scegli__campione {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 62px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(251, 249, 244, 0.08);
+}
+
+/* un filo chiaro intorno al campione: i tessuti scuri non si perdono nel vetro */
+.scegli__campione::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+
+.scegli__campione img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scegli__campione .icona {
+  width: 16px;
+  height: 16px;
+}
+
+.scegli[data-scegli="colore"] .scegli__campione {
+  width: 42px;
+  border-radius: 50%;
+}
+
+.scegli__tinta {
+  width: 100%;
+  height: 100%;
+  background: var(--tinta);
+}
+
+.scegli__testo {
+  display: -webkit-box;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.scegli__cambia {
+  flex: none;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-decoration: underline;
+  text-transform: uppercase;
+  text-underline-offset: 3px;
+  color: rgba(251, 249, 244, 0.86);
+}
+
+.scegli__togli {
+  flex: none;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--tenue);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.scegli__togli:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* --- caselle di testo scure (iniziali) e i campi dei dati e dell'indirizzo, come quelli delle misure */
+.casella-scura input,
+.misura__casella input {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.casella-scura {
+  display: block;
+}
+
+.casella-scura input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--bordo-campo);
+  border-radius: 10px;
+  background: var(--fondo-campo);
+  color: var(--filo);
+  font: inherit;
+  font-size: 1rem;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.casella-scura--lettere input {
+  width: 7.5em;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.casella-scura input:focus {
+  outline: none;
+  border-color: var(--filo);
+  box-shadow: 0 0 0 3px rgba(251, 249, 244, 0.32);
+}
+
+.casella-scura input[aria-invalid="true"] {
+  border-color: #ffb4a8;
+  box-shadow: 0 0 0 1px #ffb4a8;
+}
+
+.misura__casella input::placeholder {
+  color: rgba(251, 249, 244, 0.5);
+}
+
+/* i dati: un campo per riga; l'indirizzo: CAP e città sulla stessa riga */
+.passo[data-passo="dati"] .configura__campi,
+.indirizzo .configura__campi {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.passo[data-passo="dati"] .misura,
+.indirizzo .misura--larga {
+  grid-column: 1 / -1;
+}
+
+.indirizzo .misura--stretta {
+  grid-column: span 2;
+}
+
+.indirizzo .misura--citta {
+  grid-column: span 4;
+}
+
+/* --- spedizione: tre scelte grandi, con il prezzo */
+.voce--modi {
+  border-top: 0;
+}
+
+.modi {
+  display: grid;
+  gap: 10px;
+}
+
+.modo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 66px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(5, 15, 43, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 160ms ease-out, box-shadow 160ms ease-out, transform 140ms var(--morbido);
+}
+
+.modo:active {
+  transform: scale(0.99);
+}
+
+.modo input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(251, 249, 244, 0.6);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: box-shadow 160ms var(--morbido);
+}
+
+.modo input:checked {
+  box-shadow: inset 0 0 0 6px var(--filo);
+}
+
+.modo:has(input:checked) {
+  background: rgba(251, 249, 244, 0.12);
+  box-shadow: inset 0 0 0 1.5px var(--filo);
+}
+
+.modo:has(input:focus-visible) {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .modo:not(:has(input:checked)):hover {
+    background: rgba(5, 15, 43, 0.46);
+  }
+}
+
+.modo__testo {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+
+.modo__nome {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.modo__dettaglio {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--tenue);
+}
+
+.modo__prezzo {
+  flex: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.modo__prezzo--gratis {
+  color: #c9f2d4;
+}
+
+.voce[aria-invalid="true"] .modo {
+  box-shadow: inset 0 0 0 1px #ffb4a8;
+}
+
+.modi__nota {
+  margin-top: 2px;
+}
+
+.indirizzo {
+  min-width: 0;
+  margin: 8px 0 0;
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--riga);
+}
+
+.indirizzo__titolo {
+  float: left;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.indirizzo > .voce__aiuto {
+  clear: both;
+}
+
+/* --- pagamento: il riepilogo, i conti, il consenso */
+.riepilogo {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+html:not(.js) .riepilogo,
+html:not(.js) .conti {
+  display: none;
+}
+
+.riepilogo__parte {
+  padding: 12px 16px 14px;
+  border-radius: 14px;
+  background: rgba(5, 15, 43, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
+}
+
+.riepilogo__testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.riepilogo__titolo {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.riepilogo__modifica {
+  min-height: 44px;
+  margin: -10px -6px -10px 0;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.riepilogo__modifica:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 0;
+  border-radius: 6px;
+}
+
+.riepilogo__righe {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.riepilogo__riga {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 12px;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.riepilogo__riga dt {
+  color: var(--tenue);
+}
+
+.riepilogo__riga dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.riepilogo__parte--misure .riepilogo__righe {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 20px;
+}
+
+.riepilogo__parte--misure .riepilogo__riga {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.conti {
+  margin-top: 12px;
+  padding: 4px 16px;
+  border-radius: 14px;
+  background: rgba(251, 249, 244, 0.08);
+}
+
+.conti__righe {
+  margin: 0;
+}
+
+.conti__riga {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  font-size: 0.875rem;
+  border-top: 1px solid var(--riga);
+}
+
+.conti__riga:first-child {
+  border-top: 0;
+}
+
+.conti__riga dt {
+  color: var(--tenue);
+}
+
+.conti__riga dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.conti__riga--totale {
+  padding: 12px 0;
+  border-top-color: rgba(255, 255, 255, 0.24);
+}
+
+.conti__riga--totale dt {
+  color: var(--filo);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.conti__riga--totale dd {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.configura__consenso {
+  margin-top: 18px;
+}
+
+.configura__scheda .consenso {
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.8125rem;
+}
+
+.configura__scheda .consenso input {
+  width: 22px;
+  height: 22px;
+  margin: -1px 0 0;
+  accent-color: var(--filo);
+}
+
+.configura__scheda .consenso a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.configura__antispam {
+  margin-top: 14px;
+}
+
+.passo__invia {
+  margin-top: 18px;
+}
+
+.js .passo__invia {
+  display: none;
+}
+
+.passo__invia .pillola,
+.configura__grazie .pillola {
+  width: 100%;
+  justify-content: center;
+}
+
+.configura__nota-paga {
+  margin: 12px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--tenue);
+}
+
+.configura__esito {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(251, 249, 244, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.configura__esito:empty {
+  display: none;
+}
+
+/* --- in fondo: il prezzo, sempre in vista, e i tasti. Resta attaccato al fondo dello schermo finché il riquadro
+   continua sotto: «Continua» e il totale non si perdono mai, nemmeno in un passo lungo */
+html:not(.js) .configura__fondo {
+  display: none;
+}
+
+.configura__fondo {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 14px;
+  margin: 24px calc(-1 * var(--dentro)) 0;
+  padding: 14px var(--dentro) calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0 0 var(--raggio-scheda) var(--raggio-scheda);
+  background: rgb(9, 23, 62);
+  box-shadow: 0 -12px 24px rgba(4, 16, 54, 0.35);
+}
+
+.conto {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.conto__camicia {
+  font-size: 0.75rem;
+  color: var(--tenue);
+  white-space: nowrap;
+}
+
+.conto__totale {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.conto__etichetta {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.conto__totale strong {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.configura__tasti {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* «Indietro» è una freccia (il nome resta per chi usa un lettore di schermo): accanto al prezzo e a «Continua» non
+   c'è posto per la parola senza andare a capo */
+.configura__indietro {
+  width: 45px;
+  padding: 0;
+}
+
+.configura__indietro span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.icona--indietro {
+  width: 14px;
+  height: 14px;
+  transform: rotate(90deg);
+}
+
+.configura__avanti {
+  min-width: 148px;
+  padding: 0 28px;
+}
+
+.configura__avanti[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* --- il grazie, tornando da Stripe */
+.configura__grazie {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding: 8px 0 30px;
+}
+
+.configura__grazie-segno {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-top: 22px;
+  border-radius: 50%;
+  background: var(--filo);
+  color: var(--blu);
+}
+
+.configura__grazie-segno .icona {
+  width: 22px;
+  height: 22px;
+}
+
+.configura__grazie .passo__titolo {
+  margin-top: 14px;
+}
+
+.configura__grazie .pillola {
+  margin-top: 18px;
+}
+
+/* ------------------------------------------------------------------ finestre dei tessuti e dei colori */
+/* Lo stesso vetro della finestra «Come prendere le misure». In alto il titolo (con il campo per cui si sceglie), la
+   ricerca e i filtri; in mezzo la griglia dei campioni, che scorre; in fondo la scelta fatta e il tasto che conferma.
+   Sul telefono a tutto schermo, con i filtri dietro un tasto. */
+.finestra--grande {
+  width: min(1000px, calc(100% - 2 * var(--margine)));
+  height: min(820px, calc(100% - 32px));
+}
+
+.finestra--colori {
+  width: min(640px, calc(100% - 2 * var(--margine)));
+}
+
+.raccolta {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: calc(100svh - 32px);
+  padding: 0;
+  overflow: hidden;
+}
+
+.raccolta__testa {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 14px;
+}
+
+.raccolta__per {
+  margin: 0 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(251, 249, 244, 0.74);
+}
+
+.raccolta__per:empty {
+  display: none;
+}
+
+.finestra__chiudi .icona {
+  width: 14px;
+  height: 14px;
+}
+
+.raccolta__cerca {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px;
+}
+
+.cerca {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+.cerca .icona {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.cerca input {
+  width: 100%;
+  height: 46px;
+  margin: 0;
+  padding: 0 16px 0 42px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: var(--raggio-pillola);
+  background: rgba(5, 15, 43, 0.42);
+  color: var(--filo);
+  font: inherit;
+  font-size: 1rem;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.cerca input::placeholder {
+  color: rgba(251, 249, 244, 0.62);
+}
+
+.cerca input:focus {
+  outline: none;
+  border-color: var(--filo);
+  box-shadow: 0 0 0 3px rgba(251, 249, 244, 0.26);
+}
+
+.raccolta__mostra-filtri {
+  display: none;
+  flex: none;
+  gap: 8px;
+  height: 46px;
+  padding: 0 16px;
+}
+
+.raccolta__mostra-filtri .icona {
+  width: 16px;
+  height: 16px;
+}
+
+.raccolta__quanti-filtri {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--filo);
+  color: var(--blu);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.raccolta__filtri {
+  display: grid;
+  gap: 10px;
+  padding: 14px 24px 2px;
+}
+
+.filtro {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.filtro__nome {
+  padding-top: 10px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(251, 249, 244, 0.74);
+}
+
+.filtro__voci {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-scelta {
+  position: relative;
+  display: inline-grid;
+}
+
+/* il bersaglio sporge sopra e sotto il chip: 44 punti per il dito */
+.chip-scelta input {
+  position: absolute;
+  inset: -4px 0;
+  width: 100%;
+  height: calc(100% + 8px);
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip-scelta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--raggio-pillola);
+  background: rgba(251, 249, 244, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  color: rgba(251, 249, 244, 0.9);
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.chip-scelta input:checked + span {
+  background: var(--filo);
+  color: var(--blu);
+  box-shadow: none;
+}
+
+.chip-scelta input:focus-visible + span {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip-scelta input:not(:checked):hover + span {
+    background: rgba(251, 249, 244, 0.14);
+  }
+}
+
+.chip-scelta__pallino {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--tinta);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.34);
+}
+
+.raccolta__stato {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 4px 24px;
+}
+
+.raccolta__conta {
+  margin: 0;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(251, 249, 244, 0.76);
+}
+
+.raccolta__azzera {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.raccolta__scorre {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 24px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.raccolta__griglia--tessuti {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+  gap: 12px;
+}
+
+.campione {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 14px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.campione__foto {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 320 / 214;
+  border-radius: 9px;
+  background: rgba(251, 249, 244, 0.07);
+}
+
+.campione__foto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.campione__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.campione__nome {
+  display: -webkit-box;
+  overflow: hidden;
+  padding: 0 2px 2px;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.campione__spunta,
+.tinta .icona {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 5px;
+  border-radius: 50%;
+  background: var(--filo);
+  color: var(--blu);
+  box-shadow: 0 2px 6px rgba(5, 15, 43, 0.35);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 160ms ease-out, transform 220ms var(--morbido);
+}
+
+.campione__spunta {
+  top: 12px;
+  right: 12px;
+}
+
+.campione[aria-selected="true"],
+.tinta[aria-selected="true"] {
+  background: rgba(251, 249, 244, 0.13);
+  box-shadow: inset 0 0 0 2px var(--filo);
+}
+
+.campione[aria-selected="true"] .campione__spunta,
+.tinta[aria-selected="true"] .icona {
+  opacity: 1;
+  transform: none;
+}
+
+.campione:focus-visible,
+.tinta:focus-visible {
+  outline: 2px solid var(--filo);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .campione:not([aria-selected="true"]):hover,
+  .tinta:not([aria-selected="true"]):hover {
+    background: rgba(251, 249, 244, 0.07);
+  }
+}
+
+.raccolta__nessuno {
+  margin: 0;
+  padding: 48px 0;
+  text-align: center;
+  font-size: 0.9375rem;
+  color: rgba(251, 249, 244, 0.8);
+}
+
+.raccolta__griglia--colori {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+}
+
+.tinta {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.tinta__pallino {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--tinta);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.tinta .icona {
+  top: -4px;
+  right: -8px;
+}
+
+.tinta__nome {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.raccolta__piede {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 24px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(5, 15, 43, 0.35);
+}
+
+.raccolta__scelto {
+  min-width: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  color: rgba(251, 249, 244, 0.72);
+}
+
+.raccolta__scelto--fatto {
+  color: var(--filo);
+  font-weight: 500;
+}
+
+.raccolta__piede .pillola {
+  flex: none;
+}
+
+.raccolta__piede .pillola[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* sul telefono: a tutto schermo, i filtri dietro il tasto «Filtri», due campioni per riga */
+@media (max-width: 700px) {
+  .finestra--grande,
+  .finestra--colori {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+  }
+
+  .finestra--grande .raccolta,
+  .finestra--colori .raccolta {
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    background: rgba(10, 27, 69, 0.94);
+  }
+
+  .raccolta__testa {
+    padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+  }
+
+  .finestra__chiudi-testo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .raccolta .finestra__chiudi {
+    width: 45px;
+    padding: 0;
+  }
+
+  .raccolta__cerca {
+    padding: 0 16px;
+  }
+
+  .raccolta__mostra-filtri {
+    display: inline-flex;
+  }
+
+  .raccolta__filtri {
+    display: none;
+    max-height: 42svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 16px 2px;
+  }
+
+  .finestra--filtri-aperti .raccolta__filtri {
+    display: grid;
+  }
+
+  .filtro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .filtro__nome {
+    padding-top: 0;
+  }
+
+  .raccolta__stato {
+    padding: 2px 16px;
+  }
+
+  .raccolta__scorre {
+    padding: 12px 10px 18px;
+  }
+
+  .raccolta__griglia--tessuti {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .raccolta__griglia--colori {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  }
+
+  .raccolta__piede {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .raccolta__piede .pillola--grande {
+    padding: 0 22px;
+  }
+}
+
+/* ------------------------------------------------------------------ il riquadro sul telefono */
+@media (max-width: 480px) {
+  /* le barre dei passi senza nome: il titolo del passo, subito sotto, dice dove si è */
+  .tappe__nome {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  /* la barra è sottile, il bersaglio no: 44 punti per il dito */
+  .tappe__tasto {
+    padding: 18px 0 23px;
+  }
+
+  .tappe__conta {
+    margin-bottom: -6px;
+  }
+
+  .passo__titolo {
+    margin-top: 6px;
+  }
+
+  .voce--standard > .pillole {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .configura__avanti {
+    min-width: 0;
+    padding: 0 26px;
+  }
+
+  /* tre scelte larghe su una riga: «Personalizzato» deve starci intero */
+  .pillole--larghe .pillole__voce span {
+    padding: 4px 4px;
+    font-size: 0.625rem;
+    font-stretch: 100%;
+    letter-spacing: 0.01em;
+  }
+
+  .riepilogo__parte--misure .riepilogo__righe {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tappe__barra::after,
+  .pillole__voce span,
+  .modo,
+  .modo input,
+  .campione,
+  .campione__spunta,
+  .tinta .icona {
+    transition: none;
+  }
+}
+
+/* un campo che riceve il fuoco (Tab, il tastierino del telefono) si porta in vista sopra il fondo con i tasti e sotto
+   la testata, non dietro */
+.configura__scheda :is(input, select, button, textarea, a) {
+  scroll-margin: 96px 0 130px;
 }

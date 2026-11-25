@@ -845,27 +845,6 @@ function modulo(form) {
   });
 }
 
-// ---------------------------------------------------------------- misure del configuratore
-// Il riquadro del configuratore per ora non invia nulla (data-non-invia). Qui si controlla solo che ogni misura
-// sia un numero positivo dentro i suoi limiti (data-min, data-max), con la virgola o con il punto.
-function misure(form) {
-  form.addEventListener('submit', (e) => e.preventDefault());
-  form.querySelectorAll('input[data-min]').forEach((campo) => {
-    const errore = document.getElementById(campo.id + '-errore');
-    const controlla = (mostra) => {
-      const v = campo.value.trim();
-      const n = Number(v.replace(',', '.'));
-      const buono = !v || (/^\d{1,3}([.,]\d{1,2})?$/.test(v) && n >= +campo.dataset.min && n <= +campo.dataset.max);
-      campo.setCustomValidity(buono ? '' : campo.dataset.errore);
-      if (buono) { campo.removeAttribute('aria-invalid'); if (errore) errore.textContent = ''; }
-      else if (mostra) { campo.setAttribute('aria-invalid', 'true'); if (errore) errore.textContent = campo.dataset.errore; }
-    };
-    // mentre si scrive si toglie l'errore appena il numero torna buono; si segnala solo uscendo dal campo
-    campo.addEventListener('input', () => controlla(campo.hasAttribute('aria-invalid')));
-    campo.addEventListener('change', () => controlla(true));
-  });
-}
-
 // ---------------------------------------------------------------- lookbook: filtro e foto a tutto schermo
 // Senza script la pagina della collezione ha già tutto: i tasti del filtro portano alle quattro parti e ogni foto è
 // un link alla sua versione grande. Qui il filtro lascia in vista un tipo solo, e toccando una foto si apre il visore:
@@ -1252,5 +1231,5 @@ avvia('video', videoEroe);
 avvia('interesse', interesse);
 avvia('comparse', comparse);
 avvia('carosello', () => document.querySelectorAll('[data-carosello]').forEach(carosello));
-avvia('modulo', () => document.querySelectorAll('[data-modulo]:not([data-non-invia])').forEach(modulo));
-avvia('misure', () => document.querySelectorAll('[data-modulo][data-non-invia]').forEach(misure));
+// il riquadro del configuratore ha i suoi passi e il suo invio (src/configuratore/scheda.js)
+avvia('modulo', () => document.querySelectorAll('[data-modulo]:not([data-configuratore])').forEach(modulo));
