@@ -13,7 +13,8 @@ const fs = require('fs');
 
 const base = (process.argv[2] || 'http://127.0.0.1:8766').replace(/\/$/, '');
 const schermate = process.argv[3] || '';
-const PAGINA = base + '/camicie-su-misura/configuratore/';
+// i campi di misura stanno nel secondo passo del riquadro: ?passo=misure lo apre subito (e con lui la finestra dei passi)
+const PAGINA = base + '/camicie-su-misura/configuratore/?passo=misure';
 let passati = 0;
 const falliti = [];
 function controlla(nome, vero, dettaglio = '') {
@@ -45,7 +46,7 @@ const FORMATI = [
   };
   // ci sono le linee e il retro? (se il build non li ha trovati, le «i» mostrano solo la frase)
   const sonda = await nuovo();
-  await sonda.page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+  await sonda.page.goto(PAGINA + '&senza-passi', { waitUntil: 'domcontentloaded' });
   const dati = await sonda.page.evaluate(() => { const p = document.querySelector('.configura__palco').dataset; return { guide: !!p.guide, dietro: !!p.dietro, giro: !!p.giro }; });
   await sonda.contesto.close();
   console.log(`linee ${dati.guide ? 'presenti' : 'ASSENTI'}, retro ${dati.dietro ? 'presente' : 'ASSENTE'}, giro ${dati.giro ? 'presente' : 'ASSENTE'}`);
@@ -120,7 +121,7 @@ const FORMATI = [
   }, m);
   for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'palco')) {
     const a = await nuovo(opzioni), { page } = a;
-    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '&senza-passi', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(400);
     const cc = await page.evaluate(() => ({ campi: [...document.querySelectorAll('.misura[data-guida]')].map((m) => m.dataset.guida), info: document.querySelectorAll('.misura__info, #guida-finestra').length }));
@@ -184,7 +185,7 @@ const FORMATI = [
     const scale = {};
     for (const v of ['a', 'b', 'c', '']) {
       const a = await nuovo(), { page } = a;
-      await page.goto(PAGINA + `?senza-passi${v ? '&zoom=' + v : ''}`, { waitUntil: 'networkidle' });
+      await page.goto(PAGINA + `&senza-passi${v ? '&zoom=' + v : ''}`, { waitUntil: 'networkidle' });
       await page.click('#campo-polso');
       await page.waitForTimeout(2300);
       const z = await page.evaluate(() => document.querySelector('.configura__palco').style.getPropertyValue('--zoom'));
@@ -197,7 +198,7 @@ const FORMATI = [
     // il campo aperto prima che arrivino i pezzi della camicia: quando arrivano, la camicia non saluta né segue la mano
     const a = await nuovo(), { page } = a;
     await page.route(/\/camicia\/leggera\/.*\.webp/, async (r) => { await new Promise((f) => setTimeout(f, 3500)); await r.continue(); });
-    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+    await page.goto(PAGINA + '&senza-passi', { waitUntil: 'domcontentloaded' });
     await page.click('#campo-torace');
     await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 20000 }).catch(() => {});
     const mossa = () => page.evaluate(() => [...document.querySelectorAll('.configura__strati img')].some((x) => x.style.transform && x.style.transform !== 'none'));
@@ -212,7 +213,7 @@ const FORMATI = [
     // la camicia da dietro che non arriva: il campo dopo fa il suo zoom lo stesso, uscendo la camicia risponde
     const a = await nuovo(), { page } = a;
     await page.route(/\/camicia\/retro\/dietro.*\.webp/, async (r) => { await new Promise((f) => setTimeout(f, 15000)); await r.continue().catch(() => {}); });
-    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+    await page.goto(PAGINA + '&senza-passi', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 15000 }).catch(() => {});
     await page.click('#campo-spalla');
     await page.waitForTimeout(1500);
@@ -233,7 +234,7 @@ const FORMATI = [
     // da Spalla a una misura davanti mentre il retro si sta ancora scaricando: la camicia non deve girarsi dopo
     const a = await nuovo(), { page } = a;
     await page.route(/\/camicia\/retro\/dietro.*\.webp/, async (r) => { await new Promise((f) => setTimeout(f, 2000)); await r.continue().catch(() => {}); });
-    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'domcontentloaded' });
+    await page.goto(PAGINA + '&senza-passi', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => 'viva' in (document.querySelector('.configura__palco')?.dataset || {}), null, { timeout: 15000 }).catch(() => {});
     await page.click('#campo-spalla');
     await page.waitForTimeout(700);
@@ -253,7 +254,7 @@ const FORMATI = [
   {
     // aperta col tablet in verticale e poi girato: lo zoom usa la camicia nitida lo stesso
     const a = await nuovo({ viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }), { page } = a;
-    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '&senza-passi', { waitUntil: 'networkidle' });
     await page.waitForTimeout(3500);
     await page.setViewportSize({ width: 1180, height: 820 });
     await page.waitForTimeout(1500);
@@ -275,7 +276,7 @@ const FORMATI = [
   console.log('Telefono e tablet: il riquadro con lo zoom sopra il campo');
   for (const [nome, opzioni] of FORMATI.filter((f) => f[2] === 'finestra')) {
     const a = await nuovo(opzioni), { page } = a;
-    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    await page.goto(PAGINA + '&senza-passi', { waitUntil: 'networkidle' });
     await page.waitForTimeout(600);
     for (const misura of MISURE) {
       await tocca(page, `#campo-${misura}`);
