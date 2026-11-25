@@ -541,3 +541,37 @@ Non fatto, e perché: le coordinate della sede nei dati (non le abbiamo conferma
 5. Il film dell'apertura pesa 10 MB anche sul telefono. È una scelta approvata e in prova la pagina resta veloce a comparire, ma su una rete lenta il caricamento dura: se dopo la messa online i dati di Google lo segnalano, serve una versione più leggera per il telefono.
 6. La pagina dei rivenditori divisa in due (ingrosso, conto terzi) quando ci saranno contenuti per riempirle.
 7. La versione inglese, già predisposta nella struttura.
+
+## 16. Configuratore a passi (dal 25 novembre 2026)
+
+Parole del proprietario (25 novembre, sera): «Dividi così la configurazione a step: Configurazione prodotto, misure, dati clienti, dati spedizione e pagamento. Divisi a step in modo chiaro», con l'elenco delle opzioni, dei prezzi e della spedizione. Qui c'è come si costruisce; ciò che abbiamo interpretato è segnato **(da confermare)**.
+
+**I cinque passi.** Camicia · Misure · Dati · Spedizione · Pagamento, nel riquadro in vetro accanto alla camicia. Uno alla volta, con in cima «Passo 2 di 5» e i nomi dei passi; «Continua» controlla solo il passo in cui si è e porta il primo campo sbagliato in vista, «Indietro» non perde nulla; i passi già fatti si riaprono dal loro nome. Ciò che si è scritto resta se si ricarica la pagina (sessionStorage, mai i dati oltre la scheda del browser). Senza script i cinque passi si leggono uno sotto l'altro, come un modulo solo. Testi, opzioni e prezzi: `contenuti/it/configuratore.json`. Regole (cosa manca, quanto costa): `src/configuratore/ordine.mjs`, le stesse in pagina e nel Worker.
+
+**Passo Camicia**, nell'ordine dato da lui:
+
+| Campo | Come si sceglie | Sulla camicia |
+| --- | --- | --- |
+| Quantità | per prima, parte da 1 | |
+| Tessuto | una finestra con i campioni (filtri per tipo, colore, disegno, ricerca per nome) | |
+| Collo | menu a tendina: Italiano, Francese, Mezzo francese, Small, Button down, Coreano, Diplomatico, Club | il collo cambia; zoom ed evidenza sul collo |
+| Taschino | sì / no; se sì, il suo tessuto dalla stessa finestra | compare il taschino; zoom ed evidenza |
+| Asola colorata | sì / no; se sì, un colore da una griglia | |
+| Bottone | Tinta su tinta, Contrasto, Personalizzato («Ordine minimo: 100 pezzi») | zoom ed evidenza sui bottoni |
+| Filato bottone | un colore dalla griglia (facoltativo) | «Non cambia 3d» |
+| Iniziali | sì / no; se sì posizione (polso, collo, lato cuore) e al più 3 lettere | le lettere compaiono nel punto scelto |
+| Interno collo, Interno polso, Polsino | standard / personalizzato; se personalizzato, il suo tessuto | zoom ed evidenza sulla parte |
+
+«Colori ricamo carré» è tolto («Elimina per ora»). Note, fintone bottoni e carré, che stavano nel foglio di carta, non li ha nominati: non ci sono **(da confermare)**. «Asola» in pagina si chiama «Asola colorata» **(da confermare)**. La griglia dei colori del filo (21 colori) è nostra **(da confermare)**. Bottone personalizzato sotto i 100 pezzi: «Continua» si ferma con l'avviso **(da confermare)**.
+
+**Tessuti.** Le 32 foto della cartella Drive «Tessuto» sono cartelle colori: circa 450 campioni. Ogni campione è un tessuto: ritaglio in `public/camicia/tessuti/<id>.webp`, elenco in `contenuti/it/tessuti.json` con il nome inventato da noi («tipologia tessuto + nome colore», parole sue), tipo, colore e disegno per i filtri. Il nome vero (articolo e codice della cartella colori) non sta nel repository né nel sito: sta nella configurazione riservata su Cloudflare (archivio KV `endero-domande`, voce `riservato/tessuti`) e compare solo nell'email dell'ordine «ad Endero e ad Ennio». Strumento: `tools/tessuti.py`.
+
+**La camicia che cambia** (`src/configuratore/vesti.js`, file in `public/camicia/opzioni/`, calcolati con `camicia/opzioni/`). Il riquadro avvisa a ogni scelta con `endero:camicia` (`{ collo, taschino, iniziali }`); vesti.js sovrappone alla camicia i pezzi giusti: il collo scelto e il taschino sono ritagli calcolati con Blender sulla stessa scena (stessa luce: sovrapposti non si vedono giunte), le iniziali sono lettere disegnate nel punto scelto. I pezzi stanno su tutti i livelli della camicia: l'immagine ferma, i pezzi che dondolano (anche con il tessuto che ondeggia), la camicia nitida dello zoom, il riquadro con lo zoom del telefono. L'evidenza di una parte usa la guida alle misure (`guida.js`): un campo con `data-parte="collo"` si comporta come un campo di misura, con il contorno tratteggiato blu della parte (`parti` in `opzioni.json`, stessa forma delle misure in `guide.json`). Il tessuto scelto non cambia la camicia: non l'ha chiesto **(da proporgli)**.
+
+**Prezzo** (parole sue): 90 euro la camicia base, 100 con una personalizzazione, 120 con tre, 150 con tutte. Le personalizzazioni sono otto: taschino, asola colorata, bottone non tinta su tinta, filato bottone, iniziali, interno collo, interno polso, polsino **(da confermare)**; con due si paga 100, da tre a sette 120 **(da confermare)**. Il prezzo si vede mentre si configura e lo rifà il Worker.
+
+**Spedizione** (parole sue): ritiro in laboratorio, oppure spedizione in 5 giorni lavorativi a 15 euro, oppure in 7 giorni lavorativi a 30 euro; gratis sopra i 200 euro di spesa. Gli importi sono come li ha scritti: la più lenta costa di più **(da confermare: forse sono invertiti)**. «Sopra i 200» vale da 201 **(da confermare)**. Indirizzo solo in Italia, con CAP e sigla della provincia **(da confermare)**; l'indirizzo del laboratorio è tra `[[ ]]` finché non lo conferma.
+
+**Pagamento e ordine.** Riepilogo, consenso all'informativa, «Vai al pagamento». Decisioni del 14 novembre: Stripe, importo intero, pagina di pagamento di Stripe. Il Worker (`worker/ordine.mjs`) ricontrolla tutto, rifà il prezzo, calcola la taglia (`worker/taglie.mjs`), salva l'ordine e apre il pagamento; a pagamento fatto manda l'ordine per email a Endero e a Ennio (con il nome vero di ogni tessuto) e la conferma al cliente. Finché non ci sono le chiavi di Stripe il pagamento è spento e la pagina lo dice. Prima di accenderlo: informativa privacy aggiornata e riletta dal consulente (punto 6), indirizzo email di Ennio nei segreti del Worker.
+
+**Misure.** Come al punto 12. La finestra «Come prendere le misure» si apre entrando nel passo delle misure, non più all'apertura della pagina **(da confermare)**.
