@@ -10,26 +10,29 @@
     "caratteri": "Usa solo cifre, spazi e il + davanti.",
     "corto": "Il numero sembra incompleto: controlla le cifre.",
     "lungo": "Il numero ha troppe cifre: controllalo.",
-    "estero": "Per un numero straniero metti il prefisso, per esempio +44."
+    "estero": "Per un numero straniero metti il prefisso, per esempio +44.",
+    "prefisso": "Controlla il prefisso: per esempio +39 per l'Italia, +44 per il Regno Unito.",
+    "speciale": "Lascia un numero di cellulare o di casa."
   },
   "email": {
     "vuota": "Scrivi la tua email.",
     "formato": "Controlla l'email: deve essere come nome@esempio.it.",
     "forse": "Forse intendevi {email}?",
-    "correggi": "Correggi"
+    "correggi": "Correggi",
+    "controlla": "Controlla l'email: forse c'è un errore di battitura. Se è giusta, premi di nuovo invia."
   },
   "citta": {
     "vuota": "Scrivi la città.",
-    "caratteri": "Usa solo lettere: niente numeri."
+    "caratteri": "Usa solo lettere: niente numeri o simboli."
   },
   "nazione": {
     "vuota": "Scrivi il Paese.",
-    "caratteri": "Usa solo lettere: niente numeri."
+    "caratteri": "Usa solo lettere: niente numeri o simboli."
   },
   "partita_iva": {
     "cifre": "La partita IVA italiana ha 11 cifre.",
     "sbagliata": "Controlla la partita IVA: una cifra non torna.",
-    "estera": "Scrivi il numero di partita IVA (VAT) senza spazi."
+    "estera": "Controlla il numero di partita IVA (VAT)."
   },
   "profilo": {
     "formato": "Scrivi il sito (per esempio negozio.it) o il nome Instagram (per esempio @negozio)."
@@ -37,7 +40,11 @@
   "messaggio": {
     "vuoto": "Scrivi il tuo messaggio."
   },
+  "giorno": {
+    "passato": "Scegli un giorno da oggi in poi."
+  },
   "scelta": "Scegli almeno una voce.",
   "privacy": "Per inviare serve il consenso all'informativa privacy.",
-  "riepilogo": "Controlla i campi segnati in rosso."
+  "riepilogo": "Controlla i campi segnati in rosso.",
+  "antispam": "La verifica antispam non è ancora pronta: riprova tra qualche secondo, oppure scrivici su WhatsApp."
 }

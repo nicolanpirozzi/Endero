@@ -12,7 +12,8 @@ import { destinazione } from './reindirizzamenti.mjs';
 const manifest = JSON.parse(manifestJSON);
 
 function durata(percorso) {
-  if (percorso.startsWith('/risorse/') || percorso.startsWith('/font/')) return 'public, max-age=31536000, immutable';
+  // le immagini delle email hanno la versione nel nome e non cambiano più (tools/immagini-email.js)
+  if (['/risorse/', '/font/', '/email/'].some((c) => percorso.startsWith(c))) return 'public, max-age=31536000, immutable';
   if (['/film/', '/camicia/', '/foto/', '/video/'].some((c) => percorso.startsWith(c))) return 'public, max-age=604800';
   return 'no-cache';
 }

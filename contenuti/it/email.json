@@ -1,5 +1,5 @@
 {
-  "_nota": "Le email dei moduli (proprietario, 2026-11-24): a Endero arriva ogni richiesta del sito (messaggio, presa misure, rivenditore); chi l'ha mandata riceve una conferma breve, se ha lasciato l'email. Il configuratore no: resta spento finché non c'è il pagamento con Stripe (scelta sua). Aspetto (proprietario, 2026-11-25): in cima una foto con il logo, una per tipo di richiesta (tools/immagini-email.js); tasti invece dei numeri («invece di mettere il numero WA inserisci un tasto che ha il link che porta direttamente a WA»); a Endero i tasti per rispondere al cliente, al cliente il riepilogo di ciò che ha mandato e un rimando al sito, in fondo a tutte sede e Instagram. L'indirizzo che riceve le richieste non sta qui né in nessun file del repository: è un segreto del Worker (EMAIL_DESTINATARIO). Al cliente poche parole, chiare e utili, e solo fatti confermati. {nome} è il nome scritto nel modulo, {tipo} il nome del tipo di richiesta, {email} l'email del cliente, {quando} giorno e ora di arrivo.",
+  "_nota": "Le email dei moduli (proprietario, 2026-11-24): a Endero arriva ogni richiesta del sito (messaggio, presa misure, rivenditore); chi l'ha mandata riceve una conferma breve, se ha lasciato l'email. Il configuratore no: resta spento finché non c'è il pagamento con Stripe (scelta sua). Aspetto (proprietario, 2026-11-25): in cima una foto con il logo, una per tipo di richiesta (tools/immagini-email.js); tasti invece dei numeri («invece di mettere il numero WA inserisci un tasto che ha il link che porta direttamente a WA»); a Endero i tasti per rispondere al cliente, al cliente il riepilogo di ciò che ha mandato e un rimando al sito (nel riepilogo solo i dati che il sito ha controllato: messaggio, negozio e sito restano fuori, perché la conferma parte verso un indirizzo che nessuno ha verificato; revisione del 2026-11-25), in fondo a tutte sede e Instagram. L'indirizzo che riceve le richieste non sta qui né in nessun file del repository: è un segreto del Worker (EMAIL_DESTINATARIO). Al cliente poche parole, chiare e utili, e solo fatti confermati. {nome} è il nome scritto nel modulo, {tipo} il nome del tipo di richiesta, {email} l'email del cliente, {quando} giorno e ora di arrivo.",
   "comune": {
     "alt_testata": "Endero",
     "come_arrivare": "Come arrivare",
@@ -49,9 +49,18 @@
     "whatsapp": "Scrivici su WhatsApp",
     "whatsapp_testo": "Ciao Endero, vi scrivo per la richiesta che ho appena mandato dal sito.",
     "rimandi": {
-      "contatto": { "testo": "Scopri la collezione", "href": "/collezione/" },
-      "presa-misure": { "testo": "Scopri il su misura", "href": "/camicie-su-misura/" },
-      "rivenditore": { "testo": "Guarda la collezione", "href": "/collezione/" }
+      "contatto": {
+        "testo": "Scopri la collezione",
+        "href": "/collezione/"
+      },
+      "presa-misure": {
+        "testo": "Scopri il su misura",
+        "href": "/camicie-su-misura/"
+      },
+      "rivenditore": {
+        "testo": "Guarda la collezione",
+        "href": "/collezione/"
+      }
     },
     "firma": "A presto,",
     "piede": "Ricevi questa email perché hai mandato una richiesta dal sito di Endero."

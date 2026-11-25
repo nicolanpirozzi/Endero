@@ -1244,6 +1244,7 @@ body[data-barra] .selettore {
 
 .campo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);   /* un indirizzo lungo in «Forse intendevi» va a capo, non allarga la colonna */
   align-content: start;       /* un avviso nel campo accanto non deve allungare questo */
   gap: 6px;
   min-width: 0;
@@ -1363,7 +1364,10 @@ body[data-barra] .selettore {
 .campo__correggi {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 28px;
+  overflow-wrap: anywhere;
+  text-align: start;
   margin: 0 2px;
   padding: 0 10px;
   border: 0;

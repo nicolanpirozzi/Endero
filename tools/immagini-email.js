@@ -4,6 +4,9 @@
 //
 //   node tools/immagini-email.js            → public/email/
 //
+// Il numero nel nome dei file è la versione (VERSIONE in worker/email.mjs, che deve essere la stessa): per rifare le
+// immagini si alza il numero in tutti e due e si tengono i file vecchi, che le email già mandate continuano a chiedere.
+//
 // Le foto sono quelle del sito (public/foto/); quale foto per quale richiesta: FOTO qui sotto.
 const { chromium } = require('playwright');
 const { readFileSync, mkdirSync } = require('node:fs');
@@ -18,6 +21,7 @@ const FOTO = {
   rivenditore: ['foto/sede/negozio-fronte-o-1600.webp', '50% 50%'],
 };
 const LARGA = 1200, ALTA = 520;
+const VERSIONE = 1;
 const logo = readFileSync(join(RADICE, 'brand/logo/endero-completo.svg'), 'utf8').replace('<svg ', '<svg class="logo" ');
 
 (async () => {
@@ -35,13 +39,14 @@ const logo = readFileSync(join(RADICE, 'brand/logo/endero-completo.svg'), 'utf8'
       .logo { position: absolute; left: 64px; bottom: 52px; width: 236px; height: auto; color: #fbf9f4; z-index: 1; }
     </style><div class="q"><img src="data:image/webp;base64,${dati}" alt="">${logo}</div>`);
     await page.waitForFunction(() => document.querySelector('img').complete);
-    await page.screenshot({ path: join(USCITA, `testata-${tipo}.jpg`), type: 'jpeg', quality: 80 });
-    console.log(`public/email/testata-${tipo}.jpg`);
+    await page.screenshot({ path: join(USCITA, `testata-${tipo}-${VERSIONE}.jpg`), type: 'jpeg', quality: 80 });
+    console.log(`public/email/testata-${tipo}-${VERSIONE}.jpg`);
   }
-  // il logo bianco del piè di pagina: 300 punti, mostrato a 150
-  await page.setViewportSize({ width: 300, height: Math.round(300 * 119.3 / 207.8) });
-  await page.setContent(`<!doctype html><style>html, body { margin: 0; background: transparent; } .logo { display: block; width: 300px; height: auto; color: #fbf9f4; }</style>${logo}`);
-  await page.screenshot({ path: join(USCITA, 'logo-bianco.png'), omitBackground: true });
-  console.log('public/email/logo-bianco.png');
+  // il logo bianco del piè di pagina, già sul blu e senza trasparenza: dove la modalità scura schiarisce il fondo
+  // della fascia (Gmail sull'iPhone, Outlook) resta una piastrina blu con il logo leggibile. 240 punti, mostrato a 120
+  await page.setViewportSize({ width: 240, height: Math.round(240 * 119.3 / 207.8) });
+  await page.setContent(`<!doctype html><style>html, body { margin: 0; background: #0f285e; } .logo { display: block; width: 240px; height: auto; color: #fbf9f4; }</style>${logo}`);
+  await page.screenshot({ path: join(USCITA, `logo-bianco-${VERSIONE}.png`) });
+  console.log(`public/email/logo-bianco-${VERSIONE}.png`);
   await browser.close();
 })();

@@ -21,7 +21,8 @@ import { numeroInternazionale } from '../src/controlli.mjs';
 
 const BLU = '#0f285e', CARTA = '#faf9f7', PANNELLO = '#eceae5', FILO = '#fbf9f4', TENUE = '#5b6b8c';
 const CARATTERE = `'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif`;
-// le immagini cambiano nome se cambiano: le email già mandate continuano a mostrare le loro
+// le immagini hanno la versione nel nome (testata-contatto-1.jpg): se si rifanno, si cambia numero e si tengono i file
+// vecchi in public/email/, che le email già mandate continuano a mostrare (il sito non distingue «?v=»)
 const VERSIONE_IMMAGINI = 1;
 const TIPI = ['contatto', 'presa-misure', 'rivenditore'];
 
@@ -31,7 +32,10 @@ const riempi = (modello, valori) => modello.replace(/\{(\w+)\}/g, (_, k) => valo
 const inRiga = (v) => String(v ?? '').replace(/[\u0000-\u001F\u007F]+/g, ' ').trim().slice(0, 160);
 const tipoDi = (r) => (TIPI.includes(r.tipo) ? r.tipo : 'contatto');
 const dominio = () => String(sito.dominio || 'https://endero.men').replace(/\/$/, '');
-const immagine = (nome) => `${dominio()}/email/${nome}?v=${VERSIONE_IMMAGINI}`;
+const immagine = (nome) => `${dominio()}/email/${nome.replace(/(\.\w+)$/, `-${VERSIONE_IMMAGINI}$1`)}`;
+// nel riepilogo al cliente solo ciò che il sito ha controllato: il testo libero (messaggio, negozio, sito) no, perché
+// la conferma parte verso un indirizzo che nessuno ha verificato e non deve poter portare parole o link di altri
+const LIBERI = ['messaggio', 'attivita', 'profilo'];
 
 /** Il giorno scelto per la presa misure, all'italiana: «martedì 1 dicembre 2026». */
 function giornoScritto(s) {
@@ -69,7 +73,7 @@ export function quando(data = new Date()) {
  * Le righe della richiesta, nell'ordine in cui le legge Endero: [etichetta, valore], solo quelle compilate.
  * `tecniche`: anche pagina del sito e Paese di collegamento (servono a Endero, non al cliente).
  */
-export function righe(r, { tecniche = true } = {}) {
+export function righe(r, { tecniche = true, liberi = true } = {}) {
   const v = testi.a_endero.voci;
   const out = [];
   const metti = (etichetta, valore) => {
@@ -85,9 +89,11 @@ export function righe(r, { tecniche = true } = {}) {
   if (r.tipo === 'rivenditore' && r.dettagli) {
     let d = {};
     try { d = JSON.parse(r.dettagli); } catch { d = {}; }
-    for (const c of rivenditori.modulo.campi) if (c.nome in d) metti(c.etichetta.replace(/\s*\(facoltativ[oa]\)\s*$/i, ''), d[c.nome]);
+    for (const c of rivenditori.modulo.campi) {
+      if (c.nome in d && (liberi || !LIBERI.includes(c.nome))) metti(c.etichetta.replace(/\s*\(facoltativ[oa]\)\s*$/i, ''), d[c.nome]);
+    }
   }
-  metti(v.messaggio, r.messaggio);
+  if (liberi) metti(v.messaggio, r.messaggio);
   if (tecniche) {
     metti(v.pagina, r.pagina);
     metti(v.paese, paeseScritto(r.paese));
@@ -97,11 +103,16 @@ export function righe(r, { tecniche = true } = {}) {
 
 // ---------------------------------------------------------------- i pezzi dell'HTML
 
-/** Un tasto: pieno (blu) o di contorno. Un link vero, che funziona anche dove gli stili non arrivano. */
+/**
+ * Un tasto: pieno (blu) o di contorno. Una piccola tabella con il link dentro: Outlook per Windows non dà spazio
+ * interno ai link, alle celle sì. Sul telefono i tasti prendono tutta la larghezza, uno sotto l'altro.
+ */
 function tasto(testo, href, { pieno = true } = {}) {
   const colore = pieno ? FILO : BLU;
   const fondo = pieno ? BLU : '#ffffff';
-  return `<a href="${pulisci(href)}" target="_blank" class="tasto" style="display:inline-block;margin:0 8px 10px 0;padding:15px 26px;border-radius:999px;border:1px solid ${BLU};background:${fondo};color:${colore};font-family:${CARATTERE};font-size:13px;font-weight:600;letter-spacing:0.08em;line-height:16px;text-transform:uppercase;text-decoration:none;mso-padding-alt:0;">${pulisci(testo)}</a>`;
+  return `<table role="presentation" class="tasto" align="left" cellpadding="0" cellspacing="0" border="0" style="margin:0 8px 10px 0;border-collapse:separate;">
+      <tr><td bgcolor="${fondo}" style="border:1px solid ${BLU};border-radius:999px;background:${fondo};mso-padding-alt:15px 26px;"><a href="${pulisci(href)}" target="_blank" style="display:inline-block;padding:15px 26px;border-radius:999px;color:${colore};font-family:${CARATTERE};font-size:13px;font-weight:600;letter-spacing:0.08em;line-height:16px;text-transform:uppercase;text-decoration:none;">${pulisci(testo)}</a></td></tr>
+    </table>`;
 }
 
 /** Il riquadro con le righe: etichetta piccola sopra, valore sotto (si legge bene anche sul telefono). */
@@ -111,7 +122,7 @@ function riquadro(titolo, elenco) {
       <div style="font-size:11px;line-height:16px;letter-spacing:0.08em;text-transform:uppercase;color:${TENUE};">${pulisci(e)}</div>
       <div style="padding-top:3px;font-size:15px;line-height:22px;color:${BLU};word-break:break-word;">${pulisci(v).replace(/\r?\n/g, '<br>')}</div>
     </td></tr>`).join('\n');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;background:${CARTA};border-radius:14px;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARTA}" style="border-collapse:separate;background:${CARTA};border-radius:14px;">
   <tr><td style="padding:22px 24px 24px;">
     <div style="padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid ${PANNELLO};font-family:${CARATTERE};font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BLU};">${pulisci(titolo)}</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${voci}</table>
@@ -128,7 +139,7 @@ function piede(nota) {
     insta ? link(testi.comune.instagram, insta.link) : '',
     link(dominio().replace(/^https?:\/\//, ''), dominio() + '/'),
   ].filter(Boolean).join(' &nbsp;·&nbsp; ');
-  return `<tr><td class="dentro" style="padding:34px 44px 30px;background:${BLU};font-family:${CARATTERE};color:${FILO};">
+  return `<tr><td class="dentro" bgcolor="${BLU}" style="padding:34px 44px 30px;background:${BLU};font-family:${CARATTERE};color:${FILO};">
     <a href="${pulisci(dominio())}/" target="_blank"><img src="${immagine('logo-bianco.png')}" width="120" alt="Endero" style="display:block;width:120px;height:auto;border:0;color:${FILO};font-size:18px;font-weight:600;letter-spacing:0.08em;"></a>
     <p style="margin:20px 0 0;font-size:14px;line-height:21px;">${pulisci(c.via)}, ${pulisci(c.citta)} (${pulisci(c.provincia)})<br>${link(testi.comune.come_arrivare, c.mappa)}</p>
     <p style="margin:14px 0 0;font-size:14px;line-height:21px;">${contatti}</p>
@@ -148,30 +159,39 @@ function pagina({ titolo, anteprima, tipo, corpo, nota }) {
 <meta name="supported-color-schemes" content="light">
 <title>${pulisci(titolo)}</title>
 <style>
-  @font-face { font-family: 'Archivo'; src: url('${dominio()}/font/archivo-var.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; }
   body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
-  a { color: ${BLU}; }
   .titolo { font-stretch: 118%; }
+  /* Mail dell'iPhone trasforma da sé in link numeri e indirizzi: restano del colore del testo intorno */
+  a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
   @media (max-width: 620px) {
     .fuori { padding: 0 !important; }
     .scatola { border-radius: 0 !important; }
     .dentro { padding-left: 24px !important; padding-right: 24px !important; }
     .titolo { font-size: 26px !important; line-height: 32px !important; }
-    .tasto { display: block !important; margin: 0 0 10px !important; text-align: center !important; }
+    .tasto { width: 100% !important; float: none !important; margin: 0 0 10px !important; }
+    .tasto a { display: block !important; text-align: center !important; }
   }
 </style>
+<!-- il carattere del sito, dove si può: Outlook per Windows non legge le media query, e senza questa barriera
+     scriverebbe tutto in Times New Roman -->
+<style>
+  @media screen { @font-face { font-family: 'Archivo'; src: url('${dominio()}/font/archivo-var.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; } }
+</style>
+<!--[if mso]><style>td, p, div, a, h1, strong { font-family: Arial, Helvetica, sans-serif !important; }</style><![endif]-->
 </head>
 <body style="margin:0;padding:0;background:${PANNELLO};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${pulisci(anteprima)}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${pulisci(anteprima)}${'&#8199;&#847; '.repeat(90)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PANNELLO};">
 <tr><td class="fuori" align="center" style="padding:32px 12px;">
-  <table role="presentation" class="scatola" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;">
-    <tr><td style="background:${BLU};line-height:0;">
+  <!--[if mso]><table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+  <table role="presentation" class="scatola" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;">
+    <tr><td bgcolor="${BLU}" style="background:${BLU};line-height:0;">
       <a href="${pulisci(dominio())}/" target="_blank"><img src="${immagine(`testata-${tipo}.jpg`)}" width="600" alt="${pulisci(testi.comune.alt_testata)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;background:${BLU};color:${FILO};font-family:${CARATTERE};font-size:22px;font-weight:600;letter-spacing:0.1em;line-height:60px;text-align:center;"></a>
     </td></tr>
     ${corpo}
     ${piede(nota)}
   </table>
+  <!--[if mso]></td></tr></table><![endif]-->
 </td></tr>
 </table>
 </body>
@@ -195,22 +215,28 @@ export function perEndero(r, { arrivo = new Date() } = {}) {
   const tipo = t.tipi[r.tipo] || t.tipi.contatto;
   const elenco = righe(r);
   const nome = inRiga(r.nome);
-  const numero = numeroInternazionale(r.telefono);
+  let dettagli = {};
+  try { dettagli = JSON.parse(r.dettagli || '{}'); } catch { dettagli = {}; }
+  const numero = numeroInternazionale(r.telefono, r.tipo === 'rivenditore' ? dettagli.nazione : '');
+  // WhatsApp solo per i cellulari: un fisso italiano (39 e poi 0) su WhatsApp di solito non c'è
+  const wa = numero && !/^390/.test(numero) ? numero : '';
+  // l'indirizzo nel link mailto, codificato: nessun carattere può aggiungere destinatari
+  const mailto = r.email ? r.email.split('@').map(encodeURIComponent).join('@') : '';
   const nota = r.email ? riempi(t.rispondi, { email: r.email }) : t.senza_email;
   const arrivata = riempi(t.arrivata, { quando: quando(arrivo) });
   const tasti = [
-    numero ? tasto(t.tasti.whatsapp, `https://wa.me/${numero}?text=${encodeURIComponent(riempi(t.whatsapp_testo, { nome: nome.split(' ')[0] }))}`) : '',
-    numero ? tasto(t.tasti.chiama, `tel:+${numero}`, { pieno: false }) : '',
-    r.email ? tasto(t.tasti.email, `mailto:${r.email}?subject=${encodeURIComponent(`Endero · ${tipo}`)}`, { pieno: false }) : '',
-  ].join('');
+    wa ? tasto(t.tasti.whatsapp, `https://wa.me/${wa}?text=${encodeURIComponent(riempi(t.whatsapp_testo, { nome: nome.split(' ')[0] }))}`) : '',
+    numero ? tasto(t.tasti.chiama, `tel:+${numero}`, { pieno: !wa }) : '',
+    mailto ? tasto(t.tasti.email, `mailto:${mailto}?subject=${encodeURIComponent(`Endero · ${tipo}`)}`, { pieno: !numero }) : '',
+  ].join('\n');
   const corpo = `${apertura(riempi(t.etichetta, { tipo }), nome, arrivata)}
     ${tasti ? `<tr><td class="dentro" style="padding:0 44px 18px;">${tasti}</td></tr>` : ''}
     <tr><td class="dentro" style="padding:6px 44px 0;">${riquadro(t.dati, elenco)}</td></tr>
     <tr><td class="dentro" style="padding:18px 44px 38px;font-family:${CARATTERE};font-size:13px;line-height:20px;color:${TENUE};">${pulisci(nota)}</td></tr>`;
   const testo = [riempi(t.etichetta, { tipo }), nome, arrivata, '', ...elenco.map(([e, v]) => `${e}: ${v}`), '',
-    numero ? `${t.tasti.whatsapp}: https://wa.me/${numero}` : '', nota].filter((x, i, a) => x !== '' || a[i - 1] !== '').join('\n');
+    wa ? `${t.tasti.whatsapp}: https://wa.me/${wa}` : '', nota].filter((x, i, a) => x !== '' || a[i - 1] !== '').join('\n');
   const oggetto = inRiga(riempi(t.oggetto, { tipo, nome }));
-  const anteprima = [nome, r.telefono, (() => { try { return JSON.parse(r.dettagli || '{}').citta; } catch { return ''; } })()].filter(Boolean).join(' · ');
+  const anteprima = [nome, r.telefono, dettagli.citta].filter(Boolean).join(' · ');
   return { oggetto, testo, html: pagina({ titolo: oggetto, anteprima, tipo: tipoDi(r), corpo, nota: t.piede }) };
 }
 
@@ -220,17 +246,17 @@ export function perCliente(r) {
   const tipo = tipoDi(r);
   const saluto = riempi(t.saluto, { nome: inRiga(r.nome).split(' ')[0] || '' });
   const corpoTesto = t.testo[tipo];
-  const elenco = righe(r, { tecniche: false });
+  const elenco = righe(r, { tecniche: false, liberi: false });
   const rimando = t.rimandi[tipo];
   const whatsapp = `${sito.contatti.whatsapp_link}?text=${encodeURIComponent(t.whatsapp_testo)}`;
   const corpo = `${apertura(t.etichetta, saluto, corpoTesto)}
     <tr><td class="dentro" style="padding:0 44px 8px;">${riquadro(t.riepilogo, elenco)}</td></tr>
-    <tr><td class="dentro" style="padding:22px 44px 12px;">${tasto(t.whatsapp, whatsapp)}${rimando ? tasto(rimando.testo, dominio() + rimando.href, { pieno: false }) : ''}</td></tr>
+    <tr><td class="dentro" style="padding:22px 44px 12px;">${tasto(t.whatsapp, whatsapp)}\n${rimando ? tasto(rimando.testo, dominio() + rimando.href, { pieno: false }) : ''}</td></tr>
     <tr><td class="dentro" style="padding:6px 44px 38px;font-family:${CARATTERE};font-size:15px;line-height:22px;color:${BLU};">${pulisci(t.firma)}<br><strong style="letter-spacing:0.12em;text-transform:uppercase;">Endero</strong></td></tr>`;
   const testo = [saluto, corpoTesto, '', t.riepilogo + ':', ...elenco.map(([e, v]) => `${e}: ${v}`), '',
     `${t.whatsapp}: ${whatsapp}`, rimando ? `${rimando.testo}: ${dominio()}${rimando.href}` : '', '', t.firma, 'Endero', '',
     `${sito.contatti.via}, ${sito.contatti.citta} · ${sito.contatti.email}`].join('\n').replace(/\n{3,}/g, '\n\n');
-  return { oggetto: inRiga(t.oggetto), testo, html: pagina({ titolo: t.oggetto, anteprima: corpoTesto, tipo, corpo, nota: t.piede }) };
+  return { oggetto: inRiga(t.oggetto), testo, html: pagina({ titolo: t.oggetto, anteprima: `${saluto} ${corpoTesto}`, tipo, corpo, nota: t.piede }) };
 }
 
 /** Manda un'email con Resend. Restituisce vero se Resend l'ha presa in carico. */

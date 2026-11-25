@@ -148,7 +148,7 @@ export function comeFunziona(c, turnstile, { gruppo = 'su-misura', tipo = 'presa
 const TIPO_INPUT = { testo: 'text', telefono: 'tel', email: 'email' };
 // i campi con un controllo (src/controlli.mjs, lo stesso elenco): la pagina li controlla mentre si compila, il Worker
 // a ogni invio. Qui l'elenco è scritto a mano perché il build gira in Node, che non importa JSON senza dichiararlo.
-const CONTROLLATI = ['nome', 'telefono', 'email', 'citta', 'nazione', 'partita_iva', 'profilo', 'messaggio'];
+const CONTROLLATI = ['nome', 'telefono', 'email', 'citta', 'nazione', 'partita_iva', 'profilo', 'messaggio', 'giorno'];
 // come si scrivono: tastiera giusta sul telefono, niente maiuscole o correttore dove non servono
 const SCRITTURA = {
   nome: ' autocapitalize="words" spellcheck="false"',
@@ -236,7 +236,7 @@ export function modulo(m, { tipo = 'presa-misure', turnstile = '' } = {}) {
       ${casella({ id: id('nome'), etichetta: esc(m.nome), controllo: 'nome', html: (a) => `<input type="text" name="nome"${a} autocomplete="name" required maxlength="120">` })}
       ${casella({ id: id('telefono'), etichetta: esc(m.telefono), controllo: 'telefono', html: (a) => `<input type="tel" name="telefono"${a} autocomplete="tel" required maxlength="40">` })}
       ${casella({ id: id('email'), etichetta: esc(m.email), controllo: 'email', html: (a) => `<input type="email" name="email"${a} autocomplete="email" maxlength="160">` })}
-      ${prenotazione ? `<div class="campo"><label class="campo__nome" for="${id('giorno')}">${esc(m.giorno)}</label><input id="${id('giorno')}" type="date" name="giorno" data-giorno></div>
+      ${prenotazione ? `${casella({ id: id('giorno'), etichetta: esc(m.giorno), controllo: 'giorno', html: (a) => `<input type="date" name="giorno"${a} data-giorno>` })}
       <fieldset class="campo campo--largo">
         <legend class="campo__nome">${esc(m.fascia)}</legend>
         <div class="scelte">${m.fasce.map((f, i) => `<label class="scelta"><input type="radio" name="fascia" value="${esc(f)}"${i === m.fasce.length - 1 ? ' checked' : ''}><span>${esc(f)}</span></label>`).join('')}</div>

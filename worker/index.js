@@ -25,9 +25,14 @@ const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
 import { dimentica, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
 import { avvisa } from './email.mjs';
-import { controlla, testi as avvisi } from '../src/controlli.mjs';
+import { controlla, senzaInvisibili, testi as avvisi } from '../src/controlli.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];
+// il nome dei campi, per la pagina d'errore senza script
+const ETICHETTE = {
+  ...Object.fromEntries(rivenditori.modulo.campi.map((c) => [c.nome, c.etichetta.replace(/\s*\(facoltativ[oa]\)\s*$/i, '')])),
+  messaggio: 'Messaggio', giorno: 'Giorno', privacy: 'Privacy',
+};
 // i campi propri delle richieste dei rivenditori: nomi, scelte ammesse e lunghezze vengono dai contenuti della pagina,
 // così modulo e Worker non si possono disallineare. Quelli comuni hanno già le loro colonne.
 const COMUNI = ['nome', 'telefono', 'email', 'messaggio'];
@@ -58,6 +63,8 @@ export async function contatto(request, env, ctx) {
   const rispondi = (ok, stato, errore, campo) => {
     if (vuoleJson) return Response.json(ok ? { ok: true } : { ok: false, errore, ...(campo ? { campo } : {}) }, { status: stato });
     if (ok) return Response.redirect(new URL('/grazie/', request.url).toString(), 303);
+    // senza script la pagina d'errore dice di quale campo si parla («Città: usa solo lettere…»)
+    if (campo && ETICHETTE[campo]) errore = `${ETICHETTE[campo]}: ${errore.charAt(0).toLowerCase()}${errore.slice(1)}`;
     return new Response(paginaErrore(errore, percorsoInterno(request.headers.get('Referer') || '', request)), { status: stato, headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex', 'X-Content-Type-Options': 'nosniff' } });
   };
 
@@ -75,10 +82,11 @@ export async function contatto(request, env, ctx) {
   // esca per i programmi automatici: una persona non vede e non compila questo campo
   if (String(dati.get('sito_web') || '').trim()) return rispondi(true, 200);
 
-  // solo testo (mai file), senza caratteri di controllo, tagliato alla lunghezza prevista
+  // solo testo (mai file), senza caratteri di controllo né invisibili (arrivano incollando dalla rubrica del
+  // telefono), tagliato alla lunghezza prevista
   const campo = (nome, max, righe = false) => {
-    const v = dati.get(nome);
-    if (typeof v !== 'string') return '';
+    const v = senzaInvisibili(dati.get(nome) ?? '');
+    if (typeof dati.get(nome) !== 'string') return '';
     const pulito = righe ? v.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') : v.replace(/[\u0000-\u001F\u007F]+/g, ' ');
     return pulito.trim().slice(0, max);
   };
@@ -99,9 +107,12 @@ export async function contatto(request, env, ctx) {
     const testo = controlla(campo, valore, contesto);
     return testo ? rispondi(false, 422, testo, campo) : null;
   };
-  const primo = sbagliato('nome', r.nome) || sbagliato('telefono', r.telefono)
+  // il Paese conta per il telefono solo nel modulo dei rivenditori (gli altri sono italiani)
+  const paese = r.tipo === 'rivenditore' ? campo('nazione', 60) : '';
+  const primo = sbagliato('nome', r.nome) || sbagliato('telefono', r.telefono, { paese })
     || sbagliato('email', r.email, { obbligatorio: r.tipo === 'rivenditore' })
-    || sbagliato('messaggio', r.messaggio, { obbligatorio: r.tipo === 'contatto' });
+    || sbagliato('messaggio', r.messaggio, { obbligatorio: r.tipo === 'contatto' })
+    || (r.tipo === 'presa-misure' ? sbagliato('giorno', r.giorno) : null);
   if (primo) return primo;
   if (dati.get('privacy') !== 'si') return rispondi(false, 422, avvisi.privacy, 'privacy');
 
@@ -169,5 +180,5 @@ function paginaErrore(messaggio, percorsoModulo) {
   const indietro = percorsoModulo ? pulisci(percorsoModulo) : '/';
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Richiesta non inviata · Endero</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-content:center;gap:16px;padding:24px;text-align:center;font:300 15px/1.6 system-ui,sans-serif;color:#0f285e;background:#faf9f7}a{color:inherit}h1{font-size:22px;font-weight:600;text-transform:uppercase}h1,p{margin:0}@media (prefers-reduced-motion:no-preference){@view-transition{navigation:auto}}</style></head>
-<body><h1>Richiesta non inviata</h1><p>${testo}</p><p><a href="${indietro}">Torna al modulo</a> · <a href="https://wa.me/393338548712">Scrivici su WhatsApp</a></p></body></html>`;
+<body><h1>Richiesta non inviata</h1><p>${testo}</p><p>Torna indietro con il tasto del browser: quello che hai scritto resta lì.</p><p><a href="${indietro}">Torna al modulo</a> · <a href="https://wa.me/393338548712">Scrivici su WhatsApp</a></p></body></html>`;
 }

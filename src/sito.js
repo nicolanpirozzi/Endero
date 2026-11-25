@@ -699,13 +699,14 @@ function modulo(form) {
     if (testo) el.setAttribute('aria-invalid', 'true');
     else el.removeAttribute('aria-invalid');
   }
-  const verifica = (el) => controlla(el.dataset.controllo, el.value, { obbligatorio: el.required, paese: paese() });
+  const verifica = (el) => controlla(el.dataset.controllo, el.value, { obbligatorio: el.required, paese: paese(), oggi: giorno?.min });
 
   // l'email scritta con un dominio quasi giusto: «Forse intendevi …@gmail.com?», con il tasto che la corregge
   function forse(el) {
     let nota = el.parentElement.querySelector('.campo__forse');
     const giusta = el.getAttribute('aria-invalid') ? '' : suggerisciEmail(el.value);
     if (!giusta) { nota?.remove(); return; }
+    if (nota?.dataset.email === giusta) return;     // già mostrata: ricostruirla farebbe perdere il clic sul tasto
     if (!nota) {
       nota = document.createElement('p');
       nota.className = 'campo__forse';
@@ -720,26 +721,42 @@ function modulo(form) {
       segna(el, verifica(el));
       el.focus();
     });
+    nota.dataset.email = giusta;
     nota.replaceChildren(prima, tasto, dopo);
   }
 
+  // Uscendo da un campo con il clic su un tasto, l'avviso che compare sposta in giù ciò che sta sotto: il tasto
+  // scivola via prima che il dito o il mouse si alzino e il clic va perso (revisione del 2026-11-25). Quindi gli
+  // avvisi dell'uscita dal campo aspettano la fine del clic.
+  let premuto = false;
+  const rimandati = [];
+  const sciogli = () => setTimeout(() => { premuto = false; rimandati.splice(0).forEach((f) => f()); });
+  document.addEventListener('pointerdown', () => { premuto = true; }, true);
+  document.addEventListener('pointerup', sciogli, true);
+  document.addEventListener('pointercancel', sciogli, true);
+  const dopoIlClic = (f) => (premuto ? rimandati.push(f) : setTimeout(f));
+
   for (const el of campi) {
     // uscendo dal campo: avviso solo se c'è scritto qualcosa (un campo saltato si segnala all'invio, non prima)
-    el.addEventListener('blur', () => {
+    el.addEventListener('blur', () => dopoIlClic(() => {
       if (el.value.trim() || el.hasAttribute('aria-invalid')) segna(el, verifica(el));
       if (el.dataset.controllo === 'email') forse(el);
-    });
+    }));
     // mentre si scrive: l'avviso si aggiorna solo se c'era già, e sparisce appena il valore è giusto
     el.addEventListener('input', () => {
       if (el.hasAttribute('aria-invalid')) segna(el, verifica(el));
-      if (el.dataset.controllo === 'email') el.parentElement.querySelector('.campo__forse')?.remove();
+      if (el.dataset.controllo === 'email') { el.parentElement.querySelector('.campo__forse')?.remove(); delete el.dataset.forseVisto; }
     });
   }
-  // il Paese cambia le regole della partita IVA: se era segnata, si ricontrolla
+  // il Paese cambia le regole di telefono e partita IVA: mentre si scrive si ricontrollano quelli già segnati,
+  // uscendo dal Paese tutti e due, se scritti
+  const dipendenti = () => [form.elements.telefono, form.elements.partita_iva].filter((x) => x?.dataset?.controllo);
   form.elements.nazione?.addEventListener?.('input', () => {
-    const iva = form.elements.partita_iva;
-    if (iva?.hasAttribute('aria-invalid')) segna(iva, verifica(iva));
+    for (const x of dipendenti()) if (x.hasAttribute('aria-invalid')) segna(x, verifica(x));
   });
+  form.elements.nazione?.addEventListener?.('change', () => dopoIlClic(() => {
+    for (const x of dipendenti()) if (x.value.trim()) segna(x, verifica(x));
+  }));
 
   // "almeno una casella" e il consenso: l'avviso sta sotto il gruppo o sotto la casella
   const gruppoVuoto = (g) => ![...g.querySelectorAll('input[type="checkbox"]')].some((c) => c.checked);
@@ -778,10 +795,31 @@ function modulo(form) {
       vaiAlCampo(sbagliati[0]);
       return;
     }
+    // un'email con un probabile errore di battitura: la prima volta ci si ferma e si mostra «Forse intendevi…»;
+    // se è giusta così, il secondo invio parte
+    const mail = campi.find((x) => x.dataset.controllo === 'email');
+    if (mail && suggerisciEmail(mail.value) && !mail.dataset.forseVisto) {
+      mail.dataset.forseVisto = '1';
+      forse(mail);
+      esito.textContent = avvisi.email.controlla;
+      vaiAlCampo(mail);
+      return;
+    }
+    if (bottone.disabled) return;      // un secondo clic mentre il primo invio è in corso
     const testo = bottone.textContent;
     bottone.disabled = true;
     bottone.textContent = bottone.dataset.testoInvio;
     esito.textContent = '';
+    // l'antispam di Cloudflare dà il suo gettone qualche secondo dopo il primo campo toccato: lo si aspetta un poco
+    if (form.querySelector('.cf-turnstile')) {
+      for (let i = 0; i < 40 && !form.elements['cf-turnstile-response']?.value; i++) await new Promise((fatto) => setTimeout(fatto, 200));
+      if (!form.elements['cf-turnstile-response']?.value) {
+        esito.textContent = avvisi.antispam;
+        bottone.disabled = false;
+        bottone.textContent = testo;
+        return;
+      }
+    }
     try {
       const r = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
       const dati = await r.json().catch(() => ({}));
@@ -790,14 +828,16 @@ function modulo(form) {
         const el = dati.campo && (form.querySelector(`[data-controllo][name="${CSS.escape(dati.campo)}"]`) || form.querySelector(`fieldset:has(input[name="${CSS.escape(dati.campo)}"])`) || (dati.campo === 'privacy' ? privacy : null));
         if (el && dati.errore) { segna(el, dati.errore); esito.textContent = avvisi.riepilogo; vaiAlCampo(el); }
         else esito.textContent = dati.errore || esito.dataset.errore;
-        // l'antispam vale una volta sola: per riprovare ne serve uno nuovo
-        globalThis.turnstile?.reset?.(form.querySelector('.cf-turnstile'));
+        // il gettone dell'antispam vale una volta sola: il Worker lo spende dopo aver controllato i campi, quindi un
+        // campo sbagliato (422) lo lascia buono; per gli altri errori ne serve uno nuovo
+        if (r.status !== 422) globalThis.turnstile?.reset?.(form.querySelector('.cf-turnstile'));
         return;
       }
       form.dataset.stato = 'fatto';
       esito.textContent = esito.dataset.fatto;
     } catch (errore) {
       esito.textContent = esito.dataset.errore;
+      globalThis.turnstile?.reset?.(form.querySelector('.cf-turnstile'));
     } finally {
       bottone.disabled = false;
       bottone.textContent = testo;

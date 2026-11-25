@@ -50,7 +50,7 @@ console.log('Aspetto (2026-11-25: foto in cima, tasti, riepilogo, sede e Instagr
 const tipi = { contatto, 'presa-misure': { ...contatto, tipo: 'presa-misure', giorno: '2026-12-01', fascia: 'Pomeriggio' }, rivenditore };
 for (const [tipo, r] of Object.entries(tipi)) {
   const a = perEndero(r), b = perCliente(r);
-  controlla(`${tipo}: la foto del suo tipo in cima, dal sito vero, con il testo alternativo`, [a.html, b.html].every((h) => new RegExp(`https://endero\\.men/email/testata-${tipo}\\.jpg\\?v=\\d+" width="600" alt="Endero"`).test(h)));
+  controlla(`${tipo}: la foto del suo tipo in cima, dal sito vero, con il testo alternativo`, [a.html, b.html].every((h) => new RegExp(`https://endero\\.men/email/testata-${tipo}-\\d+\\.jpg" width="600" alt="Endero"`).test(h)));
   controlla(`${tipo}: in fondo sede con la mappa, WhatsApp, Instagram e la società`, [a.html, b.html].every((h) => /Viale del Toro 22/.test(h) && /google\.com\/maps/.test(h) && /wa\.me\/393338548712/.test(h) && /instagram\.com\/endero_official/.test(h) && /08887031212/.test(h)));
 }
 let h = perEndero(contatto).html;
@@ -69,7 +69,18 @@ controlla('al cliente: tasto WhatsApp verso Endero con un messaggio pronto, e il
 controlla('al cliente: il rimando giusto per ogni tipo', /endero\.men\/collezione\//.test(perCliente(contatto).html) && /endero\.men\/collezione\//.test(perCliente(rivenditore).html));
 h = perCliente(rivenditore).html;
 controlla('al cliente: i dati scritti dal cliente restano testo anche nel riepilogo', !/<b>Bianchi<\/b>/.test(h) && /&lt;b&gt;Bianchi/.test(h));
-controlla('al cliente: un messaggio su più righe resta su più righe', /Vorrei sapere<br>degli orari/.test(perCliente(contatto).html));
+controlla('a Endero: un messaggio su più righe resta su più righe', /Vorrei sapere<br>degli orari/.test(perEndero(contatto).html));
+controlla('al cliente: nel riepilogo niente testo libero (messaggio, negozio, sito), che partirebbe verso un indirizzo non verificato', !/Vorrei sapere/.test(perCliente(contatto).html) && !/Bottega/.test(perCliente(rivenditore).html) && /Napoli/.test(perCliente(rivenditore).html) && /Conto terzi/.test(perCliente(rivenditore).html));
+h = perEndero({ ...contatto, telefono: '081 123 4567' }).html;
+controlla('a Endero, numero fisso: niente WhatsApp, «Chiama» diventa il tasto pieno', !/wa\.me\/39081/.test(h) && /tel:\+390811234567/.test(h) && /background:#0f285e;mso-padding-alt:15px 26px;"><a href="tel:/.test(h));
+h = perEndero({ ...contatto, email: "o'brien+x@esempio.it" }).html;
+controlla('a Endero: l\'email nel link mailto è codificata (nessun carattere aggiunge destinatari)', /mailto:o&#39;brien%2Bx@esempio\.it\?subject=/.test(h));
+h = perCliente(contatto).html;
+controlla('al cliente: l\'anteprima in casella comincia con il saluto ed è seguita da spazio vuoto', /mso-hide:all;">Ciao Mario, grazie/.test(h) && (h.match(/&#8199;&#847;/g) || []).length >= 80);
+controlla('Outlook per Windows: tabella fantasma a 600, carattere del sito solo dove ci sono le media query, Arial per Outlook', /<!--\[if mso\]><table role="presentation" width="600"/.test(h) && /@media screen \{ @font-face/.test(h) && /\[if mso\]><style>td, p/.test(h));
+controlla('iPhone: numeri e indirizzi riconosciuti restano del colore del testo', /a\[x-apple-data-detectors\]/.test(h));
+controlla('i tasti sono tabelle con il link dentro (Outlook dà spazio alle celle, non ai link)', (h.match(/class="tasto"/g) || []).length === 2 && /<td bgcolor="#0f285e" style="border:1px solid #0f285e;border-radius:999px/.test(h));
+controlla('le immagini hanno la versione nel nome, non in «?v=» (il sito la ignorerebbe)', !/\?v=/.test(h) && /logo-bianco-\d+\.png/.test(h));
 controlla('HTML da email: niente script, niente fogli di stile esterni', [perCliente(contatto).html, perEndero(rivenditore).html].every((x) => !/<script/i.test(x) && !/<link/i.test(x)));
 
 console.log('Spedizione (Resend finto)');

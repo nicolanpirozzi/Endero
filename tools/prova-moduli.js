@@ -17,8 +17,9 @@ function controlla(nome, vero, dettaglio = '') {
   console.log(`${vero ? '  ok ' : '  NO '} ${nome}${!vero && dettaglio ? ' → ' + dettaglio : ''}`);
 }
 
-// lo stato di un campo: l'avviso, se è sotto il campo e dentro lo schermo, aria-invalid
-const stato = (page, sel) => page.evaluate((sel) => {
+// lo stato di un campo: l'avviso, se è sotto il campo e dentro lo schermo, aria-invalid. Gli avvisi dell'uscita
+// dal campo arrivano un attimo dopo (aspettano la fine di un eventuale clic): si aspetta un poco
+const stato = async (page, sel) => { await page.waitForTimeout(80); return page.evaluate((sel) => {
   const el = document.querySelector(sel);
   const riga = document.getElementById(el.getAttribute('aria-describedby')?.split(' ')[0]);
   const a = el.getBoundingClientRect(), r = riga?.getBoundingClientRect();
@@ -27,7 +28,7 @@ const stato = (page, sel) => page.evaluate((sel) => {
     sotto: !!r && r.height > 0 && r.top >= a.bottom - 1 && r.left >= a.left - 24, alto: Math.round(r?.height || 0),
     dentro: !!r && r.right <= innerWidth + 1, largo: document.documentElement.scrollWidth <= innerWidth,
   };
-}, sel);
+}, sel); };
 
 (async () => {
   const browser = await chromium.launch();
@@ -82,6 +83,7 @@ const stato = (page, sel) => page.evaluate((sel) => {
 
     await page.locator(e).fill('mario.rossi@gmial.com');
     await page.locator(m).focus();
+    await page.waitForTimeout(80);
     const forse = await page.evaluate(() => { const p = document.querySelector('.campo__forse'); return p ? { testo: p.textContent, tasto: p.querySelector('button')?.textContent, alto: p.querySelector('button')?.getBoundingClientRect().height } : null; });
     controlla(`${formato}: email «…@gmial.com» → «${forse?.testo}» con il tasto`, forse?.tasto === 'mario.rossi@gmail.com' && forse.alto >= 24, JSON.stringify(forse));
     await page.locator('.campo__correggi').click();
@@ -133,6 +135,27 @@ const stato = (page, sel) => page.evaluate((sel) => {
     s = await page.evaluate(() => ({ stato: document.querySelector('form.modulo').dataset.stato, esito: document.querySelector('form.modulo .modulo__esito').textContent }));
     controlla(`${formato}: tutto giusto → inviato, con il messaggio di conferma`, s.stato === 'fatto' && s.esito.length > 5, JSON.stringify(s));
 
+    // il clic su Invia con l'email sbagliata ancora a fuoco: l'avviso che compare non deve far perdere il clic
+    await page.goto(base + '/dove-siamo/', { waitUntil: 'networkidle' });
+    inviate = 0;
+    await page.locator(n).scrollIntoViewIfNeeded();
+    await page.locator(n).fill('Mario Rossi');
+    await page.locator(t).fill('333 854 8712');
+    await page.locator(m).fill('Vorrei sapere gli orari.');
+    await page.locator(`${F} [name="privacy"]`).check({ force: true });
+    await page.locator(e).fill('mario.rossi@gmial.com');
+    const tasto = page.locator(`${F} button[type="submit"]`);
+    await tasto.scrollIntoViewIfNeeded();
+    if (opzioni.hasTouch) { const b = await tasto.boundingBox(); await page.locator(e).focus(); await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); }
+    else { await page.locator(e).focus(); await tasto.click(); }
+    await page.waitForTimeout(1300);
+    s = await page.evaluate(() => ({ forse: !!document.querySelector('.campo__forse'), esito: document.querySelector('form.modulo .modulo__esito').textContent }));
+    controlla(`${formato}: Invia con un probabile refuso nell'email → il clic non va perso: si ferma una volta e mostra «Forse intendevi»`, s.forse && /errore di battitura/.test(s.esito) && inviate === 0, JSON.stringify({ ...s, inviate }));
+    await tasto.click();
+    await page.waitForTimeout(800);
+    s = await page.evaluate(() => document.querySelector('form.modulo').dataset.stato);
+    controlla(`${formato}: se l'email è giusta così, il secondo Invia parte`, s === 'fatto' && inviate === 1, `${s} ${inviate}`);
+
     // ------------------------------------------------ rivenditori
     await page.goto(base + '/diventa-rivenditore/', { waitUntil: 'networkidle' });
     inviate = 0;
@@ -151,6 +174,16 @@ const stato = (page, sel) => page.evaluate((sel) => {
     s = await page.evaluate(() => document.querySelector('fieldset[data-almeno-uno] .campo__errore').textContent);
     controlla(`${formato}: scegliendo una voce l'avviso del gruppo sparisce`, !s, s);
 
+    // il Paese conta per il telefono: un numero francese scritto alla francese chiede il prefisso
+    await page.locator(`${F} [name="nazione"]`).fill('Francia');
+    await page.locator(`${F} [name="telefono"]`).fill('06 12 34 56 78');
+    await page.locator(`${F} [name="email"]`).focus();
+    s = await stato(page, `${F} [name="telefono"]`);
+    controlla(`${formato}: Paese Francia e «06 12 34 56 78» → «${s.testo}»`, /prefisso/.test(s.testo), JSON.stringify(s));
+    await page.locator(`${F} [name="telefono"]`).fill('+33 6 12 34 56 78');
+    s = await stato(page, `${F} [name="telefono"]`);
+    controlla(`${formato}: con il prefisso +33 va bene`, !s.testo, JSON.stringify(s));
+    await page.locator(`${F} [name="nazione"]`).fill('Italia');
     const iva = `${F} [name="partita_iva"]`;
     await page.locator(iva).fill('08887031213');
     await page.locator(`${F} [name="profilo"]`).focus();
@@ -166,6 +199,12 @@ const stato = (page, sel) => page.evaluate((sel) => {
 
     // ------------------------------------------------ presa misure
     await page.goto(base + '/camicie-su-misura/', { waitUntil: 'networkidle' });
+    // un giorno passato non si può scegliere (con il calendario del browser no, scritto a mano sì)
+    await page.locator(`${F} [name="giorno"]`).fill('2020-01-01');
+    await page.locator(`${F} [name="nome"]`).focus();
+    s = await stato(page, `${F} [name="giorno"]`);
+    controlla(`${formato}: giorno passato → «${s.testo}»`, /da oggi in poi/.test(s.testo), JSON.stringify(s));
+    await page.locator(`${F} [name="giorno"]`).fill('');
     await page.locator(`${F} [name="nome"]`).scrollIntoViewIfNeeded();
     await page.locator(`${F} [name="nome"]`).fill('Mario Rossi');
     await page.locator(`${F} [name="telefono"]`).fill('+39 333 854 8712');
