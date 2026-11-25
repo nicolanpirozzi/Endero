@@ -17,7 +17,9 @@
 import testi from '../contenuti/it/email.json';
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
 import sito from '../contenuti/it/sito.json';
-import { numeroInternazionale } from '../src/controlli.mjs';
+import configuratore from '../contenuti/it/configuratore.json';
+import catalogo from '../contenuti/it/tessuti.json';
+import { numeroInternazionale, controlla } from '../src/controlli.mjs';
 
 const BLU = '#0f285e', CARTA = '#faf9f7', PANNELLO = '#eceae5', FILO = '#fbf9f4', TENUE = '#5b6b8c';
 const CARATTERE = `'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif`;
@@ -292,6 +294,282 @@ export async function avvisa(env, r) {
       esito.cliente = await manda(env, { a: [r.email], ...perCliente(r), rispondiA: env.EMAIL_RISPOSTE || 'info@endero.men' });
     } catch (errore) {
       console.error('conferma al cliente non partita', errore);
+    }
+  }
+  return esito;
+}
+
+// ================================================================ le email dell'ordine del configuratore
+//
+// Partono a pagamento fatto (worker/ordine.mjs, webhook di Stripe), una volta sola. A Endero e a Ennio tutto l'ordine
+// come lo legge il reparto: in cima la taglia di partenza con le variazioni, poi la camicia, i tessuti con il nome
+// vero della cartella colori (configurazione riservata, mai nel repository), le misure, il cliente con i tasti per
+// rispondergli, la consegna e gli importi. Al cliente la conferma con il riepilogo, i nomi dei tessuti del sito e il
+// totale pagato. Destinatari: segreto EMAIL_ORDINI (uno o più indirizzi separati da virgola; se manca,
+// EMAIL_DESTINATARIO).
+
+const C = configuratore.scheda;
+const NOMI_TESSUTI = new Map(catalogo.tessuti.map((t) => [t.id, t.nome]));
+const ROSSO = '#9c2a1a', ROSATO = '#fbeae6';
+const campoConf = (nome) => C.camicia.campi.find((c) => c.nome === nome);
+const opzione = (elenco, id) => (elenco || []).find((x) => x.id === id)?.nome || id || '';
+const colore = (id) => opzione(C.colori_filo, id);
+// le parti della camicia che hanno un tessuto, nell'ordine della pagina
+const PARTI_TESSUTO = [
+  ['tessuto', (o) => o.tessuto],
+  ['taschino', (o) => o.taschino?.tessuto],
+  ['interno_collo', (o) => o.interno_collo?.tessuto],
+  ['interno_polso', (o) => o.interno_polso?.tessuto],
+  ['polsino', (o) => o.polsino?.tessuto],
+];
+
+/** Euro all'italiana: «120 €», «12,50 €». */
+export function euro(n) {
+  const v = Number(n) || 0;
+  try {
+    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: Number.isInteger(v) ? 0 : 2 }).format(v);
+  } catch {
+    return `${v} €`;
+  }
+}
+const cm = (n) => String(Math.round(Number(n) * 100) / 100).replace('.', ',');
+
+/** Il nome del sito di un tessuto («Popeline bianco»), o l'id se non è nel catalogo. */
+const tessutoSito = (id) => NOMI_TESSUTI.get(id) || id || '';
+
+/** Le scelte della camicia, [voce, valore], con i nomi del sito. Per il cliente e per Endero. */
+export function scelteCamicia(o) {
+  const v = testi.ordine.a_endero.voci;
+  const et = (nome) => campoConf(nome)?.etichetta || nome;
+  const personalizzato = C.personalizzato || 'Personalizzato';
+  const out = [[v.quantita, String(o.quantita || 1)], [et('tessuto'), tessutoSito(o.tessuto)]];
+  out.push([et('collo'), opzione(campoConf('collo')?.opzioni, o.collo)]);
+  out.push([et('taschino'), o.taschino ? `${v.si} · ${tessutoSito(o.taschino.tessuto)}` : v.no]);
+  out.push([et('asola'), o.asola ? `${v.si} · ${colore(o.asola.colore)}` : v.no]);
+  out.push([et('bottone'), opzione(campoConf('bottone')?.opzioni, o.bottone)]);
+  out.push([et('filato_bottone'), o.filato_bottone ? colore(o.filato_bottone) : v.nessuna]);
+  const posizioni = campoConf('iniziali')?.se_si?.[0]?.opzioni;
+  out.push([et('iniziali'), o.iniziali ? riempi(v.iniziali, { lettere: o.iniziali.lettere, posizione: opzione(posizioni, o.iniziali.posizione) }) : v.no]);
+  for (const nome of ['interno_collo', 'interno_polso', 'polsino']) {
+    out.push([et(nome), o[nome] ? `${personalizzato} · ${tessutoSito(o[nome].tessuto)}` : (C.standard || v.standard)]);
+  }
+  return out;
+}
+
+/** Ritiro o spedizione, [voce, valore]. `note`: anche le note per il corriere (solo a Endero: sono testo libero). */
+export function consegna(o, { note = true } = {}) {
+  const v = testi.ordine.a_endero.voci;
+  const modo = C.spedizione.opzioni.find((s) => s.id === o.spedizione?.modo);
+  const out = [[v.modo, modo ? [modo.nome, modo.giorni ? modo.dettaglio : ''].filter(Boolean).join(' · ') : '']];
+  const a = o.spedizione?.indirizzo;
+  if (a) {
+    out.push([v.destinatario, a.destinatario]);
+    out.push([v.indirizzo, `${a.indirizzo}\n${a.cap} ${a.citta} (${a.provincia})`]);
+    if (note && a.note) out.push([v.note, a.note]);
+  }
+  return out.filter(([, x]) => x);
+}
+
+/** Gli importi, [voce, valore]: camicia, personalizzazioni (`dettagli`), camicie, spedizione, totale. */
+export function importi(o, { dettagli = true, totaleCentesimi = null } = {}) {
+  const v = testi.ordine.a_endero.voci;
+  const c = o.conti || {};
+  const out = [[v.camicia, euro(c.camicia)]];
+  if (dettagli) out.push([v.personalizzazioni, String((c.personalizzazioni || []).length)]);
+  out.push([v.camicie, `${c.quantita} × ${euro(c.camicia)}`]);
+  if (o.spedizione?.modo !== 'ritiro') out.push([v.spedizione, c.spedizione ? euro(c.spedizione) : v.gratis]);
+  out.push([v.totale, euro(Number.isInteger(totaleCentesimi) ? totaleCentesimi / 100 : c.totale)]);
+  return out;
+}
+
+/** Il riquadro a due colonne: voce a sinistra, valore a destra. Per elenchi di cose brevi (camicia, misure, importi). */
+function colonne(titolo, elenco, { nota = '', ultimaForte = false } = {}) {
+  const voci = elenco.map(([e, v], i) => {
+    const forte = ultimaForte && i === elenco.length - 1;
+    const bordo = i ? `border-top:1px solid ${PANNELLO};` : '';
+    return `<tr>
+      <td valign="top" style="${bordo}padding:10px 12px 10px 0;font-family:${CARATTERE};font-size:${forte ? 15 : 14}px;line-height:20px;color:${forte ? BLU : TENUE};${forte ? 'font-weight:600;' : ''}">${pulisci(e)}</td>
+      <td valign="top" align="right" style="${bordo}padding:10px 0;font-family:${CARATTERE};font-size:${forte ? 18 : 15}px;line-height:20px;color:${BLU};font-weight:600;text-align:right;word-break:break-word;">${pulisci(v).replace(/\r?\n/g, '<br>')}</td>
+    </tr>`;
+  }).join('\n');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARTA}" style="border-collapse:separate;background:${CARTA};border-radius:14px;">
+  <tr><td style="padding:22px 24px 14px;">
+    <div style="padding-bottom:12px;margin-bottom:2px;border-bottom:1px solid ${PANNELLO};font-family:${CARATTERE};font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BLU};">${pulisci(titolo)}</div>
+    ${nota ? `<div style="padding:10px 0 4px;font-family:${CARATTERE};font-size:13px;line-height:19px;color:${TENUE};">${pulisci(nota)}</div>` : ''}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${voci}</table>
+  </td></tr></table>`;
+}
+
+/** Un avviso in rosso, ben visibile. */
+const avvisoRosso = (testo) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td bgcolor="${ROSATO}" style="padding:12px 14px;background:${ROSATO};border-radius:10px;font-family:${CARATTERE};font-size:14px;line-height:20px;font-weight:600;color:${ROSSO};">${pulisci(testo)}</td></tr></table>`;
+
+/** La taglia per il reparto, in grande sul blu; sotto, in rosso, il motivo per cui va verificata. */
+function riquadroTaglia(t) {
+  const a = testi.ordine.a_endero;
+  const avviso = !t ? a.taglia_assente : t.daVerificare ? `${a.verifica}: ${(t.motivi || []).join('; ')}` : '';
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${BLU}" style="border-collapse:separate;background:${BLU};border-radius:14px;">
+  <tr><td style="padding:22px 24px 24px;font-family:${CARATTERE};color:${FILO};">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.1em;line-height:16px;text-transform:uppercase;color:#b9c1d3;">${pulisci(a.taglia)}</div>
+    ${(() => {
+      // la taglia in grande, sotto una variazione per riga: «collo +2 cm» non si spezza a metà sul telefono
+      const [prima, ...variazioni] = String(t?.riga || '—').split(' · ');
+      return `<div class="titolo" style="padding-top:10px;font-size:28px;line-height:34px;font-weight:600;color:${FILO};">${pulisci(prima)}</div>
+    ${variazioni.map((x) => `<div style="padding-top:4px;font-size:18px;line-height:25px;font-weight:600;color:${FILO};white-space:nowrap;">${pulisci(x)}</div>`).join('')}`;
+    })()}
+    ${avviso ? `<div style="height:16px;line-height:16px;font-size:16px;">&nbsp;</div>${avvisoRosso(avviso)}` : ''}
+  </td></tr></table>`;
+}
+
+/** Il nome vero di un tessuto, se la configurazione riservata ce l'ha: «Articolo · codice». */
+const haNomeVero = (vero) => !!(vero && typeof vero === 'object' && (vero.articolo || vero.codice));
+
+/** Un tessuto per il reparto: la foto del campione, il nome vero della cartella colori e, sotto, il nome del sito. */
+function rigaTessuto(parte, id, vero, primo) {
+  const a = testi.ordine.a_endero;
+  const f = a.campo_tessuto;
+  const buono = haNomeVero(vero);
+  const titolo = buono ? [vero.articolo, vero.codice].filter(Boolean).join(' · ') : tessutoSito(id);
+  const dettagli = buono ? [['cartella', vero.cartella], ['posizione', vero.posizione], ['composizione', vero.composizione]]
+    .filter(([, x]) => x).map(([k, x]) => `${f[k]}: ${x}`) : [];
+  const sito = riempi(a.tessuto_sito, { nome: tessutoSito(id), id });
+  const campione = `${dominio()}/camicia/tessuti/${encodeURIComponent(id)}.webp`;
+  return `<tr><td style="${primo ? '' : `border-top:1px solid ${PANNELLO};`}padding:14px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="84" valign="top" style="width:84px;padding-right:14px;"><img src="${pulisci(campione)}" width="84" height="56" alt="${pulisci(tessutoSito(id))}" style="display:block;width:84px;height:56px;border:0;border-radius:8px;background:${PANNELLO};color:${TENUE};font-family:${CARATTERE};font-size:10px;"></td>
+      <td valign="top" style="font-family:${CARATTERE};color:${BLU};">
+        <div style="font-size:11px;line-height:16px;letter-spacing:0.08em;text-transform:uppercase;color:${TENUE};">${pulisci(parte)}</div>
+        <div style="padding-top:2px;font-size:16px;line-height:22px;font-weight:600;color:${BLU};word-break:break-word;">${pulisci(titolo)}</div>
+        ${dettagli.map((x) => `<div style="font-size:13px;line-height:19px;color:${BLU};word-break:break-word;">${pulisci(x)}</div>`).join('')}
+        ${buono ? '' : `<div style="padding-top:6px;font-size:13px;line-height:18px;font-weight:600;color:${ROSSO};">${pulisci(a.tessuto_mancante)}</div>`}
+        <div style="padding-top:4px;font-size:12px;line-height:17px;color:${TENUE};">${pulisci(sito)}</div>
+      </td>
+    </tr></table>
+  </td></tr>`;
+}
+
+/** I tessuti dell'ordine: [parte, id, nome vero o null], nell'ordine della pagina. */
+export function tessutiOrdine(o, veri = {}) {
+  return PARTI_TESSUTO.map(([nome, prendi]) => [campoConf(nome)?.etichetta || nome, prendi(o)]).filter(([, id]) => id)
+    .map(([parte, id]) => [parte, id, veri && Object.hasOwn(veri, id) ? veri[id] : null]);
+}
+
+/** Le misure della camicia stesa, come le legge il reparto: «52» e, per le larghezze, «52 (giro 104)». */
+export function misureOrdine(o) {
+  const a = testi.ordine.a_endero;
+  return C.misure.campi.filter((m) => Number.isFinite(o.misure?.[m.nome]))
+    .map((m) => [m.etichetta, `${cm(o.misure[m.nome])}${m.giro ? ` (${riempi(a.giro, { cm: cm(o.misure[m.nome] * 2) })})` : ''}`]);
+}
+
+/**
+ * L'email dell'ordine per Endero e per Ennio. `dati` è quello di comeEmail in worker/ordine.mjs:
+ * { numero, ordine, taglia, pagato, pagatoCentesimi, totaleCentesimi, emailCliente, tessutiVeri }.
+ */
+export function ordinePerEndero(dati) {
+  const a = testi.ordine.a_endero, v = a.voci;
+  const o = dati.ordine || {};
+  const cl = o.cliente || {};
+  const nome = inRiga(cl.nome);
+  const numeroTel = numeroInternazionale(cl.telefono);
+  // WhatsApp solo per i cellulari, come nell'avviso dei moduli
+  const wa = numeroTel && !/^390/.test(numeroTel) ? numeroTel : '';
+  const mailto = cl.email ? cl.email.split('@').map(encodeURIComponent).join('@') : '';
+  const tasti = [
+    wa ? tasto(testi.a_endero.tasti.whatsapp, `https://wa.me/${wa}?text=${encodeURIComponent(riempi(a.whatsapp_testo, { nome: nome.split(' ')[0], numero: dati.numero }))}`) : '',
+    numeroTel ? tasto(testi.a_endero.tasti.chiama, `tel:+${numeroTel}`, { pieno: !wa }) : '',
+    mailto ? tasto(testi.a_endero.tasti.email, `mailto:${mailto}?subject=${encodeURIComponent(`Endero · ordine ${dati.numero}`)}`, { pieno: !numeroTel }) : '',
+  ].join('\n');
+  const t = dati.taglia;
+  const tessuti = tessutiOrdine(o, dati.tessutiVeri);
+  const clienti = [[v.nome, cl.nome], [v.telefono, cl.telefono], [v.email, cl.email]];
+  if (dati.emailCliente && dati.emailCliente.toLowerCase() !== String(cl.email || '').toLowerCase()) clienti.push([v.email_pagamento, dati.emailCliente]);
+  const totale = Number.isInteger(dati.totaleCentesimi) ? dati.totaleCentesimi : Math.round((o.conti?.totale || 0) * 100);
+  const diverso = Number.isInteger(dati.pagatoCentesimi) && dati.pagatoCentesimi !== totale
+    ? riempi(a.attenzione_importo, { pagato: euro(dati.pagatoCentesimi / 100), totale: euro(totale / 100) }) : '';
+  const pagato = riempi(a.pagato, { quando: quando(dati.pagato || new Date()) });
+  const nota = cl.email ? riempi(a.rispondi, { email: cl.email }) : '';
+  const conti = importi(o, { totaleCentesimi: totale }).concat([[v.pagamento, v.pagato_stripe]]);
+  const blocco = (html, sotto = 14) => `<tr><td class="dentro" style="padding:0 44px ${sotto}px;">${html}</td></tr>`;
+  const corpo = `${apertura(a.etichetta, dati.numero, `${nome} · ${pagato}`)}
+    ${blocco(riquadroTaglia(t), 14)}
+    ${diverso ? blocco(avvisoRosso(diverso)) : ''}
+    ${blocco(colonne(a.camicia, scelteCamicia(o)))}
+    ${blocco(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARTA}" style="border-collapse:separate;background:${CARTA};border-radius:14px;">
+      <tr><td style="padding:22px 24px 8px;">
+        <div style="padding-bottom:12px;border-bottom:1px solid ${PANNELLO};font-family:${CARATTERE};font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BLU};">${pulisci(a.tessuti)}</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${tessuti.map(([p, id, vero], i) => rigaTessuto(p, id, vero, i === 0)).join('\n')}</table>
+      </td></tr></table>`)}
+    ${blocco(colonne(a.misure, misureOrdine(o), { nota: a.misure_nota }))}
+    ${blocco(riquadro(a.cliente, clienti.filter(([, x]) => x)), 16)}
+    ${tasti ? `<tr><td class="dentro" style="padding:0 44px 4px;">${tasti}</td></tr>` : ''}
+    ${blocco(riquadro(a.consegna, consegna(o)))}
+    ${blocco(colonne(a.importi, conti.slice(0, -1), { ultimaForte: true }), 0)}
+    <tr><td class="dentro" style="padding:16px 44px 38px;font-family:${CARATTERE};font-size:13px;line-height:20px;color:${TENUE};">${pulisci(pagato)}${nota ? `<br>${pulisci(nota)}` : ''}</td></tr>`;
+
+  const rigaVera = ([p, id, x]) => `${p}: ${haNomeVero(x)
+    ? [x.articolo, x.codice, x.cartella && `${a.campo_tessuto.cartella}: ${x.cartella}`, x.posizione && `${a.campo_tessuto.posizione}: ${x.posizione}`, x.composizione].filter(Boolean).join(' · ')
+    : a.tessuto_mancante.toUpperCase()} (${riempi(a.tessuto_sito, { nome: tessutoSito(id), id })})`;
+  const sezione = (titolo, elenco) => [titolo.toUpperCase(), ...elenco.map(([e, x]) => `${e}: ${String(x).replace(/\n/g, ', ')}`), ''];
+  const testo = [
+    `${a.etichetta} · ${dati.numero}`, `${nome} · ${pagato}`, '',
+    `${a.taglia.toUpperCase()}: ${t?.riga || a.taglia_assente}`,
+    t?.daVerificare ? `${a.verifica.toUpperCase()}: ${(t.motivi || []).join('; ')}` : '',
+    diverso, '',
+    ...sezione(a.camicia, scelteCamicia(o)),
+    a.tessuti.toUpperCase(), ...tessuti.map(rigaVera), '',
+    `${a.misure.toUpperCase()} · ${a.misure_nota}`, ...misureOrdine(o).map(([e, x]) => `${e}: ${x}`), '',
+    ...sezione(a.cliente, clienti.filter(([, x]) => x)), wa ? `WhatsApp: https://wa.me/${wa}` : '', '',
+    ...sezione(a.consegna, consegna(o)),
+    ...sezione(a.importi, conti), nota,
+  ].filter((x, i, arr) => x !== '' || (i > 0 && arr[i - 1] !== '')).join('\n');
+  const oggetto = inRiga(t?.riga ? riempi(a.oggetto, { numero: dati.numero, nome, taglia: t.riga }) : riempi(a.oggetto_senza_taglia, { numero: dati.numero, nome }));
+  const anteprima = [t?.riga, `${o.quantita || 1} × ${tessutoSito(o.tessuto)}`, euro(totale / 100)].filter(Boolean).join(' · ');
+  return { oggetto, testo, html: pagina({ titolo: oggetto, anteprima, tipo: 'ordine', corpo, nota: a.piede }) };
+}
+
+/** La conferma dell'ordine per il cliente: nomi dei tessuti del sito (mai quelli veri), consegna, totale, WhatsApp. */
+export function ordinePerCliente(dati) {
+  const t = testi.ordine.al_cliente;
+  const o = dati.ordine || {};
+  const saluto = riempi(t.saluto, { nome: inRiga(o.cliente?.nome).split(' ')[0] || '' });
+  const whatsapp = `${sito.contatti.whatsapp_link}?text=${encodeURIComponent(riempi(t.whatsapp_testo, { numero: dati.numero }))}`;
+  const etichetta = riempi(t.etichetta, { numero: dati.numero });
+  // nel riepilogo solo ciò che il sito ha controllato: le note per il corriere (testo libero) restano fuori
+  const scelte = scelteCamicia(o);
+  const dove = consegna(o, { note: false });
+  const conti = importi(o, { dettagli: false, totaleCentesimi: Number.isInteger(dati.totaleCentesimi) ? dati.totaleCentesimi : null });
+  const corpo = `${apertura(etichetta, saluto, t.testo)}
+    <tr><td class="dentro" style="padding:0 44px 14px;">${colonne(t.riepilogo, scelte)}</td></tr>
+    <tr><td class="dentro" style="padding:0 44px 14px;">${riquadro(t.consegna, dove)}</td></tr>
+    <tr><td class="dentro" style="padding:0 44px 8px;">${colonne(testi.ordine.a_endero.importi, conti, { ultimaForte: true })}</td></tr>
+    <tr><td class="dentro" style="padding:22px 44px 12px;">${tasto(t.whatsapp, whatsapp)}\n${tasto(t.rimando.testo, dominio() + t.rimando.href, { pieno: false })}</td></tr>
+    <tr><td class="dentro" style="padding:6px 44px 38px;font-family:${CARATTERE};font-size:15px;line-height:22px;color:${BLU};">${pulisci(t.firma)}<br><strong style="letter-spacing:0.12em;text-transform:uppercase;">Endero</strong></td></tr>`;
+  const testo = [saluto, t.testo, '', `${t.riepilogo} · ${dati.numero}`, ...scelte.map(([e, v]) => `${e}: ${v}`), '',
+    ...dove.map(([e, v]) => `${e}: ${v.replace(/\n/g, ', ')}`), '',
+    ...conti.map(([e, v]) => `${e}: ${v}`), '',
+    `${t.whatsapp}: ${whatsapp}`, '', t.firma, 'Endero', '', `${sito.contatti.via}, ${sito.contatti.citta} · ${sito.contatti.email}`].join('\n').replace(/\n{3,}/g, '\n\n');
+  const oggetto = inRiga(riempi(t.oggetto, { numero: dati.numero }));
+  return { oggetto, testo, html: pagina({ titolo: oggetto, anteprima: `${saluto} ${t.testo}`, tipo: 'ordine', corpo, nota: t.piede }) };
+}
+
+/** A pagamento fatto: l'ordine a Endero e a Ennio, la conferma al cliente. Restituisce { endero, cliente }. */
+export async function avvisaOrdine(env, dati) {
+  const esito = { endero: false, cliente: false };
+  const elenco = String(env.EMAIL_ORDINI || env.EMAIL_DESTINATARIO || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (!env.RESEND_API_KEY || !elenco.length) return esito;
+  // l'indirizzo del cliente deve essere un'email semplice e scritta bene: niente virgole o nomi che aggiungono destinatari
+  const cliente = [dati.emailCliente, dati.ordine?.cliente?.email].find((x) => x && !controlla('email', x, { obbligatorio: true }));
+  try {
+    esito.endero = await manda(env, { a: elenco, ...ordinePerEndero(dati), rispondiA: cliente || undefined });
+  } catch (errore) {
+    console.error('ordine a Endero non partito', dati.numero, errore);
+  }
+  // se l'ordine a Endero non è partito, Stripe ripete l'avviso e si rimanda tutto: la conferma aspetta quel giro,
+  // così il cliente non la riceve due volte
+  if (cliente && esito.endero) {
+    try {
+      esito.cliente = await manda(env, { a: [cliente], ...ordinePerCliente(dati), rispondiA: env.EMAIL_RISPOSTE || 'info@endero.men' });
+    } catch (errore) {
+      console.error('conferma dell\'ordine al cliente non partita', dati.numero, errore);
     }
   }
   return esito;

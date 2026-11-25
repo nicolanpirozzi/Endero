@@ -5,6 +5,7 @@
 import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { contatto } from './index.js';
+import { ordine, stripe } from './ordine.mjs';
 import { dimentica } from './conservazione.mjs';
 import { INTESTAZIONI } from './intestazioni.mjs';
 import { destinazione } from './reindirizzamenti.mjs';
@@ -67,6 +68,18 @@ export default {
     if (url.pathname === '/api/contatto') {
       if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
       const risposta = await contatto(request, env, ctx);
+      // le risposte del modulo non passano dalle pagine: almeno queste due intestazioni le portano sempre
+      const r = new Response(risposta.body, risposta);
+      r.headers.set('X-Robots-Tag', 'noindex, nofollow');
+      r.headers.set('X-Content-Type-Options', 'nosniff');
+      return r;
+    }
+    // l'ordine del configuratore e l'avviso di pagamento di Stripe (worker/ordine.mjs). Nell'anteprima non ci sono né
+    // il database né la chiave di Stripe: l'ordine si controlla tutto e la risposta è «pagamento non attivo», senza
+    // salvare né mandare nulla. Su endero.men lo stesso, finché le chiavi di Stripe non ci sono.
+    if (url.pathname === '/api/ordine' || url.pathname === '/api/stripe') {
+      if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
+      const risposta = url.pathname === '/api/ordine' ? await ordine(request, env, ctx) : await stripe(request, env, ctx);
       // le risposte del modulo non passano dalle pagine: almeno queste due intestazioni le portano sempre
       const r = new Response(risposta.body, risposta);
       r.headers.set('X-Robots-Tag', 'noindex, nofollow');

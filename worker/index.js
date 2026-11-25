@@ -2,7 +2,8 @@
 //
 // Collegamenti (wrangler.toml): ASSETS (i file del sito), DB (database D1 "endero").
 // Segreti, mai nel repository: TURNSTILE_SECRET (antispam), RESEND_API_KEY ed EMAIL_DESTINATARIO (le email dei
-// moduli: worker/email.mjs; la casella di Endero non va scritta da nessun'altra parte).
+// moduli: worker/email.mjs; la casella di Endero non va scritta da nessun'altra parte). Per l'ordine del configuratore
+// (worker/ordine.mjs): STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, EMAIL_ORDINI, e l'archivio KV RISERVATO.
 
 export default {
   async fetch(request, env, ctx) {
@@ -10,6 +11,11 @@ export default {
     if (url.pathname === '/api/contatto') {
       if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
       return contatto(request, env, ctx);
+    }
+    // l'ordine del configuratore e l'avviso di pagamento di Stripe (worker/ordine.mjs)
+    if (url.pathname === '/api/ordine' || url.pathname === '/api/stripe') {
+      if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
+      return url.pathname === '/api/ordine' ? ordine(request, env, ctx) : stripe(request, env, ctx);
     }
     return env.ASSETS.fetch(request);
   },
@@ -25,6 +31,7 @@ const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
 import { dimentica, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
 import { avvisa } from './email.mjs';
+import { ordine, stripe } from './ordine.mjs';
 import { controlla, senzaInvisibili, testi as avvisi } from '../src/controlli.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];

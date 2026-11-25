@@ -7,7 +7,11 @@
 #
 # Come l'anteprima, i file stanno nell'archivio KV (Workers Sites): nell'ambiente di lavoro il caricamento degli
 # "assets" viene rifiutato (CLAUDE.md, 2026-11-15). Segreti, mai qui: TURNSTILE_SECRET, RESEND_API_KEY,
-# EMAIL_DESTINATARIO (`npx wrangler secret put <nome> --config wrangler.sito.toml`).
+# EMAIL_DESTINATARIO (`npx wrangler secret put <nome> --config wrangler.sito.toml`). Per l'ordine del configuratore
+# (worker/ordine.mjs), da mettere solo quando si accende il pagamento: STRIPE_SECRET_KEY (chiave segreta di Stripe),
+# STRIPE_WEBHOOK_SECRET (la chiave del webhook che chiama https://endero.men/api/stripe), EMAIL_ORDINI (chi riceve gli
+# ordini: Endero ed Ennio, separati da virgola; se manca, EMAIL_DESTINATARIO). Senza STRIPE_SECRET_KEY il pagamento è
+# spento e gli ordini non si salvano.
 name = "endero-sito"
 main = "worker/anteprima.js"
 compatibility_date = "2026-10-01"
@@ -25,6 +29,13 @@ exclude = ["_headers", "_redirects"]
 binding = "DB"
 database_name = "endero-sito"
 database_id = "9cd0a738-00d2-4d2d-997a-bf0a12a43ac2"
+
+# La configurazione riservata del Worker: lo stesso archivio KV dei questionari (endero-domande, wrangler.domande.toml).
+# Il sito ci legge soltanto due voci: "riservato/taglie" (le camicie campione delle otto taglie, worker/taglie.mjs) e
+# "riservato/tessuti" (il nome vero di ogni tessuto nella cartella colori, per l'email dell'ordine a Endero).
+[[kv_namespaces]]
+binding = "RISERVATO"
+id = "a44b8c9d71cf4ed8852df3bbf3f73c76"
 
 [vars]
 EMAIL_MITTENTE = "Endero <noreply@endero.men>"

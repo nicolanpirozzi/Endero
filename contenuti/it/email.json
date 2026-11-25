@@ -64,5 +64,78 @@
     },
     "firma": "A presto,",
     "piede": "Ricevi questa email perché hai mandato una richiesta dal sito di Endero."
+  },
+  "_nota_ordine": "Le email dell'ordine del configuratore (worker/ordine.mjs, punto 16 della direzione creativa): partono solo a pagamento fatto, una volta sola. A Endero e a Ennio (proprietario: «quando arriva l'email ad Endero e ad Ennio deve avere il nome che è presente nelle foto campione») tutto l'ordine, con la taglia per il reparto e il nome vero di ogni tessuto, che non sta qui: lo legge il Worker dalla configurazione riservata. Al cliente una conferma breve con i nomi dei tessuti del sito, mai quelli veri, e senza i testi liberi (note per il corriere). {numero} è il numero d'ordine (E-2026-000123), {nome} il nome del cliente, {taglia} la riga della taglia, {quando} giorno e ora del pagamento.",
+  "ordine": {
+    "a_endero": {
+      "oggetto": "Nuovo ordine {numero} · {nome} · {taglia}",
+      "oggetto_senza_taglia": "Nuovo ordine {numero} · {nome}",
+      "etichetta": "Nuovo ordine · camicia su misura",
+      "pagato": "Pagato con Stripe {quando}.",
+      "taglia": "Taglia per il reparto",
+      "taglia_assente": "Taglia non calcolata: la tabella delle taglie non è disponibile. Partire dalle misure qui sotto.",
+      "verifica": "Da verificare con il cliente",
+      "camicia": "La camicia",
+      "tessuti": "I tessuti",
+      "tessuto_sito": "Sul sito: {nome} · {id}",
+      "tessuto_mancante": "Nome della cartella colori non disponibile",
+      "campo_tessuto": {
+        "articolo": "Articolo",
+        "codice": "Codice",
+        "cartella": "Cartella",
+        "posizione": "Posizione",
+        "composizione": "Composizione"
+      },
+      "misure": "Misure della camicia del cliente",
+      "misure_nota": "La camicia stesa sul tavolo, in centimetri. Tra parentesi il giro: la larghezza per due.",
+      "giro": "giro {cm}",
+      "cliente": "Il cliente",
+      "consegna": "Ritiro o spedizione",
+      "importi": "Importi",
+      "whatsapp_testo": "Ciao {nome}, ti scriviamo da Endero per il tuo ordine {numero}.",
+      "rispondi": "Rispondendo a questa email scrivi direttamente a {email}.",
+      "attenzione_importo": "Attenzione: Stripe ha incassato {pagato}, il totale dell'ordine è {totale}. Controllare su Stripe.",
+      "piede": "Email automatica del sito endero.men",
+      "voci": {
+        "quantita": "Quantità",
+        "nessuna": "Nessuna",
+        "si": "Sì",
+        "no": "No",
+        "standard": "Standard",
+        "iniziali": "{lettere} · {posizione}",
+        "nome": "Nome",
+        "telefono": "Telefono",
+        "email": "Email",
+        "email_pagamento": "Email usata per pagare",
+        "modo": "Come",
+        "destinatario": "Chi riceve",
+        "indirizzo": "Indirizzo",
+        "note": "Note per il corriere",
+        "camicia": "Prezzo di una camicia",
+        "personalizzazioni": "Personalizzazioni",
+        "camicie": "Camicie",
+        "spedizione": "Spedizione",
+        "gratis": "Gratis",
+        "totale": "Totale",
+        "pagamento": "Pagamento",
+        "pagato_stripe": "Pagato con Stripe"
+      }
+    },
+    "al_cliente": {
+      "oggetto": "Il tuo ordine Endero {numero}",
+      "etichetta": "Ordine ricevuto · {numero}",
+      "saluto": "Ciao {nome},",
+      "testo": "grazie: abbiamo ricevuto il tuo ordine e il pagamento. Prima del taglio controlliamo le misure: se qualcosa non torna ti scriviamo su WhatsApp.",
+      "riepilogo": "Il tuo ordine",
+      "consegna": "Ritiro o spedizione",
+      "whatsapp": "Scrivici su WhatsApp",
+      "whatsapp_testo": "Ciao Endero, vi scrivo per il mio ordine {numero}.",
+      "rimando": {
+        "testo": "Scopri la collezione",
+        "href": "/collezione/"
+      },
+      "firma": "A presto,",
+      "piede": "Ricevi questa email perché hai ordinato una camicia su misura sul sito di Endero."
+    }
   }
 }

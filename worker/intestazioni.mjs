@@ -16,7 +16,9 @@ export const CSP = [
   'frame-src https://challenges.cloudflare.com',
   "frame-ancestors 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  // l'ordine senza script: /api/ordine risponde con un rimando alla pagina di pagamento di Stripe, e form-action vale
+  // anche per i rimandi (worker/ordine.mjs)
+  "form-action 'self' https://checkout.stripe.com",
   "object-src 'none'",
 ].join('; ');
 

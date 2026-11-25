@@ -104,6 +104,47 @@ globalThis.fetch = async () => { throw new Error('rete'); };
 esito = await avvisa(env, contatto);
 controlla('se la rete cade non si rompe nulla', !esito.endero && !esito.cliente);
 
+console.log('Ordine del configuratore (dati inventati)');
+{
+  const { ordinePerEndero, ordinePerCliente, avvisaOrdine } = await import(pathToFileURL(uscita).href);
+  const o = {
+    quantita: 2, tessuto: 't001', collo: 'francese', taschino: { tessuto: 't002' }, asola: { colore: 'rosso' }, bottone: 'contrasto', filato_bottone: 'blu',
+    iniziali: { posizione: 'cuore', lettere: 'MP' }, interno_collo: null, interno_polso: { tessuto: 't003' }, polsino: null,
+    misure: { giro_collo: 41, spalla: 47, spallina: 16.5, torace: 56, pancia: 51, bacino: 54, lunghezza_manica: 61, braccio: 19.25, avambraccio: 15.5, polso: 24, lunghezza_davanti: 69, lunghezza_dietro: 80.5 },
+    cliente: { nome: 'Mario <b>Rossi</b>', telefono: '333 1234567', email: 'mario@esempio.it' },
+    spedizione: { modo: 'cinque', indirizzo: { destinatario: 'Mario Rossi', indirizzo: 'Via Inventata 1', cap: '80100', citta: 'Napoli', provincia: 'NA', note: 'Citofono <i>Prova</i>' } },
+    conti: { personalizzazioni: ['taschino', 'asola', 'bottone', 'filato_bottone', 'iniziali', 'interno_polso'], camicia: 120, quantita: 2, capi: 240, spedizione: 0, gratis: true, totale: 240 },
+  };
+  const dati = { numero: 'E-2026-000007', ordine: o, taglia: { riga: 'Taglia 41 · manica −6 cm', daVerificare: true, motivi: ['variazione grande: manica −6 cm'] },
+    pagato: new Date('2026-11-25T19:49:00Z'), pagatoCentesimi: 24000, totaleCentesimi: 24000, emailCliente: 'mario@esempio.it',
+    tessutiVeri: { t001: { articolo: 'Articolo Finto', codice: 'F-1', cartella: 'Cartella Finta', posizione: '2' } } };
+  const a = ordinePerEndero(dati), b = ordinePerCliente(dati);
+  controlla('a Endero: oggetto con numero, nome e taglia', a.oggetto === 'Nuovo ordine E-2026-000007 · Mario <b>Rossi</b> · Taglia 41 · manica −6 cm', a.oggetto);
+  controlla('a Endero: taglia in grande e «da verificare» in vista', /Taglia 41</.test(a.html) && />manica −6 cm</.test(a.html) && /Da verificare con il cliente: variazione grande/.test(a.html));
+  controlla('a Endero: nome vero del tessuto, cartella e posizione', /Articolo Finto · F-1/.test(a.html) && /Cartella: Cartella Finta/.test(a.html) && /Posizione: 2/.test(a.html));
+  controlla('a Endero: dove manca il nome vero, nome del sito, id e avviso', (a.html.match(/Nome della cartella colori non disponibile/g) || []).length === 2 && /Sul sito: [^<]+ · t003/.test(a.html));
+  controlla('a Endero: foto del campione dal sito vero', /src="https:\/\/endero\.men\/camicia\/tessuti\/t001\.webp"/.test(a.html));
+  controlla('a Endero: misure con il giro, iniziali, consegna con note, totale', /56 \(giro 112\)/.test(a.html) && /MP · Lato cuore/.test(a.html) && /Citofono &lt;i&gt;Prova/.test(a.html) && /240\s€/.test(a.html));
+  controlla('a Endero: tasti WhatsApp, Chiama, Email', /wa\.me\/393331234567\?text=/.test(a.html) && /tel:\+393331234567/.test(a.html) && /mailto:mario@esempio\.it\?subject=/.test(a.html));
+  controlla('a Endero: il testo scritto dal cliente non diventa codice', !/<b>Rossi<\/b>/.test(a.html) && !/<i>Prova<\/i>/.test(a.html));
+  controlla('a Endero: la testata dell\'ordine', /testata-ordine-\d+\.jpg/.test(a.html));
+  controlla('a Endero, taglia non calcolata: lo dice', /Taglia non calcolata/.test(ordinePerEndero({ ...dati, taglia: null }).html) && !/Taglia 41/.test(ordinePerEndero({ ...dati, taglia: null }).oggetto));
+  controlla('al cliente: nomi del sito, mai quelli veri, niente note né taglia', !/Articolo Finto|F-1|Cartella Finta|Citofono|Taglia 41/.test(b.html + b.testo) && /Popeline bianco/.test(b.html));
+  controlla('al cliente: numero d\'ordine, totale e WhatsApp', b.oggetto === 'Il tuo ordine Endero E-2026-000007' && /240\s€/.test(b.html) && /wa\.me\/393338548712\?text=Ciao%20Endero/.test(b.html));
+  controlla('niente script nelle email dell\'ordine', ![a.html, b.html].some((x) => /<script/i.test(x)));
+
+  const spedite2 = [];
+  globalThis.fetch = async (url, opzioni) => { spedite2.push(JSON.parse(opzioni.body)); return new Response('{}', { status: 200 }); };
+  let es = await avvisaOrdine({ RESEND_API_KEY: 'finta', EMAIL_DESTINATARIO: 'tutti@esempio.it' }, dati);
+  controlla('senza EMAIL_ORDINI vale EMAIL_DESTINATARIO', es.endero && es.cliente && JSON.stringify(spedite2[0].to) === '["tutti@esempio.it"]');
+  spedite2.length = 0;
+  es = await avvisaOrdine({ RESEND_API_KEY: 'finta', EMAIL_ORDINI: 'a@esempio.it,b@esempio.it', EMAIL_DESTINATARIO: 'x@esempio.it' }, { ...dati, emailCliente: 'a@b.it, c@d.it' });
+  controlla('EMAIL_ORDINI con più indirizzi; un\'email del pagamento con la virgola si scarta per quella del modulo', JSON.stringify(spedite2[0].to) === '["a@esempio.it","b@esempio.it"]' && JSON.stringify(spedite2[1].to) === '["mario@esempio.it"]');
+  spedite2.length = 0;
+  es = await avvisaOrdine({ EMAIL_ORDINI: 'a@esempio.it' }, dati);
+  controlla('senza la chiave di Resend non parte nulla', !es.endero && spedite2.length === 0);
+}
+
 rmSync(cartella, { recursive: true, force: true });
 console.log(`\n${passati} controlli passati, ${falliti.length} falliti`);
 if (falliti.length) { console.log(falliti.map((x) => ' - ' + x).join('\n')); process.exit(1); }

@@ -49,7 +49,8 @@ export function personalizzazioni(o) {
     taschino: o.taschino === 'si',
     asola: o.asola === 'si',
     bottone: !!o.bottone && o.bottone !== 'tinta',
-    filato_bottone: !!o.filato_bottone,
+    // ripulito come in controllaOrdine e ordinePulito: uno spazio solo non è un colore, e non deve far salire il prezzo
+    filato_bottone: !!pulito(o.filato_bottone),
     iniziali: o.iniziali === 'si',
     interno_collo: o.interno_collo === 'personalizzato',
     interno_polso: o.interno_polso === 'personalizzato',
