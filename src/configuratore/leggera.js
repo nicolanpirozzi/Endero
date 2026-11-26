@@ -90,6 +90,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     return im.decode().catch(() => new Promise((ok, no) => { if (im.complete && im.naturalWidth) ok(); else { im.onload = ok; im.onerror = no; } })).then(() => im);
   };
   let taglia = serve();
+  let fotoOra = null;                                  // l'immagine della camicia scaricata per ultima (per il tessuto)
   const NOMI = ['parete', 'ombra', 'camicia'];
   let pezzi;
   try { pezzi = await Promise.all(NOMI.map((nome) => caricata(file(nome, taglia)))); } catch { riquadro.remove(); return; }
@@ -99,7 +100,13 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     im.style.left = x - rx + 'px'; im.style.top = y + 'px'; im.style.width = w + 'px'; im.style.height = h + 'px';
   });
   const [parete, ombra, camicia] = pezzi;
-  piano.append(parete, ombra, camicia);
+  // Sopra la camicia, con la sua stessa trasformazione, i pezzi scelti nel riquadro (collo, taschino, iniziali: li
+  // mette vesti.js). Misura e posto sono quelli della camicia, così la stessa matrice li porta tutti e due
+  const addosso = document.createElement('div');
+  addosso.className = 'configura__addosso';
+  { const [x, y, w, h] = D.pezzi.camicia; Object.assign(addosso.style, { left: x - rx + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); }
+  piano.append(parete, ombra, camicia, addosso);
+  fotoOra = camicia;
   misura();
   // se la finestra cresce (o passa su uno schermo più fitto) servono pezzi più grandi, come fa da sé l'immagine ferma
   let cambio = false;
@@ -111,7 +118,8 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
       const nuovi = await Promise.all(NOMI.map((nome) => caricata(file(nome, t))));
       NOMI.forEach((nome, i) => { pezzi[i].src = file(nome, t); });
       taglia = t;
-      if (stoffa) { stoffa.cambiaFoto(nuovi[2]); if (!corre) stoffa.disegna(null); }
+      fotoOra = nuovi[2];
+      tessuto();
     } catch { /* restano quelli di prima */ }
     cambio = false;
   };
@@ -140,7 +148,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   const disegna = () => {
     const appesa = pendolo(p.torce, p.lato, p.fondo), mossa = per(appesa, sulPiano);
     // con la stoffa la camicia la disegna lei (appesa alla gruccia che dondola); senza, è l'immagine spostata tutta insieme
-    if (stoffa) stoffa.disegna(appesa); else camicia.style.transform = css(per(per(camera, mossa), daFerma), D.pezzi.camicia);
+    if (stoffa) stoffa.disegna(appesa); else camicia.style.transform = addosso.style.transform = css(per(per(camera, mossa), daFerma), D.pezzi.camicia);
     ombra.style.transform = css(per(per(cameraOmbra, mossa), daFermaOmbra), D.pezzi.ombra);
   };
   // --- la mano e il dondolio
@@ -219,7 +227,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   function aRiposo() {
     if (corre > 0) cancelAnimationFrame(corre);
     corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
-    camicia.style.transform = ''; ombra.style.transform = '';
+    camicia.style.transform = addosso.style.transform = ''; ombra.style.transform = '';
     if (stoffa) { stoffa.stendi(null); stoffa.disegna(null); }
     const fatto = attesaRiposo; attesaRiposo = null;
     fatto?.();
@@ -236,15 +244,25 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
   /** Via la stoffa: torna la camicia rigida, quella approvata. */
   function rinuncia() {
     if (!stoffa) return;
-    stoffa.tela.remove(); stoffa = null; camicia.style.visibility = '';
+    stoffa.tela.remove(); stoffa = null; camicia.style.visibility = addosso.style.visibility = '';
     if (corre) disegna();
   }
+  // Con la stoffa la camicia è un'immagine stesa sulla griglia: i pezzi scelti nel riquadro (vesti.js) le si
+  // dipingono sopra, in una tela composta che si rifà solo quando le scelte cambiano o arriva una foto più grande
+  let vestito = null;                                  // (foto) => la tela composta, o null: la camicia com'è
+  function tessuto(tela) {
+    if (!stoffa) return;
+    stoffa.cambiaFoto(tela || (vestito && vestito(fotoOra)) || fotoOra);
+    if (!(corre > 0)) stoffa.disegna(null);           // (con ?manuale corre è -1: si disegna lo stesso)
+  }
+
   // Il tessuto che ondeggia. Se qui non si può fare (il browser non ha l'accelerazione grafica) resta la camicia rigida
   if (onda) {
     stoffa = creaOnda({ piano, dopo: ombra, foto: camicia, riquadro: D.pezzi.camicia, rx, camera, daFerma, zPiano: G[2], sole, forza: onda, comunque });
     if (stoffa) {
       stoffa.misura(misura()); stoffa.disegna(null);
-      camicia.style.visibility = 'hidden';
+      // (i pezzi scelti, con la stoffa, stanno dentro la sua immagine: vedi `tessuto`)
+      camicia.style.visibility = addosso.style.visibility = 'hidden';
       // se la scheda grafica si perde per strada, torna la camicia rigida
       stoffa.tela.addEventListener('ondapersa', rinuncia);
     }
@@ -345,7 +363,7 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
     if (!ridotto.matches) { mostra(); return; }
     clearTimeout(comparsa); attiva = false; mano.sopra = false; delete palco.dataset.viva;
     cancelAnimationFrame(corre); corre = 0; p.lato = p.fondo = p.torce = p.vLato = p.vFondo = p.vTorce = 0;
-    camicia.style.transform = ''; ombra.style.transform = ''; riquadro.classList.remove(VIVA); palco.classList.remove(STRATI);
+    camicia.style.transform = addosso.style.transform = ''; ombra.style.transform = ''; riquadro.classList.remove(VIVA); palco.classList.remove(STRATI);
     if (stoffa) { stoffa.stendi(null); stoffa.disegna(null); }
   });
   new ResizeObserver(() => { misura(); ingrandisci(); }).observe(riquadro);
@@ -378,6 +396,23 @@ export async function leggera(palco, dove, versione = '', { onda = 0, comunque =
       clearTimeout(timerFerma);
       const fatto = attesaRiposo; attesaRiposo = null;
       fatto?.();
+    },
+    // --- per vesti.js: dove mettere i pezzi scelti sulla camicia che si muove
+    veste: {
+      /** l'elemento che si muove con la camicia: misura in punti del fotogramma, dall'angolo della camicia */
+      strato: addosso,
+      /** [x, y, larghezza, altezza] della camicia nel fotogramma */
+      riquadro: D.pezzi.camicia,
+      /** quanti punti dello schermo (fisici) fa un punto del fotogramma */
+      scala: () => (riquadro.getBoundingClientRect().height / FA) * (window.devicePixelRatio || 1),
+      /** c'è la stoffa (la camicia la disegna la scheda grafica, e `addosso` è nascosto) */
+      conStoffa: () => !!stoffa,
+      /** l'immagine della camicia che la stoffa usa adesso (cambia quando arriva una più grande) */
+      foto: () => fotoOra,
+      /** `fn(foto)`: la tela composta per la stoffa, o null (la camicia com'è); serve quando arriva una foto più grande */
+      vestito(fn) { vestito = fn; },
+      /** mette nella stoffa `tela` (una tela o un'immagine grande quanto la foto), o la composizione di `vestito` */
+      tessuto(tela) { tessuto(tela); },
     },
   };
 }

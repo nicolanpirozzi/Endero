@@ -1,1 +1,95 @@
-/* Ciò che cambia sulla camicia mentre si configura: i pezzi sovrapposti (collo, taschino, iniziali). Vedi vesti.js. */
+/* Ciò che cambia sulla camicia mentre si configura: i pezzi sovrapposti (collo, taschino, iniziali). Vedi vesti.js.
+   I pezzi stanno nei punti del fotogramma 1800 x 1000, come l'immagine ferma, su ogni livello della camicia. */
+
+/* --- sull'immagine ferma: lo stesso posto, la stessa misura e lo stesso zoom (guida.js) dell'immagine ferma, e quindi
+   anche sopra la camicia nitida dello zoom. Sta sopra i livelli della camicia (z-index 1) e sotto le linee della guida. */
+.configura__vesti {
+  position: absolute;
+  top: var(--su);
+  left: min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia)));
+  z-index: 1;
+  width: var(--largo);
+  height: var(--alto);
+  transform: var(--zoom, none);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* le linee della guida restano sopra i pezzi (ritocco a un livello di configuratore.css, dichiarato qui) */
+.configura__linee {
+  z-index: 2;
+}
+
+/* Quando la camicia che si muove (leggera.js) è in vista, i pezzi li porta lei: questi si nascondono quando lei ha
+   finito di comparire (data-viva), e tornano subito quando la guida la ferma. */
+.configura__palco[data-viva]:not([data-guida-ferma]) .configura__vesti {
+  visibility: hidden;
+}
+
+/* girata di spalle (guida.js, per spalla e lunghezza dietro) i pezzi davanti non si vedono; tornano quando la camicia è
+   di nuovo di fronte, con una dissolvenza breve */
+.configura__vesti {
+  transition: opacity 200ms ease-out;
+}
+
+.configura__palco[data-girata] .configura__vesti {
+  opacity: 0;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .configura__vesti {
+    transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out;
+  }
+
+  .configura__palco[data-girata] .configura__vesti {
+    transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* sul telefono l'immagine ferma è il ritaglio verticale (x da 336 a 1086 del fotogramma): i pezzi la seguono come i
+   tre pezzi che si muovono (configuratore.css, .configura__posa), e si tagliano dove lei finisce */
+@media (max-width: 599px) {
+  .configura__vesti {
+    top: calc((100% - 26px - 133.333vw) * 0.85);
+    left: calc(100vw * -336 / 750);
+    width: calc(100vw * 1800 / 750);
+    height: 133.333vw;
+    -webkit-clip-path: inset(0 0 max(0px, calc(0.15 * (133.333vw - min(133.4vw, 82svh)))) 0);
+    clip-path: inset(0 0 max(0px, calc(0.15 * (133.333vw - min(133.4vw, 82svh)))) 0);
+  }
+}
+
+/* --- sulla camicia che dondola (leggera.js): grande quanto lei, con la sua stessa trasformazione */
+.configura__addosso {
+  position: absolute;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* --- i pezzi: un posto per tipo (collo sotto, poi taschino, poi iniziali), ognuno grande quanto il suo livello */
+.vesti__posto {
+  position: absolute;
+  inset: 0;
+}
+
+.configura__vesti .vesti__pezzo,
+.configura__addosso .vesti__pezzo {
+  position: absolute;
+  max-width: none;
+}
+
+.vesti__lettere {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* un pezzo nuovo compare sopra il vecchio con una dissolvenza breve (vesti.js mette l'opacità di partenza) */
+@media (prefers-reduced-motion: no-preference) {
+  .vesti__pezzo {
+    transition: opacity 200ms ease-out;
+  }
+}
