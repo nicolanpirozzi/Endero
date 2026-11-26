@@ -500,6 +500,90 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     controlla('senza scheda grafica: nessun errore', errori.length === 0, errori.join(' | '));
     await contesto.close();
   }
+  // ---- ciò che ha trovato la revisione del 2026-11-26: la tinta deve reggere a una scheda grafica che si perde, a un
+  // file che non arriva e a un file che manca
+  const MARRONE = 't0513';
+  const contesti = (page) => page.addInitScript(() => {
+    window.__gl = [];
+    const prima = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (tipo, ...a) { const c = prima.call(this, tipo, ...a); if (c && /webgl/.test(tipo) && !window.__gl.includes(c)) window.__gl.push(c); return c; };
+  });
+  {
+    // la scheda grafica si riprende il contesto della tinta (telefono in secondo piano): il tessuto dopo tinge lo stesso
+    const contesto = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await contesto.newPage();
+    const errori = [];
+    page.on('pageerror', (e) => errori.push(String(e)));
+    await contesti(page);
+    await page.goto(PAGINA + '&rigida', { waitUntil: 'networkidle' });
+    await pronta(page);
+    await manda(page, { tessuto: SCURO });
+    await tinta(page); await posata(page);
+    const persi = await page.evaluate(() => { let n = 0; for (const c of window.__gl) if (!c.canvas.isConnected) { c.getExtension('WEBGL_lose_context')?.loseContext(); n++; } return n; });
+    await page.waitForTimeout(300);
+    await manda(page, { tessuto: BIANCO });
+    await posata(page); await page.waitForTimeout(600);
+    const dopo = await colore(page, ...PETTO);
+    controlla('persa la scheda grafica della tinta, il tessuto scelto dopo colora lo stesso la camicia', persi === 1 && chiaro(dopo) > 150, `${persi} contesti persi, petto ${JSON.stringify(dopo)}`);
+    controlla('scheda grafica persa: nessun errore', errori.length === 0, errori.join(' | '));
+    await contesto.close();
+  }
+  {
+    // un campione che non arriva mai, poi un altro tessuto: la camicia prende il secondo e la rotella non resta accesa
+    const a = await nuovo(COMPUTER[0][1], '&rigida'), { page } = a;
+    await pronta(page);
+    await page.route(new RegExp(`/stoffe/${MARRONE}\\.webp`), () => {});             // (mai una risposta)
+    await manda(page, { tessuto: MARRONE });
+    await page.waitForTimeout(1200);
+    const gira = await page.evaluate(() => !!document.querySelector('.configura__cucitura:not([hidden])'));
+    await manda(page, { tessuto: SCURO });
+    const ok = await tinta(page);
+    await posata(page); await page.waitForTimeout(500);
+    const s = await page.evaluate(() => ({ rotella: !!document.querySelector('.configura__cucitura:not([hidden])'), chiave: window.__vesti.stato.stoffa?.chiave || '' }));
+    controlla('un campione che non arriva: la rotella gira; scelto un altro tessuto la camicia lo prende e la rotella va via', gira && ok && !s.rotella && s.chiave.includes(SCURO), JSON.stringify({ gira, ok, ...s }));
+    await a.contesto.close();
+  }
+  {
+    // un campione che manca (404) dopo un tessuto già sulla camicia: la camicia non resta del tessuto di prima (torna
+    // bianca), e quando il file torna si tinge da sola, senza toccare nulla
+    const a = await nuovo(COMPUTER[0][1], '&rigida'), { page } = a;
+    await pronta(page);
+    await manda(page, { tessuto: SCURO });
+    await tinta(page); await posata(page);
+    let manca = true;
+    await page.route(new RegExp(`/stoffe/${MARRONE}\\.webp`), (r) => (manca ? r.fulfill({ status: 404, body: '' }) : r.continue()));
+    await manda(page, { tessuto: MARRONE });
+    await posata(page); await page.waitForTimeout(700);
+    const senza = await page.evaluate(() => ({ stoffa: !!window.__vesti.stato.stoffa, tele: document.querySelectorAll('.configura__addosso canvas.vesti__tinta').length, rotella: !!document.querySelector('.configura__cucitura:not([hidden])') }));
+    controlla('un campione che manca: la camicia non resta del tessuto di prima, torna bianca, senza rotella', !senza.stoffa && senza.tele === 0 && !senza.rotella, JSON.stringify(senza));
+    manca = false;
+    const torna = await page.waitForFunction((id) => (window.__vesti.stato.stoffa?.chiave || '').includes(id), MARRONE, { timeout: 12000 }).then(() => true, () => false);
+    controlla('quando il campione torna, la camicia si tinge da sola', torna);
+    await a.contesto.close();
+  }
+  {
+    // una scheda grafica che non basta alla tinta (manca l'estensione): un tentativo solo, non un contesto a ogni scelta
+    const contesto = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await contesto.newPage();
+    const errori = [];
+    page.on('pageerror', (e) => errori.push(String(e)));
+    await contesti(page);
+    await page.addInitScript(() => {
+      for (const C of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) {
+        if (!C) continue;
+        const prima = C.prototype.getExtension;
+        C.prototype.getExtension = function (nome) { return nome === 'EXT_shader_texture_lod' ? null : prima.call(this, nome); };
+      }
+    });
+    await page.goto(PAGINA + '&comunque', { waitUntil: 'networkidle' });
+    await pronta(page);
+    const prima = await page.evaluate(() => window.__gl.length);
+    for (const id of [SCURO, BIANCO, MARRONE, SCURO, BIANCO, MARRONE]) { await manda(page, { tessuto: id }); await posata(page); await page.waitForTimeout(250); }
+    const s = await page.evaluate(() => ({ contesti: window.__gl.length, vivi: window.__gl.filter((c) => !c.isContextLost()).length, tele: document.querySelectorAll('canvas.vesti__tinta').length, onda: !!document.querySelector('.configura__onda') }));
+    controlla('scheda grafica che non basta alla tinta: un tentativo solo (rilasciato), la camicia resta bianca e il tessuto che ondeggia resta', s.contesti <= prima + 1 && s.vivi <= prima && s.tele === 0 && s.onda, JSON.stringify({ prima, ...s }));
+    controlla('scheda grafica che non basta: nessun errore', errori.length === 0, errori.join(' | '));
+    await contesto.close();
+  }
   // le iniziali: il carattere elegante, e gli altri due da provare
   for (const [v, famiglia] of [['', 'Endero Iniziali Corsivo'], ['&iniziali=b', 'Endero Iniziali Romano'], ['&iniziali=c', 'Endero Iniziali Inglese']]) {
     const a = await nuovo(COMPUTER[0][1], '&rigida' + v), { page } = a;

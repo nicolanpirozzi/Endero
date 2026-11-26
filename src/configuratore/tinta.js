@@ -119,11 +119,18 @@ void main() {
 /** Il bianco della camicia calcolata: un «tessuto» che la lascia com'è (per le zone senza un tessuto scelto). */
 const BIANCO = 237;
 
-/** La macchina che tinge: una per pagina. `null` dove la scheda grafica non c'è. */
+/**
+ * La macchina che tinge: una per pagina. `null` dove la scheda grafica non c'è o non basta (allora il suo contesto si
+ * rilascia subito: i browser ne tengono pochi, e quello del tessuto che ondeggia non deve farne le spese). La funzione
+ * che restituisce ha `persa()`: vero quando la scheda grafica se l'è ripresa (telefono in secondo piano, memoria
+ * finita); allora chi la usa ne crea un'altra.
+ */
 export function creaTinta() {
   const tela = document.createElement('canvas');
   const gl = tela.getContext('webgl', { premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: false });
-  if (!gl || !gl.getExtension('EXT_shader_texture_lod')) return null;
+  if (!gl) return null;
+  const rinuncia = () => { gl.getExtension('WEBGL_lose_context')?.loseContext(); tela.width = tela.height = 0; return null; };
+  if (!gl.getExtension('EXT_shader_texture_lod')) return rinuncia();
   const pezzo = (tipo, testo) => { const s = gl.createShader(tipo); gl.shaderSource(s, testo); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
   const programma = (punti) => {
     const v = pezzo(gl.VERTEX_SHADER, VERTICI), f = pezzo(gl.FRAGMENT_SHADER, punti);
@@ -135,7 +142,7 @@ export function creaTinta() {
     return { pr, u: (nome) => (u[nome] ||= gl.getUniformLocation(pr, nome)) };
   };
   const copia = programma(COPIA), tinge = programma(TINGE);
-  if (!copia || !tinge) return null;
+  if (!copia || !tinge) return rinuncia();
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
@@ -164,8 +171,9 @@ export function creaTinta() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, netta ? gl.NEAREST : gl.LINEAR);
     return t;
   };
+  // (un contesto perso non si aspetta che torni: programmi e immagini andrebbero rifatti tutti. Se ne crea uno nuovo)
   let perso = false;
-  tela.addEventListener('webglcontextlost', (e) => { e.preventDefault(); perso = true; });
+  tela.addEventListener('webglcontextlost', () => { perso = true; });
 
   // --- la trama e la maschera composte: quelle di base con sopra i riquadri del collo e del taschino. Stanno
   // ciascuna in una texture sua, e si rifanno solo quando cambiano i pezzi
@@ -229,9 +237,9 @@ export function creaTinta() {
    * @param {number} o.alMetro             punti della trama per metro di camicia (stesa di fronte)
    * @returns {HTMLCanvasElement|null}     una tela nuova, grande quanto la foto; null se non si può
    */
-  return function tingi({ foto, chiave, base, maschera, pezzi, tessere, alMetroUv, alMetro }) {
+  function tingi({ foto, chiave, base, maschera, pezzi, tessere, alMetroUv, alMetro }) {
     const w = foto.naturalWidth || foto.width, h = foto.naturalHeight || foto.height;
-    if (perso || !w || !h || w > massimo || h > massimo) return null;
+    if (perso || gl.isContextLost() || !w || !h || w > massimo || h > massimo) return null;
     if (!componi(tramaC, chiave, base, pezzi) || !componi(mascheraC, chiave, maschera, pezzi.map((p) => ({ img: p.maschera, x: p.x * 2, y: p.y * 2 })))) return null;
     tela.width = w; tela.height = h;
     gl.viewport(0, 0, w, h);
@@ -260,6 +268,9 @@ export function creaTinta() {
     esce.width = w; esce.height = h;
     esce.getContext('2d').drawImage(tela, 0, 0);
     for (const x of usate) gl.deleteTexture(x);
-    return perso ? null : esce;
-  };
+    if (perso || gl.isContextLost()) { esce.width = esce.height = 0; return null; }
+    return esce;
+  }
+  tingi.persa = () => perso || gl.isContextLost();
+  return tingi;
 }

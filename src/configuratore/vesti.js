@@ -73,17 +73,26 @@ export function leggiOpzioni(palco) {
 }
 
 const immagini = new Map(), pronte = new Map();
-/** Un'immagine scaricata e pronta da disegnare, una volta sola; null se manca (senza errori). */
+/** Quanto si aspetta un file prima di darlo per perso (una rete che si è fermata non risponde né sì né no). */
+const PAZIENZA = 20000;
+/** Un'immagine scaricata e pronta da disegnare, una volta sola; null se manca o non arriva (senza errori). */
 function immagine(indirizzo) {
   if (!immagini.has(indirizzo)) {
     immagini.set(indirizzo, new Promise((fatto) => {
       const im = new Image();
+      let chiuso = false;
+      // (se manca o non arriva, la prossima volta si riprova)
+      const manca = () => { if (chiuso) return; chiuso = true; clearTimeout(attesa); immagini.delete(indirizzo); fatto(null); };
+      const attesa = setTimeout(() => { manca(); im.src = ''; }, PAZIENZA);
       im.decoding = 'async';
       im.onload = () => (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => {
-        if (im.naturalWidth) pronte.set(indirizzo, im);
-        fatto(im.naturalWidth ? im : null);
+        if (chiuso) return;
+        if (!im.naturalWidth) { manca(); return; }
+        chiuso = true; clearTimeout(attesa);
+        pronte.set(indirizzo, im);
+        fatto(im);
       });
-      im.onerror = () => { immagini.delete(indirizzo); fatto(null); };      // la prossima volta si riprova
+      im.onerror = manca;
       im.src = indirizzo;
     }));
   }
@@ -92,30 +101,38 @@ function immagine(indirizzo) {
 
 // ---------------------------------------------------------------------------------------------- il tessuto
 
-let trame = null;
+let trame = null, senzaTinta = false;
 /** Ciò che serve a tingere, una volta sola: trame.json (i riquadri e i campioni), i pezzi della camicia che dondola
  *  (la sua immagine ritagliata è la base da tingere) e la macchina che tinge. null se manca qualcosa: allora la
- *  camicia resta bianca. */
+ *  camicia resta bianca. Se è la rete a mancare, la prossima scelta riprova; se è la scheda grafica a non bastare non
+ *  si riprova più (ogni tentativo aprirebbe un contesto grafico in più: i browser ne tengono pochi, e a farne le spese
+ *  sarebbe il tessuto che ondeggia). */
 function leggiTrame(palco) {
   if (trame) return trame;
   const indirizzo = palco.dataset.trame, dove = palco.dataset.leggera || '';
-  if (!indirizzo || !dove) return (trame = Promise.resolve(null));
+  if (!indirizzo || !dove || senzaTinta) return (trame = Promise.resolve(null));
   const u = new URL(indirizzo, location.href);
   const qui = u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1);
   const v = palco.dataset.leggeraV ? '?v=' + palco.dataset.leggeraV : '';
-  const leggi = (x) => fetch(x).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  trame = Promise.all([leggi(indirizzo), leggi(dove + 'leggera.json' + v), import('./tinta.js').then((m) => m.creaTinta()).catch(() => null)]).then(([T, L, tingi]) => {
-    if (!T || !L?.pezzi || !tingi) return null;
+  const leggi = (x) => {
+    const basta = new AbortController(), attesa = setTimeout(() => basta.abort(), PAZIENZA);
+    return fetch(x, { signal: basta.signal }).then((r) => (r.ok ? r.json() : null)).catch(() => null).finally(() => clearTimeout(attesa));
+  };
+  trame = Promise.all([leggi(indirizzo), leggi(dove + 'leggera.json' + v), import('./tinta.js').catch(() => null)]).then(([T, L, m]) => {
+    if (!T || !L?.pezzi || !m) return null;
+    // la macchina che tinge: se la scheda grafica se la riprende (telefono in secondo piano) se ne fa un'altra, poche volte
+    let tingi = m.creaTinta(), rifatte = 0;
+    if (!tingi) { senzaTinta = true; return null; }
     const vt = T.versione ? '?v=' + T.versione : u.search;
     return Object.assign(T, {
-      tingi, pezzi: L.pezzi,
+      pezzi: L.pezzi,
+      macchina: () => { if (tingi?.persa() && rifatte++ < 6) tingi = m.creaTinta(); return tingi && !tingi.persa() ? tingi : null; },
       file: (nome) => qui + nome + vt,                                        // trama-*.png, accanto a trame.json
       stoffa: (id) => `${qui}../stoffe/${id}.webp${vt}`,                      // il campione ripetibile di un tessuto
       camicia: (nome) => `${dove}${nome}-2.webp${v}`,                         // camicia, parete, ombra: i pezzi di leggera.js
     });
   });
-  // (se la rete è caduta, la prossima scelta riprova)
-  trame.then((T) => { if (!T) trame = null; });
+  trame.then((T) => { if (!T) trame = senzaTinta ? Promise.resolve(null) : null; });
   return trame;
 }
 /** Quali tessuti vanno su corpo, polsini e taschino, o null se la camicia resta bianca. Un tessuto che non ha il suo
@@ -146,13 +163,15 @@ async function tingiCamicia(sc, st, bianchi, T, D) {
     Promise.all(tessere.map((id) => (id ? immagine(T.stoffa(id)) : null))),
   ]);
   if (!foto || !base || !maschera || !parete || !ombra || [...fotoPezzi, ...tramePezzi, ...maschere].some((p) => !p) || tessere.some((id, k) => id && !campioni[k])) return null;
+  const tingi = T.macchina();
+  if (!tingi) return null;
   // la camicia bianca com'è adesso: con il suo collo e il suo taschino
   const bianca = document.createElement('canvas');
   bianca.width = w * K; bianca.height = h * K;
   const g = bianca.getContext('2d');
   g.drawImage(foto, 0, 0, bianca.width, bianca.height);
   pezzi.forEach((p, k) => { const [x0, y0, x1, y1] = p.riquadro; g.drawImage(fotoPezzi[k], (x0 - x) * K, (y0 - y) * K, (x1 - x0) * K, (y1 - y0) * K); });
-  const tela = T.tingi({
+  const tela = tingi({
     foto: bianca, base, maschera, chiave: tr.map((p) => p.file).join('|'),
     pezzi: tr.map((p, k) => ({ img: tramePezzi[k], maschera: maschere[k], x: p.riquadro[0] - T.base.riquadro[0], y: p.riquadro[1] - T.base.riquadro[1] })),
     tessere: tessere.map((id, k) => (id ? { img: campioni[k], cm: T.tessuti[id], specchio: !!T.tessuti[id][2] } : null)),
@@ -401,9 +420,11 @@ export function vesti(palco, camicia) {
   };
 
   // --- la rotella «filo che cuce» (proprietario, 2026-11-26): compare se una scelta fa aspettare più di un attimo
-  let rotella = null, attesaRotella = 0, lavori = 0;
+  // Segue solo l'ultima scelta: una scelta di prima rimasta appesa a un file che non arriva non la tiene accesa
+  // (con un conto dei lavori in corso restava a girare per sempre, anche sopra la camicia già tinta: revisione del 26).
+  let rotella = null, attesaRotella = 0, lavori = false;
   function cucendo(si) {
-    lavori = Math.max(0, lavori + (si ? 1 : -1));
+    lavori = si;
     clearTimeout(attesaRotella);
     if (!lavori) { if (rotella) rotella.hidden = true; return; }
     attesaRotella = setTimeout(function mostra() {
@@ -480,13 +501,15 @@ export function vesti(palco, camicia) {
     else attesaSotto = setTimeout(() => { if (stato.stoffa) bianca.style.opacity = '0'; }, DISSOLVE + 80);
   }
 
-  /** Porta sulla camicia la scelta `sc`. */
-  async function applica(sc) {
+  let riprova = 0;
+  /** Porta sulla camicia la scelta `sc` (`prova`: quante volte si è già riprovato a tingere, dopo un file non arrivato). */
+  async function applica(sc, prova = 0) {
     const mio = ++giro;
+    clearTimeout(riprova);
     const conTessuto = !!(sc.tessuto || sc.polsino_tessuto || (sc.taschino && sc.taschino_tessuto));
-    if (sc.collo === 'italiano' && !sc.taschino && !sc.iniziali && !conTessuto && vuoto(stato)) return;   // niente da scaricare
     cucendo(true);
     try {
+      if (sc.collo === 'italiano' && !sc.taschino && !sc.iniziali && !conTessuto && vuoto(stato)) return;   // niente da scaricare
       D ||= await leggiOpzioni(palco);
       if (!D || mio !== giro) return;
       const voluto = risolvi(sc, D);
@@ -502,13 +525,17 @@ export function vesti(palco, camicia) {
         if (p && p.chiave !== stato[n]?.chiave && !(await immagine(D.indirizzo(p.file, t)))) nuovo[n] = stato[n];
       }));
       if (st) {
-        // la camicia tinta: si rifà se cambiano il collo, il taschino o un tessuto (se non riesce, resta quella di prima)
-        const chiave = `stoffa:${nuovo.collo?.chiave || ''}|${nuovo.taschino ? 1 : 0}|${st.corpo}|${st.polsino}|${st.taschino}`;
+        // La camicia tinta: si rifà se cambiano il collo, il taschino o un tessuto. Se non riesce (un file non arriva,
+        // la scheda grafica si è persa): con gli stessi tessuti resta quella di prima; con un tessuto nuovo la camicia
+        // torna bianca, perché non mostri un tessuto diverso da quello scritto nel riquadro. E fra poco si riprova.
+        const tessuti = `${st.corpo}|${st.polsino}|${st.taschino}`;
+        const chiave = `stoffa:${nuovo.collo?.chiave || ''}|${nuovo.taschino ? 1 : 0}|${tessuti}`;
         if (stato.stoffa?.chiave === chiave) nuovo.stoffa = stato.stoffa;
         else {
           const fatta = await tingiCamicia(sc, st, nuovo, T, D).catch(() => null);
           if (mio !== giro) { if (fatta) butta(fatta.tela, fatta.ferma); return; }
-          nuovo.stoffa = fatta ? { chiave, ...fatta } : stato.stoffa;
+          nuovo.stoffa = fatta ? { chiave, ...fatta } : stato.stoffa?.chiave.endsWith('|' + tessuti) ? stato.stoffa : null;
+          if (!fatta && prova < 2) riprova = setTimeout(() => { if (mio === giro) applica(sc, prova + 1); }, 2500 * (prova + 1));
         }
       }
       if (nuovo.iniziali) await caratterePronto();
@@ -524,10 +551,10 @@ export function vesti(palco, camicia) {
       // (le tele di prima servono ancora un attimo alla dissolvenza della stoffa)
       if (prima && prima !== stato.stoffa) setTimeout(() => butta(prima.tela, prima.ferma), DISSOLVE * 3);
     } finally {
-      cucendo(false);
+      if (mio === giro) cucendo(false);
     }
   }
-  ascolta.add(applica);
+  ascolta.add((sc) => applica(sc));
   if (ultima) applica(ultima);
 
   // la camicia che dondola: arriva quando i suoi pezzi sono scaricati
@@ -562,5 +589,5 @@ export function vesti(palco, camicia) {
     l.livello.mostra(stato, true);
   }
   // per i controlli (tools/prova-vesti.js)
-  if (new URLSearchParams(location.search).has('manuale')) window.__vesti = { get stato() { return stato; }, get zoom() { return zoom; }, get cucendo() { return lavori; } };
+  if (new URLSearchParams(location.search).has('manuale')) window.__vesti = { get stato() { return stato; }, get zoom() { return zoom; }, get cucendo() { return lavori ? 1 : 0; } };
 }

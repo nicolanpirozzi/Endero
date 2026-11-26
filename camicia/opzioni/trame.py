@@ -34,6 +34,7 @@ AL_CM = 2400 / 21.0            # punti della cartella raddrizzata per centimetro
 LATO = 256                     # lato del campione ripetibile
 BORDO = 5.6                    # di quanti punti (della maschera, grande il doppio) la stoffa si allarga oltre la sagoma netta: quanto è largo il contorno sfumato della foto
 PRESTITO = 4.5                 # entro quanti punti dalla stoffa la trama dà una posizione presa in prestito
+GRANA = 6.0                    # una tinta unita tiene solo ciò che è più fine di così (in punti del ritaglio: mezzo millimetro)
 BIANCO = 237.0                 # il bianco in pieno sole della camicia calcolata (0,93): un tessuto bianco deve darle quello
 
 
@@ -180,15 +181,22 @@ def autocorrelazione(g):
     return ac / np.maximum(quanti, 1) / max(float(g.var()), 1e-9)
 
 
-def primo_passo(riga, minimo=7, soglia=0.3):
-    """Lungo un profilo dell'autocorrelazione, il primo spostamento a cui l'immagine torna simile a se stessa: la prima
-    cima alta almeno l'85% della più alta. 0 se non ce n'è."""
-    n = len(riga)
-    cime = [k for k in range(minimo, n - 1) if riga[k] >= riga[k - 1] and riga[k] >= riga[k + 1] and riga[k] > soglia]
-    if not cime:
-        return 0
-    alta = max(riga[k] for k in cime)
-    return next(k for k in cime if riga[k] >= 0.85 * alta)
+def cime(riga, minimo=3, quante=5):
+    """Gli spostamenti a cui un profilo dell'autocorrelazione torna simile a se stesso: le sue cime vere, dalla più
+    vicina. Una cima vera sporge da ciò che ha intorno; le increspature del filo sul fianco di una riga larga no (il
+    primo calcolo le prendeva per cime: una riga larga mezzo centimetro finiva con il passo del filo, cioè tinta unita)."""
+    from scipy.signal import find_peaks
+    riga = np.asarray(riga, np.float64)
+    if len(riga) < minimo + 3:
+        return []
+    dove, come = find_peaks(riga, prominence=0.08)
+    buone = [(int(k), float(s)) for k, s in zip(dove, come['prominences']) if k >= minimo and riga[k] > 0.1]
+    if not buone:
+        return []
+    forte = max(s for _, s in buone)
+    buone = [(k, s) for k, s in buone if s >= 0.3 * forte]
+    # le più sporgenti, in ordine di distanza
+    return sorted(k for k, _ in sorted(buone, key=lambda v: -v[1])[:quante])
 
 
 def affina(ac, dy, dx, limite, soglia=0.25):
@@ -202,7 +210,7 @@ def affina(ac, dy, dx, limite, soglia=0.25):
                     meglio, dove = ac[yy, xx], (yy, xx)
         return float(meglio), dove
     v = np.array([dy, dx], np.float64)
-    _, d = cima(dy, dx, 2)
+    _, d = cima(dy, dx, 1)
     v = np.array(d, np.float64)
     for m in range(2, 40):
         if abs(v[0] * m) >= limite[0] * 0.7 or abs(v[1] * m) >= limite[1] * 0.7:
@@ -214,37 +222,93 @@ def affina(ac, dy, dx, limite, soglia=0.25):
     return v
 
 
-def cella(im, a, b, lato_x, lato_y):
+def cella(im, g, a, b, lato_x, lato_y, al_piu=400):
     """La media di tutte le ripetizioni intere del disegno, che si ripete lungo i vettori `a` e `b` (dy, dx): una
-    cella pulita, raddrizzata (a diventa l'orizzontale, b la verticale), che si ripete senza giunte."""
+    cella pulita, raddrizzata (a diventa l'orizzontale, b la verticale), che si ripete senza giunte. Con lei, quante
+    ripetizioni c'erano e quanto si somigliano fra loro (la correlazione media fra due ripetizioni, misurata su `g`, il
+    grigio senza la grana del filo): è la prova che il passo è quello vero. Un passo sbagliato dà ripetizioni che non si
+    somigliano, e una media sbiadita."""
     h, w = im.shape[:2]
     s, t = np.meshgrid((np.arange(lato_x) + 0.5) / lato_x, (np.arange(lato_y) + 0.5) / lato_y)
-    somma = np.zeros((lato_y, lato_x, 3), np.float64)
-    quante = 0
-    for jj in range(-40, 40):
-        for ii in range(-40, 40):
-            y = (ii + s) * a[0] + (jj + t) * b[0]
-            x = (ii + s) * a[1] + (jj + t) * b[1]
-            if y.min() < 0 or x.min() < 0 or y.max() > h - 1 or x.max() > w - 1:
-                continue
-            somma += cv2.remap(im, x.astype(np.float32), y.astype(np.float32), cv2.INTER_LINEAR)
-            quante += 1
-    return (somma / quante).astype(np.float32) if quante else None
+    dove = []
+    for jj in range(-60, 60):
+        for ii in range(-60, 60):
+            # i quattro angoli della ripetizione (ii, jj) stanno nel ritaglio?
+            ys = [(ii + p) * a[0] + (jj + q) * b[0] for p in (0, 1) for q in (0, 1)]
+            xs = [(ii + p) * a[1] + (jj + q) * b[1] for p in (0, 1) for q in (0, 1)]
+            if min(ys) >= 0 and min(xs) >= 0 and max(ys) <= h - 1 and max(xs) <= w - 1:
+                dove.append((ii, jj))
+    if not dove:
+        return None, 0, 0.0, None
+    if len(dove) > al_piu:
+        dove = [dove[int(k)] for k in np.linspace(0, len(dove) - 1, al_piu)]
+    tutto = np.dstack([im, g[..., None]]).astype(np.float32)
+    somma = np.zeros((lato_y, lato_x, 4), np.float64)
+    varianze = 0.0
+    for ii, jj in dove:
+        y = ((ii + s) * a[0] + (jj + t) * b[0]).astype(np.float32)
+        x = ((ii + s) * a[1] + (jj + t) * b[1]).astype(np.float32)
+        pezzo = cv2.remap(tutto, x, y, cv2.INTER_LINEAR)
+        somma += pezzo
+        varianze += float(pezzo[..., 3].var())
+    K = len(dove)
+    media = somma / K
+    sigma2 = varianze / K
+    # Var(media) = sigma² (1 + (K - 1) rho) / K
+    rho = (K * float(media[..., 3].var()) / max(sigma2, 1e-9) - 1) / (K - 1) if K > 1 else 0.0
+    return media[..., :3].astype(np.float32), K, float(rho), media[..., 3].astype(np.float32)
 
 
-def somiglia(im, tessera, a, b):
-    """Quanto il ritaglio ricostruito ripetendo la cella somiglia al ritaglio vero (correlazione, da -1 a 1)."""
-    h, w = im.shape[:2]
+def motivi_fuori(g, cella_g, a, b):
+    """Quanta parte del ritaglio ha qualcosa di forte che la cella ripetuta non spiega: i fiorellini sparsi su un
+    vichy, un pois ogni tanto. La cella del fondo si ripete bene e li cancella con la media; se ci sono, il campione va
+    fatto in un altro modo (`finestra`). Restituisce la frazione dei punti con un residuo forte quanto mezzo disegno."""
+    h, w = g.shape
     y, x = np.mgrid[0:h, 0:w].astype(np.float64)
     M = np.linalg.inv(np.array([[a[0], b[0]], [a[1], b[1]]]))          # da (y, x) a (quante a, quante b)
     s = (M[0, 0] * y + M[0, 1] * x) % 1.0
     t = (M[1, 0] * y + M[1, 1] * x) % 1.0
-    th, tw = tessera.shape[:2]
-    grande = np.pad(tessera, ((0, 1), (0, 1), (0, 0)), mode='wrap')
+    th, tw = cella_g.shape[:2]
+    grande = np.pad(cella_g, ((0, 1), (0, 1)), mode='wrap')
     rifatto = cv2.remap(grande, (s * tw).astype(np.float32), (t * th).astype(np.float32), cv2.INTER_LINEAR)
-    g1 = cv2.GaussianBlur(im.mean(axis=2), (0, 0), 1.5); g2 = cv2.GaussianBlur(rifatto.mean(axis=2), (0, 0), 1.5)
-    g1 = g1 - g1.mean(); g2 = g2 - g2.mean()
-    return float((g1 * g2).sum() / max(1e-9, np.sqrt((g1 * g1).sum() * (g2 * g2).sum())))
+    resto = np.abs(cv2.GaussianBlur((g - rifatto).astype(np.float32), (0, 0), 2.0))
+    ampiezza = float(np.percentile(g, 99) - np.percentile(g, 1))
+    return float((resto > 0.45 * max(ampiezza, 1e-6)).mean())
+
+
+def finestra(piana, a, b):
+    """Un disegno con un fondo che si ripete (quadretti, pois) e sopra qualcosa di più rado: si prende dal ritaglio la
+    finestra più grande fatta di un numero intero di ripetizioni del fondo, raddrizzata, e si sciolgono i bordi uno
+    nell'altro per un numero intero di ripetizioni: il fondo combacia da sé, i motivi radi sfumano dove il campione
+    ricomincia. Restituisce (campione, larghezza e altezza in punti del ritaglio) o None se la finestra è troppo piccola."""
+    h, w = piana.shape[:2]
+    la, lb = float(np.hypot(*a)), float(np.hypot(*b))
+    meglio = None
+    for N in range(int(w / la) + 1, 1, -1):
+        for M in range(int(h / lb) + 1, 1, -1):
+            ys = [p * N * a[0] + q * M * b[0] for p in (0, 1) for q in (0, 1)]
+            xs = [p * N * a[1] + q * M * b[1] for p in (0, 1) for q in (0, 1)]
+            if max(ys) - min(ys) <= h - 1 and max(xs) - min(xs) <= w - 1 and (meglio is None or N * M > meglio[0] * meglio[1]):
+                meglio = (N, M, ys, xs)
+    if meglio is None:
+        return None
+    N, M, ys, xs = meglio
+    kx, ky = max(1, int(round(N * 0.18))), max(1, int(round(M * 0.18)))
+    if N - kx < 2 or M - ky < 2:
+        return None
+    oy = -min(ys) + (h - 1 - (max(ys) - min(ys))) / 2
+    ox = -min(xs) + (w - 1 - (max(xs) - min(xs))) / 2
+    lato_x, lato_y = int(round(N * la)), int(round(M * lb))
+    s, t = np.meshgrid((np.arange(lato_x) + 0.5) / lato_x * N, (np.arange(lato_y) + 0.5) / lato_y * M)
+    dritta = cv2.remap(piana, (ox + s * a[1] + t * b[1]).astype(np.float32), (oy + s * a[0] + t * b[0]).astype(np.float32), cv2.INTER_LINEAR)
+    mx, my = int(round(kx * lato_x / N)), int(round(ky * lato_y / M))
+    sfuma = np.linspace(0, 1, mx, dtype=np.float32)[None, :, None]
+    c = dritta[:, :lato_x - mx].copy()
+    c[:, :mx] = dritta[:, :mx] * sfuma + dritta[:, lato_x - mx:] * (1 - sfuma)
+    sfuma = np.linspace(0, 1, my, dtype=np.float32)[:, None, None]
+    d = c[:lato_y - my].copy()
+    d[:my] = c[:my] * sfuma + c[lato_y - my:] * (1 - sfuma)
+    return d, (N - kx) * la, (M - ky) * lb
 
 
 def senza_giunte(im):
@@ -261,13 +325,135 @@ def senza_giunte(im):
     return c
 
 
+def profilo(prof):
+    """L'autocorrelazione di un profilo a una dimensione, normalizzata sulla parte che si sovrappone."""
+    n = len(prof)
+    p = prof - prof.mean()
+    return np.correlate(p, p, 'full')[n - 1:] / (max(float(p.var()), 1e-9) * np.arange(n, 0, -1))
+
+
+def raddrizza(P, G):
+    """Le righe di un ritaglio non sono mai dritte del tutto: un grado di pendenza, sulla media di duecento file, basta
+    a sbiadire una riga sottile (era il «disegno quasi sparito» dei rigati fini). Si cerca la pendenza con cui il
+    profilo medio è più contrastato e si raddrizza l'immagine. Restituisce (colori, grigio, contrasto del profilo)."""
+    h, w = G.shape
+    ys = (np.arange(h, dtype=np.float32) - (h - 1) / 2)[:, None]
+    xs = np.arange(w, dtype=np.float32)[None, :]
+    my = np.repeat(np.arange(h, dtype=np.float32)[:, None], w, axis=1)
+    G32 = np.ascontiguousarray(G, dtype=np.float32)
+    P = np.ascontiguousarray(P, dtype=np.float32)
+    margine = int(0.13 * h / 2) + 2
+    def contrasto(s):
+        prof = cv2.remap(G32, (xs + ys * s).astype(np.float32), my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).mean(axis=0)
+        return float(prof[margine:w - margine].std())
+    prove = np.linspace(-0.12, 0.12, 49)
+    s0 = float(prove[int(np.argmax([contrasto(s) for s in prove]))])
+    fini = np.linspace(s0 - 0.005, s0 + 0.005, 21)
+    s = float(fini[int(np.argmax([contrasto(v) for v in fini]))])
+    mx = (xs + ys * s).astype(np.float32)
+    dritta = cv2.remap(P.astype(np.float32), mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)[:, margine:w - margine]
+    grigia = cv2.remap(G32, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)[:, margine:w - margine]
+    return dritta, grigia, float(grigia.mean(axis=0).std())
+
+
+def righe(piana, g):
+    """Un tessuto a righe: una sola fila di colori, lunga un passo. Tra i passi possibili si prende il più corto le cui
+    ripetizioni si somigliano davvero. Restituisce (fila di colori, passo in punti, quanto si somigliano, verticali) o
+    None se non sono righe (c'è qualcosa anche nell'altro verso) o il passo non si trova."""
+    dritte = raddrizza(piana, g), raddrizza(piana.transpose(1, 0, 2), g.T)
+    verticali = dritte[0][2] >= dritte[1][2]
+    P, G, forte = dritte[0 if verticali else 1]
+    if forte <= 0.5:
+        return None
+    # righe vere: nell'altro verso non c'è niente che si veda sulla camicia (altrimenti è un quadro: lo fa `reticolo`)
+    altro = float(cv2.GaussianBlur(G.mean(axis=1)[None].astype(np.float32), (0, 0), 3).std())
+    if altro >= 5 and altro >= 0.25 * forte:
+        return None
+    colori = P.mean(axis=0)[None].astype(np.float32)                    # una riga di colori, lunga quanto il ritaglio
+    grigio = G.mean(axis=0)
+    n = len(grigio)
+    ac1 = profilo(grigio)
+    finto = np.zeros((1, 2 * n)); finto[0, :n] = ac1; finto = np.concatenate([finto, finto])       # per `affina`: dy sempre 0
+    prove = []
+    for p0 in cime(ac1[:int(n * 0.72)], minimo=4):
+        px = float(affina(finto, 0, p0, (1, n), soglia=0.3)[1])
+        if px < 3:
+            continue
+        K = int((n - 1) / px)
+        lato = max(2, int(round(px)))
+        x = ((np.arange(lato) + 0.5) / lato)[None, :] * px
+        if K >= 2:
+            fette = np.stack([cv2.remap(grigio[None].astype(np.float32), (x + k * px).astype(np.float32), np.zeros_like(x, dtype=np.float32), cv2.INTER_LINEAR)[0] for k in range(K)])
+            sigma2 = float(fette.var(axis=1).mean())
+            rho = (K * float(fette.mean(axis=0).var()) / max(sigma2, 1e-9) - 1) / (K - 1)
+        else:
+            rho = float(ac1[int(round(px))]) - 0.05                     # una ripetizione sola: quanto il pezzo che avanza somiglia all'inizio
+        somma = np.zeros((1, lato, 3))
+        for k in range(max(K, 1)):
+            somma += cv2.remap(colori, (x + k * px).astype(np.float32), np.zeros_like(x, dtype=np.float32), cv2.INTER_LINEAR)
+        prove.append((px, rho, (somma / max(K, 1)).astype(np.float32)))
+    if not prove:
+        return None
+    meglio = max(r for _, r, _ in prove)
+    if meglio < 0.6:
+        return None
+    px, rho, fila = min((v for v in prove if v[1] >= meglio - 0.04), key=lambda v: v[0])
+    return fila, px, rho, verticali
+
+
+def reticolo(piana, g):
+    """Un disegno che si ripete in due versi (quadretti, fantasie, armature): la cella più piccola le cui ripetizioni si
+    somigliano davvero. I passi possibili si cercano sia nei profili (le linee di un finestrato si vedono lì, anche
+    quando nell'immagine intera pesano poco) sia nell'autocorrelazione intera (un pied-de-poule non ha profilo).
+    Restituisce (cella, a, b, quanto si somigliano) o None."""
+    h, w = g.shape
+    ac = autocorrelazione(g)
+    def passi(profilo_ac, asse_ac, limite):
+        tutti = []
+        for k in cime(profilo_ac[:limite], minimo=4, quante=4) + cime(asse_ac[:limite], minimo=4, quante=4):
+            if all(abs(k - v) > 2 for v in tutti):
+                tutti.append(k)
+        return sorted(tutti)[:6]
+    px = passi(profilo(g.mean(axis=0)), ac[0, :w], int(w * 0.67))
+    py = passi(profilo(g.mean(axis=1)), ac[:h, 0], int(h * 0.67))
+    prove = []
+    for x0 in px:
+        for y0 in py:
+            a, b = affina(ac, 0, x0, (h, w)), affina(ac, y0, 0, (h, w))
+            la, lb = float(np.hypot(*a)), float(np.hypot(*b))
+            if la < 3 or lb < 3:
+                continue
+            c, K, rho, cg = cella(piana, g, a, b, max(2, int(round(la))), max(2, int(round(lb))))
+            if c is not None and K >= 2:
+                prove.append((la * lb, rho, c, a, b, cg))
+    if not prove:
+        return None
+    meglio = max(v[1] for v in prove)
+    if meglio < 0.5:
+        return None
+    _, rho, c, a, b, cg = min((v for v in prove if v[1] >= meglio - 0.04), key=lambda v: v[0])
+    return c, a, b, rho, cg
+
+
 def ripetibile(ritaglio, disegno):
-    """Un campione che si ripete senza giunte, secondo il suo disegno. Una tinta unita è il suo colore medio più la
-    grana fine del tessuto (ripetuta a specchio: non ha un verso). Righe, quadretti e fantasie hanno un passo: lo si
-    cerca (dove l'immagine torna uguale a se stessa) e il campione è la media di tutte le ripetizioni del ritaglio,
-    pulita e sempre uguale; poi si controlla che ripetendola il ritaglio torni com'era. Se il passo non si trova (un
-    disegno più grande del ritaglio) resta il ritaglio, con i bordi sciolti l'uno nell'altro: mai a specchio, che
-    capovolgerebbe i motivi. Restituisce (campione, [cm in larghezza, cm in altezza], a specchio, come è fatto)."""
+    """Un campione che si ripete senza giunte, secondo il suo disegno.
+
+    Righe, quadretti, fantasie e armature che si vedono hanno un passo: lo si cerca (dove l'immagine torna uguale a se
+    stessa) e il campione è la media di tutte le ripetizioni del ritaglio, pulita e sempre uguale. Fra i passi possibili
+    vince il più corto le cui ripetizioni si somigliano davvero (vedi `cella`): un passo sbagliato di poco dà una media
+    sbiadita, e sulla camicia il disegno sparisce.
+
+    Una tinta unita senza un'armatura che si ripete è il suo colore medio più la grana fine del filo: tutto ciò che è
+    più largo di un millimetro (macchie di luce della foto, fiammature) si toglie, perché ripetuto ogni due centimetri
+    sulla camicia farebbe una quadrettatura.
+
+    Un fondo che si ripete con sopra qualcosa di più rado (un vichy con i fiorellini): la media cancellerebbe i
+    fiorellini, quindi si tiene una finestra del ritaglio fatta di ripetizioni intere del fondo (vedi `finestra`).
+
+    Se il passo non si trova (un disegno più grande del ritaglio) resta il ritaglio, con i bordi sciolti l'uno
+    nell'altro: mai a specchio, che capovolgerebbe i motivi.
+
+    Restituisce (campione, [cm in larghezza, cm in altezza], a specchio, come è fatto)."""
     im = cv2.imread(ritaglio, cv2.IMREAD_COLOR).astype(np.float32)
     h, w = im.shape[:2]
     media = im.reshape(-1, 3).mean(0)
@@ -278,45 +464,28 @@ def ripetibile(ritaglio, disegno):
     # (senza la grana del filo, che si ripete ogni due o tre punti e confonderebbe la ricerca del passo)
     g = cv2.GaussianBlur(piana.mean(axis=2), (0, 0), 1.5)
     g = g - g.mean()
-    # Una tinta unita liscia: il colore medio e la grana fine, a specchio. Una tinta unita con un'armatura che si vede
-    # (spina di pesce, diagonale, piqué) a specchio farebbe dei rombi: va trattata come un disegno, con il suo passo
-    if disegno == 'unito' and g.std() < 3.0:
-        grana = im - cv2.GaussianBlur(im, (0, 0), 7)              # solo il dettaglio fine: trama e filo
-        lato = min(h, w)
-        gr = grana[(h - lato) // 2:(h - lato) // 2 + lato, (w - lato) // 2:(w - lato) // 2 + lato]
-        return grande(media + gr), [round(lato / AL_CM, 3)] * 2, True, 'unito'
     if disegno == 'righe':
-        # righe: il profilo medio (per colonna se sono verticali) è più pulito dell'immagine
-        per_colonna, per_riga = g.mean(axis=0), g.mean(axis=1)
-        verticali = per_colonna.std() >= per_riga.std()
-        prof = per_colonna if verticali else per_riga
-        if prof.std() > 0.5:
-            n = len(prof)
-            ac1 = np.correlate(prof, prof, 'full')[n - 1:] / (prof.var() * np.arange(n, 0, -1))
-            p0 = primo_passo(ac1[:n * 2 // 3], minimo=5, soglia=0.4)
-            if p0:
-                # (le righe orizzontali del ritaglio si girano: sulla camicia le righe corrono dall'alto in basso)
-                colori = (piana if verticali else piana.transpose(1, 0, 2)).mean(axis=0)[None].astype(np.float32)       # una riga di colori
-                finto = np.zeros((1, 2 * n)); finto[0, :n] = ac1; finto = np.concatenate([finto, finto])               # per `affina`: dy sempre 0
-                px = affina(finto, 0, p0, (1, n), soglia=0.35)[1]
-                lato = max(2, int(round(px)))
-                x = ((np.arange(lato) + 0.5) / lato)[None, :] * px
-                somma, quante = np.zeros((1, lato, 3)), 0
-                for k in range(int((n - 1) / px)):
-                    somma += cv2.remap(colori, (x + k * px).astype(np.float32), np.zeros_like(x, dtype=np.float32), cv2.INTER_LINEAR); quante += 1
-                if quante:
-                    return grande(np.repeat((somma / quante).astype(np.float32), 8, axis=0)), [round(px / AL_CM, 4), 1.0], False, f"righe{'' if verticali else ' (girate)'}, passo {px:.1f}"
-    ac = autocorrelazione(g)
-    soglia = 0.3
-    px, py = primo_passo(ac[0, :w * 2 // 3], soglia=soglia), primo_passo(ac[:h * 2 // 3, 0], soglia=soglia)
-    if px and py:
-        a, b = affina(ac, 0, px, (h, w)), affina(ac, py, 0, (h, w))
-        la, lb = float(np.hypot(*a)), float(np.hypot(*b))
-        c = cella(piana, a, b, max(2, int(round(la))), max(2, int(round(lb))))
-        if c is not None:
-            quanto = somiglia(piana, c, a, b)
-            if quanto >= 0.78:
-                return grande(c), [round(la / AL_CM, 4), round(lb / AL_CM, 4)], False, f'passi {la:.1f} x {lb:.1f} ({quanto:.2f})'
+        r = righe(piana, g)
+        if r:
+            fila, px, rho, verticali = r
+            # (le righe orizzontali del ritaglio si girano: sulla camicia le righe corrono dall'alto in basso)
+            return grande(np.repeat(fila, 8, axis=0)), [round(px / AL_CM, 4), 1.0], False, f"righe{'' if verticali else ' (girate)'}, passo {px:.1f} ({rho:.2f})"
+    if disegno != 'unito' or g.std() >= 3.0:
+        r = reticolo(piana, g)
+        if r:
+            c, a, b, rho, cg = r
+            la, lb = float(np.hypot(*a)), float(np.hypot(*b))
+            fuori = motivi_fuori(g, cg, a, b) if disegno != 'unito' else 0.0
+            if fuori > 0.004:
+                f = finestra(piana, a, b)
+                if f:
+                    return grande(f[0]), [round(f[1] / AL_CM, 4), round(f[2] / AL_CM, 4)], False, f'fondo {la:.1f} x {lb:.1f} con motivi radi ({fuori * 100:.1f}%)'
+            return grande(c), [round(la / AL_CM, 4), round(lb / AL_CM, 4)], False, f'passi {la:.1f} x {lb:.1f} ({rho:.2f})'
+    if disegno == 'unito':
+        grana = im - cv2.GaussianBlur(im, (0, 0), GRANA)             # solo il dettaglio fine: trama e filo
+        lato = min(h, w)
+        c = senza_giunte((media + grana)[(h - lato) // 2:(h - lato) // 2 + lato, (w - lato) // 2:(w - lato) // 2 + lato])
+        return grande(c), [round(c.shape[1] / AL_CM, 3), round(c.shape[0] / AL_CM, 3)], False, 'unito: colore e grana'
     c = senza_giunte(piana)
     return grande(c), [round(c.shape[1] / AL_CM, 3), round(c.shape[0] / AL_CM, 3)], False, 'bordi sciolti'
 
