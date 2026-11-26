@@ -423,15 +423,24 @@ function riquadroTaglia(t) {
 /** Il nome vero di un tessuto, se la configurazione riservata ce l'ha: «Articolo · codice». */
 const haNomeVero = (vero) => !!(vero && typeof vero === 'object' && (vero.articolo || vero.codice));
 
+/** Se il codice letto sulla cartella colori non era sicuro: la frase da mostrare, con le altre letture possibili. */
+function dubbioTessuto(vero) {
+  if (!haNomeVero(vero) || !vero.incerto) return '';
+  const altre = (Array.isArray(vero.alternative) ? vero.alternative : []).map((x) => String(x).slice(0, 80)).filter(Boolean).slice(0, 4);
+  return testi.ordine.a_endero.tessuto_incerto + (altre.length ? ` ${altre.join(' / ')}` : '');
+}
+
 /** Un tessuto per il reparto: la foto del campione, il nome vero della cartella colori e, sotto, il nome del sito. */
 function rigaTessuto(parte, id, vero, primo) {
   const a = testi.ordine.a_endero;
   const f = a.campo_tessuto;
   const buono = haNomeVero(vero);
   const titolo = buono ? [vero.articolo, vero.codice].filter(Boolean).join(' · ') : tessutoSito(id);
-  const dettagli = buono ? [['cartella', vero.cartella], ['posizione', vero.posizione], ['composizione', vero.composizione]]
+  // il gruppo: nelle cartelle con più articoli lo stesso codice torna in gruppi diversi, e senza il gruppo non si sa quale sia
+  const dettagli = buono ? [['gruppo', vero.gruppo], ['cartella', vero.cartella], ['posizione', vero.posizione], ['composizione', vero.composizione]]
     .filter(([, x]) => x).map(([k, x]) => `${f[k]}: ${x}`) : [];
   const sito = riempi(a.tessuto_sito, { nome: tessutoSito(id), id });
+  const dubbio = dubbioTessuto(vero);
   const campione = `${dominio()}/camicia/tessuti/${encodeURIComponent(id)}.webp`;
   return `<tr><td style="${primo ? '' : `border-top:1px solid ${PANNELLO};`}padding:14px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -441,6 +450,7 @@ function rigaTessuto(parte, id, vero, primo) {
         <div style="padding-top:2px;font-size:16px;line-height:22px;font-weight:600;color:${BLU};word-break:break-word;">${pulisci(titolo)}</div>
         ${dettagli.map((x) => `<div style="font-size:13px;line-height:19px;color:${BLU};word-break:break-word;">${pulisci(x)}</div>`).join('')}
         ${buono ? '' : `<div style="padding-top:6px;font-size:13px;line-height:18px;font-weight:600;color:${ROSSO};">${pulisci(a.tessuto_mancante)}</div>`}
+        ${dubbio ? `<div style="padding-top:6px;font-size:13px;line-height:18px;font-weight:600;color:${ROSSO};word-break:break-word;">${pulisci(dubbio)}</div>` : ''}
         <div style="padding-top:4px;font-size:12px;line-height:17px;color:${TENUE};">${pulisci(sito)}</div>
       </td>
     </tr></table>
@@ -506,7 +516,7 @@ export function ordinePerEndero(dati) {
     <tr><td class="dentro" style="padding:16px 44px 38px;font-family:${CARATTERE};font-size:13px;line-height:20px;color:${TENUE};">${pulisci(pagato)}${nota ? `<br>${pulisci(nota)}` : ''}</td></tr>`;
 
   const rigaVera = ([p, id, x]) => `${p}: ${haNomeVero(x)
-    ? [x.articolo, x.codice, x.cartella && `${a.campo_tessuto.cartella}: ${x.cartella}`, x.posizione && `${a.campo_tessuto.posizione}: ${x.posizione}`, x.composizione].filter(Boolean).join(' · ')
+    ? [x.articolo, x.codice, dubbioTessuto(x), x.gruppo && `${a.campo_tessuto.gruppo}: ${x.gruppo}`, x.cartella && `${a.campo_tessuto.cartella}: ${x.cartella}`, x.posizione && `${a.campo_tessuto.posizione}: ${x.posizione}`, x.composizione].filter(Boolean).join(' · ')
     : a.tessuto_mancante.toUpperCase()} (${riempi(a.tessuto_sito, { nome: tessutoSito(id), id })})`;
   const sezione = (titolo, elenco) => [titolo.toUpperCase(), ...elenco.map(([e, x]) => `${e}: ${String(x).replace(/\n/g, ', ')}`), ''];
   const testo = [

@@ -79,9 +79,11 @@
       "tessuti": "I tessuti",
       "tessuto_sito": "Sul sito: {nome} · {id}",
       "tessuto_mancante": "Nome della cartella colori non disponibile",
+      "tessuto_incerto": "Codice da controllare sulla cartella colori: lo abbiamo letto da una foto e non era nitido. Letture possibili:",
       "campo_tessuto": {
         "articolo": "Articolo",
         "codice": "Codice",
+        "gruppo": "Gruppo",
         "cartella": "Cartella",
         "posizione": "Posizione",
         "composizione": "Composizione"
