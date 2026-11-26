@@ -167,7 +167,8 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     const ex = pr.left + (cam.offsetLeft + p.x / p.w) * k, ey = pr.top + (cam.offsetTop + p.y / p.w) * k;
     return { scarto: Math.max(Math.abs(q.left - ex), Math.abs(q.top - ey)), mossa: cam.style.transform, uguale: cam.style.transform === add.style.transform, visibile: getComputedStyle(add).visibility, pezzi: add.querySelectorAll('.vesti__pezzo').length };
   }, [D.colli.francese.riquadro[0] + 20 - L.pezzi.camicia[0], D.colli.francese.riquadro[1] + 30 - L.pezzi.camicia[1]]);
-  /** Quanto è «rosa» (rosso meno blu) in media il centro del collo sullo schermo: i pezzi segnaposto sono tinti. */
+  /** Quanto è chiaro in media, sullo schermo, il punto sotto il bottone del collo dove l'italiano ha le punte (con la
+   *  loro ombra) e il francese no: con il collo francese addosso lì si vede il davanti della camicia, più chiaro. */
   const rosa = async (page) => {
     const s = await page.evaluate(sullaFerma);
     const P = proietta(s);
@@ -179,7 +180,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
       const g = c.getContext('2d'); g.drawImage(im, 0, 0);
       const x = g.getImageData(0, 0, c.width, c.height).data;
-      let somma = 0; for (let i = 0; i < x.length; i += 4) somma += x[i] - x[i + 2];
+      let somma = 0; for (let i = 0; i < x.length; i += 4) somma += (x[i] + x[i + 1] + x[i + 2]) / 3;
       return somma / (x.length / 4);
     }, png.toString('base64'));
   };
@@ -227,7 +228,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       controlla(conStoffa ? 'con la stoffa il livello dei pezzi è nascosto (sono dentro la sua immagine)' : 'senza stoffa il livello dei pezzi si vede', (r0.visibile === 'hidden') === conStoffa, r0.visibile);
       // la stoffa: la tela composta
       const rosa1 = await rosa(page);
-      controlla('il collo scelto si vede sulla camicia a riposo', rosa1 - rosa0 > 3, `rosso − blu da ${rosa0.toFixed(1)} a ${rosa1.toFixed(1)}`);
+      controlla('il collo scelto si vede sulla camicia a riposo', rosa1 - rosa0 > 3, `chiaro da ${rosa0.toFixed(1)} a ${rosa1.toFixed(1)}`);
       await foto(page, `${sigla}-ferma`);
       // dondola: il livello dei pezzi ha la stessa trasformazione della camicia
       await page.evaluate(() => { window.__camicia.p.vLato = 0.12; window.__camicia.p.vTorce = 0.1; window.__camicia.sveglia(); });
@@ -436,8 +437,9 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     await foto(page, 'sagoma-coreano');
     await manda(page, { collo: 'francese', taschino: false, iniziali: sulCollo });
     await page.waitForTimeout(1500);
-    const b2 = await bordo(), r2 = P.parti.collo.riquadro;
-    controlla('cambiando collo con il campo aperto, il contorno passa da solo al collo nuovo', b2 === `M${r2[0]} ${r2[1]}`, JSON.stringify(b2));
+    // il contorno del francese: il suo, se opzioni.json glielo dà, altrimenti quello del collo di base
+    const b2 = await bordo(), q2 = (P.colli.francese?.parte || P.parti.collo).tratti[0].punti[0];
+    controlla('cambiando collo con il campo aperto, il contorno passa da solo al collo nuovo', b2 === `M${q2[0]} ${q2[1]}`, JSON.stringify(b2));
     await manda(page, { collo: 'coreano', taschino: false, iniziali: sulCollo });
     await page.focus('#finto-posto');
     await page.selectOption('#finto-posto', 'collo');
