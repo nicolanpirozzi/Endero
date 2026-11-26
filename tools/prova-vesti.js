@@ -1,14 +1,15 @@
-// Controlla la camicia che cambia con le scelte del riquadro (src/configuratore/vesti.js, punto 16 della direzione
-// creativa): il collo scelto, il taschino e le iniziali sovrapposti alla camicia su ogni livello (immagine ferma,
-// camicia che dondola, tessuto che ondeggia, camicia nitida dello zoom, riquadro del telefono), sempre al loro punto;
-// lo zoom e il contorno tratteggiato della parte quando un campo con data-parte prende il fuoco, il cambio di parte
-// con endero:parte, l'uscita, una finestra che si apre sopra; il movimento ridotto, un file che manca, nessun file
-// scaricato finché non si sceglie nulla.
+// Controlla la camicia che cambia con le scelte del riquadro (src/configuratore/vesti.js e tinta.js, punto 16 della
+// direzione creativa): il collo scelto, il taschino e le iniziali sovrapposti alla camicia su ogni livello (immagine
+// ferma, camicia che dondola, tessuto che ondeggia, camicia nitida dello zoom, riquadro del telefono), sempre al loro
+// punto; la guida alle misure con i pezzi scelti e il velo; il movimento ridotto, un file che manca, nessun file
+// scaricato finché non si sceglie nulla; e, dal 2026-11-26, il tessuto che colora la camicia (anche taschino e polsini
+// con un tessuto loro), la rotella «filo che cuce», la camicia che resta bianca senza scheda grafica, i caratteri
+// delle iniziali.
 //
 //   node tools/prova-vesti.js [indirizzo del sito, senza barra finale] [cartella per le schermate]
 //
-// In locale: node build/costruisci.mjs && node build/servi.mjs 8781. La pagina di oggi non ha ancora il riquadro
-// nuovo: gli avvisi `endero:camicia` li manda questo controllo, e i campi con data-parte li aggiunge lui (finti).
+// In locale: node build/costruisci.mjs && node build/servi.mjs 8781. Gli avvisi `endero:camicia` li manda questo
+// controllo, sul passo Misure (lì ci sono i campi che aprono la guida).
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -43,33 +44,8 @@ const TELEFONO = [
 const TUTTO = { collo: 'francese', taschino: true, iniziali: { posizione: 'cuore', lettere: 'np' } };
 
 // --- nella pagina
-/** I campi finti del riquadro: un menu per il collo, due radio per il taschino, un menu per il posto delle iniziali. */
-function campiFinti() {
-  const f = document.querySelector('.configura__scheda');
-  const blocco = document.createElement('div');
-  blocco.className = 'finti';
-  blocco.style.cssText = 'display:grid;gap:12px;margin:0 0 16px';
-  blocco.innerHTML = `
-    <div data-parte="collo" id="finto-collo"><label>Collo <select id="finto-collo-menu"><option>italiano</option><option>francese</option><option>club</option></select></label></div>
-    <fieldset data-parte="taschino" id="finto-tasca"><legend>Taschino</legend><label><input type="radio" name="tasca" value="no" checked> No</label> <label><input type="radio" name="tasca" value="si"> Sì</label></fieldset>
-    <div data-parte="iniziali_polso" id="finto-iniziali"><label>Iniziali <select id="finto-posto"><option>polso</option><option>collo</option><option>cuore</option></select></label> <button type="button" id="finto-tessuti">Tessuti</button></div>`;
-  // in cima al passo in vista (dal 2026-11-26 il riquadro è a passi: «Come misurare» sta nel passo Misure, chiuso)
-  (f.querySelector('.passo:not([hidden]) .passo__titolo') || f.querySelector('.configura__come')).after(blocco);
-  const posto = blocco.querySelector('#finto-posto');
-  posto.addEventListener('change', () => {
-    const campo = blocco.querySelector('#finto-iniziali');
-    campo.dataset.parte = 'iniziali_' + posto.value;
-    document.dispatchEvent(new CustomEvent('endero:parte', { detail: { campo } }));
-  });
-  // una finestra che si apre sopra la pagina, come quella dei tessuti
-  const d = document.createElement('dialog');
-  d.id = 'finta-finestra';
-  d.innerHTML = '<button type="button" id="finta-chiudi">Chiudi</button>';
-  document.body.append(d);
-  blocco.querySelector('#finto-tessuti').addEventListener('click', () => d.showModal());
-  d.querySelector('#finta-chiudi').addEventListener('click', () => d.close());
-}
-const manda = (page, detail) => page.evaluate((d) => document.dispatchEvent(new CustomEvent('endero:camicia', { detail: d })), detail);
+const SENZA = { collo: 'italiano', taschino: false, iniziali: null, tessuto: '', taschino_tessuto: '', polsino_tessuto: '' };
+const manda = (page, detail) => page.evaluate((d) => document.dispatchEvent(new CustomEvent('endero:camicia', { detail: d })), { ...SENZA, ...detail });
 
 /**
  * Dove dovrebbero stare, sullo schermo, i punti del fotogramma sull'immagine ferma (con lo zoom, se c'è), e dove
@@ -118,7 +94,6 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       }
     });
     await page.goto(PAGINA + cerca, { waitUntil: 'networkidle' });
-    await page.evaluate(campiFinti);
     return { contesto, page, errori, richieste };
   };
   /** Aspetta che la camicia che si muove sia pronta (se c'è) e ferma. */
@@ -193,7 +168,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     await pronta(a.page);
     await manda(a.page, { collo: 'italiano', taschino: false, iniziali: null });
     await a.page.waitForTimeout(400);
-    const r = a.richieste.filter((u) => u.includes('/camicia/opzioni/') && u.endsWith('.webp') || /\/camicia\/opzioni\/.*\.webp\?/.test(u));
+    const r = a.richieste.filter((u) => /\/camicia\/(opzioni|stoffe)\/.*\.(webp|png)(\?|$)/.test(u) || /trame\.json/.test(u));
     controlla('con il collo italiano, senza taschino né iniziali non si scarica nessun pezzo', r.length === 0, r.join(', '));
     controlla('e sulla pagina non c\'è nessun livello in più', await a.page.evaluate(() => !document.querySelector('.configura__vesti') && !document.querySelector('.configura__addosso .vesti__pezzo')));
     controlla('nessun errore', a.errori.length === 0, a.errori.join(' | '));
@@ -249,41 +224,25 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       }
       await page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
 
-      // lo zoom su una parte: il collo
-      await page.focus('#finto-collo-menu');
-      await page.waitForTimeout(1500);
+      // la guida alle misure (dal 2026-11-26 lo zoom c'è solo lì): i pezzi restano sulla camicia nitida, e la camicia è velata
+      // (il giro collo: lo zoom più forte, quello che vuole i pezzi nella grandezza quadrupla)
+      await page.focus('.misura[data-guida="giro_collo"] input');
+      await page.waitForTimeout(1700);
       const z = await page.evaluate(() => {
-        const p = document.querySelector('.configura__palco');
-        const linee = document.querySelectorAll('.configura__linee .linea__tratto').length;
-        return { aperta: p.dataset.guidaAperta, zoom: p.style.getPropertyValue('--zoom'), linee, file: document.querySelector('.configura__vesti img')?.getAttribute('src') || '' };
+        const p = document.querySelector('.configura__palco'), velo = document.querySelector('.configura__velo');
+        return { aperta: p.dataset.guidaAperta, zoom: p.style.getPropertyValue('--zoom'), linee: document.querySelectorAll('.configura__linee .linea__tratto').length, file: document.querySelector('.configura__vesti img')?.getAttribute('src') || '', velo: velo ? +getComputedStyle(velo).opacity : -1, veloZoom: velo ? getComputedStyle(velo).transform !== 'none' : false };
       });
-      controlla('entrando nel campo del collo: zoom sul collo e contorno tratteggiato', z.aperta === 'collo' && z.zoom.includes('scale') && z.linee > 0, `${z.zoom}, ${z.linee} tratti`);
+      controlla('entrando in una misura: zoom sulla zona e tratteggio', z.aperta === 'giro_collo' && z.zoom.includes('scale') && z.linee > 0, `${z.zoom}, ${z.linee} tratti`);
+      controlla('la camicia è velata (più trasparente), con lo stesso zoom', Math.abs(z.velo - 0.45) < 0.03 && z.veloZoom, JSON.stringify(z));
       const fz = await scartoFerma(page, { collo: 'francese', taschino: true, iniziali: TUTTO.iniziali });
       controlla('nello zoom i pezzi sono in vista e allineati sopra la camicia nitida', fz.s.visibile && fz.max <= 0.5 && fz.lettere <= 0.5, `${fz.max.toFixed(3)} punti, lettere ${fz.lettere.toFixed(2)}`);
       controlla('nello zoom il collo è nel file grande', /-4\.webp/.test(z.file), z.file.split('/').pop());
       await foto(page, `${sigla}-zoom-collo`);
-      // le iniziali: dal polso al cuore mentre il campo ha il fuoco
-      await page.focus('#finto-posto');
-      await page.waitForTimeout(1400);
-      const polso = await page.evaluate(() => ({ aperta: document.querySelector('.configura__palco').dataset.guidaAperta, zoom: document.querySelector('.configura__palco').style.getPropertyValue('--zoom') }));
-      await page.selectOption('#finto-posto', 'cuore');
-      await page.waitForTimeout(1400);
-      const cuore = await page.evaluate(() => ({ aperta: document.querySelector('.configura__palco').dataset.guidaAperta, zoom: document.querySelector('.configura__palco').style.getPropertyValue('--zoom') }));
-      controlla('cambiando il posto delle iniziali lo zoom scivola sulla parte nuova', polso.aperta === 'iniziali_polso' && cuore.aperta === 'iniziali_cuore' && polso.zoom !== cuore.zoom, `${polso.aperta} → ${cuore.aperta}`);
-      await foto(page, `${sigla}-zoom-iniziali`);
-      // una finestra sopra la pagina, e poi chiusa: lo zoom torna come deve
-      await page.click('#finto-tessuti');
-      await page.waitForTimeout(500);
-      const sotto = await page.evaluate(() => ({ aperta: document.querySelector('.configura__palco').dataset.guidaAperta || '' }));
-      await page.click('#finta-chiudi');
-      await page.waitForTimeout(1500);
-      const tornata = await page.evaluate(() => ({ aperta: document.querySelector('.configura__palco').dataset.guidaAperta || '', zoom: document.querySelector('.configura__palco').style.getPropertyValue('--zoom'), fuoco: document.activeElement?.id }));
-      controlla('con la finestra sopra la guida si chiude, chiusa la finestra torna sul campo', sotto.aperta === '' && (tornata.aperta === '' ? !tornata.zoom : tornata.zoom.includes('scale')), `${JSON.stringify(sotto)} → ${JSON.stringify(tornata)}`);
       // uscita
       await page.evaluate(() => document.activeElement?.blur());
       await page.waitForTimeout(1600);
-      const via = await page.evaluate(() => { const p = document.querySelector('.configura__palco'); return { aperta: p.dataset.guidaAperta, zoom: p.style.getPropertyValue('--zoom'), ferma: 'guidaFerma' in p.dataset }; });
-      controlla('uscendo, lo zoom torna indietro e la camicia riparte', !via.aperta && !via.zoom && !via.ferma, JSON.stringify(via));
+      const via = await page.evaluate(() => { const p = document.querySelector('.configura__palco'); return { aperta: p.dataset.guidaAperta, zoom: p.style.getPropertyValue('--zoom'), ferma: 'guidaFerma' in p.dataset, velo: +getComputedStyle(document.querySelector('.configura__velo')).opacity }; });
+      controlla('uscendo, lo zoom torna indietro, il velo va via e la camicia riparte', !via.aperta && !via.zoom && !via.ferma && via.velo < 0.02, JSON.stringify(via));
       // una misura che gira la camicia: i pezzi davanti non si vedono
       await page.focus('.misura[data-guida="spalla"] input');
       await page.waitForTimeout(2600);
@@ -297,12 +256,12 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       await page.waitForTimeout(1500);
       // il cambio: il collo nuovo compare sopra il vecchio, che resta finché l'altro non è comparso
       await page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
-      await manda(page, { ...TUTTO, collo: 'club' });
+      await manda(page, { ...TUTTO, collo: 'coreano' });
       await page.waitForTimeout(90);
-      const meta = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto:first-child img')].map((im) => [im.getAttribute('src').split('/').pop().split('?')[0], getComputedStyle(im).opacity]));
+      const meta = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto--collo img')].map((im) => [im.getAttribute('src').split('/').pop().split('?')[0], getComputedStyle(im).opacity]));
       await page.waitForTimeout(400);
-      const fine = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto:first-child img')].map((im) => [im.getAttribute('src').split('/').pop().split('?')[0], getComputedStyle(im).opacity]));
-      controlla('cambiando collo il nuovo compare sopra il vecchio, che resta pieno fino alla fine', meta.length === 2 && meta[0][1] === '1' && +meta[1][1] < 1 && fine.length === 1 && fine[0][0].startsWith('collo-club') && fine[0][1] === '1', `${JSON.stringify(meta)} → ${JSON.stringify(fine)}`);
+      const fine = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto--collo img')].map((im) => [im.getAttribute('src').split('/').pop().split('?')[0], getComputedStyle(im).opacity]));
+      controlla('cambiando collo il nuovo compare sopra il vecchio, che resta pieno fino alla fine', meta.length === 2 && meta[0][1] === '1' && +meta[1][1] < 1 && fine.length === 1 && fine[0][0].startsWith('collo-coreano') && fine[0][1] === '1', `${JSON.stringify(meta)} → ${JSON.stringify(fine)}`);
       controlla('la pagina non si allarga', (await larga(page)) === opzioni.viewport.width);
       controlla('nessun errore', a.errori.length === 0, a.errori.join(' | '));
       await a.contesto.close();
@@ -326,31 +285,22 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     controlla('anche mentre dondola', r1.uguale && !!r1.mossa && r1.scarto <= 0.5, `${r1.scarto?.toFixed(3)} punti`);
     await page.evaluate(() => { let n = 0; while (window.__camicia.passo(16.67) && n++ < 3000); });
     await foto(page, `${sigla}-ferma`);
-    // il riquadro con lo zoom sopra il campo del collo
-    await page.evaluate(() => document.querySelector('#finto-collo').scrollIntoView({ block: 'center' }));
+    // il riquadro con lo zoom sopra un campo di misura: dentro ci sono i pezzi scelti, e il velo
+    await page.evaluate(() => document.querySelector('.misura[data-guida="giro_collo"]').scrollIntoView({ block: 'center' }));
     await page.waitForTimeout(300);
-    await page.tap('#finto-collo-menu').catch(() => page.focus('#finto-collo-menu'));
-    await page.evaluate(() => { if (!document.activeElement?.closest('[data-parte]')) document.querySelector('#finto-collo-menu').focus(); });
-    await page.waitForTimeout(1300);
+    await page.tap('.misura[data-guida="giro_collo"] input').catch(() => page.focus('.misura[data-guida="giro_collo"] input'));
+    await page.waitForTimeout(1500);
     const l = await page.evaluate(() => {
-      const c = document.querySelector('.misura-lente'), campo = document.querySelector('#finto-collo');
+      const c = document.querySelector('.misura-lente');
       if (!c || c.hidden) return { manca: true };
       const g = c.querySelector('.misura-lente__vesti'), im = g?.querySelector('image');
-      const rc = c.getBoundingClientRect(), rm = campo.getBoundingClientRect();
-      const rs = document.querySelector('#finto-collo-menu').getBoundingClientRect();
-      return { sopra: getComputedStyle(c).position === 'fixed' && !(rc.right > rs.left + 1 && rc.left < rs.right - 1 && rc.bottom > rs.top + 1 && rc.top < rs.bottom - 1), dentro: rc.left >= -0.5 && rc.right <= innerWidth + 0.5 && rc.top >= 0 && rc.bottom <= innerHeight, immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length };
+      const velo = [...c.querySelectorAll('svg > image')].find((x) => /parete/.test(x.getAttribute('href') || ''));
+      return { immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length, velo: velo ? +velo.getAttribute('opacity') : -1, tinta: c.querySelectorAll('canvas').length };
     });
     const [x0, y0, x1, y1] = D.colli.francese.riquadro;
-    controlla('sul telefono il riquadro con lo zoom sta fermo sullo schermo, non copre il menu del collo, e ha il contorno', !l.manca && l.sopra && l.dentro && l.tratti > 0, JSON.stringify({ sopra: l.sopra, dentro: l.dentro, tratti: l.tratti }));
+    controlla('sul telefono il riquadro con lo zoom ha il tratteggio e il velo', !l.manca && l.tratti > 0 && Math.abs(l.velo - 0.45) < 0.01, JSON.stringify({ tratti: l.tratti, velo: l.velo }));
     controlla('nel riquadro ci sono il collo scelto, al suo punto, e le iniziali', !!l.immagine && l.immagine[0].startsWith('collo-francese-') && l.immagine[1] === x0 && l.immagine[2] === y0 && l.immagine[3] === x1 - x0 && l.immagine[4] === y1 - y0 && l.lettere === 'NP', JSON.stringify(l.immagine));
     await foto(page, `${sigla}-riquadro-collo`);
-    await page.focus('#finto-posto');
-    await page.waitForTimeout(900);
-    await page.selectOption('#finto-posto', 'cuore');
-    await page.waitForTimeout(1200);
-    const cuore = await page.evaluate(() => { const c = document.querySelector('.misura-lente'), t = c?.querySelector('.linea__tratto'); return c && !c.hidden && t ? t.getAttribute('d').split('C')[0] : null; });
-    controlla('cambiando il posto delle iniziali il riquadro scivola sulla parte nuova', cuore === `M${D.parti.iniziali_cuore.tratti[0].punti[0].join(' ')}`, String(cuore));
-    await foto(page, `${sigla}-riquadro-iniziali`);
     await page.evaluate(() => document.activeElement?.blur());
     await page.waitForTimeout(400);
     controlla('uscendo il riquadro sparisce', await page.evaluate(() => !document.querySelector('.misura-lente') || document.querySelector('.misura-lente').hidden));
@@ -368,16 +318,16 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     await page.waitForTimeout(250);
     const f = await scartoFerma(page, { collo: 'francese', taschino: true, iniziali: TUTTO.iniziali });
     controlla(`${nome}: i pezzi stanno sull'immagine ferma, subito e senza dissolvenza`, f.s.visibile && f.max <= 0.5 && f.s.pezzi.every((p) => p.opacita === '1'), `${f.max.toFixed(3)} punti`);
-    await manda(page, { ...TUTTO, collo: 'club' });
+    await manda(page, { ...TUTTO, collo: 'coreano' });
     await page.waitForTimeout(80);
-    const subito = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto:first-child img')].map((im) => im.getAttribute('src').split('/').pop().split('?')[0]));
-    controlla(`${nome}: un collo nuovo prende subito il posto del vecchio`, subito.length === 1 && subito[0].startsWith('collo-club'), JSON.stringify(subito));
+    const subito = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto--collo img')].map((im) => im.getAttribute('src').split('/').pop().split('?')[0]));
+    controlla(`${nome}: un collo nuovo prende subito il posto del vecchio`, subito.length === 1 && subito[0].startsWith('collo-coreano'), JSON.stringify(subito));
     if (nome.startsWith('computer')) {
-      await page.focus('#finto-collo-menu');
+      await page.focus('.misura[data-guida="torace"] input');
       await page.waitForTimeout(300);
       const z = await page.evaluate(() => document.querySelector('.configura__palco').style.getPropertyValue('--zoom'));
-      controlla(`${nome}: lo zoom sul collo c'è lo stesso`, z.includes('scale'), z);
-      await foto(page, 'ridotto-zoom-collo');
+      controlla(`${nome}: lo zoom sulla misura c'è lo stesso`, z.includes('scale'), z);
+      await foto(page, 'ridotto-zoom-torace');
     }
     controlla(`${nome}: nessun errore`, a.errori.length === 0, a.errori.join(' | '));
     await a.contesto.close();
@@ -391,35 +341,32 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     const errori = [];
     page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errori.push(m.text()); });
     page.on('pageerror', (e) => errori.push(String(e)));
-    await page.route(/collo-club-\d\.webp/, (r) => r.fulfill({ status: 404, body: '' }));
+    await page.route(/collo-coreano-\d\.webp/, (r) => r.fulfill({ status: 404, body: '' }));
     // l'avviso arriva appena la pagina è letta, prima che la camicia che si muove sia pronta
-    await page.addInitScript((d) => document.addEventListener('DOMContentLoaded', () => document.dispatchEvent(new CustomEvent('endero:camicia', { detail: d }))), TUTTO);
+    await page.addInitScript((d) => document.addEventListener('DOMContentLoaded', () => document.dispatchEvent(new CustomEvent('endero:camicia', { detail: d }))), { ...SENZA, ...TUTTO });
     await page.goto(PAGINA + '&rigida', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => 'viva' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(400);
     const presto = await page.evaluate(() => [...document.querySelectorAll('.configura__addosso .vesti__pezzo')].length);
     controlla('un avviso arrivato prima della camicia che si muove vale anche per lei', presto >= 3, `${presto} pezzi`);
-    await manda(page, { ...TUTTO, collo: 'club' });
+    await manda(page, { ...TUTTO, collo: 'coreano' });
     await page.waitForTimeout(600);
-    const resta = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto:first-child img, .configura__addosso .vesti__posto:first-child img')].map((im) => im.getAttribute('src').split('/').pop().split('?')[0]));
+    const resta = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto--collo img, .configura__addosso .vesti__posto--collo img')].map((im) => im.getAttribute('src').split('/').pop().split('?')[0]));
     controlla('se il file del collo manca, resta il collo di prima, su ogni livello', resta.length === 2 && resta.every((s) => s.startsWith('collo-francese')), JSON.stringify(resta));
     controlla('e nessun errore (a parte la richiesta non trovata)', errori.length === 0, errori.join(' | '));
     await contesto.close();
   }
 
-  // ---------------------------------------------------------------- 6. colli con la loro sagoma e il loro posto per le iniziali
-  // (aggiunta al contratto del 2026-11-25: `colli[id].parte`, `.iniziali`, `.parte_iniziali`; l'italiano può essere un
-  // oggetto senza file; i riquadri possono avere misure diverse). Dati di prova messi qui, al posto di opzioni.json
-  console.log('Colli con la loro sagoma');
+  // ---------------------------------------------------------------- 6. colli con il loro posto per le iniziali
+  // (l'italiano può essere un oggetto senza file; i riquadri possono avere misure diverse). Dati di prova messi qui
+  console.log('Colli con il loro posto per le iniziali');
   {
-    const rett = ([x0, y0, x1, y1]) => ({ vista: 'davanti', tratti: [{ punti: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], visibile: true, chiuso: true }], capi: [], riquadro: [x0, y0, x1, y1] });
     const P = JSON.parse(JSON.stringify(D));
-    P.colli.italiano = { parte: P.parti.collo, iniziali: P.iniziali.collo };
-    P.colli.coreano = { file: P.colli.coreano.file, riquadro: [620, 215, 820, 360], parte: rett([640, 240, 800, 330]), iniziali: { centro: [700, 300], gradi: 10, alta: 6 }, parte_iniziali: rett([680, 285, 720, 315]) };
+    P.colli.italiano = { iniziali: P.iniziali.collo };
+    P.colli.coreano = { file: P.colli.coreano.file, riquadro: [620, 215, 820, 360], iniziali: { centro: [700, 300], gradi: 10, alta: 6 } };
     const a = await nuovo(COMPUTER[0][1], '&rigida'), { page } = a;
     await page.route(/opzioni\/opzioni\.json/, (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(P) }));
     await page.reload({ waitUntil: 'networkidle' });
-    await page.evaluate(campiFinti);
     await pronta(page);
     const sulCollo = { posizione: 'collo', lettere: 'EDR' };
     await manda(page, { collo: 'italiano', taschino: false, iniziali: sulCollo });
@@ -430,25 +377,125 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     await page.waitForTimeout(500);
     const co = await scartoFerma(page, { collo: 'coreano', iniziali: sulCollo }, P);
     controlla('il coreano con un riquadro di misura diversa: al suo punto, e le iniziali al posto del coreano', co.max <= 0.5 && co.lettere <= 6 * 0.3 * co.k, `${co.max.toFixed(3)} punti, lettere ${co.lettere.toFixed(2)}`);
-    const bordo = () => page.evaluate(() => { const t = document.querySelector('.configura__linee .linea__tratto'); return t ? t.getAttribute('d').split('C')[0] : null; });
-    await page.focus('#finto-collo-menu');
-    await page.waitForTimeout(1500);
-    const b1 = await bordo();
-    controlla('il contorno del collo è quello del coreano', b1 === 'M640 240', JSON.stringify(b1));
-    await foto(page, 'sagoma-coreano');
-    await manda(page, { collo: 'francese', taschino: false, iniziali: sulCollo });
-    await page.waitForTimeout(1500);
-    // il contorno del francese: il suo, se opzioni.json glielo dà, altrimenti quello del collo di base
-    const b2 = await bordo(), q2 = (P.colli.francese?.parte || P.parti.collo).tratti[0].punti[0];
-    controlla('cambiando collo con il campo aperto, il contorno passa da solo al collo nuovo', b2 === `M${q2[0]} ${q2[1]}`, JSON.stringify(b2));
-    await manda(page, { collo: 'coreano', taschino: false, iniziali: sulCollo });
-    await page.focus('#finto-posto');
-    await page.selectOption('#finto-posto', 'collo');
-    await page.waitForTimeout(1500);
-    const b3 = await bordo();
-    controlla('le iniziali sul collo, con il coreano: il loro contorno è quello del coreano', b3 === 'M680 285', JSON.stringify(b3));
-    await foto(page, 'sagoma-iniziali-coreano');
     controlla('nessun errore', a.errori.length === 0, a.errori.join(' | '));
+    await a.contesto.close();
+  }
+
+  // ---------------------------------------------------------------- 7. il tessuto colora la camicia (dal 2026-11-26)
+  console.log('Il tessuto colora la camicia');
+  const [cx, cy] = L.pezzi.camicia;
+  /** Il colore di un punto del fotogramma sulla camicia tinta (la tela ritagliata, sul livello della camicia che dondola). */
+  const colore = (page, x, y) => page.evaluate(([x, y, cx, cy]) => {
+    const c = [...document.querySelectorAll('.configura__addosso canvas.vesti__tinta')].pop();
+    if (!c) return null;
+    const d = c.getContext('2d').getImageData(Math.round((x - cx) * 2), Math.round((y - cy) * 2), 1, 1).data;
+    return [d[0], d[1], d[2], d[3]];
+  }, [x, y, cx, cy]);
+  const chiaro = (c) => (c ? (c[0] + c[1] + c[2]) / 3 : -1);
+  const tinta = (page, quante = 1, attesa = 12000) => page.waitForFunction((n) => document.querySelectorAll('.configura__addosso canvas.vesti__tinta').length === n && (n === 0 || !!window.__vesti?.stato?.stoffa), quante, { timeout: attesa }).then(() => true, () => false);
+  const PETTO = [600, 520], TASCA = [(D.taschino.riquadro[0] + D.taschino.riquadro[2]) / 2, (D.taschino.riquadro[1] + D.taschino.riquadro[3]) / 2 + 10], POLSO = [495, 852];
+  const SCURO = 't0515', BIANCO = 't0501';
+  for (const [modo, cerca] of [['stoffa accesa', '&comunque'], ['rigida', '&rigida']]) {
+    const a = await nuovo(COMPUTER[0][1], cerca), { page } = a;
+    await pronta(page);
+    const perTinta = () => a.richieste.filter((u) => /trame\.json|\/stoffe\/|\/trama-|\/maschera-/.test(u)).map((u) => u.split('/').pop().split('?')[0]);
+    controlla(`${modo}: finché non si sceglie un tessuto non si scarica nulla per tingere`, perTinta().length === 0, perTinta().join(', '));
+    const caricate0 = await page.evaluate(() => window.__caricate);
+    await manda(page, { tessuto: SCURO });
+    controlla(`${modo}: scelto un tessuto, la camicia tinta compare`, await tinta(page));
+    await page.waitForTimeout(500);
+    let s = await page.evaluate(() => ({ ferma: document.querySelectorAll('.configura__vesti canvas.vesti__tinta').length, chiave: window.__vesti.stato.stoffa?.chiave, bianca: getComputedStyle(document.querySelector('.configura__addosso').previousElementSibling).opacity, classe: document.querySelector('.configura__addosso').classList.contains('vesti--tinta') }));
+    const petto = await colore(page, ...PETTO);
+    controlla(`${modo}: è del tessuto scelto (blu notte: ${petto})`, chiaro(petto) < 90 && petto[3] === 255 && s.ferma === 1 && /t0515\|t0515\|t0515$/.test(s.chiave), JSON.stringify({ petto, ...s }));
+    const scaricati = perTinta();
+    controlla(`${modo}: scarica una volta la trama, la maschera e il campione del tessuto`, ['trame.json', 'trama-base.png', 'maschera-base.png', 't0515.webp'].every((f) => scaricati.filter((x) => x === f).length === 1), scaricati.join(', '));
+    if (modo === 'rigida') controlla('rigida: sotto la tinta la camicia bianca e i pezzi bianchi non si vedono', s.bianca === '0' && s.classe, JSON.stringify(s));
+    else controlla('stoffa accesa: la tinta è entrata nella stoffa che ondeggia', (await page.evaluate(() => window.__caricate)) > caricate0 && (await rosa(page)) < 110, `${await rosa(page)}`);
+    await foto(page, `tinta-${modo.split(' ')[0]}-blu`);
+    // taschino e polsini con un tessuto loro; il corpo bianco
+    await manda(page, { tessuto: BIANCO, taschino: true, taschino_tessuto: SCURO, polsino_tessuto: SCURO, collo: 'francese' });
+    await page.waitForFunction(() => /t0501\|t0515\|t0515$/.test(window.__vesti.stato.stoffa?.chiave || ''), null, { timeout: 12000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    const [p1, p2, p3] = [await colore(page, ...PETTO), await colore(page, ...TASCA), await colore(page, ...POLSO)];
+    controlla(`${modo}: corpo bianco (${chiaro(p1).toFixed(0)}), taschino (${chiaro(p2).toFixed(0)}) e polsino (${chiaro(p3).toFixed(0)}) del loro tessuto`, chiaro(p1) > 150 && chiaro(p2) < 90 && chiaro(p3) < 90, JSON.stringify([p1, p2, p3]));
+    s = await page.evaluate(() => ({ tele: document.querySelectorAll('canvas.vesti__tinta').length, chiave: window.__vesti.stato.stoffa?.chiave }));
+    controlla(`${modo}: una tela per livello, senza tele rimaste appese (con il collo francese nella chiave)`, s.tele === 2 && /collo:francese/.test(s.chiave), JSON.stringify(s));
+    await foto(page, `tinta-${modo.split(' ')[0]}-tasca-polsini`);
+    // la guida alle misure: la tinta si toglie (camicia bianca di riferimento, velata) e poi torna
+    await page.focus('.misura[data-guida="torace"] input');
+    await page.waitForTimeout(2200);
+    const inGuida = await page.evaluate(() => ({ tinta: +getComputedStyle(document.querySelector('.configura__vesti .vesti__posto--stoffa')).opacity, velo: +getComputedStyle(document.querySelector('.configura__velo')).opacity, pezzi: document.querySelectorAll('.configura__vesti img.vesti__pezzo').length }));
+    controlla(`${modo}: nella guida alle misure la tinta si toglie e restano i pezzi bianchi, velati`, inGuida.tinta < 0.02 && inGuida.velo > 0.4 && inGuida.pezzi >= 2, JSON.stringify(inGuida));
+    await foto(page, `tinta-${modo.split(' ')[0]}-guida`);
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.waitForTimeout(2200);
+    const dopo = await page.evaluate(() => +getComputedStyle(document.querySelector('.configura__vesti .vesti__posto--stoffa')).opacity);
+    controlla(`${modo}: chiusa la guida la tinta torna`, dopo > 0.98, String(dopo));
+    // un tessuto che non c'è: la camicia torna bianca, con il suo collo e il suo taschino
+    await manda(page, { tessuto: 'zzz', taschino: true, collo: 'francese' });
+    controlla(`${modo}: con un tessuto senza campione la camicia torna bianca`, await tinta(page, 0), JSON.stringify(await page.evaluate(() => window.__vesti.stato.stoffa?.chiave)));
+    await page.waitForTimeout(400);
+    s = await page.evaluate(() => ({ bianca: getComputedStyle(document.querySelector('.configura__addosso').previousElementSibling).opacity, pezzi: document.querySelectorAll('.configura__addosso img.vesti__pezzo').length, classe: document.querySelector('.configura__addosso').classList.contains('vesti--tinta') }));
+    controlla(`${modo}: e tornano la camicia bianca e i suoi pezzi`, s.bianca === '1' && s.pezzi === 2 && !s.classe, JSON.stringify(s));
+    controlla(`${modo}: nessun errore`, a.errori.length === 0, a.errori.join(' | '));
+    await a.contesto.close();
+  }
+  // sul telefono
+  {
+    const a = await nuovo(TELEFONO[0][1], '&rigida'), { page } = a;
+    await pronta(page);
+    await manda(page, { tessuto: SCURO, taschino: true, taschino_tessuto: BIANCO });
+    const ok = await tinta(page);
+    await page.waitForTimeout(500);
+    const [p1, p2] = [await colore(page, ...PETTO), await colore(page, ...TASCA)];
+    controlla(`telefono: la camicia si tinge, con il taschino del suo tessuto (${chiaro(p1).toFixed(0)}, ${chiaro(p2).toFixed(0)})`, ok && chiaro(p1) < 90 && chiaro(p2) > 150, JSON.stringify([p1, p2]));
+    controlla('telefono: la pagina non si allarga', (await larga(page)) === TELEFONO[0][1].viewport.width);
+    controlla('telefono: nessun errore', a.errori.length === 0, a.errori.join(' | '));
+    await foto(page, 'tinta-telefono');
+    await a.contesto.close();
+  }
+  // la rotella «filo che cuce»: compare se una scelta fa aspettare, e poi va via
+  {
+    const a = await nuovo(COMPUTER[0][1], '&rigida'), { page } = a;
+    await pronta(page);
+    await page.route(/trama-base\.png/, async (r) => { await new Promise((f) => setTimeout(f, 1800)); r.continue(); });
+    await manda(page, { tessuto: SCURO });
+    await page.waitForTimeout(900);
+    const r1 = await page.evaluate(() => { const r = document.querySelector('.configura__cucitura'); if (!r || r.hidden) return null; const q = r.getBoundingClientRect(); return { testo: r.textContent.trim(), ruolo: r.getAttribute('role'), dentro: q.left >= 0 && q.right <= innerWidth && q.top >= 0 && q.bottom <= innerHeight }; });
+    controlla(`la rotella compare mentre si aspetta: «${r1?.testo}»`, r1?.testo === 'Dacci un minuto, stiamo cucendo le ultime parti' && r1.ruolo === 'status' && r1.dentro, JSON.stringify(r1));
+    await foto(page, 'rotella');
+    const ok = await tinta(page);
+    await page.waitForTimeout(300);
+    controlla('finito, la rotella va via e la camicia è tinta', ok && await page.evaluate(() => document.querySelector('.configura__cucitura').hidden));
+    controlla('rotella: nessun errore', a.errori.length === 0, a.errori.join(' | '));
+    await a.contesto.close();
+  }
+  // senza scheda grafica la camicia resta bianca, con i suoi pezzi, senza errori
+  {
+    const contesto = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await contesto.newPage();
+    const errori = [];
+    page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
+    page.on('pageerror', (e) => errori.push(String(e)));
+    await page.addInitScript(() => { const prima = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (tipo, ...a) { return /webgl/.test(tipo) ? null : prima.call(this, tipo, ...a); }; });
+    await page.goto(PAGINA + '&rigida', { waitUntil: 'networkidle' });
+    await pronta(page);
+    await manda(page, { tessuto: SCURO, taschino: true, collo: 'francese' });
+    await page.waitForTimeout(1500);
+    const s = await page.evaluate(() => ({ tele: document.querySelectorAll('canvas.vesti__tinta').length, pezzi: document.querySelectorAll('.configura__addosso img.vesti__pezzo').length, rotella: !!document.querySelector('.configura__cucitura:not([hidden])') }));
+    controlla('senza scheda grafica: niente tinta, i pezzi bianchi ci sono, la rotella non resta', s.tele === 0 && s.pezzi === 2 && !s.rotella, JSON.stringify(s));
+    controlla('senza scheda grafica: nessun errore', errori.length === 0, errori.join(' | '));
+    await contesto.close();
+  }
+  // le iniziali: il carattere elegante, e gli altri due da provare
+  for (const [v, famiglia] of [['', 'Endero Iniziali Corsivo'], ['&iniziali=b', 'Endero Iniziali Romano'], ['&iniziali=c', 'Endero Iniziali Inglese']]) {
+    const a = await nuovo(COMPUTER[0][1], '&rigida' + v), { page } = a;
+    await pronta(page);
+    await manda(page, { iniziali: { posizione: 'cuore', lettere: 'NP' } });
+    await page.waitForTimeout(900);
+    const s = await page.evaluate((f) => ({ attributo: document.querySelector('.vesti__iniziali')?.getAttribute('font-family') || '', pronto: document.fonts.check(`20px "${f}"`) && [...document.fonts].some((x) => x.family.replace(/"/g, '') === f && x.status === 'loaded') }), famiglia);
+    controlla(`iniziali${v || ' (di norma)'}: scritte in «${famiglia}», carattere scaricato dal sito`, s.attributo.includes(famiglia) && s.pronto, JSON.stringify(s));
+    controlla(`iniziali${v}: nessun errore`, a.errori.length === 0, a.errori.join(' | '));
     await a.contesto.close();
   }
 

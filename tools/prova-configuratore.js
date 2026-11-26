@@ -121,12 +121,14 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     let a = await page.evaluate(() => ({
       parti: [...document.querySelectorAll('form [data-parte]')].map((x) => x.dataset.parte),
       iniziali: document.querySelector('[data-campo="iniziali"]').dataset.parte || '',
+      colli: [...document.querySelectorAll('#campo-collo option')].map((x) => x.value),
       camicia: window.__camicia,
       futuri: [...document.querySelectorAll('[data-vai]')].slice(1).every((x) => x.getAttribute('aria-disabled') === 'true'),
       caratteri: [...document.querySelectorAll('form[data-configuratore] input:not([type=radio]):not([type=checkbox]):not([type=hidden]):not([name=sito_web]), form[data-configuratore] select, #finestra-tessuti input[type=search]')].map((x) => parseFloat(getComputedStyle(x).fontSize)),
     }));
-    controlla(`${formato}: data-parte su collo, taschino, bottoni, interno collo, interno polso, polsino; iniziali senza posizione niente`, a.parti.join() === 'collo,taschino,bottoni,interno_collo,interno_polso,polsino' && !a.iniziali, a.parti.join());
-    controlla(`${formato}: all'avvio la camicia riceve le scelte (collo italiano, niente taschino, niente iniziali)`, a.camicia.length === 1 && JSON.stringify(a.camicia[0]) === JSON.stringify({ collo: 'italiano', taschino: false, iniziali: null, tessuto: '' }), JSON.stringify(a.camicia));
+    // (dal 2026-11-26 nel passo Camicia non ci sono zoom né contorni: nessuna riga porta più una parte da evidenziare)
+    controlla(`${formato}: nel passo Camicia nessuna riga ha una parte da evidenziare (niente zoom né contorni), e i colli sono sei`, a.parti.length === 0 && !a.iniziali && a.colli.join() === 'italiano,francese,mezzo_francese,button_down,coreano,diplomatico', `${a.parti.join()} | ${a.colli.join()}`);
+    controlla(`${formato}: all'avvio la camicia riceve le scelte (collo italiano, niente taschino, niente iniziali)`, a.camicia.length === 1 && JSON.stringify(a.camicia[0]) === JSON.stringify({ collo: 'italiano', taschino: false, iniziali: null, tessuto: '', taschino_tessuto: '', polsino_tessuto: '' }), JSON.stringify(a.camicia));
     controlla(`${formato}: i passi non ancora fatti non si aprono dai nomi in cima`, a.futuri);
     controlla(`${formato}: nessun campo sotto i 16 px (il telefono non ingrandisce la pagina)`, a.caratteri.every((x) => x >= 16), a.caratteri.join(','));
     await page.click('[data-vai="pagamento"]', { force: true });
@@ -251,19 +253,17 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await page.selectOption('#campo-collo', 'francese');
     a = await page.evaluate(() => window.__camicia.at(-1));
     controlla(`${formato}: cambiando il collo la camicia riceve «francese»`, a.collo === 'francese', JSON.stringify(a));
-    // le iniziali: posizione, lettere, data-parte che cambia, endero:parte se il campo ha il fuoco
+    // le iniziali: posizione e lettere arrivano alla camicia
     await sceglieRadio(page, 'iniziali', 'si');
-    a = await page.evaluate(() => ({ sotto: !document.querySelector('[data-se="iniziali"]').hidden, parte: document.querySelector('[data-campo="iniziali"]').dataset.parte || '', camicia: window.__camicia.at(-1).iniziali }));
-    controlla(`${formato}: «Iniziali: Sì» mostra posizione e lettere; senza posizione niente data-parte né iniziali sulla camicia`, a.sotto && !a.parte && a.camicia === null, JSON.stringify(a));
+    a = await page.evaluate(() => ({ sotto: !document.querySelector('[data-se="iniziali"]').hidden, camicia: window.__camicia.at(-1).iniziali }));
+    controlla(`${formato}: «Iniziali: Sì» mostra posizione e lettere; senza posizione niente iniziali sulla camicia`, a.sotto && a.camicia === null, JSON.stringify(a));
     await sceglieRadio(page, 'iniziali_posizione', 'polso');
     await page.fill('#campo-iniziali_lettere', 'np');
-    a = await page.evaluate(() => ({ parte: document.querySelector('[data-campo="iniziali"]').dataset.parte, camicia: window.__camicia.at(-1).iniziali, eventi: window.__parte.slice() }));
-    controlla(`${formato}: posizione «polso» → data-parte="iniziali_polso"; la camicia riceve { polso, NP }`, a.parte === 'iniziali_polso' && JSON.stringify(a.camicia) === JSON.stringify({ posizione: 'polso', lettere: 'NP' }), JSON.stringify(a));
-    controlla(`${formato}: la prima posizione scelta con il fuoco dentro manda endero:parte`, a.eventi.at(-1) === 'iniziali_polso', JSON.stringify(a.eventi));
-    await page.focus('input[name="iniziali_posizione"][value="cuore"]');
+    a = await page.evaluate(() => ({ camicia: window.__camicia.at(-1).iniziali, lente: !!document.querySelector('.misura-lente:not([hidden])'), zoom: document.querySelector('.configura__palco').style.getPropertyValue('--zoom') }));
+    controlla(`${formato}: posizione «polso» e «np»: la camicia riceve { polso, NP }, senza zoom né riquadri`, JSON.stringify(a.camicia) === JSON.stringify({ posizione: 'polso', lettere: 'NP' }) && !a.lente && !a.zoom, JSON.stringify(a));
     await sceglieRadio(page, 'iniziali_posizione', 'cuore');
-    a = await page.evaluate(() => ({ parte: document.querySelector('[data-campo="iniziali"]').dataset.parte, eventi: window.__parte.slice() }));
-    controlla(`${formato}: cambiando posizione con il fuoco nel campo, data-parte diventa iniziali_cuore e parte endero:parte`, a.parte === 'iniziali_cuore' && a.eventi.at(-1) === 'iniziali_cuore', JSON.stringify(a));
+    a = await page.evaluate(() => window.__camicia.at(-1).iniziali);
+    controlla(`${formato}: cambiando posizione la camicia riceve «cuore»`, a?.posizione === 'cuore', JSON.stringify(a));
     // iniziali strane
     for (const [scritto, giusto] of [['1@', false], ['😀', false], ['ÉÀ', true], ['a.b', true]]) {
       await page.fill('#campo-iniziali_lettere', scritto);
@@ -289,6 +289,8 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     a = await page.evaluate(() => ['interno_collo_tessuto', 'interno_polso_tessuto', 'polsino_tessuto'].map((n) => document.getElementById(`campo-${n}-errore`).textContent).join(''));
     controlla(`${formato}: tornando a «Standard» gli avvisi dei tessuti nascosti spariscono`, !a, a);
     await tessuto(page, 'taschino_tessuto', 1);
+    a = await page.evaluate(() => ({ scelto: document.querySelector('[name="taschino_tessuto"]').value, camicia: window.__camicia.at(-1) }));
+    controlla(`${formato}: il tessuto del taschino arriva alla camicia (${a.scelto}); quello dei polsini no, finché sono «Standard»`, !!a.scelto && a.camicia.taschino_tessuto === a.scelto && a.camicia.polsino_tessuto === '', JSON.stringify(a.camicia));
     a = await page.evaluate(() => document.getElementById('finestra-tessuti').querySelector('[data-per]').textContent);
     await colore(page, 'asola_colore', 5);
     controlla(`${formato}: 3 personalizzazioni (taschino, asola, iniziali) + bottone contrasto → 120 €`, (await prezzo()) === euro(120), await prezzo());
@@ -549,39 +551,29 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await contesto.close();
   }
 
-  console.log('\nLo zoom sulle parti sul telefono: il riquadro sta fermo sullo schermo e la pagina non si sposta');
+  console.log('\nNel passo Camicia, sul telefono: nessun riquadro con lo zoom, la pagina non si sposta sotto il dito');
   for (const [formato, opzioni] of [FORMATI[2], FORMATI[3]]) {
     const { contesto, page } = await nuovo({ ...opzioni, reducedMotion: 'no-preference' });
     await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
     const SI = 'form[data-configuratore] label:has(> input[name="taschino"][value="si"])';
-    for (const y of [90, 150, 210]) {
-      // la riga del taschino a `y` punti dalla cima dello schermo, con «No» scelto e nessun riquadro aperto
+    for (const y of [90, 210]) {
+      // la riga del taschino a `y` punti dalla cima dello schermo, con «No» scelto
       await page.evaluate((y) => {
         document.activeElement?.blur?.();
         const no = document.querySelector('[name="taschino"][value="no"]');
         if (!no.checked) no.click();
-        scrollBy(0, document.querySelector('[data-parte="taschino"]').getBoundingClientRect().top - y);
+        scrollBy(0, document.querySelector('[data-campo="taschino"]').getBoundingClientRect().top - y);
       }, y);
       await page.waitForTimeout(500);
       const prima = await page.evaluate((SI) => { const l = document.querySelector(SI).getBoundingClientRect(); return { sy: scrollY, x: l.left + l.width / 2, y: l.top + l.height / 2 }; }, SI);
       await page.touchscreen.tap(prima.x, prima.y);
       await page.waitForTimeout(900);
       const dopo = await page.evaluate((SI) => {
-        const l = document.querySelector(SI).getBoundingClientRect(), c = document.querySelector('.misura-lente:not([hidden])')?.getBoundingClientRect();
-        return { sy: scrollY, y: l.top + l.height / 2, su: l.top, giu: l.bottom, scelto: document.querySelector('[name="taschino"][value="si"]').checked, lente: c ? [c.top, c.bottom, c.left, c.right].map(Math.round) : null, largo: innerWidth, barra: document.querySelector('[data-fondo]').getBoundingClientRect().top };
+        const l = document.querySelector(SI).getBoundingClientRect();
+        return { sy: scrollY, y: l.top + l.height / 2, scelto: document.querySelector('[name="taschino"][value="si"]').checked, lente: !!document.querySelector('.misura-lente:not([hidden])'), camicia: window.__camicia.at(-1).taschino };
       }, SI);
-      const L = dopo.lente;
-      controlla(`${formato}: riga a ${y} punti, tocco su «Sì»: scelto, la pagina non si sposta (${Math.round(dopo.sy - prima.sy)}) e il tasto resta sotto il dito`, dopo.scelto && Math.abs(dopo.sy - prima.sy) <= 1 && Math.abs(dopo.y - prima.y) <= 1, JSON.stringify({ prima, dopo }));
-      controlla(`${formato}: riga a ${y} punti: il riquadro è sullo schermo e non copre il tasto toccato`, !!L && L[0] >= 0 && L[1] <= dopo.barra + 1 && L[2] >= 0 && L[3] <= dopo.largo && (L[1] <= dopo.su || L[0] >= dopo.giu), JSON.stringify(dopo));
+      controlla(`${formato}: riga a ${y} punti, tocco su «Sì»: scelto, la camicia lo riceve, nessun riquadro, la pagina non si sposta (${Math.round(dopo.sy - prima.sy)})`, dopo.scelto && dopo.camicia === true && !dopo.lente && Math.abs(dopo.sy - prima.sy) <= 1 && Math.abs(dopo.y - prima.y) <= 1, JSON.stringify({ prima, dopo }));
     }
-    // un tocco su una riga senza parte (l'asola) lo chiude
-    const asola = await page.evaluate(() => { const l = document.querySelector('form[data-configuratore] label:has(> input[name="asola"][value="no"])'); l.scrollIntoView({ block: 'center' }); const r = l.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
-    await page.waitForTimeout(400);
-    const rimasta = await page.evaluate(() => !!document.querySelector('.misura-lente:not([hidden])'));
-    await page.touchscreen.tap(asola.x, asola.y);
-    await page.waitForTimeout(500);
-    const chiusa = await page.evaluate(() => !document.querySelector('.misura-lente:not([hidden])'));
-    controlla(`${formato}: un tocco su una riga senza parte chiude il riquadro`, chiusa, `prima ${rimasta}`);
     await contesto.close();
   }
 
