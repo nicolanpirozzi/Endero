@@ -208,7 +208,7 @@
               "tipo": "lettere",
               "etichetta": "Iniziali",
               "massimo": 3,
-              "aiuto": "Al più 3 lettere."
+              "aiuto": "Fino a 3 lettere."
             }
           ]
         },
@@ -681,7 +681,8 @@
       "cap": "Il CAP ha 5 cifre.",
       "provincia": "Scrivi la sigla della provincia, per esempio NA.",
       "privacy": "Per ordinare serve il consenso all'informativa privacy.",
-      "riepilogo": "Controlla i campi segnati in rosso."
+      "riepilogo": "Controlla i campi segnati in rosso.",
+      "note_consegna": "Nelle note non mettere indirizzi di siti."
     },
     "navigazione": "I passi dell'ordine",
     "grazie": {

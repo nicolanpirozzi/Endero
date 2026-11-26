@@ -496,7 +496,7 @@ export function ordinePerEndero(dati) {
   const diverso = Number.isInteger(dati.pagatoCentesimi) && dati.pagatoCentesimi !== totale
     ? riempi(a.attenzione_importo, { pagato: euro(dati.pagatoCentesimi / 100), totale: euro(totale / 100) }) : '';
   const pagato = riempi(a.pagato, { quando: quando(dati.pagato || new Date()) });
-  const nota = cl.email ? riempi(a.rispondi, { email: cl.email }) : '';
+  const nota = '';
   const conti = importi(o, { totaleCentesimi: totale }).concat([[v.pagamento, v.pagato_stripe]]);
   const blocco = (html, sotto = 14) => `<tr><td class="dentro" style="padding:0 44px ${sotto}px;">${html}</td></tr>`;
   const corpo = `${apertura(a.etichetta, dati.numero, `${nome} · ${pagato}`)}
@@ -569,7 +569,9 @@ export async function avvisaOrdine(env, dati) {
   // l'indirizzo del cliente deve essere un'email semplice e scritta bene: niente virgole o nomi che aggiungono destinatari
   const cliente = [dati.emailCliente, dati.ordine?.cliente?.email].find((x) => x && !controlla('email', x, { obbligatorio: true }));
   try {
-    esito.endero = await manda(env, { a: elenco, ...ordinePerEndero(dati), rispondiA: cliente || undefined });
+    // niente «Rispondi a» del cliente: una risposta porterebbe citati il nome vero dei tessuti e la taglia, che restano
+    // a Endero (revisione del 2026-11-26). Per scrivere al cliente ci sono i tasti, che aprono un messaggio nuovo
+    esito.endero = await manda(env, { a: elenco, ...ordinePerEndero(dati), rispondiA: env.EMAIL_RISPOSTE || 'info@endero.men' });
   } catch (errore) {
     console.error('ordine a Endero non partito', dati.numero, errore);
   }

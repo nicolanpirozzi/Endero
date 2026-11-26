@@ -226,7 +226,9 @@ export async function ordine(request, env, ctx) {
 
   // pagamento spento (manca la chiave di Stripe, o il database come nell'anteprima): l'ordine è giusto, ma non parte.
   // Si risponde prima dell'antispam, così il gettone di Turnstile non si spreca
-  if (!env.STRIPE_SECRET_KEY || !env.DB) {
+  // Acceso solo se c'è TUTTO ciò che serve perché un ordine pagato arrivi a Endero: con una chiave sola il cliente
+  // pagherebbe e l'ordine non arriverebbe a nessuno (revisione del 2026-11-26)
+  if (!pagamentoAcceso(env)) {
     return vuoleJson ? json({ ok: true, pagamento: 'non_attivo' }) : paginaSemplice('Pagamento non attivo', [senzaSegnaposto(T.non_attivo)], 200);
   }
 
@@ -302,6 +304,11 @@ export async function firmaValida(corpo, intestazione, segreto, adesso = Date.no
   return false;
 }
 
+/** Il pagamento è acceso: ci sono le chiavi di Stripe (anche quella del webhook), il database, le email e chi le riceve. */
+function pagamentoAcceso(env) {
+  return !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET && env.DB && env.RESEND_API_KEY && (env.EMAIL_ORDINI || env.EMAIL_DESTINATARIO));
+}
+
 export async function stripe(request, env) {
   const no = (status, frase) => new Response(frase, { status, headers: BASE });
   if (!env.STRIPE_WEBHOOK_SECRET || !env.DB) return no(503, 'Pagamento non attivo');
@@ -343,7 +350,8 @@ export async function stripe(request, env) {
 
   // le email partono una volta sola: chi «prende» l'invio (0 → 1) lo fa. Se l'avviso a Endero non parte, si rimette
   // a 0 e si risponde con un errore: Stripe riprova più tardi, e solo allora si rimanda
-  if (!env.RESEND_API_KEY) return json({ ricevuto: true });
+  // senza la chiave delle email si risponde con un errore: Stripe riprova, e l'ordine pagato non resta muto
+  if (!env.RESEND_API_KEY) return no(500, 'Email non configurata');
   const presa = await env.DB.prepare('UPDATE ordini SET email_inviate = 1 WHERE id = ? AND email_inviate = 0').bind(id).run();
   if (!(presa.meta?.changes > 0)) return json({ ricevuto: true });
   const esito = await avvisaOrdine(env, await comeEmail(env, riga));

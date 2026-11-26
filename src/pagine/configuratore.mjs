@@ -207,7 +207,7 @@ function passi(S, tessuti, turnstile) {
       <dl class="conti__righe">
         <div class="conti__riga"><dt>${esc(pg.prezzo)}</dt><dd data-conti-camicia></dd></div>
         <div class="conti__riga"><dt>${esc(pg.quantita)}</dt><dd data-conti-quantita></dd></div>
-        <div class="conti__riga"><dt>${esc(pr.spedizione)}</dt><dd data-conti-spedizione></dd></div>
+        <div class="conti__riga"><dt data-conti-consegna>${esc(pr.spedizione)}</dt><dd data-conti-spedizione></dd></div>
         <div class="conti__riga conti__riga--totale"><dt>${esc(pr.totale)}</dt><dd data-conti-totale></dd></div>
       </dl>
     </div>

@@ -314,7 +314,8 @@ console.log('L\'ordine del configuratore');
   controlla('a Endero: numero, taglia, nome vero del tessuto con la cartella', aEndero.subject.includes(primo.numero) && aEndero.subject.includes('Taglia 41 · manica −6 cm') && /Articolo Finto · F-001/.test(aEndero.html) && /Cartella: Cartella Prova/.test(aEndero.html), aEndero.subject);
   controlla('a Endero: dove manca il nome vero, si dice ben visibile', /Nome della cartella colori non disponibile/.test(aEndero.html) && new RegExp(`Sul sito: .+ · ${T3}`).test(aEndero.html));
   controlla('a Endero: le misure con il giro raddoppiato, le note per il corriere, il totale', /56 \(giro 112\)/.test(aEndero.html) && /Citofono Prova/.test(aEndero.html) && /300\s€/.test(aEndero.html));
-  controlla('a Endero: si risponde al cliente', aEndero.reply_to === 'mario.pagamento@esempio.it' || aEndero.reply_to === 'mario@esempio.it', aEndero.reply_to);
+  // rispondendo all'ordine non si scrive al cliente: nella risposta finirebbero citati il nome vero dei tessuti e la taglia
+  controlla('a Endero: la risposta non va al cliente (nomi veri e taglia restano a Endero)', !/esempio\.it/.test(String(aEndero.reply_to || '')) && !/Rispondendo a questa email/.test(aEndero.html), aEndero.reply_to);
   controlla('al cliente: all\'email con cui ha pagato, con il numero d\'ordine', JSON.stringify(alCliente.to) === '["mario.pagamento@esempio.it"]' && alCliente.subject.includes(primo.numero), JSON.stringify(alCliente.to));
   controlla('al cliente: mai i nomi veri dei tessuti, né le note per il corriere', !/Articolo Finto|F-001|Cartella Prova|Altro Finto|Citofono/.test(alCliente.html + alCliente.text));
   r = await avvisa(corpo);

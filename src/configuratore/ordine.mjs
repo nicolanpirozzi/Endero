@@ -149,7 +149,7 @@ export function controllaOrdine(d, { passo = '', tessuti = null } = {}) {
       const citta = controlla('citta', d.citta, { obbligatorio: true });
       if (citta) e.citta = citta;
       if (!PROVINCE.has(pulito(d.provincia).toUpperCase())) e.provincia = E.provincia;
-      if (/https?:|www\./i.test(pulito(d.note_consegna))) e.note_consegna = E.indirizzo;
+      if (/https?:|www\./i.test(pulito(d.note_consegna))) e.note_consegna = E.note_consegna;
     }
   }
   if (tutto || passo === 'pagamento') {

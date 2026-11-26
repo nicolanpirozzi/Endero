@@ -438,7 +438,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     const P = Object.fromEntries(S.passi.map((p) => [p.id, p]));
     const V = S.pagamento.voci;
     const vuoto = S.pagamento.nessuno;
-    const righe = (r) => r.map(([a, b]) => `<div class="riepilogo__riga"><dt>${esc(a)}</dt><dd>${b ? esc(b) : esc(vuoto)}</dd></div>`).join('');
+    // `giallo`: il valore può avere dei [[ ]] (non confermato dal proprietario), che in anteprima restano evidenziati
+    const righe = (r) => r.map(([a, b, giallo]) => `<div class="riepilogo__riga"><dt>${esc(a)}</dt><dd>${b ? (giallo ? testo(b) : esc(b)) : esc(vuoto)}</dd></div>`).join('');
     const parte = (passo, titolo, dentro, classe = '') => `<section class="riepilogo__parte${classe}"><div class="riepilogo__testa"><h3 class="riepilogo__titolo">${esc(titolo)}</h3><button class="riepilogo__modifica" type="button" data-modifica="${passo}" aria-label="${esc(`${S.modifica}: ${titolo}`)}">${esc(S.modifica)}</button></div><dl class="riepilogo__righe">${dentro}</dl></section>`;
     const camiciaRighe = [
       [campi.quantita.etichetta, d.quantita],
@@ -453,7 +454,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     ];
     const misure = S.misure.campi.map((m) => [m.etichetta, d[m.nome] ? `${d[m.nome].trim().replace('.', ',')} ${m.unita}` : '']);
     const modo = S.spedizione.opzioni.find((o) => o.id === d.spedizione);
-    const sped = modo ? [[modo.nome, piano(modo.dettaglio)]] : [[P.spedizione.nome, '']];
+    const sped = modo ? [[modo.nome, modo.dettaglio, true]] : [[P.spedizione.nome, '']];
     if (modo && (modo.prezzo > 0 || modo.giorni)) {
       const via = [d.indirizzo, [d.cap, d.citta, d.provincia && `(${d.provincia.toUpperCase()})`].filter(Boolean).join(' ')].filter((x) => x && x.trim()).join(', ');
       const I = Object.fromEntries(S.spedizione.indirizzo.campi.map((c) => [c.nome, c.etichetta]));
@@ -472,6 +473,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     const scrivi1 = (sel, v) => { const el = form.querySelector(sel); if (el.textContent !== v) el.textContent = v; };
     scrivi1('[data-conti-camicia]', euro(c.camicia));
     scrivi1('[data-conti-quantita]', String(c.quantita));
+    scrivi1('[data-conti-consegna]', modo && !(modo.prezzo > 0 || modo.giorni) ? S.prezzi.ritiro : S.prezzi.spedizione);
     scrivi1('[data-conti-spedizione]', c.spedizione === null ? vuoto : c.spedizione === 0 ? S.spedizione.gratis : euro(c.spedizione));
     scrivi1('[data-conti-totale]', euro(c.totale));
     form.querySelector('[data-conti]').hidden = false;

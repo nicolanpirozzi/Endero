@@ -63,8 +63,19 @@ const ENTRATE = {
   sito: 'src/sito.js', apertura: 'src/apertura/apertura.js', stile: 'src/stili/sito.css',
   configuratore: 'src/configuratore/configuratore.js', 'stile-configuratore': 'src/configuratore/configuratore.css',
 };
+// I testi (contenuti/**/*.json) entrano negli script senza le voci che cominciano per «_»: sono note di lavoro
+// (parole del proprietario, interpretazioni nostre) e chi apre lo script del sito non deve leggerle (revisione del 2026-11-26)
+const senzaNote = (v) => (Array.isArray(v) ? v.map(senzaNote)
+  : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => !k.startsWith('_')).map(([k, x]) => [k, senzaNote(x)])) : v);
+const testiSenzaNote = {
+  name: 'testi-senza-note',
+  setup(b) {
+    b.onLoad({ filter: /[\\/]contenuti[\\/].*\.json$/ }, (a) => ({ contents: JSON.stringify(senzaNote(JSON.parse(readFileSync(a.path, 'utf8')))), loader: 'json' }));
+  },
+};
 const esito = await build({
   absWorkingDir: RADICE,
+  plugins: [testiSenzaNote],
   entryPoints: ENTRATE,
   outdir: join(DIST, 'risorse'),
   entryNames: '[name]-[hash]',

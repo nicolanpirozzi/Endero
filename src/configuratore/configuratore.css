@@ -2297,10 +2297,13 @@ html:not(.js) .configura__fondo {
 
   .raccolta__filtri {
     display: none;
-    max-height: 42svh;
+    max-height: 54svh;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 12px 16px 2px;
+    padding: 12px 16px 30px;
+    /* in fondo sfuma: così si capisce che i filtri continuano sotto (revisione del 2026-11-26) */
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
   }
 
   .finestra--filtri-aperti .raccolta__filtri {

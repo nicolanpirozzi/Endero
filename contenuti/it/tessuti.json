@@ -31,7 +31,7 @@
   },
   {
    "id": "stretch",
-   "nome": "Cotone stretch"
+   "nome": "Stretch"
   },
   {
    "id": "raso",
@@ -2281,7 +2281,7 @@
   },
   {
    "id": "t1610",
-   "nome": "Cotone stretch millerighe rosa",
+   "nome": "Popeline stretch millerighe rosa",
    "categoria": "stretch",
    "colore": "rosa",
    "disegno": "righe"
@@ -2302,42 +2302,42 @@
   },
   {
    "id": "t1413",
-   "nome": "Cotone stretch righe azzurre",
+   "nome": "Popeline stretch righe azzurre",
    "categoria": "stretch",
    "colore": "azzurro",
    "disegno": "righe"
   },
   {
    "id": "t1401",
-   "nome": "Cotone stretch righine azzurre",
+   "nome": "Popeline stretch righine azzurre",
    "categoria": "stretch",
    "colore": "azzurro",
    "disegno": "righe"
   },
   {
    "id": "t1608",
-   "nome": "Cotone stretch millerighe azzurro",
+   "nome": "Popeline stretch millerighe azzurro",
    "categoria": "stretch",
    "colore": "azzurro",
    "disegno": "righe"
   },
   {
    "id": "t1510",
-   "nome": "Cotone stretch finestrato azzurro",
+   "nome": "Popeline stretch finestrato azzurro",
    "categoria": "stretch",
    "colore": "azzurro",
    "disegno": "quadretti"
   },
   {
    "id": "t1501",
-   "nome": "Cotone stretch vichy azzurro",
+   "nome": "Popeline stretch vichy azzurro",
    "categoria": "stretch",
    "colore": "azzurro",
    "disegno": "quadretti"
   },
   {
    "id": "t1514",
-   "nome": "Cotone stretch quadri azzurri",
+   "nome": "Popeline stretch quadri azzurri",
    "categoria": "stretch",
    "colore": "azzurro",
    "disegno": "quadretti"
@@ -2358,28 +2358,28 @@
   },
   {
    "id": "t1406",
-   "nome": "Cotone stretch righine lilla",
+   "nome": "Popeline stretch righine lilla",
    "categoria": "stretch",
    "colore": "viola",
    "disegno": "righe"
   },
   {
    "id": "t1611",
-   "nome": "Cotone stretch millerighe lilla",
+   "nome": "Popeline stretch millerighe lilla",
    "categoria": "stretch",
    "colore": "viola",
    "disegno": "righe"
   },
   {
    "id": "t1407",
-   "nome": "Cotone stretch righine viola",
+   "nome": "Popeline stretch righine viola",
    "categoria": "stretch",
    "colore": "viola",
    "disegno": "righe"
   },
   {
    "id": "t1408",
-   "nome": "Cotone stretch malva rigato",
+   "nome": "Popeline stretch malva rigato",
    "categoria": "stretch",
    "colore": "viola",
    "disegno": "righe"
@@ -2421,49 +2421,49 @@
   },
   {
    "id": "t1612",
-   "nome": "Cotone stretch millerighe beige",
+   "nome": "Popeline stretch millerighe beige",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "righe"
   },
   {
    "id": "t1416",
-   "nome": "Cotone stretch righe marroni",
+   "nome": "Popeline stretch righe marroni",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "righe"
   },
   {
    "id": "t1410",
-   "nome": "Cotone stretch righine marroni",
+   "nome": "Popeline stretch righine marroni",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "righe"
   },
   {
    "id": "t1614",
-   "nome": "Cotone stretch millerighe caffè",
+   "nome": "Popeline stretch millerighe caffè",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "righe"
   },
   {
    "id": "t1511",
-   "nome": "Cotone stretch finestrato marrone",
+   "nome": "Popeline stretch finestrato marrone",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "quadretti"
   },
   {
    "id": "t1509",
-   "nome": "Cotone stretch vichy marrone",
+   "nome": "Popeline stretch vichy marrone",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "quadretti"
   },
   {
    "id": "t1518",
-   "nome": "Cotone stretch quadri marroni",
+   "nome": "Popeline stretch quadri marroni",
    "categoria": "stretch",
    "colore": "beige",
    "disegno": "quadretti"
@@ -2498,14 +2498,14 @@
   },
   {
    "id": "t1409",
-   "nome": "Cotone stretch righine oliva",
+   "nome": "Popeline stretch righine oliva",
    "categoria": "stretch",
    "colore": "verde",
    "disegno": "righe"
   },
   {
    "id": "t1506",
-   "nome": "Cotone stretch vichy verde",
+   "nome": "Popeline stretch vichy verde",
    "categoria": "stretch",
    "colore": "verde",
    "disegno": "quadretti"
@@ -2526,28 +2526,28 @@
   },
   {
    "id": "t1411",
-   "nome": "Cotone stretch righine tortora",
+   "nome": "Popeline stretch righine tortora",
    "categoria": "stretch",
    "colore": "grigio",
    "disegno": "righe"
   },
   {
    "id": "t1613",
-   "nome": "Cotone stretch millerighe tortora",
+   "nome": "Popeline stretch millerighe tortora",
    "categoria": "stretch",
    "colore": "grigio",
    "disegno": "righe"
   },
   {
    "id": "t1609",
-   "nome": "Cotone stretch millerighe grigio",
+   "nome": "Popeline stretch millerighe grigio",
    "categoria": "stretch",
    "colore": "grigio",
    "disegno": "righe"
   },
   {
    "id": "t1507",
-   "nome": "Cotone stretch vichy grigio",
+   "nome": "Popeline stretch vichy grigio",
    "categoria": "stretch",
    "colore": "grigio",
    "disegno": "quadretti"
@@ -2596,35 +2596,35 @@
   },
   {
    "id": "t1404",
-   "nome": "Cotone stretch righine rosse",
+   "nome": "Popeline stretch righine rosse",
    "categoria": "stretch",
    "colore": "rosso",
    "disegno": "righe"
   },
   {
    "id": "t1405",
-   "nome": "Cotone stretch righine bordeaux",
+   "nome": "Popeline stretch righine bordeaux",
    "categoria": "stretch",
    "colore": "rosso",
    "disegno": "righe"
   },
   {
    "id": "t1504",
-   "nome": "Cotone stretch vichy rosso",
+   "nome": "Popeline stretch vichy rosso",
    "categoria": "stretch",
    "colore": "rosso",
    "disegno": "quadretti"
   },
   {
    "id": "t1517",
-   "nome": "Cotone stretch quadri rossi",
+   "nome": "Popeline stretch quadri rossi",
    "categoria": "stretch",
    "colore": "rosso",
    "disegno": "quadretti"
   },
   {
    "id": "t1505",
-   "nome": "Cotone stretch vichy bordeaux",
+   "nome": "Popeline stretch vichy bordeaux",
    "categoria": "stretch",
    "colore": "rosso",
    "disegno": "quadretti"
@@ -2687,63 +2687,63 @@
   },
   {
    "id": "t1414",
-   "nome": "Cotone stretch righe blu royal",
+   "nome": "Popeline stretch righe blu royal",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "righe"
   },
   {
    "id": "t1402",
-   "nome": "Cotone stretch righine blu",
+   "nome": "Popeline stretch righine blu",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "righe"
   },
   {
    "id": "t1403",
-   "nome": "Cotone stretch righine navy",
+   "nome": "Popeline stretch righine navy",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "righe"
   },
   {
    "id": "t1415",
-   "nome": "Cotone stretch righe navy",
+   "nome": "Popeline stretch righe navy",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "righe"
   },
   {
    "id": "t1513",
-   "nome": "Cotone stretch finestrato notte",
+   "nome": "Popeline stretch finestrato notte",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "quadretti"
   },
   {
    "id": "t1502",
-   "nome": "Cotone stretch vichy blu royal",
+   "nome": "Popeline stretch vichy blu royal",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "quadretti"
   },
   {
    "id": "t1515",
-   "nome": "Cotone stretch quadri blu royal",
+   "nome": "Popeline stretch quadri blu royal",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "quadretti"
   },
   {
    "id": "t1516",
-   "nome": "Cotone stretch quadri navy",
+   "nome": "Popeline stretch quadri navy",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "quadretti"
   },
   {
    "id": "t1503",
-   "nome": "Cotone stretch vichy navy",
+   "nome": "Popeline stretch vichy navy",
    "categoria": "stretch",
    "colore": "blu",
    "disegno": "quadretti"
@@ -2806,35 +2806,35 @@
   },
   {
    "id": "t1412",
-   "nome": "Cotone stretch righine nere",
+   "nome": "Popeline stretch righine nere",
    "categoria": "stretch",
    "colore": "nero",
    "disegno": "righe"
   },
   {
    "id": "t1417",
-   "nome": "Cotone stretch righe nere",
+   "nome": "Popeline stretch righe nere",
    "categoria": "stretch",
    "colore": "nero",
    "disegno": "righe"
   },
   {
    "id": "t1512",
-   "nome": "Cotone stretch finestrato nero",
+   "nome": "Popeline stretch finestrato nero",
    "categoria": "stretch",
    "colore": "nero",
    "disegno": "quadretti"
   },
   {
    "id": "t1508",
-   "nome": "Cotone stretch vichy nero",
+   "nome": "Popeline stretch vichy nero",
    "categoria": "stretch",
    "colore": "nero",
    "disegno": "quadretti"
   },
   {
    "id": "t1519",
-   "nome": "Cotone stretch quadri neri",
+   "nome": "Popeline stretch quadri neri",
    "categoria": "stretch",
    "colore": "nero",
    "disegno": "quadretti"
