@@ -16,7 +16,7 @@
 // taschino, asola colorata, bottone non tinta su tinta, filato bottone, iniziali, interno collo, interno polso,
 // polsino. Interpretazione nostra, da confermare: con due si paga come con una, da tre a sette come con tre.
 // Spedizione: «5 gg lavorativi 15 euro… oppure 7 gg lavorativi 30 euro (spedizione gratis sopra 200 euro di spesa)»:
-// gratis quando le camicie costano più di 200 euro (sopra, non da 200: interpretazione nostra).
+// gratis da 200 euro di camicie compresi (confermato dal proprietario il 2026-11-26).
 
 import testi from '../../contenuti/it/configuratore.json';
 import { controlla, senzaInvisibili } from '../controlli.mjs';
@@ -79,7 +79,7 @@ export function conti(o) {
   const quantita = Number.isFinite(q) && q >= 1 ? q : 1;
   const capi = camicia * quantita;
   const modo = SPEDIZIONI.find((s) => s.id === o.spedizione);
-  const gratis = !!modo && modo.prezzo > 0 && capi > S.spedizione.gratis_sopra;
+  const gratis = !!modo && modo.prezzo > 0 && capi >= S.spedizione.gratis_da;
   const spedizione = modo ? (gratis ? 0 : modo.prezzo) : null;
   return { personalizzazioni: quante, camicia, quantita, capi, spedizione, gratis, totale: capi + (spedizione || 0) };
 }

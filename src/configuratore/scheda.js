@@ -193,7 +193,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     // il prezzo di ogni modo di ricevere la camicia, con le camicie scelte («Gratis» sopra la soglia)
     for (const el of form.querySelectorAll('[data-prezzo-modo]')) {
       const modo = SPEDIZIONI.find((s) => s.id === el.dataset.prezzoModo);
-      const gratis = !modo.prezzo || c.capi > S.spedizione.gratis_sopra;
+      const gratis = !modo.prezzo || c.capi >= S.spedizione.gratis_da;
       const scritta = gratis ? S.spedizione.gratis : euro(modo.prezzo);
       if (el.textContent !== scritta) el.textContent = scritta;
       el.classList.toggle('modo__prezzo--gratis', gratis && !!modo.prezzo);
