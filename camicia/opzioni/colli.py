@@ -178,6 +178,24 @@ def taglia(camicia, dentro, piano, resta, bmesh, np):
     # 3 · via ciò che sta fuori
     via = [v for v, val in f.items() if val < 0 and v.is_valid]
     bmesh.ops.delete(bm, geom=via, context='VERTS')
+    # i ritagli minuscoli rimasti staccati dal resto (una scheggia di stoffa sospesa in aria, che fa pure ombra)
+    visti, schegge = set(), []
+    for v in [v for v in f if v.is_valid]:
+        if v in visti:
+            continue
+        pila, isola = [v], []
+        visti.add(v)
+        while pila:
+            u = pila.pop(); isola.append(u)
+            for e in u.link_edges:
+                w = e.other_vert(u)
+                if w not in visti:
+                    visti.add(w); pila.append(w)
+        if len(isola) < 14:
+            schegge += isola
+    if schegge:
+        bmesh.ops.delete(bm, geom=schegge, context='VERTS')
+        print(f'  tolte {len(schegge)} punte di schegge rimaste staccate', flush=True)
     resti = len([v for v in f if v.is_valid])
     bm.to_mesh(me); bm.free(); me.update()
     return len(via), resti

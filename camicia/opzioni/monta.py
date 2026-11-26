@@ -68,10 +68,11 @@ def maschera(mappa, *nomi):
     for n in nomi:
         c = np.array(COLORI[n])
         m |= (np.abs(mappa.astype(np.int16) - c).sum(axis=2) < 110)
-    return m
+    # sui bordi tra due colori nascono punti sparsi di colori di mezzo: non sono la parte
+    return ndimage.binary_opening(m, iterations=2)
 
 
-def contorno(m, fuori=3.0, liscio=1.6, passo=5.0):
+def contorno(m, fuori=3.0, liscio=1.6, passo=5.0, chiudi=0):
     """Il contorno della macchia più grande di `m`, appena più largo e liscio: una lista di punti del fotogramma."""
     from contourpy import contour_generator
     from shapely.geometry import Polygon
@@ -79,6 +80,8 @@ def contorno(m, fuori=3.0, liscio=1.6, passo=5.0):
     if not quante:
         return None
     grande = etichette == (np.argmax(ndimage.sum(m, etichette, range(1, quante + 1))) + 1)
+    if chiudi:
+        grande = ndimage.binary_closing(np.pad(grande, chiudi * 2), iterations=chiudi * 2)[chiudi * 2:-chiudi * 2, chiudi * 2:-chiudi * 2]
     grande = ndimage.binary_fill_holes(grande)
     campo = ndimage.gaussian_filter(ndimage.binary_dilation(grande, iterations=int(round(fuori * 2))).astype(np.float32), liscio * 2)
     linee = contour_generator(z=campo).lines(0.5)
@@ -126,6 +129,16 @@ def asse(m, attorno=None, raggio=None):
     return c, g
 
 
+def orlo(m):
+    """La direzione dell'orlo in fondo a `m` (gradi): la retta che passa per il punto più basso di ogni colonna."""
+    ys, xs = np.nonzero(m)
+    colonne = np.unique(xs)
+    colonne = colonne[len(colonne) // 6: -len(colonne) // 6]          # senza gli angoli arrotondati
+    fondo = np.array([ys[xs == x].max() for x in colonne])
+    a, _ = np.polyfit(colonne, fondo, 1)
+    return math.degrees(math.atan(a))
+
+
 def dentro_vicino(m, a, quanto):
     """Il punto di `m` più «dentro» (lontano dal bordo) tra quelli a meno di `quanto` punti del fotogramma da `a`."""
     d = ndimage.distance_transform_edt(m)
@@ -161,7 +174,7 @@ def main():
     # i polsini: quello a sinistra di chi guarda per «polsino» e «interno polso», l'altro per le iniziali
     pa, pb = maschera(mappa, 'polsino_a'), maschera(mappa, 'polsino_b')
     o['parti']['polsino'] = parte(contorno(pa))
-    c, g = asse(pa)
+    c, _ = asse(pa); g = orlo(pa)
     # l'interno si vede dal fondo del polsino: la fascia più bassa
     ys, xs = np.nonzero(pa)
     lungo = np.array([-math.sin(math.radians(g)), math.cos(math.radians(g))])      # verso il fondo
@@ -171,7 +184,7 @@ def main():
     fondo = np.zeros_like(pa); fondo[ys[quota > quota.max() * 0.25], xs[quota > quota.max() * 0.25]] = True
     o['parti']['interno_polso'] = parte(contorno(fondo, fuori=2.0))
     o['parti']['interno_polso']['riquadro'] = o['parti']['polsino']['riquadro']
-    cb, gb = asse(pb)
+    cb, _ = asse(pb); gb = orlo(pb)
     alta = round(metro * 0.007, 1)                             # lettere alte 7 millimetri
     o['iniziali']['polso'] = {'centro': [round(cb[0], 1), round(cb[1], 1)], 'gradi': round(gb, 1), 'alta': alta}
     o['parti']['iniziali_polso'] = parte(contorno(pb))
@@ -199,7 +212,7 @@ def main():
             voce['riquadro'] = pezzo(base, apri(f'collo-{nome}-{VOLTE}x.png'), RIQUADRO_COLLO, file, uscita)
         collo = maschera(mappa, 'colletto', 'listino')
         # solo la zona del collo: il listino sotto il primo bottone è coperto dal cannoncino
-        voce['parte'] = parte(contorno(collo), margine=26)
+        voce['parte'] = parte(contorno(collo, chiudi=7), margine=26)
         # le iniziali sul collo: sulla punta a destra di chi guarda (il lato sinistro di chi la indossa); dove il
         # colletto non c'è, o davanti ha solo le alette, sul listino
         bottone = punti['bottoni'][0]
@@ -210,11 +223,19 @@ def main():
             qui = dentro_vicino(banda, [bottone[0] + (58 if nome == 'diplomatico' else 40), bottone[1] - 8], 30)
             _, g = asse(banda, qui, 22)
         else:
-            ys, xs = np.nonzero(foglia)
-            lontano = np.argmax((xs / 2 - bottone[0]) ** 2 * 0.6 + (ys / 2 - bottone[1] + 40) ** 2)
-            punta = [xs[lontano] / 2, ys[lontano] / 2]
-            qui = dentro_vicino(foglia, punta, metro * 0.034)
-            _, g = asse(foglia, qui, metro * 0.02)
+            # la falda a destra di chi guarda; le lettere stanno nel mezzo della sua parte davanti, a due o tre
+            # centimetri dal bottone del collo, e corrono lungo la falda: dal bottone verso la punta
+            etichette, quante = ndimage.label(foglia)
+            falda = etichette == (np.argmax(ndimage.sum(foglia, etichette, range(1, quante + 1))) + 1)
+            d = ndimage.distance_transform_edt(falda)
+            ys, xs = np.nonzero(falda)
+            r = np.hypot(xs / 2 - bottone[0], ys / 2 - bottone[1])
+            zona = (r > metro * 0.026) & (r < metro * 0.07)
+            # meglio all'altezza del bottone o sotto; più su solo se lì la falda è troppo stretta (il francese)
+            i = int(np.argmax(np.where(zona, d[ys, xs] - 0.5 * np.maximum(0, (bottone[1] - 4) * 2 - ys), -1e9)))
+            qui = [float(xs[i] / 2), float(ys[i] / 2)]
+            g = math.degrees(math.atan2(qui[1] - bottone[1], qui[0] - bottone[0]))
+            g = g - 180 if g > 90 else g + 180 if g < -90 else g
         voce['iniziali'] = {'centro': [round(qui[0], 1), round(qui[1], 1)], 'gradi': round(g, 1), 'alta': round(metro * 0.0065, 1)}
         voce['parte_iniziali'] = parte(ovale(qui, g, metro * 0.03, metro * 0.016), margine=34)
         o['colli'][nome] = voce
@@ -229,7 +250,7 @@ def main():
             impronta.update(f.encode()); impronta.update(open(os.path.join(uscita, f), 'rb').read())
     o['versione'] = impronta.hexdigest()[:10]
     with open(os.path.join(uscita, 'opzioni.json'), 'w') as f:
-        json.dump(o, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump(o, f, ensure_ascii=False, separators=(',', ':'), default=lambda v: v.item())      # i numeri di numpy
         f.write('\n')
     pesi = sum(os.path.getsize(os.path.join(uscita, f)) for f in os.listdir(uscita))
     print(f'{uscita}: {len(os.listdir(uscita))} file, {pesi // 1024} KB; riquadri: ' + ', '.join(f"{k} {v.get('riquadro')}" for k, v in o['colli'].items()))

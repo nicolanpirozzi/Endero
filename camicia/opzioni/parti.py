@@ -167,21 +167,31 @@ def mappa(a):
         tasca = set(metti_taschino(camicia, scena, bmesh, np, riposo)) if nome == 'italiano' else set()
         co = np.array([v.co[:] for v in me.vertices]) @ np.array(riposo.to_3x3()).T      # dove stanno nel file: X a destra, Z in alto
         isole = scena._pezzi(me)
+        # dove sta ogni pezzo nel cartamodello: la media delle UV dei suoi punti
+        uvl = me.uv_layers.active.data
+        somma = np.zeros((len(me.vertices), 2)); quante = np.zeros(len(me.vertices))
+        for l in me.loops:
+            somma[l.vertex_index] += uvl[l.index].uv[:]; quante[l.vertex_index] += 1
+        uv_punto = somma / np.maximum(quante, 1)[:, None]
+        uv_medio = {p[0]: uv_punto[p].mean(0) for p in isole}
         # chi è chi, dalla posizione nel file: colletto il più alto (se c'è ancora), poi il listino; polsini in fondo alle maniche
         def tipo(p):
             q = co[p]
             if tasca and p[0] in tasca:
                 return 'taschino'
-            if q[:, 2].max() > -0.095 and abs(q[:, 0]).max() < 0.12 and q[:, 2].min() > -0.25:
-                return 'colletto' if (len(p) > 600 or q[:, 2].min() < -0.18 or q[:, 2].max() > -0.08) and nome != 'coreano' and not _listino(q) else 'listino'
+            # colletto e listino si riconoscono dal posto che hanno nel cartamodello (le UV): un colletto ritagliato può
+            # essere in più pezzi (le alette del diplomatico), ma nel cartamodello resta dov'era
+            u, v = uv_medio[p[0]]
+            if 0.24 < u < 0.60 and 0.915 < v < 0.972:
+                return 'colletto'
+            if 0.24 < u < 0.60 and 0.850 < v < 0.892:
+                return 'listino'
             if 400 < len(p) < 700 and q[:, 2].max() < -0.75 and q[:, 2].min() > -0.87 and abs(q[:, 0]).min() > 0.19:
                 return 'polsino_a' if q[:, 0].mean() < 0 else 'polsino_b'
             if 700 < len(p) < 900 and abs(q[:, 0]).max() < 0.03:
                 return 'cannoncino'
             return 'camicia'
 
-        def _listino(q):
-            return q[:, 2].min() > -0.18 and q[:, 2].max() < -0.082
         nomi = list(COLORI)
         me.materials.clear()
         for k in nomi:
