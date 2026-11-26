@@ -2429,3 +2429,8 @@ html:not(.js) .configura__fondo {
     font-size: 0.8125rem;
   }
 }
+
+.contatore__numero:focus-visible {
+  border-radius: 8px;
+  background: rgba(251, 249, 244, 0.1);
+}

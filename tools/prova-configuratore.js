@@ -55,7 +55,11 @@ const valore = (page, nome) => page.evaluate((n) => document.querySelector(`form
 // si tocca la scritta della scelta, come una persona (il fondo con i tasti, che resta in vista, può coprire la riga: Playwright scorre finché la trova libera)
 const sceglieRadio = (page, nome, v) => page.locator(`form[data-configuratore] label:has(> input[name="${nome}"][value="${v}"])`).first().click();
 /** Sceglie un tessuto dalla finestra (per il campo `nome`), con il clic e il tasto che conferma. */
+// (prima si esce dal campo che ha il fuoco: sul telefono la guida apre sopra la sua riga il riquadro con lo zoom, che
+// copre la riga di sopra finché non lo si tocca)
+const esci = async (page) => { await page.evaluate(() => document.activeElement?.blur?.()); await page.waitForTimeout(200); };
 async function tessuto(page, nome, quale = 0) {
+  await esci(page);
   await page.click(`#campo-${nome}`);
   await page.waitForSelector('#finestra-tessuti[open]');
   await page.locator('#finestra-tessuti .campione:not([hidden])').nth(quale).click();
@@ -63,6 +67,7 @@ async function tessuto(page, nome, quale = 0) {
   await page.waitForTimeout(100);
 }
 async function colore(page, nome, quale = 0) {
+  await esci(page);
   await page.click(`#campo-${nome}`);
   await page.waitForSelector('#finestra-colori[open]');
   await page.locator('#finestra-colori .tinta').nth(quale).click();
@@ -494,6 +499,50 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await page.click('[data-apri-passi]');
     a = await page.evaluate(() => document.getElementById('come-misurare').open);
     controlla('«Come misurare» la riapre', a);
+    await contesto.close();
+  }
+
+  // ------------------------------------------------ le scelte ricordate arrivano alla camicia anche ricaricando
+  console.log('\nLa camicia dopo una ricarica');
+  for (const [formato, opzioni] of [FORMATI[0], FORMATI[2]]) {
+    const { contesto, page, errori } = await nuovo(opzioni);
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    await page.selectOption('#campo-collo', 'francese');
+    await sceglieRadio(page, 'taschino', 'si');
+    await page.reload({ waitUntil: 'networkidle' });
+    let pezzi = [];
+    for (let k = 0; k < 40; k++) {
+      pezzi = await page.evaluate(() => [...document.querySelectorAll('.configura__palco img.vesti__pezzo')].filter((im) => getComputedStyle(im).opacity !== '0').map((im) => im.getAttribute('src').split('/').pop().split('?')[0]));
+      if (pezzi.some((x) => /collo-francese/.test(x)) && pezzi.some((x) => /taschino/.test(x))) break;
+      await page.waitForTimeout(150);
+    }
+    const a = await page.evaluate(() => ({ collo: document.querySelector('[name="collo"]').value, taschino: document.querySelector('[name="taschino"]:checked').value, primo: window.__camicia[0] }));
+    controlla(`${formato}: collo francese e taschino scelti, ricaricando restano nel riquadro e sulla camicia (${[...new Set(pezzi)].join(', ')})`, a.collo === 'francese' && a.taschino === 'si' && a.primo?.collo === 'francese' && a.primo?.taschino === true && pezzi.some((x) => /collo-francese/.test(x)) && pezzi.some((x) => /taschino/.test(x)), JSON.stringify(a));
+    controlla(`${formato}: nessun errore in console`, errori.length === 0, errori.join(' | ').slice(0, 200));
+    await contesto.close();
+  }
+
+  // ------------------------------------------------ 483 tessuti: apertura, filtri, scorrimento
+  console.log('\nLa finestra con tutti i tessuti');
+  for (const [formato, opzioni] of [FORMATI[0], FORMATI[2]]) {
+    const { contesto, page } = await nuovo({ ...opzioni, reducedMotion: 'no-preference' });
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    const quanti = await page.evaluate(() => document.querySelectorAll('#finestra-tessuti .campione').length);
+    const t0 = Date.now();
+    await page.click('#campo-tessuto');
+    await page.waitForSelector('#finestra-tessuti[open]');
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const apre = Date.now() - t0;
+    const filtro = await page.evaluate(() => { const r = document.querySelector('#finestra-tessuti input[name="colore"]:not([value=""])'); const t = performance.now(); r.click(); return performance.now() - t; });
+    const cerca = await page.evaluate(() => { const i = document.querySelector('#finestra-tessuti [data-cerca]'); const t = performance.now(); i.value = 'popeline'; i.dispatchEvent(new Event('input', { bubbles: true })); return performance.now() - t; });
+    await page.click('#finestra-tessuti [data-azzera]');
+    // i nomi più lunghi: dentro la loro casella, su due righe al più
+    const nomi = await page.evaluate(() => { const v = [...document.querySelectorAll('#finestra-tessuti .campione')]; const lungo = v.sort((a, b) => b.textContent.length - a.textContent.length)[0]; lungo.scrollIntoView({ block: 'center' }); const n = lungo.querySelector('.campione__nome'), r = n.getBoundingClientRect(), c = lungo.getBoundingClientRect(); return { nome: n.textContent, dentro: r.right <= c.right + 1 && r.left >= c.left - 1, righe: Math.round(r.height / parseFloat(getComputedStyle(n).lineHeight)), largo: document.documentElement.scrollWidth <= innerWidth }; });
+    // lo scorrimento della griglia arriva in fondo e le immagini si caricano dove si guarda
+    const fondo = await page.evaluate(async () => { const s = document.querySelector('#finestra-tessuti .raccolta__scorre'); s.scrollTop = s.scrollHeight; await new Promise((r) => setTimeout(r, 800)); const ultimo = [...document.querySelectorAll('#finestra-tessuti .campione')].pop(); const r = ultimo.getBoundingClientRect(), b = s.getBoundingClientRect(); return { inVista: r.bottom <= b.bottom + 1 && r.top >= b.top - 1, caricata: ultimo.querySelector('img').complete && ultimo.querySelector('img').naturalWidth > 0 }; });
+    controlla(`${formato}: ${quanti} tessuti: la finestra si apre in ${apre} ms, un filtro in ${filtro.toFixed(1)} ms, la ricerca in ${cerca.toFixed(1)} ms`, quanti >= 1 && apre < 1500 && filtro < 100 && cerca < 100);
+    controlla(`${formato}: il nome più lungo («${nomi.nome}») sta nella sua casella su ${nomi.righe} righe`, nomi.dentro && nomi.righe <= 2 && nomi.largo, JSON.stringify(nomi));
+    controlla(`${formato}: la griglia scorre fino all'ultimo tessuto e la sua immagine si carica`, fondo.inVista && fondo.caricata, JSON.stringify(fondo));
     await contesto.close();
   }
 
