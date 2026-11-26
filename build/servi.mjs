@@ -6,6 +6,7 @@ import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { destinazione } from '../worker/reindirizzamenti.mjs';
+import { INTESTAZIONI } from '../worker/intestazioni.mjs';
 
 const DIST = process.argv[3] ? resolve(process.argv[3]) + '/' : fileURLToPath(new URL('../dist/', import.meta.url));
 const porta = Number(process.argv[2] || process.env.PORT || 8766);
@@ -30,6 +31,9 @@ createServer((req, res) => {
   if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
   let stato = 200;
   if (!existsSync(file)) { file = join(DIST, '404.html'); stato = 404; }
-  res.writeHead(stato, { 'Content-Type': tipi[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+  // le pagine escono con le stesse intestazioni di sicurezza del sito vero: ciò che lì è vietato (un'immagine «blob:»,
+  // uno stile aggiunto da uno script) lo è anche qui, e i controlli in locale se ne accorgono (2026-11-26)
+  const sicurezza = extname(file) === '.html' ? INTESTAZIONI : {};
+  res.writeHead(stato, { 'Content-Type': tipi[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', ...sicurezza });
   createReadStream(file).pipe(res);
 }).listen(porta, '127.0.0.1', () => console.log(`anteprima su http://127.0.0.1:${porta}/`));

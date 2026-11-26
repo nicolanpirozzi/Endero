@@ -123,8 +123,11 @@ async function tinta(chiave) {
     fatta = quale ? await tela(T.D.indirizzo(file, +t), quale.file) : null;
   }
   if (!fatta) return null;
-  const blob = await new Promise((f) => fatta.toBlob(f, 'image/png'));
-  return blob ? semplice(URL.createObjectURL(blob)) : null;
+  // (un indirizzo «data:» e non «blob:»: la regola di sicurezza delle pagine, worker/intestazioni.mjs, lascia passare
+  // solo le immagini del sito e quelle «data:»)
+  let indirizzo = '';
+  try { indirizzo = fatta.toDataURL('image/webp', 0.95); } catch { return null; }
+  return semplice(indirizzo);
 }
 /** Il riquadro della camicia tinta sull'immagine ferma: quello della camicia ritagliata, dentro il fotogramma. */
 const MARGINE = 24;
