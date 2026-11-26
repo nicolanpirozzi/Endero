@@ -15,7 +15,8 @@ const fs = require('fs');
 
 const base = (process.argv[2] || 'http://127.0.0.1:8781').replace(/\/$/, '');
 const schermate = process.argv[3] || '';
-const PAGINA = base + '/camicie-su-misura/configuratore/?senza-passi&manuale';
+// sul passo Misure: ci sono i campi di misura (il giro sul retro con «spalla»), e i campi finti vanno in cima a quel passo
+const PAGINA = base + '/camicie-su-misura/configuratore/?passo=misure&senza-passi&manuale';
 let passati = 0;
 const falliti = [];
 function controlla(nome, vero, dettaglio = '') {
@@ -52,7 +53,8 @@ function campiFinti() {
     <div data-parte="collo" id="finto-collo"><label>Collo <select id="finto-collo-menu"><option>italiano</option><option>francese</option><option>club</option></select></label></div>
     <fieldset data-parte="taschino" id="finto-tasca"><legend>Taschino</legend><label><input type="radio" name="tasca" value="no" checked> No</label> <label><input type="radio" name="tasca" value="si"> Sì</label></fieldset>
     <div data-parte="iniziali_polso" id="finto-iniziali"><label>Iniziali <select id="finto-posto"><option>polso</option><option>collo</option><option>cuore</option></select></label> <button type="button" id="finto-tessuti">Tessuti</button></div>`;
-  f.querySelector('.configura__come').after(blocco);
+  // in cima al passo in vista (dal 2026-11-26 il riquadro è a passi: «Come misurare» sta nel passo Misure, chiuso)
+  (f.querySelector('.passo:not([hidden]) .passo__titolo') || f.querySelector('.configura__come')).after(blocco);
   const posto = blocco.querySelector('#finto-posto');
   posto.addEventListener('change', () => {
     const campo = blocco.querySelector('#finto-iniziali');
