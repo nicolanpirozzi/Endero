@@ -584,6 +584,46 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     controlla('scheda grafica che non basta: nessun errore', errori.length === 0, errori.join(' | '));
     await contesto.close();
   }
+  {
+    // Dalla seconda revisione del 26: (1) un collo più piccolo (coreano, diplomatico) dipinge la parete dove quello di
+    // base non c'è più: lì la foto non è camicia e non va tinta (veniva una riga quasi nera lungo le spalle); (2) su un
+    // rigato contrastato il disegno arriva fino al bordo e alle cuciture (prima lì c'era il colore medio: un profilo rosa)
+    const a = await nuovo(COMPUTER[0][1], '&rigida'), { page } = a;
+    await pronta(page);
+    const tela = () => page.evaluate(() => { const c = [...document.querySelectorAll('.configura__addosso canvas.vesti__tinta')].pop(); window.__prima = window.__ora; window.__ora = c.getContext('2d').getImageData(0, 0, c.width, c.height); });
+    await manda(page, { tessuto: BIANCO, collo: 'coreano' }); await tinta(page); await posata(page); await page.waitForTimeout(500); await tela();
+    await manda(page, { tessuto: 't2408', collo: 'coreano' }); await posata(page); await page.waitForTimeout(700); await tela();
+    const parete = await page.evaluate(() => {
+      const a = window.__prima.data, b = window.__ora.data;
+      let parete = 0, cambiati = 0;
+      for (let i = 0; i < a.length; i += 4) {
+        if (a[i + 3] < 250 || a[i + 2] < 60 || (a[i + 2] - a[i]) / a[i + 2] < 0.62) continue;       // (la parete: blu pieno)
+        parete++;
+        if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) > 45) cambiati++;
+      }
+      return { parete, cambiati };
+    });
+    controlla('collo coreano: la parete dipinta dal collo non prende il colore del tessuto', parete.parete > 1000 && parete.cambiati < 80, JSON.stringify(parete));
+    await manda(page, { tessuto: 't2920' }); await posata(page); await page.waitForTimeout(700); await tela();
+    const rosa = await page.evaluate(() => {
+      const { data: d, width: w, height: h } = window.__ora;
+      const vuoto = (x, y) => x < 0 || y < 0 || x >= w || y >= h || d[(y * w + x) * 4 + 3] < 40;
+      let fascia = 0, rosa = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        if (d[i + 3] < 250) continue;
+        if (!(vuoto(x - 5, y) || vuoto(x + 5, y) || vuoto(x, y - 5) || vuoto(x, y + 5))) continue;       // (solo il contorno)
+        const R = d[i], G = d[i + 1], B = d[i + 2];
+        if (R < 60 || Math.abs(G - B) > 40) continue;                                                // (ombre profonde, gruccia)
+        fascia++;
+        const s = (R - Math.min(G, B)) / R;                                                          // 0 bianco, 0.8 rosso
+        if (s > 0.28 && s < 0.52) rosa++;
+      }
+      return { fascia, rosa, parte: +(rosa / fascia).toFixed(3) };
+    });
+    controlla('rigato rosso e bianco: sul contorno ci sono le righe, non una fascia di colore medio', rosa.fascia > 5000 && rosa.parte < 0.55, JSON.stringify(rosa));
+    await a.contesto.close();
+  }
   // le iniziali: il carattere elegante, e gli altri due da provare
   for (const [v, famiglia] of [['', 'Endero Iniziali Corsivo'], ['&iniziali=b', 'Endero Iniziali Romano'], ['&iniziali=c', 'Endero Iniziali Inglese']]) {
     const a = await nuovo(COMPUTER[0][1], '&rigida' + v), { page } = a;

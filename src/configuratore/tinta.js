@@ -25,8 +25,8 @@ uniform vec2 misura, r0, r1, r2;
 uniform float morbido, fitto, passo, mezzo;
 varying vec2 q;
 // Un punto della trama: xy dove sta nel cartamodello, z se la posizione c'e (0 no, 1 vera, 3 presa in prestito dal
-// punto di stoffa piu vicino). La trama e larga il doppio: a sinistra la prima coordinata (rosso i bit alti, verde i
-// bassi) e nel blu se c'e; a destra la seconda coordinata
+// punto buono piu vicino: contorni, cuciture, risvolti stretti; vale come una vera). La trama e larga il
+// doppio: a sinistra la prima coordinata (rosso i bit alti, verde i bassi) e nel blu se c'e; a destra la seconda
 vec3 leggi(vec2 i) {
   vec2 d = vec2(0.5 / misura.x, 1.0 / misura.y);
   vec2 c = clamp(i, vec2(0.0), misura - 1.0);
@@ -41,13 +41,18 @@ float stessa(vec3 m, vec3 n) {
 }
 // il colore (lineare) di un campione in un punto del cartamodello: quanto sfocato lo dice quanto cambia la posizione
 // da un punto dello schermo al vicino (da lontano le righe sottili diventano il loro colore medio)
-vec3 campione(sampler2D t, vec2 rip, vec2 uv, vec2 dx, vec2 dy, float orlo) {
+vec3 campione(sampler2D t, vec2 rip, vec2 uv, vec2 dx, vec2 dy, float orlo, float prestito) {
   vec2 ex = dx * rip * 256.0 / fitto, ey = dy * rip * 256.0 / fitto;
-  // (mai piu nitido della stoffa stesa di fronte; sul bordo, dove la posizione e presa in prestito, sempre piu
-  // sfocato fino al colore medio: un contorno pulito, senza puntini)
+  // (mai piu nitido della stoffa stesa di fronte; oltre la sagoma, dove la foto sfuma nella parete, appena piu morbido.
+  // Fino al 26 novembre li e lungo le cuciture si leggeva il colore medio del tessuto: su un rigato contrastato
+  // veniva un profilo rosa tutto intorno. Ora il disegno prosegue fino al bordo: vedi impacchetta in trame.py)
   float piano = passo * max(rip.x, rip.y) * 256.0 / fitto;
   float fine = max(0.0, 0.5 * log2(max(max(dot(ex, ex), dot(ey, ey)), piano * piano) + 1e-12) + morbido);
-  fine = max(fine, mix(0.0, 7.0, orlo));
+  fine = max(fine, mix(0.0, 1.5, orlo));
+  // Dove la posizione e presa in prestito (contorni, cuciture) e la stessa per due o tre punti di fila: un disegno
+  // piu fine di cosi li darebbe un colore a caso per ogni punto (puntini lungo le cuciture). Li si legge sfocato di
+  // tre punti: le righe larghe restano righe, i microdisegni diventano il loro colore
+  fine = max(fine, 0.5 * log2(piano * piano + 1e-12) + morbido + 1.6 * prestito);
   // (la seconda coordinata del cartamodello cresce verso l'alto, le righe del campione verso il basso)
   return pow(texture2DLodEXT(t, vec2(uv.x, -uv.y) * rip, fine).rgb, vec3(2.2));
 }
@@ -63,13 +68,11 @@ vec3 stoffaDi(vec3 k, vec2 pk, vec3 a, vec3 b, vec3 c, vec3 d, vec4 w, vec3 zone
   vec3 xp = leggi(pk + vec2(1.0, 0.0)), xm = leggi(pk - vec2(1.0, 0.0)), yp = leggi(pk + vec2(0.0, 1.0)), ym = leggi(pk - vec2(0.0, 1.0));
   vec2 dx = stessa(k, xp) > 0.0 ? xp.xy - k.xy : (stessa(k, xm) > 0.0 ? k.xy - xm.xy : vec2(0.04, 0.0));
   vec2 dy = stessa(k, yp) > 0.0 ? yp.xy - k.xy : (stessa(k, ym) > 0.0 ? k.xy - ym.xy : vec2(0.0, 0.04));
-  // (anche dove tutte le posizioni sono prese in prestito, oltre la sagoma, il colore e quello medio)
   float prestate = (ma * float(a.z == 3.0) + mb * float(b.z == 3.0) + mc * float(c.z == 3.0) + md * float(d.z == 3.0)) / tutti;
-  float o = max(orlo, prestate);
   vec3 colore = vec3(0.0);
-  if (zone.x > 0.002) colore += zone.x * campione(t0, r0, uv, dx, dy, o);
-  if (zone.y > 0.002) colore += zone.y * campione(t1, r1, uv, dx, dy, o);
-  if (zone.z > 0.002) colore += zone.z * campione(t2, r2, uv, dx, dy, o);
+  if (zone.x > 0.002) colore += zone.x * campione(t0, r0, uv, dx, dy, orlo, prestate);
+  if (zone.y > 0.002) colore += zone.y * campione(t1, r1, uv, dx, dy, orlo, prestate);
+  if (zone.z > 0.002) colore += zone.z * campione(t2, r2, uv, dx, dy, orlo, prestate);
   return colore;
 }
 void main() {
@@ -81,7 +84,11 @@ void main() {
   float mx = clamp(q.x, mezzo, 1.0 - mezzo) * 0.5;
   vec3 mc = texture2D(maschera, vec2(mx, q.y)).rgb, mz = texture2D(maschera, vec2(mx + 0.5, q.y)).rgb;
   float lontano = f.a < 0.98 ? mc.b : 0.0;
-  float copre = mc.r + mc.g + lontano;
+  // Un collo piu piccolo (coreano, diplomatico) dipinge la parete dove quello di base non c'e piu: li la foto non e
+  // camicia, e tingerla darebbe una riga quasi nera lungo le spalle. La parete si riconosce dal suo blu pieno (la
+  // camicia bianca, anche in ombra, non e mai cosi satura)
+  float parete = smoothstep(0.58, 0.70, (f.b - f.r) / max(f.b, 0.02));
+  float copre = (mc.r + mc.g + lontano) * (1.0 - parete);
   vec2 s = q * misura - 0.5, i = floor(s), t = s - i;
   vec3 a = leggi(i), b = leggi(i + vec2(1.0, 0.0)), c = leggi(i + vec2(0.0, 1.0)), d = leggi(i + vec2(1.0, 1.0));
   vec4 w = vec4((1.0 - t.x) * (1.0 - t.y), t.x * (1.0 - t.y), (1.0 - t.x) * t.y, t.x * t.y);

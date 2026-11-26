@@ -10,7 +10,7 @@ stoffa, dove sta nel cartamodello) e mappa-italiano.png (`parti.py mappa`: un co
       la posizione nel cartamodello di ogni punto della camicia ritagliata, e dei riquadri in cui un collo o il
       taschino la cambiano: 16 bit per coordinata, in un'immagine larga il doppio del suo riquadro (a sinistra la prima
       coordinata, a destra la seconda: rosso i bit alti, verde i bassi). Nel blu di sinistra: 255 una posizione vera,
-      200 una presa in prestito dal punto di stoffa più vicino, 0 niente.
+      200 una presa in prestito dal punto buono più vicino (contorni, cuciture, risvolti stretti), 0 niente.
   opzioni/maschera-base.png, maschera-collo-<nome>.png, maschera-taschino.png
       dove c'è stoffa e di quale zona (corpo, polsini, taschino: per chi vuole un tessuto diverso su una parte), a
       grandezza doppia, come la foto: così i bordi di bottoni, gruccia, polsini e taschino sono netti. Vedi `maschera`.
@@ -105,27 +105,74 @@ def impacchetta(trama, riquadro, uscita):
                     intorno += (ss2 & (np.abs(mu3 - uu2) < VICINO) & (np.abs(mv3 - vv2) < VICINO)).astype(np.int32)
         cambia = soli & (intorno >= 5)
         u = np.where(cambia, mu3, u); v = np.where(cambia, mv3, v)
-    u16 = np.clip(np.round(u * 65535), 0, 65535).astype(np.int64); v16 = np.clip(np.round(v * 65535), 0, 65535).astype(np.int64)
-    # Intorno alla stoffa (entro PRESTITO punti) ogni punto prende la posizione del punto di stoffa più vicino: la
-    # maschera, grande il doppio, decide dove c'è stoffa, e sul suo bordo una posizione deve esserci sempre
+    # --- I punti buoni e quelli che la posizione la prendono in prestito.
+    # Buono è un punto di stoffa la cui posizione è affidabile: sta dentro la sagoma (sul contorno la stoffa si vede di
+    # taglio e le posizioni calcolate ballano) e ha, a destra o a sinistra e sopra o sotto, un vicino sulla sua stessa
+    # stoffa a un passo credibile (un punto a cavallo di una cucitura no: lì il calcolo mescola le posizioni dei due
+    # pezzi e ne esce una che non esiste). Tutti gli altri (il contorno, le cuciture, le strisce larghe un punto, e
+    # PRESTITO punti oltre la sagoma, dove la maschera vuole comunque una posizione) prendono la posizione del punto
+    # buono più vicino: così righe e quadretti arrivano fino al bordo e alla cucitura. Prima lì si leggeva il colore
+    # medio del tessuto, e su un rigato contrastato veniva un profilo rosa lungo ogni cucitura e tutto intorno alla
+    # camicia (revisione del 2026-11-26).
+    dal_vuoto = cv2.distanceTransform((stoffa | ferro).astype(np.uint8), cv2.DIST_L2, 5)
+    di_taglio = stoffa & (dal_vuoto <= 1.5)
+    STRETTO = 0.006
+    def accanto(dy, dx):
+        u2, v2, s2 = np.roll(u, (dy, dx), (0, 1)), np.roll(v, (dy, dx), (0, 1)), np.roll(stoffa, (dy, dx), (0, 1))
+        ok = stoffa & s2 & (np.abs(u - u2) < STRETTO) & (np.abs(v - v2) < STRETTO)
+        # (np.roll fa il giro: la prima e l'ultima fila non hanno un vicino da quella parte)
+        if dy == 1: ok[0] = False
+        if dy == -1: ok[-1] = False
+        if dx == 1: ok[:, 0] = False
+        if dx == -1: ok[:, -1] = False
+        return ok, u2, v2
+    (sx_ok, u_sx, v_sx), (dx_ok, u_dx, v_dx) = accanto(0, 1), accanto(0, -1)          # il vicino di sinistra, di destra
+    (su_ok, u_su, v_su), (giu_ok, u_giu, v_giu) = accanto(1, 0), accanto(-1, 0)       # il vicino di sopra, di sotto
+    buoni = stoffa & ~di_taglio & (sx_ok | dx_ok) & (su_ok | giu_ok)
+    # I pezzetti stretti: lungo i bordi del colletto, le cuciture e il cannoncino si vedono i risvolti, ritagli del
+    # cartamodello larghi tre o quattro punti, ognuno con il suo verso: tinti ciascuno per conto suo, su un rigato
+    # fanno un marmorizzato lungo ogni bordo. Su una camicia vera lì la stoffa del pezzo grande gira e prosegue: quindi
+    # buono è solo chi sta in un pezzo largo almeno cinque punti (si consuma ogni pezzo di due punti dai suoi confini,
+    # cuciture comprese, e lo si fa ricrescere di due: ciò che non ricresce era stretto).
+    def passo_di(insieme, cresce):
+        esito = insieme.copy()
+        for (ok, _, _), (dy, dx) in (((sx_ok, 0, 0), (0, 1)), ((dx_ok, 0, 0), (0, -1)), ((su_ok, 0, 0), (1, 0)), ((giu_ok, 0, 0), (-1, 0))):
+            accanto_c = ok & np.roll(insieme, (dy, dx), (0, 1))
+            esito = (esito | (accanto_c & buoni)) if cresce else (esito & accanto_c)
+        return esito
+    cuore = buoni
+    for _ in range(2):
+        cuore = passo_di(cuore, False)
+    larghi = cuore
+    for _ in range(2):
+        larghi = passo_di(larghi, True)
+    if larghi.sum() >= 0.5 * buoni.sum():           # (in un riquadro piccolo, fatto solo di pezzi stretti, restano tutti)
+        buoni = larghi
     lontano, dove = cv2.distanceTransformWithLabels((~stoffa).astype(np.uint8), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
-    ys, xs = np.nonzero(stoffa)
-    if len(ys):
+    bordo = (~stoffa) & (lontano <= PRESTITO)
+    uf, vf = u.astype(np.float64).copy(), v.astype(np.float64).copy()
+    if buoni.any():
+        # (la posizione del punto buono più vicino, così com'è. Proseguirla con il passo di quel punto sembrava meglio
+        # ma dava un marmorizzato: vicino al contorno la stoffa gira, e il suo passo cambia da un punto all'altro)
+        py, px = np.nonzero((stoffa & ~buoni) | bordo)
+        _, da_chi = cv2.distanceTransformWithLabels((~buoni).astype(np.uint8), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+        gy, gx = np.nonzero(buoni)
+        indice = np.zeros(da_chi.max() + 1, np.int64); indice[da_chi[gy, gx]] = np.arange(len(gy))
+        chi = indice[da_chi[py, px]]
+        uf[py, px] = u[gy[chi], gx[chi]]; vf[py, px] = v[gy[chi], gx[chi]]
+    elif stoffa.any():
+        # (un riquadro senza un solo punto buono: la posizione del punto di stoffa più vicino)
+        ys, xs = np.nonzero(stoffa)
         indice = np.zeros(dove.max() + 1, np.int64); indice[dove[ys, xs]] = np.arange(len(ys))
-        bordo = (~stoffa) & (lontano <= PRESTITO)
         by, bx = np.nonzero(bordo)
-        vicino = indice[dove[by, bx]]
-        u16[by, bx] = u16[ys[vicino], xs[vicino]]; v16[by, bx] = v16[ys[vicino], xs[vicino]]
-    else:
-        bordo = np.zeros_like(stoffa)
+        quale = indice[dove[by, bx]]
+        uf[by, bx] = u[ys[quale], xs[quale]]; vf[by, bx] = v[ys[quale], xs[quale]]
+    u16 = np.clip(np.round(uf * 65535), 0, 65535).astype(np.int64); v16 = np.clip(np.round(vf * 65535), 0, 65535).astype(np.int64)
     pieno = stoffa | bordo
     rgb = np.zeros((h, w * 2, 3), np.uint8)
     rgb[:, :w, 0] = np.where(pieno, u16 >> 8, 0); rgb[:, :w, 1] = np.where(pieno, u16 & 255, 0)
-    # Sul contorno della camicia la stoffa si vede di taglio e le posizioni calcolate ballano: anche lì (un punto e mezzo
-    # dentro la sagoma) si legge il colore medio del tessuto, come sul bordo esterno: un contorno pulito, senza puntini
-    dal_vuoto = cv2.distanceTransform((stoffa | ferro).astype(np.uint8), cv2.DIST_L2, 5)
-    di_taglio = stoffa & (dal_vuoto <= 1.5)
-    rgb[:, :w, 2] = np.where(stoffa & ~di_taglio, 255, np.where(bordo | di_taglio, 200, 0))
+    # nel blu: 255 una posizione vera, 200 una presa in prestito, 0 niente
+    rgb[:, :w, 2] = np.where(buoni, 255, np.where(pieno, 200, 0))
     rgb[:, w:, 0] = np.where(pieno, v16 >> 8, 0); rgb[:, w:, 1] = np.where(pieno, v16 & 255, 0)
     cv2.imwrite(uscita, rgb[..., ::-1], [cv2.IMWRITE_PNG_COMPRESSION, 9])
     return os.path.getsize(uscita)
