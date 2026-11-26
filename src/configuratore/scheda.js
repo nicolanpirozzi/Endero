@@ -13,7 +13,8 @@
 // - l'invio a /api/ordine, che apre il pagamento di Stripe (o dice che non è ancora attivo).
 // Per i controlli automatici: ?passo=misure (o un altro passo) apre direttamente quel passo.
 import testi from '../../contenuti/it/configuratore.json';
-import { controllaOrdine, conti, lettere as maiuscole, SPEDIZIONI } from './ordine.mjs';
+import { controllaOrdine, conti, lettere as maiuscole, SPEDIZIONI, provincia } from './ordine.mjs';
+import { voce, finestraAperta, finestraChiusa, voceFinestraTolta } from './cronologia.mjs';
 import { suggerisciEmail, testi as avvisi } from '../controlli.mjs';
 
 const S = testi.scheda;
@@ -149,11 +150,12 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
 
   // ------------------------------------------------------------------ sotto-campi, parti, camicia, prezzo
-  function condizioni() {
+  let scoperti = [];             // i sotto-campi appena comparsi per una scelta (vedi `scopri`)
+  function condizioni(origine) {
     const d = dati();
     for (const el of form.querySelectorAll('[data-se]')) {
       const si = el.dataset.seValore.split(' ').includes(d[el.dataset.se] || '');
-      if (el.hidden === si) el.hidden = !si;
+      if (el.hidden === si) { el.hidden = !si; if (si) scoperti.push(el); }
     }
     // le iniziali: la parte da mostrare dipende dalla posizione scelta (iniziali_polso, iniziali_collo, iniziali_cuore)
     for (const el of form.querySelectorAll('[data-parte-base]')) {
@@ -161,8 +163,25 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       const parte = pos ? `${el.dataset.parteBase}_${pos}` : '';
       if ((el.dataset.parte || '') === parte) continue;
       if (parte) el.dataset.parte = parte; else delete el.dataset.parte;
-      if (parte && el.contains(document.activeElement)) document.dispatchEvent(new CustomEvent('endero:parte', { detail: { campo: el } }));
+      const daQui = !!origine && el.contains(origine);
+      if (!parte || !(daQui || el.contains(document.activeElement))) continue;
+      // Safari non dà il fuoco ai radio cliccati: glielo si dà qui, così la guida si apre (e poi si chiude) come altrove
+      if (daQui && !el.contains(document.activeElement)) origine.focus?.({ preventScroll: true });
+      document.dispatchEvent(new CustomEvent('endero:parte', { detail: { campo: el } }));
     }
+  }
+  /** I campi comparsi con «Sì» o «Personalizzato» non restano dietro la barra con i tasti: la pagina sale di quanto
+   *  serve, senza mandare la riga toccata sotto la testata (revisione del 2026-11-26). */
+  function scopri() {
+    const el = scoperti.pop();
+    scoperti = [];
+    if (!el || !visibile(el)) return;
+    requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect(), riga = (el.closest('.voce') || el).getBoundingClientRect();
+      const su = Math.max(testata(), 0) + 16, giu = (fondo?.getBoundingClientRect().top || innerHeight) - 12;
+      const di = Math.min(r.bottom - giu, riga.top - su);
+      if (di > 1) scorri(di);
+    });
   }
 
   let vestita = '';
@@ -234,7 +253,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
   // solo cifre, anche incollando «3 camicie»
   quantita?.addEventListener('input', () => {
-    const solo = quantita.value.replace(/\D/g, '').slice(0, 3);
+    const solo = (quantita.value.match(/\d+/)?.[0] || '').slice(0, 3);
     if (solo !== quantita.value) quantita.value = solo;
   });
 
@@ -291,8 +310,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
 
   /** Tutto ciò che dipende dalle scelte. */
-  function aggiorna() {
-    condizioni();
+  function aggiorna(origine) {
+    condizioni(origine);
     for (const box of scelte) mostraScelta(box);
     if (quantita) tastiQuantita();
     prezzi();
@@ -301,12 +320,26 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
   form.addEventListener('input', (e) => {
     if (e.target.closest('dialog')) return;
-    aggiorna(); riguarda(); salva();
+    aggiorna(e.target); scopri(); riguarda(); salva();
     if (e.target.name === 'email') { e.target.closest('.misura').querySelector('.campo__forse')?.remove(); forseVisto = false; }
   });
   form.addEventListener('change', (e) => {
     if (e.target.closest('dialog')) return;
-    aggiorna(); riguarda(); salva();
+    // la provincia scritta per esteso diventa la sua sigla («Napoli» → «NA»)
+    if (e.target.name === 'provincia') { const s = provincia(e.target.value); if (s && s !== e.target.value) e.target.value = s; }
+    aggiorna(e.target); scopri(); riguarda(); salva();
+  });
+  // Invio in una casella non fa «Continua» (sul telefono lo si preme per chiudere la tastiera, e ci si ritrovava al
+  // passo dopo o con tutti gli avvisi accesi): porta alla prossima casella vuota del passo, dall'ultima chiude la tastiera
+  const CASELLE = ['text', 'tel', 'email'];
+  const caselle = (passo) => [...(sezioni[passo]?.querySelectorAll('input') || [])].filter((x) => CASELLE.includes(x.type));
+  for (const p of PASSI) caselle(p).forEach((x, i, tutte) => x.setAttribute('enterkeyhint', p !== 'camicia' && i < tutte.length - 1 ? 'next' : 'done'));
+  form.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing || e.target.tagName !== 'INPUT' || !CASELLE.includes(e.target.type)) return;
+    e.preventDefault();
+    const tutte = caselle(attivo).filter((x) => visibile(x) && !x.disabled);
+    const dopo = attivo === 'camicia' ? null : tutte.slice(tutte.indexOf(e.target) + 1).find((x) => !x.value.trim());
+    if (dopo) dopo.focus(); else e.target.blur();
   });
 
   // ------------------------------------------------------------------ i passi
@@ -352,8 +385,15 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     form.classList.toggle('configura__scheda--ultimo', ultimo);
   }
 
-  /** Apre un passo. `porta`: la pagina scorre fino al riquadro e il fuoco va al titolo del passo. */
-  function vai(id, { porta = true } = {}) {
+  /** Il riquadro dall'inizio: «Passo n di 5» in vista sotto la testata (`subito`: in un colpo). */
+  function inCima(subito = false) {
+    const r = form.getBoundingClientRect();
+    const su = Math.max(testata(), 0) + 12;
+    if (r.top < su || r.top > innerHeight * 0.6) scorri(r.top - su - 4, subito);
+  }
+  /** Apre un passo. `porta`: la pagina scorre fino al riquadro e il fuoco va al titolo del passo. `storia`: il passo
+   *  entra nella cronologia del browser, così il tasto Indietro torna al passo di prima e non alla pagina di prima. */
+  function vai(id, { porta = true, storia = true } = {}) {
     if (!sezioni[id]) return;
     const prima = attivo;
     attivo = id;
@@ -375,20 +415,33 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     if (id === 'pagamento') { riepilogo(); antispam(); }
     aggiorna();
     salva();
+    scoperti = [];
+    // la finestra «Come prendere le misure» si apre la prima volta che si entra nel passo
+    const saluta = id === 'misure' && !misureViste;
     if (porta) {
-      // il riquadro dall'inizio: «Passo n di 5» in vista sotto la testata
-      const r = form.getBoundingClientRect();
-      const su = Math.max(testata(), 0) + 12;
-      if (r.top < su || r.top > innerHeight * 0.6) scorri(r.top - su - 4);
+      // Con la finestra che sta per aprirsi la pagina si sposta in un colpo: la finestra ferma lo scorrimento morbido
+      // appena partito, e chiusa la finestra il riquadro restava fuori dallo schermo (revisione del 2026-11-26)
+      inCima(saluta);
       sezioni[id].querySelector('.passo__titolo')?.focus({ preventScroll: true });
     }
-    if (id === 'misure' && !misureViste) { misureViste = true; salutare = apriPassi(); }
+    if (storia && prima !== id) voce({ passo: id });
+    if (saluta) { misureViste = true; salutare = apriPassi(); if (porta) salutare.then(() => inCima()); }
   }
+  addEventListener('popstate', (e) => {
+    if (form.dataset.fatto) return;
+    const p = e.state?.passo;
+    if (!PASSI.includes(p) || p === attivo) return;
+    // con Avanti del browser, come dai nomi in cima: ci si ferma al primo passo che non va
+    const fermo = PASSI.slice(indice(attivo), indice(p)).find((x) => Object.keys(errori(x)).length);
+    if (fermo) { if (fermo !== attivo) vai(fermo, { storia: false }); controllaPasso(fermo); return; }
+    vai(p, { storia: false });
+  });
 
   /** Va a un passo più avanti passando da quelli di mezzo: si ferma al primo che non va. */
   function vaiFinoA(id) {
     for (let k = indice(attivo); k < indice(id); k++) {
-      if (!controllaPasso(PASSI[k], { fuoco: false })) {
+      // (si guarda ai dati, non ai campi in vista: di un passo chiuso non se ne vede nessuno)
+      if (Object.keys(errori(PASSI[k])).length) {
         if (PASSI[k] !== attivo) vai(PASSI[k]);
         controllaPasso(PASSI[k]);
         return;
@@ -458,7 +511,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     const modo = S.spedizione.opzioni.find((o) => o.id === d.spedizione);
     const sped = modo ? [[modo.nome, modo.dettaglio, true]] : [[P.spedizione.nome, '']];
     if (modo && (modo.prezzo > 0 || modo.giorni)) {
-      const via = [d.indirizzo, [d.cap, d.citta, d.provincia && `(${d.provincia.toUpperCase()})`].filter(Boolean).join(' ')].filter((x) => x && x.trim()).join(', ');
+      const via = [d.indirizzo, [d.cap, d.citta, d.provincia && `(${provincia(d.provincia) || d.provincia.toUpperCase()})`].filter(Boolean).join(' ')].filter((x) => x && x.trim()).join(', ');
       const I = Object.fromEntries(S.spedizione.indirizzo.campi.map((c) => [c.nome, c.etichetta]));
       sped.push([I.destinatario, d.destinatario], [S.spedizione.indirizzo.titolo, via]);
       if (d.note_consegna?.trim()) sped.push([I.note_consegna, d.note_consegna]);
@@ -491,10 +544,31 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     s.async = true;
     document.head.appendChild(s);
   }
-  form.elements.privacy?.addEventListener('change', () => { if (form.elements.privacy.hasAttribute('aria-invalid')) segna('privacy', form.elements.privacy.checked ? '' : S.errori.privacy); });
+  form.elements.privacy?.addEventListener('change', () => {
+    if (form.elements.privacy.hasAttribute('aria-invalid')) segna('privacy', form.elements.privacy.checked ? '' : S.errori.privacy);
+    if (form.elements.privacy.checked && esito.textContent === piano(S.errori.riepilogo)) esito.textContent = '';
+  });
 
-  const mostraEsito = (frase) => { esito.innerHTML = testo(frase); };
+  /** L'esito sta in fondo al passo, la barra con il tasto è sempre in vista: lo si porta sopra la barra, altrimenti
+   *  il tasto sembra non fare nulla (revisione del 2026-11-26). */
+  function mostraEsito(frase) {
+    esito.innerHTML = testo(frase);
+    if (!frase) return;
+    requestAnimationFrame(() => {
+      const r = esito.getBoundingClientRect();
+      const su = Math.max(testata(), 0) + 16, giu = (fondo?.getBoundingClientRect().top || innerHeight) - 12;
+      if (r.bottom > giu) scorri(r.bottom - giu); else if (r.top < su) scorri(r.top - su);
+    });
+  }
   let inviando = false;
+  let partito = false;           // la pagina del pagamento si sta aprendo
+  // tornando dal pagamento con il tasto Indietro del browser (la pagina riappare com'era), il tasto si riaccende
+  addEventListener('pageshow', (e) => {
+    if (!e.persisted || !partito) return;
+    partito = false; inviando = false;
+    avanti.disabled = false;
+    avanti.textContent = avanti.dataset.paga;
+  });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (attivo !== 'pagamento') { prossimo(); return; }
@@ -516,7 +590,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       }
       const r = await fetch(form.getAttribute('action') || '/api/ordine', { method: 'POST', body: JSON.stringify(dati()), headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
       const risposta = await r.json().catch(() => ({}));
-      if (r.ok && risposta.ok && typeof risposta.vai === 'string' && /^(https:\/\/|\/)/.test(risposta.vai)) { location.assign(risposta.vai); return; }
+      // (solo la pagina di pagamento di Stripe, o un indirizzo di questo sito)
+      if (r.ok && risposta.ok && typeof risposta.vai === 'string' && /^(https:\/\/checkout\.stripe\.com\/|\/(?!\/))/.test(risposta.vai)) { partito = true; location.assign(risposta.vai); return; }
       if ((r.ok && risposta.ok && risposta.pagamento === 'non_attivo') || r.status === 503) { mostraEsito(S.pagamento.non_attivo); return; }
       if (risposta.errori && typeof risposta.errori === 'object' && Object.keys(risposta.errori).length) {
         // il Worker dice quali campi non vanno: si torna al passo del primo, con l'avviso sotto
@@ -539,9 +614,12 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       mostraEsito(S.pagamento.errore);
       globalThis.turnstile?.reset?.(form.querySelector('.cf-turnstile'));
     } finally {
-      inviando = false;
-      avanti.disabled = false;
-      if (avanti.textContent === avanti.dataset.attesa) avanti.textContent = testoTasto;
+      // mentre la pagina del pagamento si apre il tasto resta spento: ogni clic in più manderebbe un altro ordine
+      if (!partito) {
+        inviando = false;
+        avanti.disabled = false;
+        if (avanti.textContent === avanti.dataset.attesa) avanti.textContent = testoTasto;
+      }
     }
   });
 
@@ -586,7 +664,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   for (const s of Object.values(sezioni)) s.hidden = true;
   form.classList.add('configura__scheda--a-passi');
   aggiorna();
-  vai(primo, { porta: false });
+  vai(primo, { porta: false, storia: false });
+  try { history.replaceState({ passo: primo }, ''); } catch { /* si va avanti senza */ }
   if (esitoOrdine === 'annullato' && primo === 'pagamento') mostraEsito(S.pagamento.annullato);
   pulisciIndirizzo();
   // la camicia com'è stata scelta (anche dopo una ricarica): vesti.js ascolta da subito
@@ -613,8 +692,11 @@ function raccolta(dlg, scegli) {
   const griglia = dlg.querySelector('[data-griglia]');
   const voci = [...griglia.querySelectorAll('[role="option"]')];
   // per la ricerca: il nome e il tipo, minuscoli e senza accenti (i nomi dei tipi stanno nei filtri)
-  const tipi = Object.fromEntries([...dlg.querySelectorAll('input[name="tipo"]')].map((r) => [r.value, r.nextElementSibling.textContent]));
-  for (const v of voci) v.dataset.cerca = perCercare(`${v.querySelector('img')?.alt || ''} ${tipi[v.dataset.tipo] || ''}`);
+  // (anche le parole dei filtri: chi legge «Tinta unita» o «Azzurri» sulle pillole e lo scrive, li trova)
+  const nomi = (campo) => Object.fromEntries([...dlg.querySelectorAll(`input[name="${campo}"]`)].filter((r) => r.value).map((r) => [r.value, r.nextElementSibling.textContent]));
+  const tipi = nomi('tipo'), colori = nomi('colore'), disegni = nomi('disegno');
+  for (const v of voci) v.dataset.cerca = perCercare(`${v.querySelector('img')?.alt || ''} ${tipi[v.dataset.tipo] || ''} ${colori[v.dataset.colore] || ''} ${disegni[v.dataset.disegno] || ''}`);
+  const scorre = dlg.querySelector('.raccolta__scorre');
   const per = dlg.querySelector('[data-per]');
   const scelto = dlg.querySelector('[data-scelto]');
   const conferma = dlg.querySelector('[data-conferma]');
@@ -626,6 +708,10 @@ function raccolta(dlg, scegli) {
   const mostraFiltri = dlg.querySelector('[data-mostra-filtri]');
   const quantiFiltri = dlg.querySelector('[data-quanti-filtri]');
   let box = null, apertoDa = null, scelta = '';
+  let apertaIl = 0, ultimoBox = null, giuSulFondo = false, clic = [null, null];
+  // Un doppio clic sul tasto che apre la finestra: il secondo clic cade su un campione (o sul fondo scuro) appena
+  // comparso sotto il puntatore, e sceglieva un tessuto a caso (o richiudeva la finestra). Per un attimo non conta
+  const appena = () => performance.now() - apertaIl < 350;
 
   const nome = (el) => el.querySelector('.campione__nome, .tinta__nome')?.textContent || '';
   const inVista = () => voci.filter((v) => !v.hidden);
@@ -656,7 +742,7 @@ function raccolta(dlg, scegli) {
   const stato = { tipo: '', colore: '', disegno: '', testo: '' };
   function applica() {
     let n = 0;
-    const parole = stato.testo.split(/\s+/).filter(Boolean);
+    const parole = stato.testo.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
     for (const v of voci) {
       const si = (!stato.tipo || v.dataset.tipo === stato.tipo) && (!stato.colore || v.dataset.colore === stato.colore)
         && (!stato.disegno || v.dataset.disegno === stato.disegno) && parole.every((p) => v.dataset.cerca.includes(p));
@@ -670,8 +756,11 @@ function raccolta(dlg, scegli) {
     if (quantiFiltri) { quantiFiltri.hidden = !quanti; quantiFiltri.textContent = quanti ? String(quanti) : ''; }
     primoAttivo();
   }
-  filtri?.addEventListener('change', (e) => { if (e.target.name in stato) { stato[e.target.name] = e.target.value; applica(); } });
-  ricerca?.addEventListener('input', () => { stato.testo = perCercare(ricerca.value); applica(); });
+  // (dopo un filtro o una ricerca l'elenco riparte dall'inizio)
+  filtri?.addEventListener('change', (e) => { if (e.target.name in stato) { stato[e.target.name] = e.target.value; applica(); if (scorre) scorre.scrollTop = 0; } });
+  // Invio su un filtro non chiude la finestra (il primo tasto del modulo è «Chiudi»)
+  filtri?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('input')) e.preventDefault(); });
+  ricerca?.addEventListener('input', () => { stato.testo = perCercare(ricerca.value); applica(); if (scorre) scorre.scrollTop = 0; });
   ricerca?.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
@@ -679,11 +768,15 @@ function raccolta(dlg, scegli) {
       if (el) attiva(el);
     }
   });
-  azzera?.addEventListener('click', () => {
+  function azzeraTutto() {
     Object.assign(stato, { tipo: '', colore: '', disegno: '', testo: '' });
     if (ricerca) ricerca.value = '';
-    for (const r of filtri.querySelectorAll('input[value=""]')) r.checked = true;
+    for (const r of filtri?.querySelectorAll('input[value=""]') || []) r.checked = true;
+  }
+  azzera?.addEventListener('click', () => {
+    azzeraTutto();
     applica();
+    if (scorre) scorre.scrollTop = 0;
     ricerca?.focus();
   });
   mostraFiltri?.addEventListener('click', () => {
@@ -693,8 +786,9 @@ function raccolta(dlg, scegli) {
   });
 
   // clic, doppio clic, tastiera
-  griglia.addEventListener('click', (e) => { const el = e.target.closest('[role="option"]'); if (el) seleziona(el, { fuoco: true }); });
-  griglia.addEventListener('dblclick', (e) => { const el = e.target.closest('[role="option"]'); if (el) { seleziona(el); fatto(); } });
+  griglia.addEventListener('click', (e) => { const el = e.target.closest('[role="option"]'); if (!el || appena()) return; clic = [clic[1], el]; seleziona(el, { fuoco: true }); });
+  // (il doppio clic conferma solo se tutti e due i clic erano sullo stesso campione)
+  griglia.addEventListener('dblclick', (e) => { const el = e.target.closest('[role="option"]'); if (el && !appena() && clic[0] === el && clic[1] === el) { seleziona(el); fatto(); } });
   griglia.addEventListener('keydown', (e) => {
     const el = e.target.closest('[role="option"]');
     if (!el) return;
@@ -725,23 +819,34 @@ function raccolta(dlg, scegli) {
   }
   dlg.addEventListener('close', () => {
     blocca(false);
+    // la voce di cronologia aggiunta aprendo si toglie (se la finestra non l'ha già chiusa il tasto Indietro)
+    finestraChiusa();
     const da = apertoDa;
     box = null; apertoDa = null;
     // il fuoco torna al tasto che l'ha aperta
     if (da?.isConnected) da.focus({ preventScroll: true });
   });
-  // un clic sul fondo scuro, fuori dal vetro, chiude come Esc
-  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  // un clic sul fondo scuro, fuori dal vetro, chiude come Esc (non un trascinamento cominciato dentro il vetro, come
+  // quando si seleziona il testo della ricerca)
+  dlg.addEventListener('pointerdown', (e) => { giuSulFondo = e.target === dlg; });
+  dlg.addEventListener('click', (e) => { if (e.target === dlg && giuSulFondo && !appena()) dlg.close(); });
+  // il tasto Indietro del browser (il gesto, sul telefono) chiude la finestra, non lascia la pagina
+  addEventListener('popstate', () => { if (dlg.open && voceFinestraTolta()) dlg.close(); });
 
   dlg.apri = (b) => {
     box = b;
     apertoDa = b.querySelector('.scegli__tasto');
     per.textContent = b.dataset.per || '';
+    // per un altro campo si riparte da tutti i tessuti: i filtri rimasti accesi ne lasciavano vedere tre
+    if (ultimoBox && ultimoBox !== b) azzeraTutto();
+    ultimoBox = b;
     if (ricerca && ricerca.value) { ricerca.value = ''; stato.testo = ''; }
     if (ricerca) applica();
     const v = b.querySelector('[data-valore]').value;
     seleziona(voci.find((x) => x.dataset.id === v) || null);
     dlg.showModal();
+    apertaIl = performance.now(); clic = [null, null]; giuSulFondo = false;
+    finestraAperta();
     blocca(true);
     const el = primoAttivo();
     // il campione scelto in vista; il fuoco sulla griglia (non sulla ricerca: sul telefono aprirebbe la tastiera)

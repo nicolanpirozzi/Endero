@@ -32,10 +32,33 @@ export const PERSONALIZZAZIONI = CAMPI.filter((c) => c.personalizzazione).map((c
 export const MISURE = S.misure.campi;
 export const COLORI = S.colori_filo;
 export const SPEDIZIONI = S.spedizione.opzioni;
-// le sigle delle province italiane (per il campo «Provincia»)
-const PROVINCE = new Set(('AG AL AN AO AP AQ AR AT AV BA BG BI BL BN BO BR BS BT BZ CA CB CE CH CL CN CO CR CS CT CZ EN FC FE FG FI FM FR GE GO GR '
-  + 'IM IS KR LC LE LI LO LT LU MB MC ME MI MN MO MS MT NA NO NU OR PA PC PD PE PG PI PN PO PR PT PU PV PZ RA RC RE RG RI RM RN RO SA SI SO SP SR SS SU SV '
-  + 'TA TE TN TO TP TR TS TV UD VA VB VC VE VI VR VT VV').split(' '));
+// Le province italiane, sigla e nome (per il campo «Provincia»). Il nome serve a chi scrive «Roma» al posto di «RM»:
+// con il campo fermo a due lettere restava «RO», che è Rovigo, e l'ordine partiva così (revisione del 2026-11-26).
+const PROVINCE_NOMI = {
+  AG: 'Agrigento', AL: 'Alessandria', AN: 'Ancona', AO: 'Aosta', AP: 'Ascoli Piceno', AQ: "L'Aquila", AR: 'Arezzo', AT: 'Asti', AV: 'Avellino',
+  BA: 'Bari', BG: 'Bergamo', BI: 'Biella', BL: 'Belluno', BN: 'Benevento', BO: 'Bologna', BR: 'Brindisi', BS: 'Brescia', BT: 'Barletta-Andria-Trani',
+  BZ: 'Bolzano', CA: 'Cagliari', CB: 'Campobasso', CE: 'Caserta', CH: 'Chieti', CL: 'Caltanissetta', CN: 'Cuneo', CO: 'Como', CR: 'Cremona',
+  CS: 'Cosenza', CT: 'Catania', CZ: 'Catanzaro', EN: 'Enna', FC: 'Forlì-Cesena', FE: 'Ferrara', FG: 'Foggia', FI: 'Firenze', FM: 'Fermo',
+  FR: 'Frosinone', GE: 'Genova', GO: 'Gorizia', GR: 'Grosseto', IM: 'Imperia', IS: 'Isernia', KR: 'Crotone', LC: 'Lecco', LE: 'Lecce', LI: 'Livorno',
+  LO: 'Lodi', LT: 'Latina', LU: 'Lucca', MB: 'Monza-Brianza', MC: 'Macerata', ME: 'Messina', MI: 'Milano', MN: 'Mantova', MO: 'Modena',
+  MS: 'Massa-Carrara', MT: 'Matera', NA: 'Napoli', NO: 'Novara', NU: 'Nuoro', OR: 'Oristano', PA: 'Palermo', PC: 'Piacenza', PD: 'Padova',
+  PE: 'Pescara', PG: 'Perugia', PI: 'Pisa', PN: 'Pordenone', PO: 'Prato', PR: 'Parma', PT: 'Pistoia', PU: 'Pesaro-Urbino', PV: 'Pavia', PZ: 'Potenza',
+  RA: 'Ravenna', RC: 'Reggio Calabria', RE: 'Reggio Emilia', RG: 'Ragusa', RI: 'Rieti', RM: 'Roma', RN: 'Rimini', RO: 'Rovigo', SA: 'Salerno',
+  SI: 'Siena', SO: 'Sondrio', SP: 'La Spezia', SR: 'Siracusa', SS: 'Sassari', SU: 'Sud Sardegna', SV: 'Savona', TA: 'Taranto', TE: 'Teramo',
+  TN: 'Trento', TO: 'Torino', TP: 'Trapani', TR: 'Terni', TS: 'Trieste', TV: 'Treviso', UD: 'Udine', VA: 'Varese', VB: 'Verbano-Cusio-Ossola',
+  VC: 'Vercelli', VE: 'Venezia', VI: 'Vicenza', VR: 'Verona', VT: 'Viterbo', VV: 'Vibo Valentia',
+};
+const PROVINCE = new Set(Object.keys(PROVINCE_NOMI));
+const soloLettere = (v) => pulito(v).toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z]/g, '');
+// il nome intero e, per le province con più città nel nome, ognuna («Monza», «Forlì», «Pesaro»); più qualche modo di dire
+const PER_NOME = new Map(Object.entries(PROVINCE_NOMI).flatMap(([s, n]) => [n, ...(n.includes('-') ? n.split('-') : [])].map((x) => [soloLettere(x), s])));
+for (const [nome, s] of [['Monza e Brianza', 'MB'], ['Monza e della Brianza', 'MB'], ['Pesaro e Urbino', 'PU'], ['Massa e Carrara', 'MS'], ['Verbania', 'VB'],
+  ["Reggio nell'Emilia", 'RE'], ['Reggio di Calabria', 'RC'], ['Aquila', 'AQ'], ['Spezia', 'SP'], ["Valle d'Aosta", 'AO'], ['Bolzano Bozen', 'BZ'], ['Carbonia', 'SU']]) PER_NOME.set(soloLettere(nome), s);
+/** La sigla di una provincia scritta come sigla («na», «NA») o per esteso («Napoli»); vuota se non la si riconosce. */
+export function provincia(v) {
+  const s = pulito(v).toUpperCase();
+  return PROVINCE.has(s) ? s : (PER_NOME.get(soloLettere(v)) || '');
+}
 
 /** Un numero scritto con la virgola o con il punto; NaN se non è un numero. */
 export function numero(v) {
@@ -148,7 +171,7 @@ export function controllaOrdine(d, { passo = '', tessuti = null } = {}) {
       if (!/^\d{5}$/.test(pulito(d.cap))) e.cap = E.cap;
       const citta = controlla('citta', d.citta, { obbligatorio: true });
       if (citta) e.citta = citta;
-      if (!PROVINCE.has(pulito(d.provincia).toUpperCase())) e.provincia = E.provincia;
+      if (!provincia(d.provincia)) e.provincia = E.provincia;
       if (/https?:|www\./i.test(pulito(d.note_consegna))) e.note_consegna = E.note_consegna;
     }
   }
@@ -183,7 +206,7 @@ export function ordinePulito(d) {
   if (modo && (modo.prezzo > 0 || modo.giorni)) {
     o.spedizione.indirizzo = {
       destinatario: pulito(d.destinatario), indirizzo: pulito(d.indirizzo), cap: pulito(d.cap), citta: pulito(d.citta),
-      provincia: pulito(d.provincia).toUpperCase(), note: pulito(d.note_consegna),
+      provincia: provincia(d.provincia), note: pulito(d.note_consegna),
     };
   }
   o.conti = conti(d);

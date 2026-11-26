@@ -22,10 +22,10 @@ const SVG = 'http://www.w3.org/2000/svg';
 const DISSOLVE = 200;                  // millisecondi: la comparsa di un pezzo nuovo (la stessa durata è nel CSS)
 const FILO = '#0f285e';                // il blu del logo, per il ricamo delle iniziali
 const POSTI = ['polso', 'collo', 'cuore'];
-const SLOT = ['stoffa', 'collo', 'taschino', 'iniziali'];        // dal basso in alto
 // PROVA (proprietario, 2026-11-26: «Sì, prepara una prova»): con ?prova=tessuto il tessuto scelto colora la camicia
-// (tinta.js). Senza quella parola nell'indirizzo qui non cambia nulla.
+// (tinta.js). Senza quella parola nell'indirizzo qui non cambia nulla: nemmeno il posto della stoffa c'è.
 const PROVA = new URLSearchParams(location.search).get('prova') === 'tessuto';
+const SLOT = [...(PROVA ? ['stoffa'] : []), 'collo', 'taschino', 'iniziali'];        // dal basso in alto
 const TINTA = 'tinta|';
 
 // ---------------------------------------------------------------------------------------------- le scelte

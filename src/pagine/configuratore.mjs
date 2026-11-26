@@ -100,7 +100,7 @@ function voceCamicia(c, S, tessuti) {
   if (c.tipo === 'lettere') {
     return `<div class="voce voce--lettere">
         <label class="voce__nome" id="${nome}" for="${id(c.nome)}">${esc(c.etichetta)}</label>
-        <span class="casella-scura casella-scura--lettere"><input id="${id(c.nome)}" name="${esc(c.nome)}" data-campo="${esc(c.nome)}" type="text" maxlength="${esc(c.massimo)}" autocomplete="off" autocapitalize="characters" spellcheck="false"${descritto(c.nome, c.aiuto ? `${id(c.nome)}-aiuto` : '')}></span>
+        <span class="casella-scura casella-scura--lettere"><input id="${id(c.nome)}" name="${esc(c.nome)}" data-campo="${esc(c.nome)}" type="text" maxlength="${esc(c.massimo)}" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"${descritto(c.nome, c.aiuto ? `${id(c.nome)}-aiuto` : '')}></span>
         ${c.aiuto ? `<p class="voce__aiuto" id="${id(c.nome)}-aiuto">${t(c.aiuto)}</p>` : ''}
         ${riga(c.nome)}
       </div>`;
@@ -144,7 +144,7 @@ function campoMisura(c, s) {
 function campoTesto(c, { obbligatorio = true } = {}) {
   const tipo = c.tipo || 'text';
   const tastiera = c.tastiera ? ` inputmode="${esc(c.tastiera)}"` : tipo === 'tel' ? ' inputmode="tel"' : '';
-  const scrittura = tipo === 'email' ? ' autocapitalize="off" spellcheck="false"' : c.nome === 'provincia' ? ' autocapitalize="characters" spellcheck="false"' : '';
+  const scrittura = tipo === 'email' ? ' autocapitalize="off" spellcheck="false"' : c.nome === 'provincia' ? ' autocapitalize="characters" autocorrect="off" spellcheck="false"' : '';
   const classi = ['misura', `misura--${c.nome}`, c.stretto ? 'misura--stretta' : 'misura--larga'].join(' ');
   return `<div class="${classi}">
         <label class="misura__nome" for="${id(c.nome)}">${esc(c.etichetta)}</label>
@@ -212,7 +212,7 @@ function passi(S, tessuti, turnstile) {
       </dl>
     </div>
     <div class="consenso__riga configura__consenso">
-      <label class="consenso"><input type="checkbox" name="privacy" value="si" required data-campo="privacy" id="${id('privacy')}"${descritto('privacy')}><span>${tConLink(pg.consenso)}</span></label>
+      <label class="consenso"><input type="checkbox" name="privacy" value="si" required data-campo="privacy" id="${id('privacy')}"${descritto('privacy')}><span>${tConLink(pg.consenso).replace(/<a href="([^"]+)">/g, '<a href="$1" target="_blank" rel="noopener">')}</span></label>
       ${riga('privacy')}
     </div>
     ${turnstile ? `<div class="cf-turnstile configura__antispam" data-sitekey="${esc(turnstile)}" data-language="it" data-size="flexible" data-theme="dark"></div>` : ''}

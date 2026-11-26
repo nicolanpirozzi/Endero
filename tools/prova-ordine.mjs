@@ -105,6 +105,7 @@ const ind = (pezzo) => errori(ordineCon(SPEDIRE, pezzo));
 controlla('senza indirizzo: tutti i campi segnati', chiavi(errori(ordineCon({ spedizione: 'cinque' }))) === 'cap,citta,destinatario,indirizzo,provincia', chiavi(errori(ordineCon({ spedizione: 'cinque' }))));
 for (const [cap, giusto] of [['80100', true], ['00100', true], ['8010', false], ['801000', false], ['80 100', false], ['abcde', false]]) controlla(`CAP «${cap}» ${giusto ? 'va' : 'no'}`, giusto ? !ind({ cap }).cap : !!ind({ cap }).cap);
 for (const [p, giusto] of [['NA', true], ['na', true], [' Na ', true], ['RM', true], ['XX', false], ['NAP', false], ['', false]]) controlla(`provincia «${p}» ${giusto ? 'va' : 'no'}`, giusto ? !ind({ provincia: p }).provincia : !!ind({ provincia: p }).provincia);
+for (const [p, sigla] of [['Roma', 'RM'], ['napoli', 'NA'], ['Forlì', 'FC'], ['Reggio Emilia', 'RE'], ['Monza', 'MB'], ["L'Aquila", 'AQ'], ['Ro', 'RO']]) controlla(`provincia «${p}» → ${sigla}`, ordinePulito(ordineCon(SPEDIRE, { provincia: p })).spedizione.indirizzo.provincia === sigla && !errori(ordineCon(SPEDIRE, { provincia: p })).provincia);
 controlla('provincia salvata in maiuscolo', ordinePulito(ordineCon(SPEDIRE, { provincia: 'na' })).spedizione.indirizzo.provincia === 'NA');
 controlla('indirizzo con un link: no', !!ind({ indirizzo: 'Via https://truffa.example 1' }).indirizzo);
 controlla('indirizzo troppo corto o senza lettere: no', !!ind({ indirizzo: 'V 1' }).indirizzo && !!ind({ indirizzo: '12345' }).indirizzo);

@@ -337,10 +337,11 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       if (!c || c.hidden) return { manca: true };
       const g = c.querySelector('.misura-lente__vesti'), im = g?.querySelector('image');
       const rc = c.getBoundingClientRect(), rm = campo.getBoundingClientRect();
-      return { sopra: rc.bottom <= rm.top + 1, dentro: rc.left >= -0.5 && rc.right <= innerWidth + 0.5, immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length };
+      const rs = document.querySelector('#finto-collo-menu').getBoundingClientRect();
+      return { sopra: getComputedStyle(c).position === 'fixed' && (rc.bottom <= rs.top + 1 || rc.top >= rs.bottom - 1), dentro: rc.left >= -0.5 && rc.right <= innerWidth + 0.5 && rc.top >= 0 && rc.bottom <= innerHeight, immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length };
     });
     const [x0, y0, x1, y1] = D.colli.francese.riquadro;
-    controlla('sul telefono il riquadro con lo zoom sta sopra il campo del collo, con il contorno', !l.manca && l.sopra && l.dentro && l.tratti > 0, JSON.stringify({ sopra: l.sopra, dentro: l.dentro, tratti: l.tratti }));
+    controlla('sul telefono il riquadro con lo zoom sta fermo sullo schermo, non copre il menu del collo, e ha il contorno', !l.manca && l.sopra && l.dentro && l.tratti > 0, JSON.stringify({ sopra: l.sopra, dentro: l.dentro, tratti: l.tratti }));
     controlla('nel riquadro ci sono il collo scelto, al suo punto, e le iniziali', !!l.immagine && l.immagine[0].startsWith('collo-francese-') && l.immagine[1] === x0 && l.immagine[2] === y0 && l.immagine[3] === x1 - x0 && l.immagine[4] === y1 - y0 && l.lettere === 'NP', JSON.stringify(l.immagine));
     await foto(page, `${sigla}-riquadro-collo`);
     await page.focus('#finto-posto');

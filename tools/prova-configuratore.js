@@ -66,6 +66,7 @@ async function tessuto(page, nome, quale = 0) {
   await esci(page);
   await page.click(`#campo-${nome}`);
   await page.waitForSelector('#finestra-tessuti[open]');
+  await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
   await page.locator('#finestra-tessuti .campione:not([hidden])').nth(quale).click();
   await page.click('#finestra-tessuti [data-conferma]');
   await page.waitForTimeout(100);
@@ -74,6 +75,7 @@ async function colore(page, nome, quale = 0) {
   await esci(page);
   await page.click(`#campo-${nome}`);
   await page.waitForSelector('#finestra-colori[open]');
+  await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
   await page.locator('#finestra-colori .tinta').nth(quale).click();
   await page.click('#finestra-colori [data-conferma]');
   await page.waitForTimeout(100);
@@ -83,7 +85,8 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
 (async () => {
   const browser = await chromium.launch();
   const nuovo = async (opzioni) => {
-    const contesto = await browser.newContext({ ...opzioni, locale: 'it-IT', reducedMotion: 'reduce' });
+    // (movimento ridotto, se il giro non chiede altro: quelli della revisione girano con il movimento normale)
+    const contesto = await browser.newContext({ locale: 'it-IT', reducedMotion: 'reduce', ...opzioni });
     const page = await contesto.newPage();
     const errori = [];
     page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
@@ -141,14 +144,18 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     // ------------------------------------------------ la finestra dei tessuti
     await page.click('#campo-tessuto');
     await page.waitForSelector('#finestra-tessuti[open]');
+    await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
     a = await page.evaluate(() => {
       const d = document.getElementById('finestra-tessuti'), r = d.querySelector('.finestra__corpo').getBoundingClientRect();
       const opz = [...d.querySelectorAll('[role="option"]')];
-      return { per: d.querySelector('[data-per]').textContent, bloccata: document.documentElement.classList.contains('dialogo-aperto'), dentro: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, tutta: r.width >= innerWidth - 2, conta: d.querySelector('[data-conta]').textContent, quante: opz.length, pigre: opz.every((o) => o.querySelector('img').loading === 'lazy'), filtri: getComputedStyle(d.querySelector('[data-filtri]')).display, conferma: d.querySelector('[data-conferma]').disabled };
+      return { per: d.querySelector('[data-per]').textContent, bloccata: document.documentElement.classList.contains('dialogo-aperto'), dentro: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, tutta: r.width >= innerWidth - 2, conta: d.querySelector('[data-conta]').textContent, quante: opz.length, pigre: opz.every((o) => o.querySelector('img').loading === 'lazy'), filtri: getComputedStyle(d.querySelector('[data-filtri]')).display, righe: d.querySelector('.raccolta__scorre').clientHeight / opz[0].getBoundingClientRect().height, conferma: d.querySelector('[data-conferma]').disabled };
     });
     controlla(`${formato}: la finestra dei tessuti si apre, dice per cosa si sceglie, ferma la pagina, sta nello schermo`, a.per === 'Tessuto della camicia' && a.bloccata && a.dentro && a.quante >= 1 && a.pigre && a.conferma, JSON.stringify(a));
     if (telefono) controlla(`${formato}: sul telefono a tutto schermo, con i filtri dietro il tasto`, a.tutta && a.filtri === 'none', JSON.stringify(a));
-    if (telefono) { await page.click('[data-mostra-filtri]'); await page.waitForTimeout(100); }
+    // (dietro il tasto anche sulle finestre basse dei portatili: revisione del 2026-11-26)
+    const dietro = a.filtri === 'none';
+    if (formato === 'schermo basso') controlla(`${formato}: sulle finestre basse i filtri stanno dietro il tasto, e si vede più di una riga di campioni (${a.righe.toFixed(1)})`, dietro && a.righe >= 1.5, JSON.stringify(a));
+    if (dietro) { await page.click('[data-mostra-filtri]'); await page.waitForTimeout(100); }
     // un tipo qualunque (il primo dopo «Tutti»): restano solo quelli, con il conteggio giusto
     const tipo = await page.evaluate(() => document.querySelector('#finestra-tessuti input[name="tipo"]:not([value=""])').value);
     await page.locator(`#finestra-tessuti [data-filtri] input[name="tipo"][value="${tipo}"]`).click({ force: true });
@@ -163,7 +170,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     a = await page.evaluate(() => ({ nessuno: !document.querySelector('#finestra-tessuti [data-nessuno]').hidden, conta: document.querySelector('#finestra-tessuti [data-conta]').textContent, azzera: !document.querySelector('[data-azzera]').hidden }));
     controlla(`${formato}: una ricerca senza risultati: «Nessun tessuto con questi filtri», 0 tessuti, «Togli i filtri»`, a.nessuno && a.conta === '0 tessuti' && a.azzera, JSON.stringify(a));
     await page.click('#finestra-tessuti [data-azzera]');
-    if (telefono) { await page.click('[data-mostra-filtri]'); await page.waitForTimeout(100); }
+    if (dietro) { await page.click('[data-mostra-filtri]'); await page.waitForTimeout(100); }
     // la ricerca: due parole del nome di un campione, scritte in maiuscolo e senza accenti
     const cercato = await page.evaluate(() => [...document.querySelectorAll('#finestra-tessuti .campione__nome')].map((x) => x.textContent).find((n) => n.split(' ').length >= 2));
     const parole = cercato.split(' ').slice(-2).join(' ').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -190,6 +197,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
       controlla(`${formato}: Esc chiude senza scegliere, il fuoco torna al tasto, la pagina riparte`, !a.aperta && a.fuoco === 'campo-tessuto' && !a.valore && !a.bloccata, JSON.stringify(a));
       await page.keyboard.press('Enter');
       await page.waitForSelector('#finestra-tessuti[open]');
+      await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
       await page.keyboard.press('ArrowRight');
       await page.keyboard.press('Enter');
       await page.waitForTimeout(150);
@@ -198,6 +206,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
       // doppio clic
       await page.click('#campo-tessuto');
       await page.waitForSelector('#finestra-tessuti[open]');
+      await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
       a = await page.evaluate(() => document.querySelector('#finestra-tessuti [aria-selected="true"]')?.dataset.id);
       controlla(`${formato}: riaprendo, il tessuto scelto è già segnato`, a === secondo, a);
       await page.locator('#finestra-tessuti .campione').nth(0).dblclick();
@@ -219,6 +228,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     if (formato === 'computer') {
       await page.click('#campo-tessuto');
       await page.waitForSelector('#finestra-tessuti[open]');
+      await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
       await foto(page, 'configuratore-tessuti-computer');
       await page.keyboard.press('Escape');
     }
@@ -506,6 +516,95 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await contesto.close();
   }
 
+  // ------------------------------------------------ dalla revisione del 2026-11-26: come una persona, con il movimento normale
+  console.log('\nDa Camicia a Misure con la finestra che si apre (movimento normale)');
+  for (const [formato, opzioni] of FORMATI) {
+    const { contesto, page } = await nuovo({ ...opzioni, reducedMotion: 'no-preference' });
+    await page.goto(PAGINA, { waitUntil: 'networkidle' });
+    await tessuto(page, 'tessuto');
+    // fino in fondo al passo, come chi guarda tutte le voci, poi «Continua» e «Inizia»
+    await page.evaluate(() => document.querySelector('[data-campo="polsino"]').scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(500);
+    await page.click('[data-avanti]');
+    await page.waitForSelector('#come-misurare[open]');
+    await page.waitForTimeout(400);
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(900);
+    const a = await page.evaluate(() => {
+      const c = document.getElementById('campo-giro_collo').getBoundingClientRect(), tit = document.querySelector('[data-passo="misure"] .passo__titolo').getBoundingClientRect();
+      return { aperta: document.getElementById('come-misurare').open, campo: Math.round(c.top), titolo: Math.round(tit.top), alto: innerHeight, barra: Math.round(document.querySelector('[data-fondo]').getBoundingClientRect().top) };
+    });
+    controlla(`${formato}: chiusa la finestra, il passo Misure è in vista dall'inizio (titolo a ${a.titolo}, primo campo a ${a.campo} su ${a.alto})`, !a.aperta && a.titolo > 0 && a.titolo < a.alto * 0.7 && a.campo > 0, JSON.stringify(a));
+    // il tasto Indietro del browser torna al passo di prima, non alla pagina di prima
+    await page.goBack();
+    await page.waitForTimeout(400);
+    let s = await stato(page);
+    controlla(`${formato}: Indietro del browser torna al passo Camicia, sulla stessa pagina`, s.passi.join() === 'camicia' && /configuratore/.test(page.url()), `${s.passi.join()} ${page.url()}`);
+    await page.goForward();
+    await page.waitForTimeout(400);
+    s = await stato(page);
+    controlla(`${formato}: Avanti riporta al passo Misure`, s.passi.join() === 'misure', s.passi.join());
+    await contesto.close();
+  }
+
+  console.log('\nLo zoom sulle parti sul telefono: il riquadro sta fermo sullo schermo e la pagina non si sposta');
+  for (const [formato, opzioni] of [FORMATI[2], FORMATI[3]]) {
+    const { contesto, page } = await nuovo({ ...opzioni, reducedMotion: 'no-preference' });
+    await page.goto(PAGINA + '?senza-passi', { waitUntil: 'networkidle' });
+    const SI = 'form[data-configuratore] label:has(> input[name="taschino"][value="si"])';
+    for (const y of [90, 150, 210]) {
+      // la riga del taschino a `y` punti dalla cima dello schermo, con «No» scelto e nessun riquadro aperto
+      await page.evaluate((y) => {
+        document.activeElement?.blur?.();
+        const no = document.querySelector('[name="taschino"][value="no"]');
+        if (!no.checked) no.click();
+        scrollBy(0, document.querySelector('[data-parte="taschino"]').getBoundingClientRect().top - y);
+      }, y);
+      await page.waitForTimeout(500);
+      const prima = await page.evaluate((SI) => { const l = document.querySelector(SI).getBoundingClientRect(); return { sy: scrollY, x: l.left + l.width / 2, y: l.top + l.height / 2 }; }, SI);
+      await page.touchscreen.tap(prima.x, prima.y);
+      await page.waitForTimeout(900);
+      const dopo = await page.evaluate((SI) => {
+        const l = document.querySelector(SI).getBoundingClientRect(), c = document.querySelector('.misura-lente:not([hidden])')?.getBoundingClientRect();
+        return { sy: scrollY, y: l.top + l.height / 2, su: l.top, giu: l.bottom, scelto: document.querySelector('[name="taschino"][value="si"]').checked, lente: c ? [c.top, c.bottom, c.left, c.right].map(Math.round) : null, largo: innerWidth, barra: document.querySelector('[data-fondo]').getBoundingClientRect().top };
+      }, SI);
+      const L = dopo.lente;
+      controlla(`${formato}: riga a ${y} punti, tocco su «Sì»: scelto, la pagina non si sposta (${Math.round(dopo.sy - prima.sy)}) e il tasto resta sotto il dito`, dopo.scelto && Math.abs(dopo.sy - prima.sy) <= 1 && Math.abs(dopo.y - prima.y) <= 1, JSON.stringify({ prima, dopo }));
+      controlla(`${formato}: riga a ${y} punti: il riquadro è sullo schermo e non copre il tasto toccato`, !!L && L[0] >= 0 && L[1] <= dopo.barra + 1 && L[2] >= 0 && L[3] <= dopo.largo && (L[1] <= dopo.su || L[0] >= dopo.giu), JSON.stringify(dopo));
+    }
+    // un tocco su una riga senza parte (l'asola) lo chiude
+    const asola = await page.evaluate(() => { const l = document.querySelector('form[data-configuratore] label:has(> input[name="asola"][value="no"])'); l.scrollIntoView({ block: 'center' }); const r = l.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await page.waitForTimeout(400);
+    const rimasta = await page.evaluate(() => !!document.querySelector('.misura-lente:not([hidden])'));
+    await page.touchscreen.tap(asola.x, asola.y);
+    await page.waitForTimeout(500);
+    const chiusa = await page.evaluate(() => !document.querySelector('.misura-lente:not([hidden])'));
+    controlla(`${formato}: un tocco su una riga senza parte chiude il riquadro`, chiusa, `prima ${rimasta}`);
+    await contesto.close();
+  }
+
+  console.log('\nInvio nelle caselle, doppio clic sul tasto dei tessuti');
+  {
+    const { contesto, page } = await nuovo({ ...FORMATI[0][1], reducedMotion: 'no-preference' });
+    await page.goto(PAGINA + '?passo=dati&senza-passi', { waitUntil: 'networkidle' });
+    await page.fill('#campo-nome', 'Mario Prova');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    let a = await page.evaluate(() => ({ passo: [...document.querySelectorAll('[data-passo]')].find((x) => !x.hidden).dataset.passo, fuoco: document.activeElement.id, rossi: document.querySelectorAll('[data-passo="dati"] [aria-invalid="true"]').length }));
+    controlla('Invio dopo il nome: si resta nel passo Dati, il fuoco va al telefono, nessun avviso', a.passo === 'dati' && a.fuoco === 'campo-telefono' && a.rossi === 0, JSON.stringify(a));
+    await page.click('[data-vai="camicia"]');
+    await page.waitForTimeout(300);
+    await page.locator('#campo-tessuto').dblclick();
+    await page.waitForTimeout(600);
+    a = await page.evaluate(() => ({ aperta: document.getElementById('finestra-tessuti').open, valore: document.querySelector('[name="tessuto"]').value }));
+    controlla('doppio clic su «Scegli il tessuto»: la finestra resta aperta e non sceglie nulla', a.aperta && !a.valore, JSON.stringify(a));
+    await page.goBack();
+    await page.waitForTimeout(300);
+    a = await page.evaluate(() => ({ aperta: document.getElementById('finestra-tessuti').open, passo: [...document.querySelectorAll('[data-passo]')].find((x) => !x.hidden).dataset.passo }));
+    controlla('con la finestra dei tessuti aperta, Indietro del browser la chiude e si resta sul passo', !a.aperta && a.passo === 'camicia' && /configuratore/.test(page.url()), JSON.stringify(a));
+    await contesto.close();
+  }
+
   // ------------------------------------------------ le scelte ricordate arrivano alla camicia anche ricaricando
   console.log('\nLa camicia dopo una ricarica');
   for (const [formato, opzioni] of [FORMATI[0], FORMATI[2]]) {
@@ -535,6 +634,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     const t0 = Date.now();
     await page.click('#campo-tessuto');
     await page.waitForSelector('#finestra-tessuti[open]');
+    await page.waitForTimeout(400);   // (per un attimo dopo l'apertura i clic non contano: vedi `appena` in scheda.js)
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
     const apre = Date.now() - t0;
     const filtro = await page.evaluate(() => { const r = document.querySelector('#finestra-tessuti input[name="colore"]:not([value=""])'); const t = performance.now(); r.click(); return performance.now() - t; });

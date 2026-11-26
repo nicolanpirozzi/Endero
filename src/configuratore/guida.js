@@ -23,6 +23,7 @@
 // (`endero:lente`).
 
 import { lineaParte, colloScelto } from './vesti.js';
+import { finestraAperta, finestraChiusa, voceFinestraTolta } from './cronologia.mjs';
 
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
 /** I campi che aprono la guida: le misure e le parti della camicia. */
@@ -58,8 +59,15 @@ function blocca(si) {
 export function passi() {
   const finestra = document.getElementById('come-misurare');
   if (!finestra || typeof finestra.showModal !== 'function') return Promise.resolve();
-  const apri = () => { if (!finestra.open) { finestra.showModal(); blocca(true); } };
-  finestra.addEventListener('close', () => blocca(false));
+  const apri = () => {
+    if (finestra.open) return;
+    finestra.showModal();
+    blocca(true);
+    // una voce di cronologia: il tasto Indietro del browser (il gesto, sul telefono) chiude la finestra
+    finestraAperta();
+  };
+  finestra.addEventListener('close', () => { blocca(false); finestraChiusa(); });
+  addEventListener('popstate', () => { if (finestra.open && voceFinestraTolta()) finestra.close(); });
   for (const b of document.querySelectorAll('[data-apri-passi]')) b.addEventListener('click', apri);
   if (new URLSearchParams(location.search).has('senza-passi')) return Promise.resolve();
   const chiusa = new Promise((fatto) => finestra.addEventListener('close', () => fatto(), { once: true }));
@@ -99,11 +107,11 @@ const r2 = (v) => Math.round(v * 100) / 100;
  * (larghezza / altezza): un terzo più grande della linea, mai sotto `zoom.minimo`, dentro il fotogramma.
  * Restituisce [x, y, larghezza, altezza].
  */
-function zona([x0, y0, x1, y1], aspetto) {
+function zona([x0, y0, x1, y1], aspetto, minimo = zoom.minimo) {
   let w = Math.max(1, (x1 - x0) * ATTORNO);
   let h = Math.max(1, (y1 - y0) * ATTORNO);
   const grande = Math.max(w, h);
-  if (grande < zoom.minimo) { w *= zoom.minimo / grande; h *= zoom.minimo / grande; }
+  if (grande < minimo) { w *= minimo / grande; h *= minimo / grande; }
   if (w / h > aspetto) h = w / aspetto; else w = h * aspetto;
   if (w > 1800) { w = 1800; h = w / aspetto; }
   if (h > 1000) { h = 1000; w = h * aspetto; }
@@ -431,7 +439,8 @@ export function guida(palco, camicia) {
     vestiti = crea('g', { class: 'misura-lente__vesti' });
     sopra = crea('svg', { viewBox: '0 0 1800 1000', x: 0, y: 0, width: 1800, height: 1000, overflow: 'visible' });
     svgC.append(foto, vestiti, sopra);
-    carta.append(svgC);
+    // (una x nell'angolo, quando il riquadro sta fermo sullo schermo: dice che toccandolo si chiude)
+    carta.append(svgC, Object.assign(document.createElement('span'), { className: 'misura-lente__chiudi' }));
   };
   const mettiQuadro = (q) => { quadro = q; svgC.setAttribute('viewBox', q.map(r1).join(' ')); };
   /** Il riquadro scivola dalla zona di adesso a `verso`, in SCIVOLA millisecondi. */
@@ -454,7 +463,10 @@ export function guida(palco, camicia) {
     const vv = window.visualViewport;
     const testata = document.querySelector('[data-testata]');
     const alta = testata ? testata.offsetHeight : 0;
-    return { su: (vv ? vv.offsetTop : 0) + alta + 8, giu: (vv ? vv.offsetTop + vv.height : innerHeight) - 8 };
+    // (in basso ci si ferma alla barra con il prezzo e i tasti, che sta sempre in fondo allo schermo)
+    const barra = document.querySelector('[data-fondo]');
+    const sopraBarra = barra && barra.getClientRects().length ? barra.getBoundingClientRect().top : Infinity;
+    return { su: (vv ? vv.offsetTop : 0) + alta + 8, giu: Math.min(vv ? vv.offsetTop + vv.height : innerHeight, sopraBarra) - 8 };
   }
   /** Il fondo del campo, sullo schermo (di una misura, la casella in cui si scrive; di una parte, tutto il blocco). */
   const fondoCampo = (m) => ((!m.dataset.parte && m.querySelector('input')) || m).getBoundingClientRect().bottom;
@@ -469,6 +481,19 @@ export function guida(palco, camicia) {
     const centro = rm.left - x0 + rm.width / 2;
     carta.style.left = `${Math.round(Math.min(Math.max(centro - largo / 2, sx), sx + largoTutto - largo))}px`;
     carta.style.top = `${Math.round(rm.top - y0 - alto - 10)}px`;
+  }
+  /** Il riquadro fermo sullo schermo (per le parti): in alto, sotto la testata; se lì coprirebbe il comando toccato,
+   *  in basso, sopra la barra con i tasti. */
+  let toccato = null;
+  function posaFissa(m, alto, largo, su, giu) {
+    const vv = window.visualViewport;
+    const fuoco = m.contains(document.activeElement) ? document.activeElement : null;
+    const comando = (m.contains(toccato) ? toccato.closest('label, select, input, button') : null) || fuoco || m.querySelector('input:checked, select, button') || m;
+    const r = comando.getBoundingClientRect();
+    const coperto = r.bottom > su - 6 && r.top < su + alto + 10;
+    const sotto = r.bottom > giu - alto - 10 && r.top < giu + 6;
+    carta.style.left = `${Math.round((vv ? vv.offsetLeft : 0) + ((vv ? vv.width : innerWidth) - largo) / 2)}px`;
+    carta.style.top = `${Math.round(coperto && !sotto ? giu - alto : su)}px`;
   }
   /** Il riquadro e il campo in vista insieme, anche con la tastiera aperta. Il riquadro si misura dove
    *  arriva (dal campo), non dove sta ancora scivolando. */
@@ -486,22 +511,37 @@ export function guida(palco, camicia) {
     preparaCarta();
     const mio = ++turno;
     aperta = m;
-    const contenitore = m.parentElement;
+    // Per le parti (collo, taschino, bottoni, iniziali…) il riquadro sta fermo sullo schermo e la pagina non si muove:
+    // sopra la riga toccata copriva le righe prima e faceva saltare la pagina sotto il dito (revisione del
+    // 2026-11-26). Per le misure resta sopra la casella in cui si scrive, con la pagina che lo tiene in vista.
+    const fissa = !!m.dataset.parte;
+    const contenitore = fissa ? document.body : m.parentElement;
+    const compare = carta.hidden || carta.parentElement !== contenitore;
     if (carta.parentElement !== contenitore) { contenitore.append(carta); quadro = null; }
-    // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro e il campo. Mai più
-    // largo di 1,8 volte l'alto: le misure lunghe (le lunghezze totali) ci stanno intere, con i loro capi
+    carta.classList.toggle('misura-lente--fissa', fissa);
     const { su, giu } = libero();
-    const blocco = fondoCampo(m) - m.getBoundingClientRect().top;
-    const largoTutto = contenitore.clientWidth;
-    const alto = Math.round(Math.max(110, Math.min(240, largoTutto * 0.62, giu - su - blocco - 10)));
-    const largo = Math.min(largoTutto, Math.round(alto * 1.8));
+    let alto, largo;
+    if (fissa) {
+      alto = Math.round(Math.max(120, Math.min(200, (giu - su) * 0.34)));
+      largo = Math.round(Math.min(innerWidth - 32, 340, alto * 1.8));
+    } else {
+      // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro e il campo. Mai più
+      // largo di 1,8 volte l'alto: le misure lunghe (le lunghezze totali) ci stanno intere, con i loro capi
+      const blocco = fondoCampo(m) - m.getBoundingClientRect().top;
+      const largoTutto = contenitore.clientWidth;
+      alto = Math.round(Math.max(110, Math.min(240, largoTutto * 0.62, giu - su - blocco - 10)));
+      largo = Math.min(largoTutto, Math.round(alto * 1.8));
+    }
     carta.style.width = `${largo}px`;
     carta.style.height = `${alto}px`;
     if (carta.hidden) quadro = null;
+    // comparendo va al suo posto in un colpo: non ci scivola dal posto in cui era stato aperto prima
+    if (compare) carta.style.transition = 'none';
     carta.hidden = false;
-    posaCarta(m, alto, largo);
+    if (fissa) posaFissa(m, alto, largo, su, giu); else posaCarta(m, alto, largo);
+    if (compare) { void carta.offsetHeight; carta.style.transition = ''; }
     sopra.replaceChildren();
-    inVista(m);
+    if (!fissa) inVista(m);
     const [d, misura] = await Promise.all([linee(), lineaDi(m)]);
     if (mio !== turno) return;
     const dietro = versoDi(m) === 'dietro';
@@ -521,7 +561,8 @@ export function guida(palco, camicia) {
       quadro = null;
     }
     if (!quadro) mettiQuadro(zona(d?.viste?.[dietro ? 'dietro' : 'davanti']?.sagoma || [420, 120, 1040, 960], aspetto));
-    const z = zona(misura.riquadro, aspetto);
+    // (le iniziali sono piccole: lì si stringe di più, se no nel riquadro sono alte un millimetro)
+    const z = zona(misura.riquadro, aspetto, m.dataset.parte?.startsWith('iniziali') ? Math.min(zoom.minimo, 160) : zoom.minimo);
     // vesti.js mette i pezzi scelti nella grandezza che serve a questo zoom (punti fisici dello schermo per punto del fotogramma)
     if (!dietro) document.dispatchEvent(new CustomEvent('endero:lente', { detail: { gruppo: vestiti, scala: (largo / z[2]) * (window.devicePixelRatio || 1) } }));
     await scivolaSu(z);
@@ -576,11 +617,27 @@ export function guida(palco, camicia) {
     else if (aperta !== m && m.dataset.parte && !campoDi(document.activeElement)) apri(m);
   });
   // e senza fuoco non arriva focusout: si chiude con un tocco fuori dai campi
+  // (Safari non sposta il fuoco toccando radio, etichette e tasti: dove sta il fuoco non conta, tranne quando si sta
+  // scrivendo in una casella della parte aperta, le iniziali: lì il riquadro resta finché si scrive)
   document.addEventListener('pointerdown', (e) => {
-    if (!aperta?.dataset.parte || campoDi(e.target) || carta?.contains(e.target) || campoDi(document.activeElement)) return;
+    toccato = e.target;
+    if (!aperta?.dataset.parte || campoDi(e.target) || carta?.contains(e.target)) return;
+    const a = document.activeElement;
+    if (aperta.contains(a) && a.matches('input[type="text"]')) return;
     clearTimeout(uscita);
-    uscita = setTimeout(() => { if (aperta && !campoDi(document.activeElement)) chiudi(); }, 120);
-  });
+    uscita = setTimeout(() => { if (aperta?.dataset.parte) chiudi(); }, 120);
+  }, true);
+  // il riquadro fermo sullo schermo si chiude quando la riga che l'ha aperto esce dalla parte libera dello schermo
+  let giro = 0;
+  addEventListener('scroll', () => {
+    if (giro || !aperta?.dataset.parte || !carta || carta.hidden || !carta.classList.contains('misura-lente--fissa')) return;
+    giro = requestAnimationFrame(() => {
+      giro = 0;
+      if (!aperta?.dataset.parte || !carta || carta.hidden) return;
+      const r = aperta.getBoundingClientRect(), { su, giu } = libero();
+      if (r.bottom < su || r.top > giu) chiudiCarta();
+    });
+  }, { passive: true });
   // Il collo è cambiato mentre la sua evidenza (o quella delle iniziali sul collo) è aperta: ogni collo ha la sua
   // sagoma, il contorno si rifà sul collo nuovo
   let collo = colloScelto();
@@ -598,10 +655,13 @@ export function guida(palco, camicia) {
   });
   // con la tastiera del telefono che si apre o si chiude il riquadro cambia misura e resta in vista con il campo
   let tastiera = 0;
-  window.visualViewport?.addEventListener('resize', () => {
+  const conLaTastiera = () => {
     clearTimeout(tastiera);
     tastiera = setTimeout(() => { if (aperta && carta && !carta.hidden && !sulPalco()) apriCarta(aperta); }, 150);
-  });
+  };
+  window.visualViewport?.addEventListener('resize', conLaTastiera);
+  // (con la tastiera aperta l'iPhone sposta la parte visibile dentro la pagina: il riquadro fermo la segue)
+  window.visualViewport?.addEventListener('scroll', () => { if (aperta?.dataset.parte && window.visualViewport.height < innerHeight - 80) conLaTastiera(); });
   // se la finestra cambia forma con una guida aperta, la guida si rifà nel modo giusto (palco o riquadro) e con le misure nuove
   let cambio = 0;
   addEventListener('resize', () => {
