@@ -312,7 +312,7 @@ console.log('L\'ordine del configuratore');
   controlla('… e due email: a Endero ed Ennio, e al cliente', email.length === 2 && JSON.stringify(email[0].to) === '["reparto@esempio.it","ennio@esempio.it"]', JSON.stringify(email.map((x) => x.to)));
   const [aEndero, alCliente] = email;
   controlla('a Endero: numero, taglia, nome vero del tessuto con la cartella', aEndero.subject.includes(primo.numero) && aEndero.subject.includes('Taglia 41 · manica −6 cm') && /Articolo Finto · F-001/.test(aEndero.html) && /Cartella: Cartella Prova/.test(aEndero.html), aEndero.subject);
-  controlla('a Endero: dove manca il nome vero, si dice ben visibile', /Nome della cartella colori non disponibile/.test(aEndero.html) && /Sul sito: .+ · t0201/.test(aEndero.html));
+  controlla('a Endero: dove manca il nome vero, si dice ben visibile', /Nome della cartella colori non disponibile/.test(aEndero.html) && new RegExp(`Sul sito: .+ · ${T3}`).test(aEndero.html));
   controlla('a Endero: le misure con il giro raddoppiato, le note per il corriere, il totale', /56 \(giro 112\)/.test(aEndero.html) && /Citofono Prova/.test(aEndero.html) && /300\s€/.test(aEndero.html));
   controlla('a Endero: si risponde al cliente', aEndero.reply_to === 'mario.pagamento@esempio.it' || aEndero.reply_to === 'mario@esempio.it', aEndero.reply_to);
   controlla('al cliente: all\'email con cui ha pagato, con il numero d\'ordine', JSON.stringify(alCliente.to) === '["mario.pagamento@esempio.it"]' && alCliente.subject.includes(primo.numero), JSON.stringify(alCliente.to));
