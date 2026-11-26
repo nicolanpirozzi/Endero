@@ -46,6 +46,9 @@ const TUTTO = { collo: 'francese', taschino: true, iniziali: { posizione: 'cuore
 // --- nella pagina
 const SENZA = { collo: 'italiano', taschino: false, iniziali: null, tessuto: '', taschino_tessuto: '', polsino_tessuto: '' };
 const manda = (page, detail) => page.evaluate((d) => document.dispatchEvent(new CustomEvent('endero:camicia', { detail: d })), { ...SENZA, ...detail });
+// Aspetta che la camicia abbia finito di prendere l'ultima scelta. In locale i pezzi arrivano in un attimo e non
+// cambia nulla; sull'anteprima vera arrivano dalla rete, e un tempo fisso non basta (2026-11-26).
+const posata = (page) => page.waitForFunction(() => !window.__vesti || !window.__vesti.cucendo, null, { timeout: 15000 }).catch(() => {});
 
 /**
  * Dove dovrebbero stare, sullo schermo, i punti del fotogramma sull'immagine ferma (con lo zoom, se c'è), e dove
@@ -189,11 +192,13 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       // ogni collo, poi il taschino e le iniziali
       for (const collo of Object.keys(D.colli).filter((c) => D.colli[c])) {
         await manda(page, { collo, taschino: false, iniziali: null });
+        await posata(page);
         await page.waitForTimeout(450);
         const f = await scartoFerma(page, { collo });
         if (f.max > 0.5) controlla(`collo ${collo}: allineato sull'immagine ferma`, false, `${f.max.toFixed(2)} punti ${f.manca || ''}`);
       }
       await manda(page, TUTTO);
+      await posata(page);
       await page.waitForTimeout(500);
       const f = await scartoFerma(page, { collo: 'francese', taschino: true, iniziali: TUTTO.iniziali });
       controlla('ogni collo, il taschino e le iniziali allineati sull\'immagine ferma (entro mezzo punto)', f.max <= 0.5 && f.lettere <= 0.5, `${f.max.toFixed(3)} punti, lettere ${f.lettere.toFixed(2)}`);
@@ -244,12 +249,15 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       const via = await page.evaluate(() => { const p = document.querySelector('.configura__palco'); return { aperta: p.dataset.guidaAperta, zoom: p.style.getPropertyValue('--zoom'), ferma: 'guidaFerma' in p.dataset, velo: +getComputedStyle(document.querySelector('.configura__velo')).opacity }; });
       controlla('uscendo, lo zoom torna indietro, il velo va via e la camicia riparte', !via.aperta && !via.zoom && !via.ferma && via.velo < 0.02, JSON.stringify(via));
       // una misura che gira la camicia: i pezzi davanti non si vedono
+      // (sull'anteprima vera il retro e i video del giro arrivano dalla rete: si aspetta il giro, non un tempo fisso)
       await page.focus('.misura[data-guida="spalla"] input');
+      await page.waitForFunction(() => 'girata' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
       await page.waitForTimeout(2600);
       const dietro = await page.evaluate(() => ({ girata: 'girata' in document.querySelector('.configura__palco').dataset, opacita: getComputedStyle(document.querySelector('.configura__vesti')).opacity }));
       controlla('girata di spalle, i pezzi davanti non si vedono', dietro.girata && dietro.opacita === '0', JSON.stringify(dietro));
       await page.focus('.misura[data-guida="torace"] input');
-      await page.waitForTimeout(3000);
+      await page.waitForFunction(() => !('girata' in document.querySelector('.configura__palco').dataset), null, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(600);
       const davanti = await page.evaluate(() => ({ girata: 'girata' in document.querySelector('.configura__palco').dataset, opacita: getComputedStyle(document.querySelector('.configura__vesti')).opacity }));
       controlla('di nuovo davanti, tornano', !davanti.girata && davanti.opacita === '1', JSON.stringify(davanti));
       await page.evaluate(() => document.activeElement?.blur());
@@ -275,6 +283,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     const sigla = nome.split(' ').slice(0, 2).join('-');
     await pronta(page);
     await manda(page, TUTTO);
+    await posata(page);
     await page.waitForTimeout(500);
     const f = await scartoFerma(page, { collo: 'francese', taschino: true, iniziali: TUTTO.iniziali });
     controlla('pezzi e iniziali allineati sull\'immagine ferma del telefono (entro mezzo punto)', f.max <= 0.5 && f.lettere <= 0.5, `${f.max.toFixed(3)} punti, lettere ${f.lettere.toFixed(2)}`);
@@ -315,10 +324,12 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     const a = await nuovo({ ...opzioni, reducedMotion: 'reduce' }), { page } = a;
     await page.waitForTimeout(300);
     await manda(page, TUTTO);
+    await posata(page);
     await page.waitForTimeout(250);
     const f = await scartoFerma(page, { collo: 'francese', taschino: true, iniziali: TUTTO.iniziali });
     controlla(`${nome}: i pezzi stanno sull'immagine ferma, subito e senza dissolvenza`, f.s.visibile && f.max <= 0.5 && f.s.pezzi.every((p) => p.opacita === '1'), `${f.max.toFixed(3)} punti`);
     await manda(page, { ...TUTTO, collo: 'coreano' });
+    await posata(page);
     await page.waitForTimeout(80);
     const subito = await page.evaluate(() => [...document.querySelectorAll('.configura__vesti .vesti__posto--collo img')].map((im) => im.getAttribute('src').split('/').pop().split('?')[0]));
     controlla(`${nome}: un collo nuovo prende subito il posto del vecchio`, subito.length === 1 && subito[0].startsWith('collo-coreano'), JSON.stringify(subito));
@@ -370,10 +381,12 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     await pronta(page);
     const sulCollo = { posizione: 'collo', lettere: 'EDR' };
     await manda(page, { collo: 'italiano', taschino: false, iniziali: sulCollo });
+    await posata(page);
     await page.waitForTimeout(500);
     const it = await scartoFerma(page, { collo: 'italiano', iniziali: sulCollo }, P);
     controlla('l\'italiano come oggetto senza file: nessun pezzo, le iniziali al posto del collo', it.s.pezzi.length === 0 && it.lettere <= 6 * 0.3 * it.k, `${it.s.pezzi.length} pezzi, lettere a ${it.lettere.toFixed(2)}`);
     await manda(page, { collo: 'coreano', taschino: false, iniziali: sulCollo });
+    await posata(page);
     await page.waitForTimeout(500);
     const co = await scartoFerma(page, { collo: 'coreano', iniziali: sulCollo }, P);
     controlla('il coreano con un riquadro di misura diversa: al suo punto, e le iniziali al posto del coreano', co.max <= 0.5 && co.lettere <= 6 * 0.3 * co.k, `${co.max.toFixed(3)} punti, lettere ${co.lettere.toFixed(2)}`);
@@ -492,6 +505,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     const a = await nuovo(COMPUTER[0][1], '&rigida' + v), { page } = a;
     await pronta(page);
     await manda(page, { iniziali: { posizione: 'cuore', lettere: 'NP' } });
+    await posata(page);
     await page.waitForTimeout(900);
     const s = await page.evaluate((f) => ({ attributo: document.querySelector('.vesti__iniziali')?.getAttribute('font-family') || '', pronto: document.fonts.check(`20px "${f}"`) && [...document.fonts].some((x) => x.family.replace(/"/g, '') === f && x.status === 'loaded') }), famiglia);
     controlla(`iniziali${v || ' (di norma)'}: scritte in «${famiglia}», carattere scaricato dal sito`, s.attributo.includes(famiglia) && s.pronto, JSON.stringify(s));
