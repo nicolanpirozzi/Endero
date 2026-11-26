@@ -236,7 +236,7 @@ console.log('L\'ordine del configuratore');
   // un ordine con la spedizione che si paga: due righe a Stripe
   r = await manda(env, { ...ORDINE, ...SPEDIRE, quantita: '1' });
   s = aStripe[1];
-  controlla('spedizione in 5 giorni a 90 €: 9000 + una riga di spedizione da 1500', (await r.json()).ok && s.corpo.get('line_items[0][price_data][unit_amount]') === '9000' && s.corpo.get('line_items[1][price_data][unit_amount]') === '1500' && s.corpo.get('line_items[1][quantity]') === '1', s && [...s.corpo].filter(([k]) => k.startsWith('line_items')).map((x) => x.join('=')).join('&'));
+  controlla('spedizione in 5 giorni a 90 €: 9000 + una riga di spedizione da 3000', (await r.json()).ok && s.corpo.get('line_items[0][price_data][unit_amount]') === '9000' && s.corpo.get('line_items[1][price_data][unit_amount]') === '3000' && s.corpo.get('line_items[1][quantity]') === '1', s && [...s.corpo].filter(([k]) => k.startsWith('line_items')).map((x) => x.join('=')).join('&'));
   controlla('numeri d\'ordine in fila', db.prepare('SELECT numero FROM ordini ORDER BY n DESC').get().numero.endsWith('000002'));
 
   // ordini sbagliati: niente salvato, niente Stripe

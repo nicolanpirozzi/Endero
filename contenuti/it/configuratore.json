@@ -1,5 +1,5 @@
 {
-  "_nota": "Configuratore a passi (proprietario, 2026-11-25: «Dividi così la configurazione a step: Configurazione prodotto, misure, dati clienti, dati spedizione e pagamento. Divisi a step in modo chiaro»). Opzioni, prezzi e spedizione sono parole sue; come li abbiamo interpretati dove non erano univoci sta in docs/direzione-creativa.md, punto 16, ed è da fargli confermare. PASSO CAMICIA: quantità per prima (1); tessuto da una finestra con i campioni (contenuti/it/tessuti.json: nomi inventati da noi, i nomi veri delle cartelle colori non stanno nel repository e compaiono solo nell'email dell'ordine); collo, menu a tendina con otto colli, che cambia anche sulla camicia; taschino sì/no con il suo tessuto; asola sì/no con il colore; bottone tinta su tinta, contrasto o personalizzato («Ordine minimo 100 pz»); filato bottone, un colore; iniziali sì/no, posizione e al più tre lettere; interno collo, interno polso e polsino standard o personalizzati con il loro tessuto. «Colori ricamo carré» tolto («Elimina per ora»). 'parte' dice quale parte della camicia si evidenzia con lo zoom mentre si sceglie (public/camicia/opzioni/opzioni.json). 'personalizzazione': true per le otto voci che fanno salire il prezzo. PREZZI: 90 base, 100 con una personalizzazione, 120 con tre, 150 con tutte (parole sue); due personalizzazioni valgono come una, da tre a sette come tre: interpretazione nostra. SPEDIZIONE: ritiro in laboratorio, oppure 5 giorni lavorativi 15 euro, oppure 7 giorni lavorativi 30 euro, gratis sopra i 200 euro di spesa (parole sue, importi come li ha scritti). Le regole stanno in src/configuratore/ordine.mjs e valgono uguali in pagina e nel Worker. MISURE: come prima (2026-11-21: la camicia che sta meglio, stesa su un tavolo); la finestra «Come prendere le misure» si apre entrando nel passo delle misure. Tra [[ ]] ciò che non è confermato. Al cliente poche informazioni, chiare e utili.",
+  "_nota": "Configuratore a passi (proprietario, 2026-11-25: «Dividi così la configurazione a step: Configurazione prodotto, misure, dati clienti, dati spedizione e pagamento. Divisi a step in modo chiaro»). Opzioni, prezzi e spedizione sono parole sue; come li abbiamo interpretati dove non erano univoci sta in docs/direzione-creativa.md, punto 16, ed è da fargli confermare. PASSO CAMICIA: quantità per prima (1); tessuto da una finestra con i campioni (contenuti/it/tessuti.json: nomi inventati da noi, i nomi veri delle cartelle colori non stanno nel repository e compaiono solo nell'email dell'ordine); collo, menu a tendina con otto colli, che cambia anche sulla camicia; taschino sì/no con il suo tessuto; asola sì/no con il colore; bottone tinta su tinta, contrasto o personalizzato («Ordine minimo 100 pz»); filato bottone, un colore; iniziali sì/no, posizione e al più tre lettere; interno collo, interno polso e polsino standard o personalizzati con il loro tessuto. «Colori ricamo carré» tolto («Elimina per ora»). 'parte' dice quale parte della camicia si evidenzia con lo zoom mentre si sceglie (public/camicia/opzioni/opzioni.json). 'personalizzazione': true per le otto voci che fanno salire il prezzo. PREZZI: 90 base, 100 con una personalizzazione, 120 con tre, 150 con tutte (parole sue); due personalizzazioni valgono come una, da tre a sette come tre: confermato da lui il 2026-11-26. SPEDIZIONE: ritiro in laboratorio, oppure 7 giorni lavorativi 15 euro, oppure 5 giorni lavorativi 30 euro, gratis sopra i 200 euro di spesa (nel messaggio del 25 gli importi erano scambiati: il 26 ha confermato «Sono invertiti»). Le regole stanno in src/configuratore/ordine.mjs e valgono uguali in pagina e nel Worker. MISURE: come prima (2026-11-21: la camicia che sta meglio, stesa su un tavolo); la finestra «Come prendere le misure» si apre entrando nel passo delle misure. Tra [[ ]] ciò che non è confermato. Al cliente poche informazioni, chiare e utili.",
   "meta": {
     "titolo": "Camicia su misura online · Crea la tua con Endero",
     "briciola": "Crea la tua camicia",
@@ -556,17 +556,17 @@
           "prezzo": 0
         },
         {
-          "id": "cinque",
-          "nome": "Spedizione",
-          "dettaglio": "5 giorni lavorativi",
-          "giorni": 5,
-          "prezzo": 15
-        },
-        {
           "id": "sette",
           "nome": "Spedizione",
           "dettaglio": "7 giorni lavorativi",
           "giorni": 7,
+          "prezzo": 15
+        },
+        {
+          "id": "cinque",
+          "nome": "Spedizione",
+          "dettaglio": "5 giorni lavorativi",
+          "giorni": 5,
           "prezzo": 30
         }
       ],

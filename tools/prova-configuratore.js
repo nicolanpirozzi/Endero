@@ -374,10 +374,10 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     s = await stato(page);
     controlla(`${formato}: dal nome in cima si torna al passo Spedizione (i passi di mezzo vanno bene)`, s.passi.join() === 'spedizione', JSON.stringify(s));
     a = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('[data-prezzo-modo]')].map((x) => [x.dataset.prezzoModo, x.textContent.replace(/\s/g, ' ')])));
-    controlla(`${formato}: con 90 € le spedizioni costano 15 € e 30 €`, a.cinque === euro(15) && a.sette === euro(30), JSON.stringify(a));
+    controlla(`${formato}: con 90 € le spedizioni costano 30 € (5 giorni) e 15 € (7 giorni)`, a.cinque === euro(30) && a.sette === euro(15), JSON.stringify(a));
     await sceglieRadio(page, 'spedizione', 'cinque');
     a = await page.evaluate(() => ({ indirizzo: !document.querySelector('.indirizzo').hidden, chi: document.querySelector('[name="destinatario"]').value, totale: document.querySelector('[data-conto-totale]').textContent.replace(/\s/g, ' ') }));
-    controlla(`${formato}: con la spedizione compare l'indirizzo, «destinatario» già «${a.chi}», totale ${a.totale}`, a.indirizzo && a.chi === 'Mario Rossi' && a.totale === euro(105), JSON.stringify(a));
+    controlla(`${formato}: con la spedizione compare l'indirizzo, «destinatario» già «${a.chi}», totale ${a.totale}`, a.indirizzo && a.chi === 'Mario Rossi' && a.totale === euro(120), JSON.stringify(a));
     await avanti(page);
     a = await page.evaluate(() => ['indirizzo', 'cap', 'citta', 'provincia'].map((n) => document.getElementById(`campo-${n}-errore`).textContent));
     controlla(`${formato}: indirizzo vuoto → avvisi su via, CAP, città, provincia`, a.every(Boolean), JSON.stringify(a));
@@ -395,7 +395,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     // ------------------------------------------------ Pagamento
     s = await stato(page);
     a = await page.evaluate(() => ({ testo: document.querySelector('[data-riepilogo]').innerText, totale: document.querySelector('[data-conti-totale]').textContent.replace(/\s/g, ' '), tasto: document.querySelector('[data-avanti]').textContent }));
-    controlla(`${formato}: passo Pagamento: riepilogo con tessuto, collo, misure, dati e indirizzo; totale ${a.totale}; il tasto dice «${a.tasto}»`, s.passi.join() === 'pagamento' && /Francese/.test(a.testo) && /41 cm/.test(a.testo) && /Mario Rossi/.test(a.testo) && /80014 Giugliano/.test(a.testo) && a.totale === euro(105) && /pagamento/i.test(a.tasto), JSON.stringify({ s, ...a }).slice(0, 400));
+    controlla(`${formato}: passo Pagamento: riepilogo con tessuto, collo, misure, dati e indirizzo; totale ${a.totale}; il tasto dice «${a.tasto}»`, s.passi.join() === 'pagamento' && /Francese/.test(a.testo) && /41 cm/.test(a.testo) && /Mario Rossi/.test(a.testo) && /80014 Giugliano/.test(a.testo) && a.totale === euro(120) && /pagamento/i.test(a.tasto), JSON.stringify({ s, ...a }).slice(0, 400));
     if (formato === 'computer' || formato === 'telefono') await foto(page, `configuratore-pagamento-${formato}`);
     // ricarica a metà: resta tutto, sullo stesso passo
     await page.reload({ waitUntil: 'networkidle' });

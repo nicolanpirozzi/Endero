@@ -75,7 +75,7 @@ for (const [q, giusto] of [['1', true], ['2', true], ['999', true], ['007', true
   controlla(`quantità «${q}» ${giusto ? 'va' : 'no'}`, giusto ? !e.quantita : !!e.quantita, JSON.stringify(e));
 }
 controlla('3 camicie con una personalizzazione: 300 €', conti(ordineCon(UNA[0], { quantita: '3' })).capi === 300);
-controlla('il prezzo è a camicia, il totale per la quantità', (() => { const c = conti(ordineCon(UNA[0], { quantita: '2' }, SPEDIRE)); return c.camicia === 100 && c.capi === 200 && c.spedizione === 15 && c.totale === 215; })());
+controlla('il prezzo è a camicia, il totale per la quantità', (() => { const c = conti(ordineCon(UNA[0], { quantita: '2' }, SPEDIRE)); return c.camicia === 100 && c.capi === 200 && c.spedizione === 30 && c.totale === 230; })());
 
 console.log('Bottone personalizzato: da 100 pezzi');
 controlla('con 99 si ferma', !!errori(ordineCon({ bottone: 'personalizzato', quantita: '99' })).bottone);
@@ -85,11 +85,11 @@ controlla('con una quantità sbagliata l\'avviso è sulla quantità, non sul bot
 console.log('Spedizione: gratis sopra i 200 €, non a 200');
 const sped = (q, p, modo = 'cinque') => conti(ordineCon(...UNA.slice(0, p), SPEDIRE, { spedizione: modo, quantita: String(q) }));
 let c = sped(2, 1);            // 2 × 100 = 200
-controlla('200 € di camicie: la spedizione si paga (15 €)', c.capi === 200 && c.spedizione === 15 && !c.gratis && c.totale === 215, JSON.stringify(c));
+controlla('200 € di camicie: la spedizione si paga (5 giorni: 30 €)', c.capi === 200 && c.spedizione === 30 && !c.gratis && c.totale === 230, JSON.stringify(c));
 c = sped(3, 0);                // 3 × 90 = 270
 controlla('270 € di camicie: spedizione gratis', c.capi === 270 && c.spedizione === 0 && c.gratis && c.totale === 270, JSON.stringify(c));
 c = sped(2, 1, 'sette');
-controlla('7 giorni a 200 €: 30 €', c.spedizione === 30 && c.totale === 230, JSON.stringify(c));
+controlla('7 giorni a 200 €: 15 €', c.spedizione === 15 && c.totale === 215, JSON.stringify(c));
 c = sped(2, 3, 'sette');       // 2 × 120 = 240
 controlla('7 giorni a 240 €: gratis', c.spedizione === 0 && c.totale === 240, JSON.stringify(c));
 c = conti(ordineCon({ quantita: '5' }));
@@ -175,7 +175,7 @@ controlla('un oggetto al posto di un testo non rompe nulla', (() => { try { cons
 controlla('il prezzo scritto dal browser non conta', conti(ordineCon({ prezzo: '1', totale: '1', camicia: '1' })).totale === 90);
 const p = ordinePulito(ordineCon(TUTTE, SPEDIRE, { prezzo: '1', sconto: '100' }));
 controlla('nell\'ordine pulito entrano solo i campi previsti', !('prezzo' in p) && !('sconto' in p));
-controlla('tutte le personalizzazioni con spedizione in 5 giorni: 150 + 15', p.conti.camicia === 150 && p.conti.spedizione === 15 && p.conti.totale === 165, JSON.stringify(p.conti));
+controlla('tutte le personalizzazioni con spedizione in 5 giorni: 150 + 30', p.conti.camicia === 150 && p.conti.spedizione === 30 && p.conti.totale === 180, JSON.stringify(p.conti));
 
 rmSync(cartella, { recursive: true, force: true });
 console.log(`\n${passati} controlli passati, ${falliti.length} falliti`);
