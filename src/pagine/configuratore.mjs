@@ -67,7 +67,8 @@ function pillole(nome, opzioni, scelta, { classe = '' } = {}) {
 
 /** Una riga del passo Camicia (e i suoi sotto-campi, che compaiono con «Sì» o «Personalizzato»). */
 function voceCamicia(c, S, tessuti) {
-  const parte = c.parte ? (c.nome === 'iniziali' ? ` data-parte-base="${esc(c.parte)}"` : ` data-parte="${esc(c.parte)}"`) : '';
+  // (fino al 2026-11-26 qui c'era `data-parte`: lo zoom sulla parte della camicia mentre la si sceglie; il proprietario lo ha tolto)
+  const parte = '';
   const nome = `${id(c.nome)}-nome`;
   if (c.tipo === 'quantita') {
     return `<div class="voce voce--quantita">
@@ -330,7 +331,7 @@ export default function paginaConfiguratore({ sito, testi: c, tessuti = { tessut
   const g = S.grazie;
   const corpo = `<main>
 <section class="configura" id="contenuto" tabindex="-1">
-  <div class="configura__palco"${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}${datiGuida}${camicia.opzioni ? ` data-opzioni="${esc(camicia.opzioni)}"` : ''}>
+  <div class="configura__palco"${camicia.leggera ? ` data-leggera="${esc(camicia.leggera)}" data-leggera-v="${esc(camicia.leggeraV)}"` : ''}${datiGuida}${camicia.opzioni ? ` data-opzioni="${esc(camicia.opzioni)}"` : ''}${camicia.trame ? ` data-trame="${esc(camicia.trame)}"` : ''} data-cucitura="${esc(S.camicia.caricamento)}">
     <picture>
       <source media="(max-width: 599px)" srcset="${esc(serie(camicia.ferma.telefono, 750, camicia.ferma.telefono2x))}" sizes="100vw" width="750" height="1000">
       <img class="configura__ferma" src="${esc(camicia.ferma.computer)}" srcset="${esc(serie(camicia.ferma.computer, 1800, camicia.ferma.computer2x))}" sizes="(max-width: 959px) 112vh, max(180vh, 90vw)" width="1800" height="1000" alt="${esc(p.alt)}" fetchpriority="high" draggable="false">

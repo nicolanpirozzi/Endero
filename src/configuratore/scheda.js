@@ -7,8 +7,8 @@
 //   primo campo sbagliato, con l'avviso sotto, come negli altri moduli del sito; «Indietro» non perde nulla;
 // - i sotto-campi che compaiono con «Sì» o «Personalizzato»; il prezzo sempre in vista, rifatto a ogni scelta;
 // - le finestre dei tessuti e dei colori del filo (una per tipo, per tutti i campi);
-// - la camicia che segue le scelte: a ogni cambio l'avviso `endero:camicia` (lo ascolta vesti.js), e `data-parte`
-//   sulle righe che hanno una parte da mostrare sulla camicia (lo zoom lo fa guida.js);
+// - la camicia che segue le scelte: a ogni cambio l'avviso `endero:camicia` (lo ascolta vesti.js) con il collo, il
+//   taschino, le iniziali e i tessuti (della camicia, del taschino, dei polsini);
 // - ciò che si scrive resta nella scheda del browser (sessionStorage): ricaricando non si perde, chiudendola sì;
 // - l'invio a /api/ordine, che apre il pagamento di Stripe (o dice che non è ancora attivo).
 // Per i controlli automatici: ?passo=misure (o un altro passo) apre direttamente quel passo.
@@ -151,23 +151,11 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
 
   // ------------------------------------------------------------------ sotto-campi, parti, camicia, prezzo
   let scoperti = [];             // i sotto-campi appena comparsi per una scelta (vedi `scopri`)
-  function condizioni(origine) {
+  function condizioni() {
     const d = dati();
     for (const el of form.querySelectorAll('[data-se]')) {
       const si = el.dataset.seValore.split(' ').includes(d[el.dataset.se] || '');
       if (el.hidden === si) { el.hidden = !si; if (si) scoperti.push(el); }
-    }
-    // le iniziali: la parte da mostrare dipende dalla posizione scelta (iniziali_polso, iniziali_collo, iniziali_cuore)
-    for (const el of form.querySelectorAll('[data-parte-base]')) {
-      const pos = d[`${el.dataset.campo}_posizione`] || '';
-      const parte = pos ? `${el.dataset.parteBase}_${pos}` : '';
-      if ((el.dataset.parte || '') === parte) continue;
-      if (parte) el.dataset.parte = parte; else delete el.dataset.parte;
-      const daQui = !!origine && el.contains(origine);
-      if (!parte || !(daQui || el.contains(document.activeElement))) continue;
-      // Safari non dà il fuoco ai radio cliccati: glielo si dà qui, così la guida si apre (e poi si chiude) come altrove
-      if (daQui && !el.contains(document.activeElement)) origine.focus?.({ preventScroll: true });
-      document.dispatchEvent(new CustomEvent('endero:parte', { detail: { campo: el } }));
     }
   }
   /** I campi comparsi con «Sì» o «Personalizzato» non restano dietro la barra con i tasti: la pagina sale di quanto
@@ -195,8 +183,11 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       collo: d.collo || '',
       taschino: d.taschino === 'si',
       iniziali: d.iniziali === 'si' && d.iniziali_posizione && l ? { posizione: d.iniziali_posizione, lettere: l } : null,
-      // il tessuto: lo usa solo la prova «il tessuto colora la camicia» (vesti.js, ?prova=tessuto)
+      // i tessuti che colorano la camicia (vesti.js): il suo, quello del taschino e quello dei polsini; interno collo
+      // e interno polso sulla camicia non si vedono (proprietario, 2026-11-26: «così semplifichiamo»)
       tessuto: d.tessuto || '',
+      taschino_tessuto: d.taschino === 'si' ? d.taschino_tessuto || '' : '',
+      polsino_tessuto: d.polsino === 'personalizzato' ? d.polsino_tessuto || '' : '',
     };
     const ora = JSON.stringify(detail);
     if (!sempre && ora === vestita) return;
@@ -221,19 +212,6 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     }
     return c;
   }
-
-  // Un tocco su una scelta (sì / no, un bottone, il tasto dei tessuti) di una riga con una parte sulla camicia: il fuoco
-  // arriva dopo il clic, non quando il dito si appoggia. Con il fuoco la guida apre sopra la riga lo zoom sulla parte e
-  // sui telefoni bassi sposta la pagina per tenerli in vista insieme: se lo facesse fra l'appoggio e il clic, il clic
-  // cadrebbe altrove e la scelta andrebbe persa (provato a 375 x 548). Le caselle di testo e i menu restano come sono.
-  const tasto = (e) => e.target.closest?.('[data-parte] :is(.pillole__voce, .modo, .scegli__tasto, .scegli__togli)');
-  form.addEventListener('mousedown', (e) => { if (e.button === 0 && tasto(e)) e.preventDefault(); });
-  form.addEventListener('click', (e) => {
-    const t = tasto(e);
-    if (!t) return;
-    const el = t.matches('label') ? t.querySelector('input') : t;
-    setTimeout(() => { if (el.isConnected && !el.closest('[hidden]') && document.activeElement !== el && !document.querySelector('dialog[open]')) el.focus({ preventScroll: true }); });
-  });
 
   // ------------------------------------------------------------------ quantità
   const quantita = form.elements.quantita;
@@ -310,8 +288,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
 
   /** Tutto ciò che dipende dalle scelte. */
-  function aggiorna(origine) {
-    condizioni(origine);
+  function aggiorna() {
+    condizioni();
     for (const box of scelte) mostraScelta(box);
     if (quantita) tastiQuantita();
     prezzi();
@@ -320,14 +298,14 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
   form.addEventListener('input', (e) => {
     if (e.target.closest('dialog')) return;
-    aggiorna(e.target); scopri(); riguarda(); salva();
+    aggiorna(); scopri(); riguarda(); salva();
     if (e.target.name === 'email') { e.target.closest('.misura').querySelector('.campo__forse')?.remove(); forseVisto = false; }
   });
   form.addEventListener('change', (e) => {
     if (e.target.closest('dialog')) return;
     // la provincia scritta per esteso diventa la sua sigla («Napoli» → «NA»)
     if (e.target.name === 'provincia') { const s = provincia(e.target.value); if (s && s !== e.target.value) e.target.value = s; }
-    aggiorna(e.target); scopri(); riguarda(); salva();
+    aggiorna(); scopri(); riguarda(); salva();
   });
   // Invio in una casella non fa «Continua» (sul telefono lo si preme per chiudere la tastiera, e ci si ritrovava al
   // passo dopo o con tutti gli avvisi accesi): porta alla prossima casella vuota del passo, dall'ultima chiude la tastiera

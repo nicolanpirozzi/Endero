@@ -52,6 +52,7 @@
       }
     ],
     "camicia": {
+      "caricamento": "Dacci un minuto, stiamo cucendo le ultime parti",
       "campi": [
         {
           "nome": "quantita",
@@ -75,7 +76,6 @@
           "nome": "collo",
           "tipo": "tendina",
           "etichetta": "Collo",
-          "parte": "collo",
           "predefinita": "italiano",
           "opzioni": [
             {
@@ -91,10 +91,6 @@
               "nome": "Mezzo francese"
             },
             {
-              "id": "small",
-              "nome": "Small"
-            },
-            {
               "id": "button_down",
               "nome": "Button down"
             },
@@ -105,10 +101,6 @@
             {
               "id": "diplomatico",
               "nome": "Diplomatico"
-            },
-            {
-              "id": "club",
-              "nome": "Club"
             }
           ]
         },
@@ -116,7 +108,6 @@
           "nome": "taschino",
           "tipo": "sino",
           "etichetta": "Taschino",
-          "parte": "taschino",
           "personalizzazione": true,
           "se_si": [
             {
@@ -147,7 +138,6 @@
           "nome": "bottone",
           "tipo": "scelta",
           "etichetta": "Bottone",
-          "parte": "bottoni",
           "personalizzazione": true,
           "predefinita": "tinta",
           "opzioni": [
@@ -181,7 +171,6 @@
           "nome": "iniziali",
           "tipo": "sino",
           "etichetta": "Iniziali",
-          "parte": "iniziali",
           "personalizzazione": true,
           "se_si": [
             {
@@ -216,7 +205,6 @@
           "nome": "interno_collo",
           "tipo": "standard",
           "etichetta": "Interno collo",
-          "parte": "interno_collo",
           "personalizzazione": true,
           "se_si": [
             {
@@ -232,7 +220,6 @@
           "nome": "interno_polso",
           "tipo": "standard",
           "etichetta": "Interno polso",
-          "parte": "interno_polso",
           "personalizzazione": true,
           "se_si": [
             {
@@ -248,7 +235,6 @@
           "nome": "polsino",
           "tipo": "standard",
           "etichetta": "Polsino",
-          "parte": "polsino",
           "personalizzazione": true,
           "se_si": [
             {

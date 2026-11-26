@@ -13,21 +13,23 @@
 // lo stesso dell'immagine ferma. Con il movimento ridotto niente giro, zoom animato né linee che si disegnano.
 // Lo zoom ha tre misure: il proprietario ha scelto la forte («Mi piace forte», 2026-11-22), che è quella normale;
 // ?zoom=a (leggero) e ?zoom=b (di mezzo) restano per confrontarle.
-// Dal 2026-11-25 (configuratore a passi) la stessa guida vale per le parti della camicia che si scelgono nel riquadro:
-// un elemento con `data-parte="collo"` (o taschino, bottoni, iniziali_polso, …) si comporta come un campo di misura,
-// con lo zoom sulla parte e il suo contorno tratteggiato (`parti` in public/camicia/opzioni/opzioni.json, la stessa
-// forma delle misure in guide.json; le parti si guardano sempre davanti). Se l'attributo cambia mentre il campo ha il
-// fuoco, il riquadro lo dice con `endero:parte` e lo zoom scivola sulla parte nuova. I pezzi scelti (vesti.js) stanno
-// sulla camicia anche dentro lo zoom: la guida dice a vesti.js quanto ingrandisce (`endero:zoom`), quando la camicia
-// è girata di spalle (`data-girata` sul palco: i pezzi davanti non si vedono) e dove sta il riquadro del telefono
+// Dal 2026-11-26 la guida vale solo per le misure: nel passo Camicia non ci sono più zoom né contorni delle parti
+// (proprietario: «quando sono nella sezione CAMICIA, non ci sono zoom e evidenziamenti»; per un giorno c'erano stati).
+// Nel passo Misure, mentre la guida è aperta, la camicia è quella bianca di riferimento e si fa più trasparente,
+// «così i tratteggi si vedono meglio» (parole sue): sopra di lei si stende un velo, che è la parete senza la camicia
+// (lo stesso pezzo che usa leggera.js). Quanto, lo sceglie lui fra tre misure: ?velo=a (poco), b (di mezzo, quella
+// normale), c (molto). I pezzi scelti nel passo Camicia (vesti.js: collo, taschino, iniziali) restano sulla camicia
+// anche dentro lo zoom, bianchi: la guida dice a vesti.js quanto ingrandisce (`endero:zoom`), quando la camicia è
+// girata di spalle (`data-girata` sul palco: i pezzi davanti non si vedono) e dove sta il riquadro del telefono
 // (`endero:lente`).
 
-import { lineaParte, colloScelto } from './vesti.js';
 import { finestraAperta, finestraChiusa, voceFinestraTolta } from './cronologia.mjs';
 
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
-/** I campi che aprono la guida: le misure e le parti della camicia. */
-const CAMPO = '.misura[data-guida], [data-parte]';
+/** I campi che aprono la guida: le misure. */
+const CAMPO = '.misura[data-guida]';
+// quanto la parete vela la camicia mentre la guida è aperta (0 niente, 1 la camicia sparisce)
+const VELO = { a: 0.3, b: 0.45, c: 0.6 }[new URLSearchParams(location.search).get('velo')] ?? 0.45;
 const SVG = 'http://www.w3.org/2000/svg';
 
 // quanto si ingrandisce al più sul computer, e quanto è grande al minimo la zona inquadrata (punti del fotogramma)
@@ -161,7 +163,7 @@ const finoAllaFine = (el, ms) => new Promise((fatto) => {
  * @param {Promise} camicia       quella di leggera(): si compie con { ferma, riparti }, o niente se la camicia non si muove
  */
 export function guida(palco, camicia) {
-  if (!document.querySelector(CAMPO) && !palco.dataset.opzioni) return;
+  if (!document.querySelector(CAMPO)) return;
   // il riquadro in vetro: lo zoom inquadra la camicia nello spazio libero alla sua sinistra
   const scheda = () => document.querySelector('.configura__scheda') || document.querySelector(CAMPO)?.closest('form') || palco;
   const sulPalco = () => getComputedStyle(palco).position === 'sticky';
@@ -171,12 +173,14 @@ export function guida(palco, camicia) {
   const linee = () => (dati ||= palco.dataset.guide
     ? fetch(palco.dataset.guide).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).catch(() => { dati = null; return null; })
     : Promise.resolve(null));
-  /** Che cosa mostra un campo: la sua chiave, la vista e dove prendere la linea (una misura o una parte). */
-  const chiave = (m) => m.dataset.parte || m.dataset.guida;
-  const versoDi = (m) => (!m.dataset.parte && m.dataset.vista === 'dietro' ? 'dietro' : 'davanti');
-  const lineaDi = (m) => (m.dataset.parte
-    ? lineaParte(palco, m.dataset.parte)
-    : linee().then((d) => d?.misure?.[m.dataset.guida] || null));
+  /** Che cosa mostra un campo: la sua chiave, la vista e la sua linea. */
+  const chiave = (m) => m.dataset.guida;
+  const versoDi = (m) => (m.dataset.vista === 'dietro' ? 'dietro' : 'davanti');
+  const lineaDi = (m) => linee().then((d) => d?.misure?.[m.dataset.guida] || null);
+  // il velo: la parete senza la camicia (il pezzo di leggera.js), nei suoi punti del fotogramma
+  const PARETE = [80, 0, 993, 1000];
+  const parete = palco.dataset.leggera ? `${palco.dataset.leggera}parete-2.webp${palco.dataset.leggeraV ? '?v=' + palco.dataset.leggeraV : ''}` : '';
+  palco.style.setProperty('--velo', VELO);
   // e con loro la copia a grandezza doppia dell'immagine ferma, che lo zoom usa sul computer (così è già pronta)
   const pronte = {};
   // (solo dove la camicia sta accanto ai campi: sul telefono non serve. Un «no» per questo non si ricorda: se la
@@ -219,7 +223,16 @@ export function guida(palco, camicia) {
     };
     nitida = nuova(palco.dataset.nitida || palco.dataset.ferma, !!palco.dataset.nitida);
     nitidaDietro = palco.dataset.nitidaDietro ? nuova(palco.dataset.nitidaDietro, true) : null;
-    palco.querySelector('.configura__invito').before(...[nitida, nitidaDietro, svg].filter(Boolean));
+    // il velo sopra la camicia (e sopra i pezzi scelti), sotto le linee: stesso posto e stesso zoom dell'immagine ferma
+    let velo = null;
+    if (parete) {
+      velo = Object.assign(document.createElement('div'), { className: 'configura__velo' });
+      velo.setAttribute('aria-hidden', 'true');
+      const im = Object.assign(document.createElement('img'), { alt: '', decoding: 'async', draggable: false, src: parete });
+      Object.assign(im.style, { left: `${PARETE[0] / 18}%`, top: `${PARETE[1] / 10}%`, width: `${PARETE[2] / 18}%`, height: `${PARETE[3] / 10}%` });
+      velo.append(im);
+    }
+    palco.querySelector('.configura__invito').before(...[nitida, nitidaDietro, velo, svg].filter(Boolean));
   };
   /** Un video del giro, sopra la camicia, con le misure dell'immagine ferma: parte quando è pronto, finisce e basta.
    *  `parte` si chiama quando il primo fotogramma è sullo schermo (o quando si rinuncia al video). */
@@ -369,7 +382,7 @@ export function guida(palco, camicia) {
     }
     const girata = await gira(verso);
     if (mio !== turno || !girata) return;
-    // una parte senza linea (un nome che opzioni.json non conosce): la camicia resta ferma, senza zoom
+    // una misura senza linea: la camicia resta ferma, senza zoom
     if (!misura) { await zoomVia(); return; }
     // la copia a grandezza doppia dell'immagine ferma (davanti; da dietro c'è la camicia girata): solo se è già pronta
     // prima dello zoom, mai a metà, quando comparirebbe di colpo già ingrandita
@@ -438,9 +451,10 @@ export function guida(palco, camicia) {
     // i pezzi scelti nel riquadro (vesti.js), nelle stesse coordinate della camicia
     vestiti = crea('g', { class: 'misura-lente__vesti' });
     sopra = crea('svg', { viewBox: '0 0 1800 1000', x: 0, y: 0, width: 1800, height: 1000, overflow: 'visible' });
-    svgC.append(foto, vestiti, sopra);
-    // (una x nell'angolo, quando il riquadro sta fermo sullo schermo: dice che toccandolo si chiude)
-    carta.append(svgC, Object.assign(document.createElement('span'), { className: 'misura-lente__chiudi' }));
+    // il velo: la parete sopra la camicia e i suoi pezzi, sotto la linea
+    const velo = parete ? crea('image', { href: parete, x: PARETE[0], y: PARETE[1], width: PARETE[2], height: PARETE[3], preserveAspectRatio: 'none', opacity: VELO }) : null;
+    svgC.append(...[foto, vestiti, velo, sopra].filter(Boolean));
+    carta.append(svgC);
   };
   const mettiQuadro = (q) => { quadro = q; svgC.setAttribute('viewBox', q.map(r1).join(' ')); };
   /** Il riquadro scivola dalla zona di adesso a `verso`, in SCIVOLA millisecondi. */
@@ -468,8 +482,8 @@ export function guida(palco, camicia) {
     const sopraBarra = barra && barra.getClientRects().length ? barra.getBoundingClientRect().top : Infinity;
     return { su: (vv ? vv.offsetTop : 0) + alta + 8, giu: Math.min(vv ? vv.offsetTop + vv.height : innerHeight, sopraBarra) - 8 };
   }
-  /** Il fondo del campo, sullo schermo (di una misura, la casella in cui si scrive; di una parte, tutto il blocco). */
-  const fondoCampo = (m) => ((!m.dataset.parte && m.querySelector('input')) || m).getBoundingClientRect().bottom;
+  /** Il fondo del campo, sullo schermo: la casella in cui si scrive. */
+  const fondoCampo = (m) => (m.querySelector('input') || m).getBoundingClientRect().bottom;
   /** Il riquadro va sopra il campo `m`, più stretto del modulo: sopra il campo, non in mezzo. Le misure si prendono
    *  dallo schermo, così vale qualunque sia l'elemento che contiene il campo. */
   function posaCarta(m, alto, largo) {
@@ -481,25 +495,6 @@ export function guida(palco, camicia) {
     const centro = rm.left - x0 + rm.width / 2;
     carta.style.left = `${Math.round(Math.min(Math.max(centro - largo / 2, sx), sx + largoTutto - largo))}px`;
     carta.style.top = `${Math.round(rm.top - y0 - alto - 10)}px`;
-  }
-  /** Il riquadro fermo sullo schermo (per le parti): in alto, sotto la testata; se lì coprirebbe il comando toccato,
-   *  in basso, sopra la barra con i tasti; dove lo schermo è basso e largo (il telefono di traverso) e non c'è posto
-   *  né sopra né sotto, di lato. */
-  let toccato = null;
-  function posaFissa(m, alto, largo, su, giu) {
-    const vv = window.visualViewport;
-    const fuoco = m.contains(document.activeElement) ? document.activeElement : null;
-    const comando = (m.contains(toccato) ? toccato.closest('label, select, input, button') : null) || fuoco || m.querySelector('input:checked, select, button') || m;
-    const r = comando.getBoundingClientRect();
-    const x0 = vv ? vv.offsetLeft : 0, tutto = vv ? vv.width : innerWidth;
-    const centro = x0 + (tutto - largo) / 2, destra = x0 + tutto - largo - 16, sinistra = x0 + 16;
-    const copre = ([x, y]) => r.right > x - 8 && r.left < x + largo + 8 && r.bottom > y - 8 && r.top < y + alto + 8;
-    // (di lato, prima dalla parte opposta al comando)
-    const lati = r.left + r.width / 2 < x0 + tutto / 2 ? [destra, sinistra] : [sinistra, destra];
-    const posti = [[centro, su], [centro, giu - alto], ...lati.map((x) => [x, su]), ...lati.map((x) => [x, giu - alto])];
-    const [x, y] = posti.find((p) => !copre(p)) || posti[0];
-    carta.style.left = `${Math.round(x)}px`;
-    carta.style.top = `${Math.round(y)}px`;
   }
   /** Il riquadro e il campo in vista insieme, anche con la tastiera aperta. Il riquadro si misura dove
    *  arriva (dal campo), non dove sta ancora scivolando. */
@@ -517,37 +512,26 @@ export function guida(palco, camicia) {
     preparaCarta();
     const mio = ++turno;
     aperta = m;
-    // Per le parti (collo, taschino, bottoni, iniziali…) il riquadro sta fermo sullo schermo e la pagina non si muove:
-    // sopra la riga toccata copriva le righe prima e faceva saltare la pagina sotto il dito (revisione del
-    // 2026-11-26). Per le misure resta sopra la casella in cui si scrive, con la pagina che lo tiene in vista.
-    const fissa = !!m.dataset.parte;
-    const contenitore = fissa ? document.body : m.parentElement;
+    const contenitore = m.parentElement;
     const compare = carta.hidden || carta.parentElement !== contenitore;
     if (carta.parentElement !== contenitore) { contenitore.append(carta); quadro = null; }
-    carta.classList.toggle('misura-lente--fissa', fissa);
+    // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro e il campo. Mai più
+    // largo di 1,8 volte l'alto: le misure lunghe (le lunghezze totali) ci stanno intere, con i loro capi
     const { su, giu } = libero();
-    let alto, largo;
-    if (fissa) {
-      alto = Math.round(Math.max(120, Math.min(200, (giu - su) * 0.34)));
-      largo = Math.round(Math.min(innerWidth - 32, 340, alto * 1.8));
-    } else {
-      // grande quanto c'è posto: fra la testata e la tastiera ci stanno il riquadro e il campo. Mai più
-      // largo di 1,8 volte l'alto: le misure lunghe (le lunghezze totali) ci stanno intere, con i loro capi
-      const blocco = fondoCampo(m) - m.getBoundingClientRect().top;
-      const largoTutto = contenitore.clientWidth;
-      alto = Math.round(Math.max(110, Math.min(240, largoTutto * 0.62, giu - su - blocco - 10)));
-      largo = Math.min(largoTutto, Math.round(alto * 1.8));
-    }
+    const blocco = fondoCampo(m) - m.getBoundingClientRect().top;
+    const largoTutto = contenitore.clientWidth;
+    const alto = Math.round(Math.max(110, Math.min(240, largoTutto * 0.62, giu - su - blocco - 10)));
+    const largo = Math.min(largoTutto, Math.round(alto * 1.8));
     carta.style.width = `${largo}px`;
     carta.style.height = `${alto}px`;
     if (carta.hidden) quadro = null;
     // comparendo va al suo posto in un colpo: non ci scivola dal posto in cui era stato aperto prima
     if (compare) carta.style.transition = 'none';
     carta.hidden = false;
-    if (fissa) posaFissa(m, alto, largo, su, giu); else posaCarta(m, alto, largo);
+    posaCarta(m, alto, largo);
     if (compare) { void carta.offsetHeight; carta.style.transition = ''; }
     sopra.replaceChildren();
-    if (!fissa) inVista(m);
+    inVista(m);
     const [d, misura] = await Promise.all([linee(), lineaDi(m)]);
     if (mio !== turno) return;
     const dietro = versoDi(m) === 'dietro';
@@ -567,8 +551,7 @@ export function guida(palco, camicia) {
       quadro = null;
     }
     if (!quadro) mettiQuadro(zona(d?.viste?.[dietro ? 'dietro' : 'davanti']?.sagoma || [420, 120, 1040, 960], aspetto));
-    // (le iniziali sono piccole: lì si stringe di più, se no nel riquadro sono alte un millimetro)
-    const z = zona(misura.riquadro, aspetto, m.dataset.parte?.startsWith('iniziali') ? Math.min(zoom.minimo, 160) : zoom.minimo);
+    const z = zona(misura.riquadro, aspetto);
     // vesti.js mette i pezzi scelti nella grandezza che serve a questo zoom (punti fisici dello schermo per punto del fotogramma)
     if (!dietro) document.dispatchEvent(new CustomEvent('endero:lente', { detail: { gruppo: vestiti, scala: (largo / z[2]) * (window.devicePixelRatio || 1) } }));
     await scivolaSu(z);
@@ -592,7 +575,6 @@ export function guida(palco, camicia) {
   }
   let uscita = 0;
   const campoDi = (el) => el?.closest?.(CAMPO) || null;
-  // (si ascolta tutta la pagina: i campi delle parti il riquadro li può costruire dopo, o fuori dal modulo)
   document.addEventListener('focusin', (e) => {
     const m = campoDi(e.target);
     if (!m) return;
@@ -615,49 +597,10 @@ export function guida(palco, camicia) {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && aperta && campoDi(e.target)) chiudi();
   });
+  // la guida chiusa (con Esc, o toccando il riquadro) si riapre con un clic sul suo campo
   document.addEventListener('click', (e) => {
     const m = campoDi(e.target);
-    if (!m) return;
-    // Safari non dà il fuoco ai tasti cliccati: una parte fatta di tasti si apre lo stesso, con il clic
-    if (!aperta && m.contains(document.activeElement)) apri(m);
-    else if (aperta !== m && m.dataset.parte && !campoDi(document.activeElement)) apri(m);
-  });
-  // e senza fuoco non arriva focusout: si chiude con un tocco fuori dai campi
-  // (Safari non sposta il fuoco toccando radio, etichette e tasti: dove sta il fuoco non conta, tranne quando si sta
-  // scrivendo in una casella della parte aperta, le iniziali: lì il riquadro resta finché si scrive)
-  document.addEventListener('pointerdown', (e) => {
-    toccato = e.target;
-    if (!aperta?.dataset.parte || campoDi(e.target) || carta?.contains(e.target)) return;
-    const a = document.activeElement;
-    if (aperta.contains(a) && a.matches('input[type="text"]')) return;
-    clearTimeout(uscita);
-    uscita = setTimeout(() => { if (aperta?.dataset.parte) chiudi(); }, 120);
-  }, true);
-  // il riquadro fermo sullo schermo si chiude quando la riga che l'ha aperto esce dalla parte libera dello schermo
-  let giro = 0;
-  addEventListener('scroll', () => {
-    if (giro || !aperta?.dataset.parte || !carta || carta.hidden || !carta.classList.contains('misura-lente--fissa')) return;
-    giro = requestAnimationFrame(() => {
-      giro = 0;
-      if (!aperta?.dataset.parte || !carta || carta.hidden) return;
-      const r = aperta.getBoundingClientRect(), { su, giu } = libero();
-      if (r.bottom < su || r.top > giu) chiudiCarta();
-    });
-  }, { passive: true });
-  // Il collo è cambiato mentre la sua evidenza (o quella delle iniziali sul collo) è aperta: ogni collo ha la sua
-  // sagoma, il contorno si rifà sul collo nuovo
-  let collo = colloScelto();
-  document.addEventListener('endero:camicia', () => {
-    const prima = collo;
-    collo = colloScelto();
-    if (collo !== prima && aperta && ['collo', 'iniziali_collo'].includes(aperta.dataset.parte)) apri(aperta);
-  });
-  // La parte di un campo è cambiata mentre è aperto (le iniziali: dal polso al cuore): lo zoom scivola sulla nuova.
-  // Se il campo non è più una parte (niente iniziali), la guida si chiude
-  document.addEventListener('endero:parte', (e) => {
-    const m = e.detail?.campo;
-    if (!m || (aperta !== m && !m.contains?.(document.activeElement))) return;
-    if (m.matches(CAMPO)) apri(m); else if (aperta === m) chiudi();
+    if (m && !aperta && m.contains(document.activeElement)) apri(m);
   });
   // con la tastiera del telefono che si apre o si chiude il riquadro cambia misura e resta in vista con il campo
   let tastiera = 0;
@@ -666,8 +609,6 @@ export function guida(palco, camicia) {
     tastiera = setTimeout(() => { if (aperta && carta && !carta.hidden && !sulPalco()) apriCarta(aperta); }, 150);
   };
   window.visualViewport?.addEventListener('resize', conLaTastiera);
-  // (con la tastiera aperta l'iPhone sposta la parte visibile dentro la pagina: il riquadro fermo la segue)
-  window.visualViewport?.addEventListener('scroll', () => { if (aperta?.dataset.parte && window.visualViewport.height < innerHeight - 80) conLaTastiera(); });
   // se la finestra cambia forma con una guida aperta, la guida si rifà nel modo giusto (palco o riquadro) e con le misure nuove
   let cambio = 0;
   addEventListener('resize', () => {

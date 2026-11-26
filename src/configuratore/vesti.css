@@ -1,9 +1,11 @@
-/* Ciò che cambia sulla camicia mentre si configura: i pezzi sovrapposti (collo, taschino, iniziali). Vedi vesti.js.
-   I pezzi stanno nei punti del fotogramma 1800 x 1000, come l'immagine ferma, su ogni livello della camicia. */
+/* Ciò che cambia sulla camicia mentre si configura: la camicia tinta del tessuto scelto e i pezzi sovrapposti (collo,
+   taschino, iniziali). Vedi vesti.js. Tutto sta nei punti del fotogramma 1800 x 1000, come l'immagine ferma, su ogni
+   livello della camicia. */
 
 /* --- sull'immagine ferma: lo stesso posto, la stessa misura e lo stesso zoom (guida.js) dell'immagine ferma, e quindi
    anche sopra la camicia nitida dello zoom. Sta sopra i livelli della camicia (z-index 1) e sotto le linee della guida. */
-.configura__vesti {
+.configura__vesti,
+.configura__velo {
   position: absolute;
   top: var(--su);
   left: min(0px, max(100vw - var(--largo), var(--posto) - var(--largo) * var(--camicia)));
@@ -40,6 +42,10 @@
 @media (prefers-reduced-motion: no-preference) {
   .configura__vesti {
     transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out;
+  }
+
+  .configura__velo {
+    transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease-out;
   }
 
   .configura__palco[data-girata] .configura__vesti {
@@ -94,18 +100,135 @@
   }
 }
 
-/* --- PROVA (?prova=tessuto): nella finestra dei tessuti, quelli che colorano la camicia hanno un segno */
-.campione--prova .campione__foto::before {
-  content: "Prova";
+
+/* --- la camicia tinta (una tela): sta sopra i pezzi bianchi e sotto le iniziali */
+.vesti__tinta {
+  display: block;
+}
+
+/* sulla camicia che dondola la tinta è ritagliata: i pezzi bianchi sotto di lei non devono spuntare dai bordi */
+.configura__addosso.vesti--tinta .vesti__posto--collo,
+.configura__addosso.vesti--tinta .vesti__posto--taschino {
+  visibility: hidden;
+}
+
+/* --- durante la guida alle misure (zoom e tratteggi: guida.js) la camicia è quella bianca di riferimento: la tinta
+   si scioglie, e torna quando la guida si chiude */
+.vesti__posto--stoffa {
+  transition: opacity 450ms ease-out;
+}
+
+.configura__palco[data-guida-aperta][data-guida-ferma] .vesti__posto--stoffa {
+  opacity: 0;
+}
+
+/* … e si fa più trasparente, «così i tratteggi si vedono meglio» (proprietario, 2026-11-26): sopra la camicia e i suoi
+   pezzi si stende la parete senza camicia. Quanto: --velo, messo da guida.js (tre misure da provare) */
+.configura__velo {
+  opacity: 0;
+}
+
+.configura__velo img {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 1;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: #fbf9f4;
-  color: #0f285e;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1.2;
+  max-width: none;
+}
+
+.configura__palco[data-guida-aperta][data-guida-ferma] .configura__velo {
+  opacity: var(--velo, 0.45);
+}
+
+/* --- la rotella «filo che cuce» (proprietario, 2026-11-26: «ruota caricamento come filo che cuce con scritto sotto
+   "Dacci un minuto, stiamo cucendo le ultime parti"»): al centro della camicia, quando una scelta fa aspettare */
+.configura__cucitura {
+  position: absolute;
+  top: 46%;
+  left: 39.2%;                         /* il centro della camicia nel fotogramma (706 su 1800) */
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: min(240px, 70vw);
+  padding: 18px 20px 16px;
+  border: 1px solid rgba(251, 249, 244, 0.2);
+  border-radius: 20px;
+  background: rgba(9, 23, 62, 0.78);
+  color: #fbf9f4;
+  text-align: center;
+  visibility: visible;                 /* anche quando il suo livello è nascosto dietro la camicia che dondola */
+  transform: translate(-50%, -50%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.configura__cucitura[hidden] {
+  display: none;
+}
+
+.configura__cucitura p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.cucitura__filo {
+  width: 48px;
+  height: 48px;
+  overflow: visible;
+}
+
+/* il filo: un giro di punti di cucitura; l'ago ci passa attraverso */
+.cucitura__giro {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 6.6 4.4;
+  transform-origin: 28px 28px;
+}
+
+.cucitura__ago path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.cucitura__ago circle {
+  fill: rgb(9, 23, 62);
+  stroke: currentColor;
+  stroke-width: 0.9;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .configura__cucitura {
+    animation: cucitura-compare 240ms ease-out both;
+  }
+
+  .cucitura__giro {
+    animation: cucitura-gira 2.4s linear infinite;
+  }
+
+  .cucitura__ago {
+    animation: cucitura-punto 0.8s ease-in-out infinite;
+  }
+}
+
+@keyframes cucitura-compare {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cucitura-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cucitura-punto {
+  50% {
+    transform: translate(-2px, 4.6px);
+  }
 }

@@ -35,5 +35,6 @@ createServer((req, res) => {
   // uno stile aggiunto da uno script) lo è anche qui, e i controlli in locale se ne accorgono (2026-11-26)
   const sicurezza = extname(file) === '.html' ? INTESTAZIONI : {};
   res.writeHead(stato, { 'Content-Type': tipi[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', ...sicurezza });
-  createReadStream(file).pipe(res);
+  // (un file che sparisce mentre lo si legge, perché il sito si sta ricostruendo, non deve fermare il server)
+  createReadStream(file).on('error', () => res.destroy()).pipe(res);
 }).listen(porta, '127.0.0.1', () => console.log(`anteprima su http://127.0.0.1:${porta}/`));

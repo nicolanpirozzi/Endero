@@ -171,6 +171,8 @@ if (existsSync(join(RADICE, 'public/camicia/nitide/nitide.json'))) {
 // ciò che cambia sulla camicia mentre si configura (src/configuratore/vesti.js): colli, taschino, iniziali e le parti
 // da evidenziare con lo zoom, calcolati da camicia/opzioni/
 camicia.opzioni = conVersione('opzioni/opzioni.json');
+// la trama per tingere la camicia del tessuto scelto e i campioni dei tessuti (camicia/opzioni/trame.py)
+camicia.trame = conVersione('opzioni/trame.json');
 if (!camicia.ferma.computer || !camicia.ferma.telefono) throw new Error('mancano public/camicia/ferma.webp e ferma-telefono.webp: si rifanno con camicia/film/monta.py');
 if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/, il configuratore mostra solo la camicia ferma');
 const testiConfiguratore = leggi('configuratore.json');

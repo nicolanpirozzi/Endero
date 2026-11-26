@@ -9,13 +9,11 @@ stoffa cade (che è la parte difficile, ed è già giusta nel file):
   button down      lo stesso, con i due bottoncini sulle punte che il file aveva e che avevamo tolto;
   mezzo francese   il davanti tagliato via di un angolo: le punte si aprono;
   francese         lo stesso, di più: punte larghe;
-  small            più basso tutto intorno: punte corte;
-  club             basso, con le punte arrotondate;
   diplomatico      restano solo due alette davanti, ripiegate dal listino;
   coreano          niente colletto: resta il listino.
 Il taglio segue una forma disegnata nel piano del cartamodello (shapely); la maglia si divide lungo quella linea.
 
-    <venv>/bin/python camicia/opzioni/colli.py <file .blend comprato> <cartella di lavoro> [--solo francese,club]
+    <venv>/bin/python camicia/opzioni/colli.py <file .blend comprato> <cartella di lavoro> [--solo francese,coreano]
                                                [--campioni 96] [--volte 4] [--rifai]
 
 Scrive nella cartella di lavoro collo-<nome>-<volte>x.png: il riquadro del collo (RIQUADRO, punti del fotogramma
@@ -33,13 +31,13 @@ sys.path.insert(0, os.path.join(QUI, '..', 'guide'))
 
 LARGA, ALTA = 1800, 1000
 RIQUADRO = (590, 180, 850, 390)      # x0, y0, x1, y1 nel fotogramma: colletto, listino e l'ombra che fanno sul petto
-COLLI = ('italiano', 'button_down', 'mezzo_francese', 'francese', 'small', 'club', 'diplomatico', 'coreano')
+# (small e club c'erano fino al 2026-11-26, quando il proprietario li ha tolti: «Elimina collo small e collo Club»;
+# i loro tagli stanno nella cronologia di git: abbassa 0.017 il primo, abbassa 0.012 e punte tonde 0.021 il secondo)
+COLLI = ('italiano', 'button_down', 'mezzo_francese', 'francese', 'diplomatico', 'coreano')
 # le misure dei tagli, in metri sul cartamodello (o gradi)
 TAGLI = {
     'mezzo_francese': {'apre': 24},
     'francese': {'apre': 46},
-    'small': {'abbassa': 0.017},
-    'club': {'abbassa': 0.012, 'tonda': 0.021},
     'diplomatico': {'aletta': (0.050, 0.034, 0.85)},     # base lungo il listino, altezza, dove cade la punta lungo la base
 }
 

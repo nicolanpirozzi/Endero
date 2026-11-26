@@ -24,7 +24,7 @@ QUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, QUI)
 RIQUADRO_COLLO = (590, 180, 850, 390)          # gli stessi di colli.py e parti.py (qui Blender non si carica)
 RIQUADRO_TASCHINO = (740, 370, 910, 560)
-COLLI = ('italiano', 'button_down', 'mezzo_francese', 'francese', 'small', 'club', 'diplomatico', 'coreano')
+COLLI = ('italiano', 'button_down', 'mezzo_francese', 'francese', 'diplomatico', 'coreano')
 COLORI = {'colletto': (255, 0, 0), 'listino': (0, 255, 0), 'polsino_a': (0, 0, 255), 'polsino_b': (255, 255, 0),
           'bottoni': (255, 0, 255), 'taschino': (0, 255, 255), 'cannoncino': (255, 128, 0)}
 QUALITA = 84
@@ -243,6 +243,12 @@ def main():
     o['parti']['collo'] = o['colli']['italiano']['parte']
     o['iniziali']['collo'] = o['colli']['italiano']['iniziali']
     o['parti']['iniziali_collo'] = o['colli']['italiano']['parte_iniziali']
+
+    # Dal 2026-11-26 nel passo Camicia non ci sono più zoom né contorni (proprietario: «non ci sono zoom e
+    # evidenziamenti»): i contorni delle parti restano calcolati qui sopra, ma non vanno più nel file del sito
+    o.pop('parti')
+    for voce in o['colli'].values():
+        voce.pop('parte', None); voce.pop('parte_iniziali', None)
 
     impronta = hashlib.sha256()
     for f in sorted(os.listdir(uscita)):

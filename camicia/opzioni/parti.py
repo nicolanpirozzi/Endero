@@ -2,7 +2,7 @@
 «Se il taschino è si deve comparire un taschino anche nel 3d. Si evidenzia la parte nel 3d mentre si seleziona con zoom»).
 
     <venv>/bin/python camicia/opzioni/parti.py taschino <file .blend comprato> <cartella di lavoro> [--campioni 96] [--volte 4]
-    <venv>/bin/python camicia/opzioni/parti.py mappa <file .blend comprato> <cartella di lavoro> [--solo italiano,club]
+    <venv>/bin/python camicia/opzioni/parti.py mappa <file .blend comprato> <cartella di lavoro> [--solo italiano,coreano]
     <venv>/bin/python camicia/opzioni/parti.py trama <file .blend comprato> <cartella di lavoro>     (prova del tessuto sulla camicia)
 
 `taschino` calcola taschino-<volte>x.png: il riquadro del petto con il taschino (un pezzo di stoffa ritagliato dal
