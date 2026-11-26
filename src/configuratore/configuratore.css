@@ -675,6 +675,10 @@
     transition: top 320ms cubic-bezier(0.22, 1, 0.36, 1);
     animation: lente-compare 260ms ease-out both;
   }
+
+  .misura-lente--fissa {
+    transition: top 320ms cubic-bezier(0.22, 1, 0.36, 1), left 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }
 
 @keyframes lente-compare {

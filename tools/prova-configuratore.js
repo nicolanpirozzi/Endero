@@ -427,6 +427,8 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await page.locator('.configura__consenso label').click({ position: { x: 10, y: 10 } });
     // pagamento non attivo
     await avanti(page);
+    // (la risposta finta arriva quando arriva: si aspetta la frase, fino a 3 secondi)
+    await page.waitForFunction(() => document.querySelector('[data-esito]').textContent.trim(), null, { timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(200);
     a = await page.evaluate(() => document.querySelector('[data-esito]').textContent);
     controlla(`${formato}: invia i dati in JSON (tessuto, misure, spedizione, consenso)`, inviato && inviato.tessuto && inviato.giro_collo === '41' && inviato.spedizione === 'cinque' && inviato.privacy === 'si', JSON.stringify(inviato).slice(0, 200));

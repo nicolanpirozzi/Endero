@@ -664,8 +664,9 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   for (const s of Object.values(sezioni)) s.hidden = true;
   form.classList.add('configura__scheda--a-passi');
   aggiorna();
-  vai(primo, { porta: false, storia: false });
+  // (il primo passo nella cronologia, prima di aprirlo: se è Misure, la finestra che si apre aggiunge la sua voce)
   try { history.replaceState({ passo: primo }, ''); } catch { /* si va avanti senza */ }
+  vai(primo, { porta: false, storia: false });
   if (esitoOrdine === 'annullato' && primo === 'pagamento') mostraEsito(S.pagamento.annullato);
   pulisciIndirizzo();
   // la camicia com'è stata scelta (anche dopo una ricarica): vesti.js ascolta da subito

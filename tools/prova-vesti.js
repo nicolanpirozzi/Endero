@@ -338,7 +338,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       const g = c.querySelector('.misura-lente__vesti'), im = g?.querySelector('image');
       const rc = c.getBoundingClientRect(), rm = campo.getBoundingClientRect();
       const rs = document.querySelector('#finto-collo-menu').getBoundingClientRect();
-      return { sopra: getComputedStyle(c).position === 'fixed' && (rc.bottom <= rs.top + 1 || rc.top >= rs.bottom - 1), dentro: rc.left >= -0.5 && rc.right <= innerWidth + 0.5 && rc.top >= 0 && rc.bottom <= innerHeight, immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length };
+      return { sopra: getComputedStyle(c).position === 'fixed' && !(rc.right > rs.left + 1 && rc.left < rs.right - 1 && rc.bottom > rs.top + 1 && rc.top < rs.bottom - 1), dentro: rc.left >= -0.5 && rc.right <= innerWidth + 0.5 && rc.top >= 0 && rc.bottom <= innerHeight, immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length };
     });
     const [x0, y0, x1, y1] = D.colli.francese.riquadro;
     controlla('sul telefono il riquadro con lo zoom sta fermo sullo schermo, non copre il menu del collo, e ha il contorno', !l.manca && l.sopra && l.dentro && l.tratti > 0, JSON.stringify({ sopra: l.sopra, dentro: l.dentro, tratti: l.tratti }));

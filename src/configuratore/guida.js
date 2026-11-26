@@ -483,17 +483,23 @@ export function guida(palco, camicia) {
     carta.style.top = `${Math.round(rm.top - y0 - alto - 10)}px`;
   }
   /** Il riquadro fermo sullo schermo (per le parti): in alto, sotto la testata; se lì coprirebbe il comando toccato,
-   *  in basso, sopra la barra con i tasti. */
+   *  in basso, sopra la barra con i tasti; dove lo schermo è basso e largo (il telefono di traverso) e non c'è posto
+   *  né sopra né sotto, di lato. */
   let toccato = null;
   function posaFissa(m, alto, largo, su, giu) {
     const vv = window.visualViewport;
     const fuoco = m.contains(document.activeElement) ? document.activeElement : null;
     const comando = (m.contains(toccato) ? toccato.closest('label, select, input, button') : null) || fuoco || m.querySelector('input:checked, select, button') || m;
     const r = comando.getBoundingClientRect();
-    const coperto = r.bottom > su - 6 && r.top < su + alto + 10;
-    const sotto = r.bottom > giu - alto - 10 && r.top < giu + 6;
-    carta.style.left = `${Math.round((vv ? vv.offsetLeft : 0) + ((vv ? vv.width : innerWidth) - largo) / 2)}px`;
-    carta.style.top = `${Math.round(coperto && !sotto ? giu - alto : su)}px`;
+    const x0 = vv ? vv.offsetLeft : 0, tutto = vv ? vv.width : innerWidth;
+    const centro = x0 + (tutto - largo) / 2, destra = x0 + tutto - largo - 16, sinistra = x0 + 16;
+    const copre = ([x, y]) => r.right > x - 8 && r.left < x + largo + 8 && r.bottom > y - 8 && r.top < y + alto + 8;
+    // (di lato, prima dalla parte opposta al comando)
+    const lati = r.left + r.width / 2 < x0 + tutto / 2 ? [destra, sinistra] : [sinistra, destra];
+    const posti = [[centro, su], [centro, giu - alto], ...lati.map((x) => [x, su]), ...lati.map((x) => [x, giu - alto])];
+    const [x, y] = posti.find((p) => !copre(p)) || posti[0];
+    carta.style.left = `${Math.round(x)}px`;
+    carta.style.top = `${Math.round(y)}px`;
   }
   /** Il riquadro e il campo in vista insieme, anche con la tastiera aperta. Il riquadro si misura dove
    *  arriva (dal campo), non dove sta ancora scivolando. */
