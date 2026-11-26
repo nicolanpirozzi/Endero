@@ -29,9 +29,6 @@ const id = (nome) => `campo-${nome}`;
 const riga = (nome) => `<p class="campo__errore" id="${id(nome)}-errore" aria-live="polite"></p>`;
 const descritto = (nome, altro = '') => ` aria-describedby="${[altro, `${id(nome)}-errore`].filter(Boolean).join(' ')}"`;
 
-/** Il nome di un tessuto nell'elenco, per la ricerca: minuscolo e senza accenti. */
-const perCercare = (s) => String(s).toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
-
 /** Il <select> dei tessuti per chi non ha lo script: un gruppo per tipo. */
 function elencoTessuti(nome, tessuti, { obbligatorio = false } = {}) {
   const gruppi = (tessuti.categorie || []).map((c) => {
@@ -227,7 +224,8 @@ function passi(S, tessuti, turnstile) {
   ].join('\n  ');
 }
 
-/** La finestra dei tessuti: una sola per tutti i campi «tessuto», con i campioni scritti qui una volta. */
+/** La finestra dei tessuti: una sola per tutti i campi «tessuto», con i campioni scritti qui una volta (con 450 tessuti
+ *  ogni byte conta: la spunta della scelta la disegna il CSS, il testo per la ricerca lo prepara lo script). */
 function finestraTessuti(F, tessuti) {
   const elenco = tessuti.tessuti || [];
   const filtro = (nome, voci, gruppo, { pallini = false } = {}) => `<div class="filtro" role="radiogroup" aria-label="${esc(gruppo)}">
@@ -237,7 +235,6 @@ function finestraTessuti(F, tessuti) {
             ${voci.map((v) => `<label class="chip-scelta"><input type="radio" name="${nome}" value="${esc(v.id)}"><span>${pallini ? `<i class="chip-scelta__pallino" style="--tinta: ${esc(v.tinta)}"></i>` : ''}${esc(v.nome)}</span></label>`).join('\n            ')}
           </div>
         </div>`;
-  const nomi = Object.fromEntries((tessuti.categorie || []).map((c) => [c.id, c.nome]));
   return `<dialog class="finestra finestra--grande finestra--tessuti" id="finestra-tessuti" aria-labelledby="finestra-tessuti-titolo" data-lenis-prevent>
   <form method="dialog" class="vetro finestra__corpo raccolta" data-raccolta="tessuto">
     <div class="raccolta__testa">
@@ -262,7 +259,7 @@ function finestraTessuti(F, tessuti) {
     </div>
     <div class="raccolta__scorre">
       <div class="raccolta__griglia raccolta__griglia--tessuti" role="listbox" aria-labelledby="finestra-tessuti-titolo" data-griglia>
-        ${elenco.map((x) => `<div class="campione" role="option" aria-selected="false" tabindex="-1" data-id="${esc(x.id)}" data-tipo="${esc(x.categoria)}" data-colore="${esc(x.colore)}" data-disegno="${esc(x.disegno)}" data-cerca="${esc(perCercare(`${x.nome} ${nomi[x.categoria] || ''}`))}"><span class="campione__foto"><img src="/camicia/tessuti/${esc(x.id)}.webp" alt="${esc(x.nome)}" width="320" height="214" loading="lazy" decoding="async" draggable="false"></span><span class="campione__nome" aria-hidden="true">${esc(x.nome)}</span>${ICONA.spunta.replace('class="icona"', 'class="icona campione__spunta"')}</div>`).join('\n        ')}
+        ${elenco.map((x) => `<div class="campione" role="option" aria-selected="false" tabindex="-1" data-id="${esc(x.id)}" data-tipo="${esc(x.categoria)}" data-colore="${esc(x.colore)}" data-disegno="${esc(x.disegno)}"><span class="campione__foto"><img src="/camicia/tessuti/${esc(x.id)}.webp" alt="${esc(x.nome)}" width="320" height="214" loading="lazy" decoding="async" draggable="false"></span><span class="campione__nome" aria-hidden="true">${esc(x.nome)}</span></div>`).join('\n        ')}
       </div>
       <p class="raccolta__nessuno" data-nessuno${elenco.length ? ' hidden' : ''}>${esc(F.nessuno)}</p>
     </div>

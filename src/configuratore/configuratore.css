@@ -2120,7 +2120,7 @@ html:not(.js) .configura__fondo {
   -webkit-line-clamp: 2;
 }
 
-.campione__spunta,
+.campione::after,
 .tinta .icona {
   position: absolute;
   width: 24px;
@@ -2135,9 +2135,13 @@ html:not(.js) .configura__fondo {
   transition: opacity 160ms ease-out, transform 220ms var(--morbido);
 }
 
-.campione__spunta {
+/* la spunta del campione scelto: un cerchio chiaro con il segno blu (disegnato qui: nell'HTML i campioni sono centinaia) */
+.campione::after {
+  content: "";
   top: 12px;
   right: 12px;
+  padding: 0;
+  background: var(--filo) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%230f285e' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
 }
 
 .campione[aria-selected="true"],
@@ -2146,7 +2150,7 @@ html:not(.js) .configura__fondo {
   box-shadow: inset 0 0 0 2px var(--filo);
 }
 
-.campione[aria-selected="true"] .campione__spunta,
+.campione[aria-selected="true"]::after,
 .tinta[aria-selected="true"] .icona {
   opacity: 1;
   transform: none;
@@ -2392,7 +2396,7 @@ html:not(.js) .configura__fondo {
   .modo,
   .modo input,
   .campione,
-  .campione__spunta,
+  .campione::after,
   .tinta .icona {
     transition: none;
   }
@@ -2402,4 +2406,26 @@ html:not(.js) .configura__fondo {
    la testata, non dietro */
 .configura__scheda :is(input, select, button, textarea, a) {
   scroll-margin: 96px 0 130px;
+}
+
+/* con il mouse i filtri dei tessuti stanno più stretti: con tredici tipi e undici colori lasciano più posto ai campioni */
+@media (hover: hover) and (pointer: fine) and (min-width: 701px) {
+  .raccolta__filtri {
+    gap: 6px;
+  }
+
+  .chip-scelta span {
+    height: 30px;
+    padding: 0 12px;
+  }
+
+  .filtro__nome {
+    padding-top: 7px;
+  }
+}
+
+@media (max-width: 700px) {
+  .raccolta__scelto:not(.raccolta__scelto--fatto) {
+    font-size: 0.8125rem;
+  }
 }

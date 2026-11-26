@@ -595,6 +595,9 @@ function raccolta(dlg, scegli) {
   if (!dlg || typeof dlg.showModal !== 'function') return;
   const griglia = dlg.querySelector('[data-griglia]');
   const voci = [...griglia.querySelectorAll('[role="option"]')];
+  // per la ricerca: il nome e il tipo, minuscoli e senza accenti (i nomi dei tipi stanno nei filtri)
+  const tipi = Object.fromEntries([...dlg.querySelectorAll('input[name="tipo"]')].map((r) => [r.value, r.nextElementSibling.textContent]));
+  for (const v of voci) v.dataset.cerca = perCercare(`${v.querySelector('img')?.alt || ''} ${tipi[v.dataset.tipo] || ''}`);
   const per = dlg.querySelector('[data-per]');
   const scelto = dlg.querySelector('[data-scelto]');
   const conferma = dlg.querySelector('[data-conferma]');

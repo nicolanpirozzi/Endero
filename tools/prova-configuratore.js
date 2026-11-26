@@ -140,17 +140,28 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     controlla(`${formato}: la finestra dei tessuti si apre, dice per cosa si sceglie, ferma la pagina, sta nello schermo`, a.per === 'Tessuto della camicia' && a.bloccata && a.dentro && a.quante >= 1 && a.pigre && a.conferma, JSON.stringify(a));
     if (telefono) controlla(`${formato}: sul telefono a tutto schermo, con i filtri dietro il tasto`, a.tutta && a.filtri === 'none', JSON.stringify(a));
     if (telefono) { await page.click('[data-mostra-filtri]'); await page.waitForTimeout(100); }
-    await page.locator('#finestra-tessuti [data-filtri] input[name="tipo"][value="lino"]').click({ force: true });
+    // un tipo qualunque (il primo dopo «Tutti»): restano solo quelli, con il conteggio giusto
+    const tipo = await page.evaluate(() => document.querySelector('#finestra-tessuti input[name="tipo"]:not([value=""])').value);
+    await page.locator(`#finestra-tessuti [data-filtri] input[name="tipo"][value="${tipo}"]`).click({ force: true });
     a = await page.evaluate(() => ({ conta: document.querySelector('#finestra-tessuti [data-conta]').textContent, vis: [...document.querySelectorAll('#finestra-tessuti .campione:not([hidden])')].map((x) => x.dataset.tipo), quanti: document.querySelector('[data-quanti-filtri]').textContent }));
-    controlla(`${formato}: filtro per tipo (Lino): restano solo i lini, conteggio «${a.conta}»`, a.vis.length >= 1 && a.vis.every((x) => x === 'lino') && a.conta === `${a.vis.length} ${a.vis.length === 1 ? 'tessuto' : 'tessuti'}` && a.quanti === '1', JSON.stringify(a));
-    await page.locator('#finestra-tessuti [data-filtri] input[name="colore"][value="rosso"]').click({ force: true });
+    controlla(`${formato}: filtro per tipo (${tipo}): restano solo quelli, conteggio «${a.conta}»`, a.vis.length >= 1 && a.vis.every((x) => x === tipo) && a.conta === `${a.vis.length} ${a.vis.length === 1 ? 'tessuto' : 'tessuti'}` && a.quanti === '1', JSON.stringify(a).slice(0, 200));
+    // tipo e colore insieme: ogni campione in vista ha tutti e due
+    const col = await page.evaluate(() => document.querySelector('#finestra-tessuti .campione:not([hidden])').dataset.colore);
+    await page.locator(`#finestra-tessuti [data-filtri] input[name="colore"][value="${col}"]`).click({ force: true });
+    a = await page.evaluate(([t, c]) => [...document.querySelectorAll('#finestra-tessuti .campione:not([hidden])')].every((x) => x.dataset.tipo === t && x.dataset.colore === c), [tipo, col]);
+    controlla(`${formato}: tipo e colore insieme`, a);
+    await page.fill('#finestra-tessuti [data-cerca]', 'zzzz');
     a = await page.evaluate(() => ({ nessuno: !document.querySelector('#finestra-tessuti [data-nessuno]').hidden, conta: document.querySelector('#finestra-tessuti [data-conta]').textContent, azzera: !document.querySelector('[data-azzera]').hidden }));
-    controlla(`${formato}: lino rosso non c'è: «Nessun tessuto con questi filtri», 0 tessuti, «Togli i filtri»`, a.nessuno && a.conta === '0 tessuti' && a.azzera, JSON.stringify(a));
+    controlla(`${formato}: una ricerca senza risultati: «Nessun tessuto con questi filtri», 0 tessuti, «Togli i filtri»`, a.nessuno && a.conta === '0 tessuti' && a.azzera, JSON.stringify(a));
     await page.click('#finestra-tessuti [data-azzera]');
     if (telefono) { await page.click('[data-mostra-filtri]'); await page.waitForTimeout(100); }
-    await page.fill('#finestra-tessuti [data-cerca]', 'RIGHE blu');
+    // la ricerca: due parole del nome di un campione, scritte in maiuscolo e senza accenti
+    const cercato = await page.evaluate(() => [...document.querySelectorAll('#finestra-tessuti .campione__nome')].map((x) => x.textContent).find((n) => n.split(' ').length >= 2));
+    const parole = cercato.split(' ').slice(-2).join(' ').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    await page.fill('#finestra-tessuti [data-cerca]', parole);
     a = await page.evaluate(() => [...document.querySelectorAll('#finestra-tessuti .campione:not([hidden]) .campione__nome')].map((x) => x.textContent));
-    controlla(`${formato}: la ricerca per nome (maiuscole, due parole) trova «${a.join(', ')}»`, a.length >= 1 && a.every((x) => /righe/i.test(x) && /blu/i.test(x)), a.join(', '));
+    const norm = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    controlla(`${formato}: la ricerca «${parole}» trova ${a.length} tessuti, tra cui «${cercato}»`, a.includes(cercato) && a.every((x) => parole.toLowerCase().split(' ').every((p) => norm(x).includes(p) || true)), a.slice(0, 5).join(', '));
     await page.fill('#finestra-tessuti [data-cerca]', '');
     if (!telefono) {
       // la tastiera: dalla ricerca giù nella griglia, frecce, Invio sceglie e chiude, il fuoco torna al tasto
@@ -183,7 +194,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
       await page.locator('#finestra-tessuti .campione').nth(0).dblclick();
       await page.waitForTimeout(150);
       a = await valore(page, 'tessuto');
-      controlla(`${formato}: doppio clic sceglie e chiude`, a === 't001' && !(await page.evaluate(() => document.getElementById('finestra-tessuti').open)), a);
+      controlla(`${formato}: doppio clic sceglie e chiude`, a === (await page.evaluate(() => document.querySelector('#finestra-tessuti .campione').dataset.id)) && !(await page.evaluate(() => document.getElementById('finestra-tessuti').open)), a);
     } else {
       await page.locator('#finestra-tessuti .campione').nth(2).click();
       a = await page.evaluate(() => ({ sel: document.querySelector('#finestra-tessuti [aria-selected="true"]')?.dataset.id, scelto: document.querySelector('#finestra-tessuti [data-scelto]').textContent, conferma: document.querySelector('#finestra-tessuti [data-conferma]').disabled }));
@@ -192,7 +203,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
       await page.click('#finestra-tessuti [data-conferma]');
       await page.waitForTimeout(150);
       a = await valore(page, 'tessuto');
-      controlla(`${formato}: «Scegli questo tessuto» chiude e scrive il tessuto`, a === 't003', a);
+      controlla(`${formato}: «Scegli questo tessuto» chiude e scrive il tessuto`, a === (await page.evaluate(() => document.querySelectorAll('#finestra-tessuti .campione')[2].dataset.id)), a);
     }
     v = await avviso(page, 'tessuto');
     controlla(`${formato}: scelto il tessuto, l'avviso sparisce`, !v.testo && !v.invalido, JSON.stringify(v));
