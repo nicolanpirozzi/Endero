@@ -575,3 +575,24 @@ Parole del proprietario (25 novembre, sera): «Dividi così la configurazione a 
 **Pagamento e ordine.** Riepilogo, consenso all'informativa, «Vai al pagamento». Decisioni del 14 novembre: Stripe, importo intero, pagina di pagamento di Stripe. Il Worker (`worker/ordine.mjs`) ricontrolla tutto, rifà il prezzo, calcola la taglia (`worker/taglie.mjs`), salva l'ordine e apre il pagamento; a pagamento fatto manda l'ordine per email a Endero e a Ennio (con il nome vero di ogni tessuto) e la conferma al cliente. Finché non ci sono le chiavi di Stripe il pagamento è spento e la pagina lo dice. Prima di accenderlo: informativa privacy aggiornata e riletta dal consulente (punto 6), indirizzo email di Ennio nei segreti del Worker.
 
 **Misure.** Come al punto 12. La finestra «Come prendere le misure» si apre entrando nel passo delle misure, non più all'apertura della pagina **(da confermare)**.
+
+**Com'è fatto e come si rifà** (notte tra il 25 e il 26 novembre).
+
+*I colli.* Il colletto della camicia comprata è una striscia di stoffa: il suo cartamodello sta nelle coordinate UV del file. Gli altri colli si ottengono ritagliando quel cartamodello (`camicia/opzioni/colli.py`), come farebbe un sarto con le forbici, senza toccare come la stoffa cade: mezzo francese e francese tolgono un angolo sul davanti (24 e 46 gradi), small abbassa il colletto tutto intorno (1,7 cm), club lo abbassa e arrotonda le punte, diplomatico lascia due alette, coreano toglie il colletto e lascia il listino, button down rimette i due bottoncini che il file aveva. L'italiano è il colletto del file, cioè l'immagine già approvata. Ogni collo si calcola con la stessa scena e la stessa luce dell'immagine ferma, solo nel riquadro del collo, a grandezza quadrupla (4 minuti l'uno); `monta.py` tiene di ogni calcolo solo i punti diversi dalla camicia di base, con i bordi sfumati: sovrapposto, non si vedono giunte. Tutti e sette i pezzi pesano 250 KB.
+
+*Il taschino* (`camicia/opzioni/parti.py taschino`) è un pezzo del davanti della camicia ritagliato a forma di taschino e sollevato di un millimetro e mezzo, con l'orlo in cima: ha le stesse pieghe della stoffa sotto. Sta sul petto sinistro di chi la indossa.
+
+*Contorni e iniziali* (`parti.py mappa`, poi `monta.py`). Per ogni collo si calcola una mappa in cui ogni parte ha un colore suo (colletto, listino, polsini, bottoni, taschino); da lì vengono i contorni tratteggiati, i riquadri dello zoom e i punti in cui si ricamano le iniziali (lettere alte 7 millimetri): sul polsino sinistro di chi la indossa, sul petto dove sta il taschino, sulla falda del colletto accanto al bottone (sul listino per coreano e diplomatico). Ogni collo ha il suo contorno e il suo punto per le iniziali (`colli[id].parte`, `.iniziali`, `.parte_iniziali` in `opzioni.json`).
+
+```
+PY=<venv con Blender>/bin/python; B=<file .blend comprato>; L=<cartella di lavoro>
+$PY camicia/opzioni/colli.py $B $L                # gli otto colli, circa 40 minuti (--solo club --rifai per uno)
+$PY camicia/opzioni/parti.py taschino $B $L       # il petto con e senza taschino, 10 minuti
+$PY camicia/opzioni/parti.py mappa $B $L          # le mappe delle parti, 2 minuti per collo
+$PY -I camicia/opzioni/monta.py $L public/camicia/opzioni
+node tools/prova-vesti.js                         # con il sito in locale sulla porta 8781
+```
+
+Limiti noti: vista da dietro (misure di spalla e lunghezza dietro) la camicia mostra sempre il colletto di base; l'ombra sulla parete non cambia con il collo (non si nota); il tessuto scelto non colora la camicia.
+
+*I tessuti* (`tools/tessuti.py`, lavoro fuori dal repository). Le 32 foto sono state raddrizzate e riportate a carta bianca (`raddrizza`), poi per ogni cartella un agente ha trovato i campioni e letto i codici, e un secondo agente li ha riletti da capo senza guardare la prima lettura: 502 campioni, 3 codici rimasti incerti (segnati nel registro). 19 bianchi delle due cartelle «bianche» sono gli stessi di altre cartelle e compaiono una volta sola: 483 tessuti in 13 categorie. I nomi inventati non contengono parole dei nomi veri. Il registro per Endero (PDF, 77 pagine: per ogni campione il nome sul sito, l'articolo e il codice letti, la posizione nella cartella) si manda al proprietario e non sta nel repository; i nomi veri sono nell'archivio KV `endero-domande`, voce `riservato/tessuti`, caricati il 26 novembre.
