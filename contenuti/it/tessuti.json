@@ -1,13 +1,9 @@
 {
- "_nota": "SEGNAPOSTO: dodici tessuti finti per costruire la pagina. Quelli veri (circa 450, dalle cartelle colori della cartella Drive «Tessuto») li scrive tools/tessuti.py: stesso formato. 'nome' è inventato da noi (tipo di tessuto + colore, proprietario 2026-11-25); il nome vero della cartella colori NON sta nel repository: lo conosce solo il Worker (configurazione riservata) e compare nell'email dell'ordine. Immagine: public/camicia/tessuti/<id>.webp, 320 x 214.",
+ "_nota": "Tessuti tra cui si sceglie nel configuratore: i campioni delle cartelle colori fotografate da Endero (2026-11-25), un ritaglio per tessuto. 'nome' è inventato da noi, tipo di tessuto + colore (proprietario 2026-11-25); il nome vero del campione NON sta nel repository: lo conosce solo il Worker (configurazione riservata) e compare nell'email dell'ordine. Ordine: per categoria, poi colore dal chiaro allo scuro, poi tinta unita prima dei disegni. Immagine: public/camicia/tessuti/<id>.webp, 320 x 214.",
  "categorie": [
   {
    "id": "popeline",
    "nome": "Popeline"
-  },
-  {
-   "id": "lino",
-   "nome": "Lino"
   },
   {
    "id": "oxford",
@@ -18,12 +14,44 @@
    "nome": "Twill"
   },
   {
-   "id": "cotone",
-   "nome": "Cotone"
+   "id": "filafil",
+   "nome": "Fil-à-fil"
+  },
+  {
+   "id": "spina",
+   "nome": "Spina di pesce"
+  },
+  {
+   "id": "pique",
+   "nome": "Piqué"
+  },
+  {
+   "id": "jacquard",
+   "nome": "Jacquard"
+  },
+  {
+   "id": "stretch",
+   "nome": "Cotone stretch"
+  },
+  {
+   "id": "raso",
+   "nome": "Raso"
+  },
+  {
+   "id": "lino",
+   "nome": "Lino"
+  },
+  {
+   "id": "linocotone",
+   "nome": "Lino e cotone"
+  },
+  {
+   "id": "seersucker",
+   "nome": "Seersucker"
   },
   {
    "id": "denim",
-   "nome": "Denim"
+   "nome": "Denim e chambray"
   }
  ],
  "colori": [
@@ -33,19 +61,9 @@
    "tinta": "#f4f4f0"
   },
   {
-   "id": "azzurro",
-   "nome": "Azzurri",
-   "tinta": "#8fb4e0"
-  },
-  {
-   "id": "blu",
-   "nome": "Blu",
-   "tinta": "#1f3f9a"
-  },
-  {
-   "id": "beige",
-   "nome": "Beige e marroni",
-   "tinta": "#c9b08a"
+   "id": "giallo",
+   "nome": "Gialli e arancio",
+   "tinta": "#e8b93a"
   },
   {
    "id": "rosa",
@@ -53,9 +71,19 @@
    "tinta": "#eab0c0"
   },
   {
-   "id": "rosso",
-   "nome": "Rossi",
-   "tinta": "#c8202b"
+   "id": "azzurro",
+   "nome": "Azzurri",
+   "tinta": "#8fb4e0"
+  },
+  {
+   "id": "viola",
+   "nome": "Viola e lilla",
+   "tinta": "#9a7fc0"
+  },
+  {
+   "id": "beige",
+   "nome": "Beige e marroni",
+   "tinta": "#b8946a"
   },
   {
    "id": "verde",
@@ -66,6 +94,16 @@
    "id": "grigio",
    "nome": "Grigi",
    "tinta": "#9a9da3"
+  },
+  {
+   "id": "rosso",
+   "nome": "Rossi e bordeaux",
+   "tinta": "#a8202b"
+  },
+  {
+   "id": "blu",
+   "nome": "Blu",
+   "tinta": "#1f3f9a"
   },
   {
    "id": "nero",
@@ -93,87 +131,3384 @@
  ],
  "tessuti": [
   {
-   "id": "t001",
+   "id": "t3201",
+   "nome": "Popeline fine bianco",
+   "categoria": "popeline",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0501",
    "nome": "Popeline bianco",
    "categoria": "popeline",
    "colore": "bianco",
    "disegno": "unito"
   },
   {
-   "id": "t002",
+   "id": "t0809",
+   "nome": "Popeline finissimo bianco",
+   "categoria": "popeline",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2602",
+   "nome": "Popeline righe fucsia e blu",
+   "categoria": "popeline",
+   "colore": "rosa",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1815",
+   "nome": "Popeline celeste operato",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0502",
    "nome": "Popeline celeste",
    "categoria": "popeline",
    "colore": "azzurro",
    "disegno": "unito"
   },
   {
-   "id": "t003",
-   "nome": "Lino sabbia",
-   "categoria": "lino",
+   "id": "t0810",
+   "nome": "Popeline finissimo celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0503",
+   "nome": "Popeline azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0504",
+   "nome": "Popeline azzurro intenso",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1813",
+   "nome": "Popeline righine cielo",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1809",
+   "nome": "Popeline righe rade azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2811",
+   "nome": "Popeline filetti azzurri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2805",
+   "nome": "Popeline righe a gruppi celesti",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1801",
+   "nome": "Popeline righe sottili azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2801",
+   "nome": "Popeline righine scure su celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2815",
+   "nome": "Popeline a righe celesti",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2717",
+   "nome": "Popeline righe sfumate azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1908",
+   "nome": "Popeline righe larghe azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1804",
+   "nome": "Popeline bastoncino azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3004",
+   "nome": "Popeline bastoncino fine azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1905",
+   "nome": "Popeline a righe azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2803",
+   "nome": "Popeline righe fitte azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1911",
+   "nome": "Popeline millerighe celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1901",
+   "nome": "Popeline righine celesti",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2916",
+   "nome": "Popeline bande azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2704",
+   "nome": "Popeline righe azzurre e blu",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3001",
+   "nome": "Popeline righine fitte azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2603",
+   "nome": "Popeline righe turchese e blu",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2911",
+   "nome": "Popeline bastoncino celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3011",
+   "nome": "Popeline righe medie azzurre",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2611",
+   "nome": "Popeline righe cielo e notte",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2710",
+   "nome": "Popeline righe azzurre e notte",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2604",
+   "nome": "Popeline bastone a toni azzurri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1816",
+   "nome": "Popeline millerighe avio",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1811",
+   "nome": "Popeline celeste gessato",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2808",
+   "nome": "Popeline azzurro filettato",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2817",
+   "nome": "Popeline bastone azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2614",
+   "nome": "Popeline azzurro filetti neri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2813",
+   "nome": "Popeline azzurro gessato",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2907",
+   "nome": "Popeline finestrato azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1807",
+   "nome": "Popeline finestrato celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1817",
+   "nome": "Popeline microquadretto celeste",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2904",
+   "nome": "Popeline quadri azzurri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2909",
+   "nome": "Popeline quadrettini azzurri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1912",
+   "nome": "Popeline microquadretto azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2901",
+   "nome": "Popeline vichy azzurro",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1104",
+   "nome": "Popeline a cavallini azzurri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1101",
+   "nome": "Popeline a nastrini azzurri",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1110",
+   "nome": "Popeline vichy azzurro fiorito",
+   "categoria": "popeline",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0506",
+   "nome": "Popeline lilla",
+   "categoria": "popeline",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0507",
+   "nome": "Popeline melanzana",
+   "categoria": "popeline",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0513",
+   "nome": "Popeline marrone",
+   "categoria": "popeline",
    "colore": "beige",
    "disegno": "unito"
   },
   {
-   "id": "t004",
-   "nome": "Lino blu notte",
-   "categoria": "lino",
+   "id": "t0514",
+   "nome": "Popeline testa di moro",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2708",
+   "nome": "Popeline righe rade marroni",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2718",
+   "nome": "Popeline righe sfumate sabbia",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2712",
+   "nome": "Popeline righe sabbia e blu",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2715",
+   "nome": "Popeline righe marroni e blu",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2703",
+   "nome": "Popeline righe caffè e blu",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3015",
+   "nome": "Popeline righe medie marroni",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3009",
+   "nome": "Popeline righe strette marroni",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2820",
+   "nome": "Popeline bastone marrone",
+   "categoria": "popeline",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2914",
+   "nome": "Popeline bastoncino verde bosco",
+   "categoria": "popeline",
+   "colore": "verde",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0508",
+   "nome": "Popeline grigio perla",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0509",
+   "nome": "Popeline tortora",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0510",
+   "nome": "Popeline antracite",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2719",
+   "nome": "Popeline righe sfumate grigie",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3014",
+   "nome": "Popeline righe medie grigie",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3007",
+   "nome": "Popeline righe strette grigie",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2711",
+   "nome": "Popeline righe grigie e royal",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1803",
+   "nome": "Popeline righe sottili antracite",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1109",
+   "nome": "Popeline ardesia a pois",
+   "categoria": "popeline",
+   "colore": "grigio",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0511",
+   "nome": "Popeline rosso",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0512",
+   "nome": "Popeline bordeaux",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2707",
+   "nome": "Popeline righe rade rosse e blu",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2706",
+   "nome": "Popeline righe rosse e blu",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2702",
+   "nome": "Popeline righe rosse e nere",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2716",
+   "nome": "Popeline righe bordeaux",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2920",
+   "nome": "Popeline bande rosse",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3016",
+   "nome": "Popeline righe medie rosse",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2915",
+   "nome": "Popeline bastoncino rosso",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2606",
+   "nome": "Popeline bastone rosso e blu",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1904",
+   "nome": "Popeline righine rosso arancio",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2609",
+   "nome": "Popeline righe bordeaux e grigie",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3008",
+   "nome": "Popeline righe strette rosse",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2610",
+   "nome": "Popeline righe rosse e grigie",
+   "categoria": "popeline",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0505",
+   "nome": "Popeline blu royal",
+   "categoria": "popeline",
    "colore": "blu",
    "disegno": "unito"
   },
   {
-   "id": "t005",
-   "nome": "Oxford azzurro",
+   "id": "t0811",
+   "nome": "Popeline finissimo navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0515",
+   "nome": "Popeline blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2812",
+   "nome": "Popeline filetti blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1810",
+   "nome": "Popeline righe rade navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1814",
+   "nome": "Popeline millerighe blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2802",
+   "nome": "Popeline filetti fitti blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2601",
+   "nome": "Popeline filetti notte e cielo",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2713",
+   "nome": "Popeline righe blu e celesti",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2806",
+   "nome": "Popeline righe a gruppi blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2701",
+   "nome": "Popeline righe blu e grigie",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2816",
+   "nome": "Popeline a righe blu medio",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2709",
+   "nome": "Popeline righe rade blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2807",
+   "nome": "Popeline righe a gruppi notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2705",
+   "nome": "Popeline righe blu miste",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2714",
+   "nome": "Popeline righe notte filetti blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2804",
+   "nome": "Popeline righe alternate blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1913",
+   "nome": "Popeline millerighe ardesia",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1906",
+   "nome": "Popeline a righe blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1909",
+   "nome": "Popeline righe larghe blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1907",
+   "nome": "Popeline a righe navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3012",
+   "nome": "Popeline righe medie blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1903",
+   "nome": "Popeline righine navy e sabbia",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2917",
+   "nome": "Popeline bande blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2918",
+   "nome": "Popeline bande blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1805",
+   "nome": "Popeline a righe bluette",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1902",
+   "nome": "Popeline righine navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3005",
+   "nome": "Popeline righe strette blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1802",
+   "nome": "Popeline righe sottili blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2912",
+   "nome": "Popeline bastoncino blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1910",
+   "nome": "Popeline righe larghe navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2913",
+   "nome": "Popeline bastoncino blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1806",
+   "nome": "Popeline righe medie navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2605",
+   "nome": "Popeline bastone a toni blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2607",
+   "nome": "Popeline righe blu e nere",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3013",
+   "nome": "Popeline bastoncino medio blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3002",
+   "nome": "Popeline righine fitte blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2608",
+   "nome": "Popeline righe blu e tabacco",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3006",
+   "nome": "Popeline righe strette blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2615",
+   "nome": "Popeline righe notte e bluette",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3003",
+   "nome": "Popeline bastoncino fine navy",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2809",
+   "nome": "Popeline blu royal filettato",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2613",
+   "nome": "Popeline blu royal e rosso",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2616",
+   "nome": "Popeline righe notte e rosse",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1812",
+   "nome": "Popeline blu gessato",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2612",
+   "nome": "Popeline blu notte a righe",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2810",
+   "nome": "Popeline navy filettato",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2814",
+   "nome": "Popeline blu royal gessato",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2819",
+   "nome": "Popeline bastone blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2818",
+   "nome": "Popeline bastone blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2617",
+   "nome": "Popeline blu filetti grigi",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2618",
+   "nome": "Popeline righe larghe bluette",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2619",
+   "nome": "Popeline notte filetti fucsia",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2908",
+   "nome": "Popeline finestrato blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1808",
+   "nome": "Popeline quadretti navy e bluette",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2910",
+   "nome": "Popeline quadrettini blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1914",
+   "nome": "Popeline microquadretto blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2905",
+   "nome": "Popeline quadri blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2902",
+   "nome": "Popeline vichy blu royal",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2906",
+   "nome": "Popeline quadri blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t2903",
+   "nome": "Popeline vichy blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1107",
+   "nome": "Popeline bianco a pois blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1105",
+   "nome": "Popeline a cavallini blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1102",
+   "nome": "Popeline a nastrini blu notte",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1818",
+   "nome": "Popeline pied-de-poule blu",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1111",
+   "nome": "Popeline vichy blu fiorito",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1103",
+   "nome": "Popeline blu royal a nastrini",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1108",
+   "nome": "Popeline avio a pois",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1106",
+   "nome": "Popeline blu a cavallini bianchi",
+   "categoria": "popeline",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0812",
+   "nome": "Popeline finissimo nero",
+   "categoria": "popeline",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0516",
+   "nome": "Popeline nero",
+   "categoria": "popeline",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2919",
+   "nome": "Popeline bande nere",
+   "categoria": "popeline",
+   "colore": "nero",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3017",
+   "nome": "Popeline righe medie nere",
+   "categoria": "popeline",
+   "colore": "nero",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3010",
+   "nome": "Popeline righe strette nere",
+   "categoria": "popeline",
+   "colore": "nero",
+   "disegno": "righe"
+  },
+  {
+   "id": "t2517",
+   "nome": "Oxford grana grossa bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2304",
+   "nome": "Oxford operato fine bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2104",
+   "nome": "Oxford ritorto bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2107",
+   "nome": "Oxford operato ritorto bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2508",
+   "nome": "Oxford bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2301",
+   "nome": "Oxford fine bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2401",
+   "nome": "Oxford operato bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1709",
+   "nome": "Oxford elasticizzato bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2201",
+   "nome": "Oxford puntinato bianco",
+   "categoria": "oxford",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1712",
+   "nome": "Oxford elasticizzato ghiaccio",
    "categoria": "oxford",
    "colore": "azzurro",
    "disegno": "unito"
   },
   {
-   "id": "t006",
-   "nome": "Oxford rosa",
+   "id": "t2302",
+   "nome": "Oxford fine celeste",
    "categoria": "oxford",
-   "colore": "rosa",
+   "colore": "azzurro",
    "disegno": "unito"
   },
   {
-   "id": "t007",
+   "id": "t2305",
+   "nome": "Oxford operato fine celeste",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2202",
+   "nome": "Oxford puntinato celeste",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2108",
+   "nome": "Oxford operato ritorto celeste",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2105",
+   "nome": "Oxford ritorto celeste",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2402",
+   "nome": "Oxford operato celeste",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2509",
+   "nome": "Oxford celeste",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2518",
+   "nome": "Oxford grana grossa azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2303",
+   "nome": "Oxford fine azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1713",
+   "nome": "Oxford elasticizzato azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2203",
+   "nome": "Oxford puntinato azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2306",
+   "nome": "Oxford operato fine azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2403",
+   "nome": "Oxford operato azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1011",
+   "nome": "Oxford a righe larghe azzurre",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1008",
+   "nome": "Oxford a righe azzurre",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1309",
+   "nome": "Oxford a rombi azzurro",
+   "categoria": "oxford",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t2205",
+   "nome": "Oxford puntinato lilla",
+   "categoria": "oxford",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2406",
+   "nome": "Oxford operato lilla",
+   "categoria": "oxford",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2407",
+   "nome": "Oxford operato prugna",
+   "categoria": "oxford",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2208",
+   "nome": "Oxford puntinato tabacco",
+   "categoria": "oxford",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2409",
+   "nome": "Oxford operato mogano",
+   "categoria": "oxford",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2405",
+   "nome": "Oxford operato grigio perla",
+   "categoria": "oxford",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1710",
+   "nome": "Oxford elasticizzato grigio perla",
+   "categoria": "oxford",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2204",
+   "nome": "Oxford puntinato grigio perla",
+   "categoria": "oxford",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2207",
+   "nome": "Oxford puntinato ardesia",
+   "categoria": "oxford",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2209",
+   "nome": "Oxford puntinato bianco e nero",
+   "categoria": "oxford",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2408",
+   "nome": "Oxford operato bordeaux",
+   "categoria": "oxford",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1711",
+   "nome": "Oxford elasticizzato bordeaux",
+   "categoria": "oxford",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2106",
+   "nome": "Oxford ritorto blu",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2109",
+   "nome": "Oxford operato ritorto blu",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2510",
+   "nome": "Oxford blu",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2404",
+   "nome": "Oxford operato bluette",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2519",
+   "nome": "Oxford grana grossa bluette",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2206",
+   "nome": "Oxford puntinato blu mélange",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1714",
+   "nome": "Oxford elasticizzato bluette",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2410",
+   "nome": "Oxford operato blu scuro",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2411",
+   "nome": "Oxford operato blu notte",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1715",
+   "nome": "Oxford elasticizzato blu navy",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1009",
+   "nome": "Oxford a righe blu",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1012",
+   "nome": "Oxford a righe larghe blu",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1010",
+   "nome": "Oxford a righe blu notte",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1013",
+   "nome": "Oxford a righe larghe blu notte",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1308",
+   "nome": "Oxford a rombi blu",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1307",
+   "nome": "Oxford a rombi blu notte",
+   "categoria": "oxford",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t2412",
+   "nome": "Oxford operato nero",
+   "categoria": "oxford",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1716",
+   "nome": "Oxford elasticizzato nero",
+   "categoria": "oxford",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0805",
+   "nome": "Twill bianco classico",
+   "categoria": "twill",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2004",
+   "nome": "Twill marcato bianco",
+   "categoria": "twill",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2504",
+   "nome": "Twill bianco",
+   "categoria": "twill",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2312",
+   "nome": "Twill sottile bianco",
+   "categoria": "twill",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1701",
+   "nome": "Twill elasticizzato bianco",
+   "categoria": "twill",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2001",
+   "nome": "Twill fine bianco",
+   "categoria": "twill",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2313",
+   "nome": "Twill sottile celeste",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0806",
+   "nome": "Twill celeste classico",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1702",
+   "nome": "Twill elasticizzato celeste",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2505",
+   "nome": "Twill celeste",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2002",
+   "nome": "Twill fine celeste",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2005",
+   "nome": "Twill marcato azzurro",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2506",
+   "nome": "Twill azzurro polvere",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2314",
+   "nome": "Twill sottile lavanda",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2003",
+   "nome": "Twill fine azzurro",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2006",
+   "nome": "Twill marcato azzurro intenso",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1703",
+   "nome": "Twill elasticizzato azzurro",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0807",
+   "nome": "Twill bastoncino azzurro",
+   "categoria": "twill",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1707",
+   "nome": "Twill elasticizzato mogano",
+   "categoria": "twill",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2507",
    "nome": "Twill grigio perla",
    "categoria": "twill",
    "colore": "grigio",
    "disegno": "unito"
   },
   {
-   "id": "t008",
-   "nome": "Cotone a righe blu",
-   "categoria": "cotone",
+   "id": "t1706",
+   "nome": "Twill elasticizzato grigio mélange",
+   "categoria": "twill",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1704",
+   "nome": "Twill elasticizzato blu oltremare",
+   "categoria": "twill",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1705",
+   "nome": "Twill elasticizzato blu navy",
+   "categoria": "twill",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0808",
+   "nome": "Twill bastoncino blu royal",
+   "categoria": "twill",
    "colore": "blu",
    "disegno": "righe"
   },
   {
-   "id": "t009",
-   "nome": "Cotone a quadretti rossi",
-   "categoria": "cotone",
-   "colore": "rosso",
-   "disegno": "quadretti"
+   "id": "t1708",
+   "nome": "Twill elasticizzato nero",
+   "categoria": "twill",
+   "colore": "nero",
+   "disegno": "unito"
   },
   {
-   "id": "t010",
-   "nome": "Denim chiaro",
-   "categoria": "denim",
+   "id": "t2501",
+   "nome": "Fil-à-fil bianco",
+   "categoria": "filafil",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1601",
+   "nome": "Fil-à-fil elasticizzato bianco",
+   "categoria": "filafil",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1604",
+   "nome": "Fil-à-fil elasticizzato celeste",
+   "categoria": "filafil",
    "colore": "azzurro",
    "disegno": "unito"
   },
   {
-   "id": "t011",
-   "nome": "Lino verde salvia",
+   "id": "t2502",
+   "nome": "Fil-à-fil azzurro",
+   "categoria": "filafil",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1605",
+   "nome": "Fil-à-fil elasticizzato azzurro",
+   "categoria": "filafil",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1603",
+   "nome": "Fil-à-fil elasticizzato tabacco",
+   "categoria": "filafil",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1602",
+   "nome": "Fil-à-fil elasticizzato perla",
+   "categoria": "filafil",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2503",
+   "nome": "Fil-à-fil blu",
+   "categoria": "filafil",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1607",
+   "nome": "Fil-à-fil elasticizzato avio",
+   "categoria": "filafil",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1606",
+   "nome": "Fil-à-fil elasticizzato blu royal",
+   "categoria": "filafil",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2307",
+   "nome": "Spigato fine bianco",
+   "categoria": "spina",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2010",
+   "nome": "Spigato largo ritorto bianco",
+   "categoria": "spina",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2514",
+   "nome": "Spigato bianco",
+   "categoria": "spina",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t3109",
+   "nome": "Spigato minuto bianco",
+   "categoria": "spina",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t3205",
+   "nome": "Spigato largo bianco",
+   "categoria": "spina",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2007",
+   "nome": "Spigato ritorto bianco",
+   "categoria": "spina",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2308",
+   "nome": "Spigato fine celeste",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2008",
+   "nome": "Spigato ritorto celeste",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2011",
+   "nome": "Spigato largo ritorto celeste",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2515",
+   "nome": "Spigato celeste",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2516",
+   "nome": "Spigato lavanda",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2309",
+   "nome": "Spigato fine azzurro",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2009",
+   "nome": "Spigato ritorto azzurro",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2012",
+   "nome": "Spigato largo ritorto azzurro",
+   "categoria": "spina",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t3203",
+   "nome": "Piqué fine bianco",
+   "categoria": "pique",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2511",
+   "nome": "Piqué bianco",
+   "categoria": "pique",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2101",
+   "nome": "Piqué a costine bianco",
+   "categoria": "pique",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t3110",
+   "nome": "Piqué a coste larghe bianco",
+   "categoria": "pique",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2512",
+   "nome": "Piqué celeste",
+   "categoria": "pique",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2102",
+   "nome": "Piqué a costine azzurro",
+   "categoria": "pique",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2513",
+   "nome": "Piqué avio",
+   "categoria": "pique",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t2103",
+   "nome": "Piqué a costine blu",
+   "categoria": "pique",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t3107",
+   "nome": "Jacquard bianco a righe larghe",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3108",
+   "nome": "Jacquard bianco a righine",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "righe"
+  },
+  {
+   "id": "t3104",
+   "nome": "Jacquard bianco a griglia",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3103",
+   "nome": "Jacquard bianco spigato",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3105",
+   "nome": "Jacquard bianco a mattoncini",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3113",
+   "nome": "Jacquard bianco a nido d'ape",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1212",
+   "nome": "Jacquard bianco a rombi puntinati",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3102",
+   "nome": "Jacquard bianco a micro rombi",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3106",
+   "nome": "Jacquard bianco a cerchi",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3117",
+   "nome": "Jacquard bianco a rombi",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t2310",
+   "nome": "Jacquard bianco a losanghe",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3115",
+   "nome": "Jacquard bianco a fiori",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3116",
+   "nome": "Jacquard bianco a stelline",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3101",
+   "nome": "Jacquard bianco a pois",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1209",
+   "nome": "Jacquard bianco a quadratini",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1201",
+   "nome": "Jacquard bianco a ovali",
+   "categoria": "jacquard",
+   "colore": "bianco",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t2311",
+   "nome": "Jacquard celeste a losanghe",
+   "categoria": "jacquard",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1202",
+   "nome": "Jacquard azzurro a ovali",
+   "categoria": "jacquard",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1210",
+   "nome": "Jacquard azzurro a quadratini",
+   "categoria": "jacquard",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1213",
+   "nome": "Jacquard azzurro a rombi",
+   "categoria": "jacquard",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1205",
+   "nome": "Jacquard ovali celesti",
+   "categoria": "jacquard",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1207",
+   "nome": "Jacquard ovali blu e rossi",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1214",
+   "nome": "Jacquard chambray a rombi",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1203",
+   "nome": "Jacquard blu royal a ovali",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1211",
+   "nome": "Jacquard chambray a quadratini",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1204",
+   "nome": "Jacquard blu notte a ovali",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1206",
+   "nome": "Jacquard notte ovali celesti",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1208",
+   "nome": "Jacquard notte con punti rossi",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1216",
+   "nome": "Jacquard blu notte a rombi",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1215",
+   "nome": "Jacquard blu notte a trattini",
+   "categoria": "jacquard",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0801",
+   "nome": "Cotone stretch bianco ottico",
+   "categoria": "stretch",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0701",
+   "nome": "Cotone stretch bianco",
+   "categoria": "stretch",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0707",
+   "nome": "Cotone stretch rosa",
+   "categoria": "stretch",
+   "colore": "rosa",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0708",
+   "nome": "Cotone stretch malva",
+   "categoria": "stretch",
+   "colore": "rosa",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0709",
+   "nome": "Cotone stretch fucsia",
+   "categoria": "stretch",
+   "colore": "rosa",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1610",
+   "nome": "Cotone stretch millerighe rosa",
+   "categoria": "stretch",
+   "colore": "rosa",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0717",
+   "nome": "Cotone stretch celeste",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0802",
+   "nome": "Cotone stretch azzurro",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1413",
+   "nome": "Cotone stretch righe azzurre",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1401",
+   "nome": "Cotone stretch righine azzurre",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1608",
+   "nome": "Cotone stretch millerighe azzurro",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1510",
+   "nome": "Cotone stretch finestrato azzurro",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1501",
+   "nome": "Cotone stretch vichy azzurro",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1514",
+   "nome": "Cotone stretch quadri azzurri",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0902",
+   "nome": "Cotone stretch azzurro micropois",
+   "categoria": "stretch",
+   "colore": "azzurro",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0702",
+   "nome": "Cotone stretch lilla",
+   "categoria": "stretch",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1406",
+   "nome": "Cotone stretch righine lilla",
+   "categoria": "stretch",
+   "colore": "viola",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1611",
+   "nome": "Cotone stretch millerighe lilla",
+   "categoria": "stretch",
+   "colore": "viola",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1407",
+   "nome": "Cotone stretch righine viola",
+   "categoria": "stretch",
+   "colore": "viola",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1408",
+   "nome": "Cotone stretch malva rigato",
+   "categoria": "stretch",
+   "colore": "viola",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0705",
+   "nome": "Cotone stretch panna",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0706",
+   "nome": "Cotone stretch sabbia",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0714",
+   "nome": "Cotone stretch cammello",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0715",
+   "nome": "Cotone stretch cioccolato",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0716",
+   "nome": "Cotone stretch testa di moro",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1612",
+   "nome": "Cotone stretch millerighe beige",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1416",
+   "nome": "Cotone stretch righe marroni",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1410",
+   "nome": "Cotone stretch righine marroni",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1614",
+   "nome": "Cotone stretch millerighe caffè",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1511",
+   "nome": "Cotone stretch finestrato marrone",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1509",
+   "nome": "Cotone stretch vichy marrone",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1518",
+   "nome": "Cotone stretch quadri marroni",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0905",
+   "nome": "Cotone stretch cammello micropois",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0915",
+   "nome": "Cotone stretch marrone a pois",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0907",
+   "nome": "Cotone stretch caffè micropois",
+   "categoria": "stretch",
+   "colore": "beige",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0713",
+   "nome": "Cotone stretch oliva",
+   "categoria": "stretch",
+   "colore": "verde",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1409",
+   "nome": "Cotone stretch righine oliva",
+   "categoria": "stretch",
+   "colore": "verde",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1506",
+   "nome": "Cotone stretch vichy verde",
+   "categoria": "stretch",
+   "colore": "verde",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0703",
+   "nome": "Cotone stretch perla",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0704",
+   "nome": "Cotone stretch tortora",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1411",
+   "nome": "Cotone stretch righine tortora",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1613",
+   "nome": "Cotone stretch millerighe tortora",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1609",
+   "nome": "Cotone stretch millerighe grigio",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1507",
+   "nome": "Cotone stretch vichy grigio",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0903",
+   "nome": "Cotone stretch perla micropois",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0913",
+   "nome": "Cotone stretch tortora a pois",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0904",
+   "nome": "Cotone stretch tortora micropois",
+   "categoria": "stretch",
+   "colore": "grigio",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0710",
+   "nome": "Cotone stretch rosso",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0712",
+   "nome": "Cotone stretch bordeaux",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0711",
+   "nome": "Cotone stretch prugna",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1404",
+   "nome": "Cotone stretch righine rosse",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1405",
+   "nome": "Cotone stretch righine bordeaux",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1504",
+   "nome": "Cotone stretch vichy rosso",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1517",
+   "nome": "Cotone stretch quadri rossi",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1505",
+   "nome": "Cotone stretch vichy bordeaux",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0906",
+   "nome": "Cotone stretch bordeaux micropois",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0914",
+   "nome": "Cotone stretch bordeaux a pois",
+   "categoria": "stretch",
+   "colore": "rosso",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0718",
+   "nome": "Cotone stretch fiordaliso",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0719",
+   "nome": "Cotone stretch blu royal",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0720",
+   "nome": "Cotone stretch blu navy",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0803",
+   "nome": "Cotone stretch navy scuro",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0721",
+   "nome": "Cotone stretch blu notte",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0722",
+   "nome": "Cotone stretch blu inchiostro",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1414",
+   "nome": "Cotone stretch righe blu royal",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1402",
+   "nome": "Cotone stretch righine blu",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1403",
+   "nome": "Cotone stretch righine navy",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1415",
+   "nome": "Cotone stretch righe navy",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1513",
+   "nome": "Cotone stretch finestrato notte",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1502",
+   "nome": "Cotone stretch vichy blu royal",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1515",
+   "nome": "Cotone stretch quadri blu royal",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1516",
+   "nome": "Cotone stretch quadri navy",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1503",
+   "nome": "Cotone stretch vichy navy",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0910",
+   "nome": "Cotone stretch bianco pois blu",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0911",
+   "nome": "Cotone stretch fiordaliso a pois",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0912",
+   "nome": "Cotone stretch indaco a pois",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0908",
+   "nome": "Cotone stretch navy micropois",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0916",
+   "nome": "Cotone stretch navy a pois",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0917",
+   "nome": "Cotone stretch blu pois bluette",
+   "categoria": "stretch",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0723",
+   "nome": "Cotone stretch nero",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0804",
+   "nome": "Cotone stretch nero intenso",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1412",
+   "nome": "Cotone stretch righine nere",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1417",
+   "nome": "Cotone stretch righe nere",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1512",
+   "nome": "Cotone stretch finestrato nero",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1508",
+   "nome": "Cotone stretch vichy nero",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t1519",
+   "nome": "Cotone stretch quadri neri",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0901",
+   "nome": "Cotone stretch bianco pois neri",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0909",
+   "nome": "Cotone stretch nero micropois",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t0918",
+   "nome": "Cotone stretch nero a pois",
+   "categoria": "stretch",
+   "colore": "nero",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t3217",
+   "nome": "Raso di cotone bianco",
+   "categoria": "raso",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0601",
+   "nome": "Raso bianco",
+   "categoria": "raso",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0610",
+   "nome": "Raso fucsia",
+   "categoria": "raso",
+   "colore": "rosa",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0602",
+   "nome": "Raso celeste",
+   "categoria": "raso",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0608",
+   "nome": "Raso azzurro",
+   "categoria": "raso",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0609",
+   "nome": "Raso lilla",
+   "categoria": "raso",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0603",
+   "nome": "Raso cipria",
+   "categoria": "raso",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0604",
+   "nome": "Raso cammello",
+   "categoria": "raso",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0605",
+   "nome": "Raso tabacco",
+   "categoria": "raso",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0606",
+   "nome": "Raso testa di moro",
+   "categoria": "raso",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0607",
+   "nome": "Raso verde bottiglia",
+   "categoria": "raso",
+   "colore": "verde",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0611",
+   "nome": "Raso grigio perla",
+   "categoria": "raso",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0612",
+   "nome": "Raso tortora",
+   "categoria": "raso",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0613",
+   "nome": "Raso blu notte",
+   "categoria": "raso",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0614",
+   "nome": "Raso nero",
+   "categoria": "raso",
+   "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0201",
+   "nome": "Lino bianco",
+   "categoria": "lino",
+   "colore": "bianco",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0209",
+   "nome": "Lino giallo sole",
+   "categoria": "lino",
+   "colore": "giallo",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0104",
+   "nome": "Lino giallo oro",
+   "categoria": "lino",
+   "colore": "giallo",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0211",
+   "nome": "Lino arancio",
+   "categoria": "lino",
+   "colore": "giallo",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0108",
+   "nome": "Lino ghiaccio",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0202",
+   "nome": "Lino azzurro polvere",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0109",
+   "nome": "Lino azzurro cielo",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0213",
+   "nome": "Lino turchese",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0203",
+   "nome": "Lino avio",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0214",
+   "nome": "Lino azzurro intenso",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0303",
+   "nome": "Lino a righe azzurro pallido",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0306",
+   "nome": "Lino a righe larghe azzurre",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0312",
+   "nome": "Lino bianco a righe celesti",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0309",
+   "nome": "Lino celeste rigato",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0314",
+   "nome": "Lino a bastoncino azzurro",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0301",
+   "nome": "Lino a righine azzurre",
+   "categoria": "lino",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0107",
+   "nome": "Lino lilla",
+   "categoria": "lino",
+   "colore": "viola",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0101",
+   "nome": "Lino sabbia",
+   "categoria": "lino",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0204",
+   "nome": "Lino écru",
+   "categoria": "lino",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0205",
+   "nome": "Lino corda",
+   "categoria": "lino",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0102",
+   "nome": "Lino tabacco",
+   "categoria": "lino",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0207",
+   "nome": "Lino nocciola",
+   "categoria": "lino",
+   "colore": "beige",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0103",
+   "nome": "Lino verde prato",
    "categoria": "lino",
    "colore": "verde",
    "disegno": "unito"
   },
   {
-   "id": "t012",
-   "nome": "Twill nero",
-   "categoria": "twill",
+   "id": "t0210",
+   "nome": "Lino verde mela",
+   "categoria": "lino",
+   "colore": "verde",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0206",
+   "nome": "Lino kaki",
+   "categoria": "lino",
+   "colore": "verde",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0208",
+   "nome": "Lino verde muschio",
+   "categoria": "lino",
+   "colore": "verde",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0112",
+   "nome": "Lino ardesia",
+   "categoria": "lino",
+   "colore": "grigio",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0313",
+   "nome": "Lino a righe larghe perla",
+   "categoria": "lino",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0311",
+   "nome": "Lino antracite rigato",
+   "categoria": "lino",
+   "colore": "grigio",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0105",
+   "nome": "Lino corallo",
+   "categoria": "lino",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0212",
+   "nome": "Lino rosso",
+   "categoria": "lino",
+   "colore": "rosso",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0111",
+   "nome": "Lino pervinca",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0110",
+   "nome": "Lino fiordaliso",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0106",
+   "nome": "Lino blu cobalto",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0215",
+   "nome": "Lino blu royal",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0113",
+   "nome": "Lino blu oltremare",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0216",
+   "nome": "Lino blu navy",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0307",
+   "nome": "Lino a righe larghe blu",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0304",
+   "nome": "Lino a righe blu",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0305",
+   "nome": "Lino a righe blu navy",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0308",
+   "nome": "Lino a righe larghe navy",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0315",
+   "nome": "Lino a righe blu mélange",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0310",
+   "nome": "Lino blu rigato",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0302",
+   "nome": "Lino a righine blu navy",
+   "categoria": "lino",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0217",
+   "nome": "Lino nero",
+   "categoria": "lino",
    "colore": "nero",
+   "disegno": "unito"
+  },
+  {
+   "id": "t0403",
+   "nome": "Lino e cotone a righe azzurre",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0414",
+   "nome": "Lino e cotone bastoncino azzurro",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0406",
+   "nome": "Lino e cotone righe larghe azzurre",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0401",
+   "nome": "Lino e cotone millerighe celeste",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0418",
+   "nome": "Lino e cotone a fasce azzurre",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0411",
+   "nome": "Lino e cotone celeste rigato",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0409",
+   "nome": "Lino e cotone quadretti azzurri",
+   "categoria": "linocotone",
+   "colore": "azzurro",
+   "disegno": "quadretti"
+  },
+  {
+   "id": "t0417",
+   "nome": "Lino e cotone a righe rosse",
+   "categoria": "linocotone",
+   "colore": "rosso",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0404",
+   "nome": "Lino e cotone a righe blu",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0407",
+   "nome": "Lino e cotone righe larghe blu",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0415",
+   "nome": "Lino e cotone bastoncino blu",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0419",
+   "nome": "Lino e cotone a fasce blu",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0408",
+   "nome": "Lino e cotone righe larghe navy",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0405",
+   "nome": "Lino e cotone a righe navy",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0402",
+   "nome": "Lino e cotone righine navy",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0412",
+   "nome": "Lino e cotone blu rigato",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0420",
+   "nome": "Lino e cotone a fasce navy",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0416",
+   "nome": "Lino e cotone bastoncino navy",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0413",
+   "nome": "Lino e cotone navy rigato",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t0410",
+   "nome": "Lino e cotone pied-de-poule navy",
+   "categoria": "linocotone",
+   "colore": "blu",
+   "disegno": "fantasia"
+  },
+  {
+   "id": "t1006",
+   "nome": "Seersucker righe larghe azzurre",
+   "categoria": "seersucker",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1003",
+   "nome": "Seersucker a righe azzurre",
+   "categoria": "seersucker",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1001",
+   "nome": "Seersucker a righine azzurre",
+   "categoria": "seersucker",
+   "colore": "azzurro",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1002",
+   "nome": "Seersucker a righine blu",
+   "categoria": "seersucker",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1007",
+   "nome": "Seersucker a righe larghe blu",
+   "categoria": "seersucker",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1004",
+   "nome": "Seersucker a righe blu royal",
+   "categoria": "seersucker",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1005",
+   "nome": "Seersucker a righe blu notte",
+   "categoria": "seersucker",
+   "colore": "blu",
+   "disegno": "righe"
+  },
+  {
+   "id": "t1304",
+   "nome": "Denim azzurro grigio",
+   "categoria": "denim",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1301",
+   "nome": "Chambray azzurro",
+   "categoria": "denim",
+   "colore": "azzurro",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1305",
+   "nome": "Denim blu slavato",
+   "categoria": "denim",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1302",
+   "nome": "Denim blu sfumato",
+   "categoria": "denim",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1306",
+   "nome": "Denim indaco",
+   "categoria": "denim",
+   "colore": "blu",
+   "disegno": "unito"
+  },
+  {
+   "id": "t1303",
+   "nome": "Denim blu scuro",
+   "categoria": "denim",
+   "colore": "blu",
    "disegno": "unito"
   }
  ]
