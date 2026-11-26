@@ -123,7 +123,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
       caratteri: [...document.querySelectorAll('form[data-configuratore] input:not([type=radio]):not([type=checkbox]):not([type=hidden]):not([name=sito_web]), form[data-configuratore] select, #finestra-tessuti input[type=search]')].map((x) => parseFloat(getComputedStyle(x).fontSize)),
     }));
     controlla(`${formato}: data-parte su collo, taschino, bottoni, interno collo, interno polso, polsino; iniziali senza posizione niente`, a.parti.join() === 'collo,taschino,bottoni,interno_collo,interno_polso,polsino' && !a.iniziali, a.parti.join());
-    controlla(`${formato}: all'avvio la camicia riceve le scelte (collo italiano, niente taschino, niente iniziali)`, a.camicia.length === 1 && JSON.stringify(a.camicia[0]) === JSON.stringify({ collo: 'italiano', taschino: false, iniziali: null }), JSON.stringify(a.camicia));
+    controlla(`${formato}: all'avvio la camicia riceve le scelte (collo italiano, niente taschino, niente iniziali)`, a.camicia.length === 1 && JSON.stringify(a.camicia[0]) === JSON.stringify({ collo: 'italiano', taschino: false, iniziali: null, tessuto: '' }), JSON.stringify(a.camicia));
     controlla(`${formato}: i passi non ancora fatti non si aprono dai nomi in cima`, a.futuri);
     controlla(`${formato}: nessun campo sotto i 16 px (il telefono non ingrandisce la pagina)`, a.caratteri.every((x) => x >= 16), a.caratteri.join(','));
     await page.click('[data-vai="pagamento"]', { force: true });

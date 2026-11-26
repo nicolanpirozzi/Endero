@@ -93,3 +93,19 @@
     transition: opacity 200ms ease-out;
   }
 }
+
+/* --- PROVA (?prova=tessuto): nella finestra dei tessuti, quelli che colorano la camicia hanno un segno */
+.campione--prova .campione__foto::before {
+  content: "Prova";
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fbf9f4;
+  color: #0f285e;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}

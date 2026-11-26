@@ -176,6 +176,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       collo: d.collo || '',
       taschino: d.taschino === 'si',
       iniziali: d.iniziali === 'si' && d.iniziali_posizione && l ? { posizione: d.iniziali_posizione, lettere: l } : null,
+      // il tessuto: lo usa solo la prova «il tessuto colora la camicia» (vesti.js, ?prova=tessuto)
+      tessuto: d.tessuto || '',
     };
     const ora = JSON.stringify(detail);
     if (!sempre && ora === vestita) return;

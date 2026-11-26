@@ -3,6 +3,7 @@
 
     <venv>/bin/python camicia/opzioni/parti.py taschino <file .blend comprato> <cartella di lavoro> [--campioni 96] [--volte 4]
     <venv>/bin/python camicia/opzioni/parti.py mappa <file .blend comprato> <cartella di lavoro> [--solo italiano,club]
+    <venv>/bin/python camicia/opzioni/parti.py trama <file .blend comprato> <cartella di lavoro>     (prova del tessuto sulla camicia)
 
 `taschino` calcola taschino-<volte>x.png: il riquadro del petto con il taschino (un pezzo di stoffa ritagliato dal
 davanti della camicia, quindi con le sue stesse pieghe, appena sollevato) e senza-taschino-<volte>x.png, lo stesso
@@ -244,9 +245,63 @@ def mappa(a):
         bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
+def trama(a):
+    """Per ogni collo (e per la camicia con il taschino): trama-<nome>.png (16 bit), il fotogramma a grandezza doppia in cui
+    ogni punto di stoffa porta scritto dove sta nel cartamodello (rosso e verde: le coordinate UV; blu 1 sulla stoffa,
+    0,5 su bottoni, gruccia e nastro, 0 altrove). Serve a vestire la camicia del tessuto scelto: le righe seguono il
+    verso di ogni pezzo (maniche, colletto, polsini), come su una camicia vera. `monta.py` ne fa i file del sito."""
+    import importlib
+    import retro
+    quali = [x for x in a.solo.split(',') if x] or list(colli.COLLI) + ['taschino']
+    for nome in quali:
+        file = os.path.join(os.path.abspath(a.uscita), f'trama-{nome}.png')
+        if os.path.exists(file) and not a.rifai:
+            print(f'{file}: già fatto', flush=True)
+            continue
+        import scena
+        importlib.reload(scena)
+        a.volte, a.campioni = 2, 1
+        _, bpy, pezzi = colli.prepara('italiano' if nome == 'taschino' else nome, a)
+        import bmesh
+        import numpy as np
+        camicia = pezzi['camicia']
+        if nome == 'taschino':
+            metti_taschino(camicia, scena, bmesh, np, pezzi['a_riposo']['camicia'])
+        # la stoffa: emette le sue coordinate nel cartamodello, più 1 nel blu
+        m = bpy.data.materials.new('trama'); m.use_nodes = True
+        nt = m.node_tree; nt.nodes.clear()
+        uv = nt.nodes.new('ShaderNodeUVMap')
+        piu = nt.nodes.new('ShaderNodeVectorMath'); piu.operation = 'ADD'; piu.inputs[1].default_value = (0, 0, 1)
+        e = nt.nodes.new('ShaderNodeEmission'); u = nt.nodes.new('ShaderNodeOutputMaterial')
+        nt.links.new(uv.outputs['UV'], piu.inputs[0]); nt.links.new(piu.outputs['Vector'], e.inputs['Color']); nt.links.new(e.outputs[0], u.inputs['Surface'])
+        camicia.data.materials.clear(); camicia.data.materials.append(m)
+        for f in camicia.data.polygons:
+            f.material_index = 0
+        for o in (pezzi['bottoni'], pezzi['gruccia'], pezzi['nastro']):
+            o.data.materials.clear(); o.data.materials.append(_emissione(bpy, 'ferro', (0, 0, 0.5)))
+        pezzi['parete'].data.materials.clear(); pezzi['parete'].data.materials.append(_emissione(bpy, 'altro', (0, 0, 0)))
+        for o in bpy.context.scene.objects:
+            if o.type == 'LIGHT' or o == pezzi.get('finestra'):
+                o.hide_render = True
+        sc = bpy.context.scene
+        sc.world.use_nodes = True
+        for n in sc.world.node_tree.nodes:
+            if n.type == 'BACKGROUND':
+                n.inputs['Strength'].default_value = 0
+        sc.cycles.samples = 1; sc.cycles.use_denoising = False
+        sc.cycles.pixel_filter_type = 'BOX'; sc.cycles.filter_width = 0.01
+        sc.view_settings.view_transform = 'Raw'; sc.view_settings.look = 'None'
+        sc.view_settings.exposure = 0; sc.view_settings.gamma = 1
+        sc.render.image_settings.file_format = 'PNG'; sc.render.image_settings.color_mode = 'RGB'; sc.render.image_settings.color_depth = '16'
+        sc.render.dither_intensity = 0            # niente rumore aggiunto: qui i colori sono posizioni
+        sc.render.use_border = False
+        print(f'trama-{nome}.png in {retro.calcola(bpy, file):.0f} s', flush=True)
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('comando', choices=('taschino', 'mappa'))
+    ap.add_argument('comando', choices=('taschino', 'mappa', 'trama'))
     ap.add_argument('blend'); ap.add_argument('uscita')
     ap.add_argument('--solo', default='')
     ap.add_argument('--campioni', type=int, default=96)
@@ -255,7 +310,7 @@ def main():
     a = ap.parse_args()
     a.blend = os.path.abspath(a.blend)
     os.makedirs(a.uscita, exist_ok=True)
-    {'taschino': taschino, 'mappa': mappa}[a.comando](a)
+    {'taschino': taschino, 'mappa': mappa, 'trama': trama}[a.comando](a)
 
 
 if __name__ == '__main__':

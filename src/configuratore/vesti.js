@@ -22,7 +22,11 @@ const SVG = 'http://www.w3.org/2000/svg';
 const DISSOLVE = 200;                  // millisecondi: la comparsa di un pezzo nuovo (la stessa durata è nel CSS)
 const FILO = '#0f285e';                // il blu del logo, per il ricamo delle iniziali
 const POSTI = ['polso', 'collo', 'cuore'];
-const SLOT = ['collo', 'taschino', 'iniziali'];        // dal basso in alto
+const SLOT = ['stoffa', 'collo', 'taschino', 'iniziali'];        // dal basso in alto
+// PROVA (proprietario, 2026-11-26: «Sì, prepara una prova»): con ?prova=tessuto il tessuto scelto colora la camicia
+// (tinta.js). Senza quella parola nell'indirizzo qui non cambia nulla.
+const PROVA = new URLSearchParams(location.search).get('prova') === 'tessuto';
+const TINTA = 'tinta|';
 
 // ---------------------------------------------------------------------------------------------- le scelte
 
@@ -34,6 +38,7 @@ function pulisci(d) {
     collo: typeof d?.collo === 'string' ? d.collo : 'italiano',
     taschino: d?.taschino === true,
     iniziali: lettere && POSTI.includes(ini.posizione) ? { posizione: ini.posizione, lettere } : null,
+    tessuto: PROVA && typeof d?.tessuto === 'string' ? d.tessuto : '',
   };
 }
 // L'ultima scelta si ricorda da subito, anche se arriva prima che la camicia sia pronta
@@ -56,7 +61,8 @@ export function leggiOpzioni(palco) {
       const v = u.searchParams.get('v') || (D.versione != null ? String(D.versione) : '');
       const cartella = u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1);
       D.taglie = (Array.isArray(D.taglie) && D.taglie.length ? D.taglie : [1, 2, 4]).slice().sort((a, b) => a - b);
-      D.indirizzo = (file, t) => `${cartella}${file}-${String(t).replace('.', '')}.webp${v ? '?v=' + encodeURIComponent(v) : ''}`;
+      // (prova del tessuto: un pezzo tinto non è un file, è una chiave «tinta|tessuto|file|grandezza»; la camicia intera, «@…», ha una grandezza sola)
+      D.indirizzo = (file, t) => (file.startsWith(TINTA) ? `${file}|${file.includes('|@') ? 0 : t}` : `${cartella}${file}-${String(t).replace('.', '')}.webp${v ? '?v=' + encodeURIComponent(v) : ''}`);
       return D;
     }));
   }
@@ -64,9 +70,72 @@ export function leggiOpzioni(palco) {
 }
 
 const immagini = new Map(), pronte = new Map();
+// --- la prova del tessuto: le immagini «tinta|tessuto|file|grandezza» si fanno qui, dalla bianca
+let trame = null, tingi, doveTrame = '', leggeraDove = '', leggeraV = '', pezziLeggera = null;
+const semplice = (indirizzo) => new Promise((fatto) => { const im = new Image(); im.onload = () => fatto(im); im.onerror = () => fatto(null); im.src = indirizzo; });
+/** trame.json (accanto a opzioni.json) e la macchina che tinge; null se manca qualcosa (allora la camicia resta bianca). */
+function leggiTrame(palco, D) {
+  if (trame) return trame;
+  const u = new URL(palco.dataset.opzioni, location.href);
+  doveTrame = u.pathname.slice(0, u.pathname.lastIndexOf('/') + 1);
+  leggeraDove = palco.dataset.leggera || ''; leggeraV = palco.dataset.leggeraV ? '?v=' + palco.dataset.leggeraV : '';
+  trame = Promise.all([
+    fetch(doveTrame + 'trame.json' + u.search).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    leggeraDove ? fetch(leggeraDove + 'leggera.json' + leggeraV).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null,
+    import('./tinta.js').then((m) => m.creaTinta()).catch(() => null),
+  ]).then(([T, L, f]) => { tingi = f; pezziLeggera = L?.pezzi || null; return T && L && f ? Object.assign(T, { versione: u.search, D }) : null; });
+  return trame;
+}
+/** Un'immagine tinta: `chiave` è «tinta|tessuto|file|grandezza»; file «@camicia» (la camicia ritagliata), «@ferma»
+ *  (la camicia sulla sua parete, opaca: per l'immagine ferma e lo zoom) o il file di un pezzo (collo, taschino). */
+async function tinta(chiave) {
+  const T = await trame;
+  const [, tid, file, t] = chiave.split('|');
+  const tess = T?.tessuti?.[tid];
+  if (!tess || !tingi || !pezziLeggera) return null;
+  const tessera = await immagine(doveTrame + tess.file + T.versione);
+  const come = { ...tess, alMetro: T.al_metro_uv, alMetroSchermo: T.al_metro };
+  const tela = async (bianca, trama) => {
+    const [foto, mappa] = await Promise.all([immagine(bianca), immagine(doveTrame + trama + T.versione)]);
+    return foto && mappa && tessera ? tingi(foto, mappa, tessera, come) : null;
+  };
+  let fatta = null;
+  if (file === '@camicia') fatta = await tela(`${leggeraDove}camicia-2.webp${leggeraV}`, T.base.file);
+  else if (file === '@ferma') {
+    // opaca: parete e ombra (gli stessi pezzi della camicia che dondola) e sopra la camicia tinta, nei punti
+    // dell'immagine ferma. Sopra la camicia bianca una camicia ritagliata lascerebbe un filo bianco sui bordi.
+    const [camicia, parete, ombra] = await Promise.all([immagine(`${TINTA}${tid}|@camicia|0`), immagine(`${leggeraDove}parete-2.webp${leggeraV}`), immagine(`${leggeraDove}ombra-2.webp${leggeraV}`)]);
+    if (!camicia || !parete || !ombra) return null;
+    const [x0, y0, x1, y1] = FERMA(), k = 2, W = (x1 - x0) * k, H = (y1 - y0) * k;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    for (const [im, nome] of [[parete, 'parete'], [ombra, 'ombra'], [camicia, 'camicia']]) { const [x, y, w, h] = pezziLeggera[nome]; g.drawImage(im, (x - x0) * k, (y - y0) * k, w * k, h * k); }
+    // i bordi (di sola parete) sfumano, tranne dove sono il bordo del fotogramma: nessuna giunta con l'immagine sotto
+    g.globalCompositeOperation = 'destination-in';
+    const s = MARGINE * k * 0.75;
+    const sfuma = (ax, ay, bx, by) => { const gr = g.createLinearGradient(ax, ay, bx, by); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, '#000'); g.fillStyle = gr; g.fillRect(0, 0, W, H); };
+    sfuma(0, 0, s, 0); sfuma(W, 0, W - s, 0);
+    if (y0 > 0) sfuma(0, 0, 0, s);
+    if (y1 < 1000) sfuma(0, H, 0, H - s);
+    fatta = c;
+  } else {
+    const quale = [...Object.values(T.colli || {}), T.taschino].find((p) => p && p.file === `trama-${file}.png`);
+    fatta = quale ? await tela(T.D.indirizzo(file, +t), quale.file) : null;
+  }
+  if (!fatta) return null;
+  const blob = await new Promise((f) => fatta.toBlob(f, 'image/png'));
+  return blob ? semplice(URL.createObjectURL(blob)) : null;
+}
+/** Il riquadro della camicia tinta sull'immagine ferma: quello della camicia ritagliata, dentro il fotogramma. */
+const MARGINE = 24;
+const FERMA = () => { const [x, y, w, h] = pezziLeggera.camicia; return [x - MARGINE, Math.max(0, y - MARGINE), x + w + MARGINE, Math.min(1000, y + h + MARGINE)]; };
 /** Un'immagine scaricata e pronta da disegnare, una volta sola; null se manca (senza errori). */
 function immagine(indirizzo) {
   if (!immagini.has(indirizzo)) {
+    if (indirizzo.startsWith(TINTA)) {
+      immagini.set(indirizzo, tinta(indirizzo).then((im) => { if (im) pronte.set(indirizzo, im); return im; }, () => null));
+      return immagini.get(indirizzo);
+    }
     immagini.set(indirizzo, new Promise((fatto) => {
       const im = new Image();
       im.decoding = 'async';
@@ -88,14 +157,18 @@ const tagliaPer = (D, scala) => D.taglie.find((t) => t >= scala * 0.92) || D.tag
  * Un collo può portare con sé il posto delle iniziali «collo» (`colli[id].iniziali`: sul coreano non c'è la punta del
  * colletto); un collo senza `file` (l'italiano, che è la camicia com'è) non ha pezzi da sovrapporre.
  */
-function risolvi(sc, D) {
+function risolvi(sc, D, T) {
   const collo = D.colli?.[sc.collo];
+  // con la prova del tessuto: la camicia tinta sotto tutto, e i pezzi tinti dello stesso tessuto
+  const tid = T?.tessuti?.[sc.tessuto] ? sc.tessuto : '';
+  const f = (file) => (tid ? `${TINTA}${tid}|${file}` : file), c = (chiave) => (tid ? `${chiave}:${tid}` : chiave);
   const tasca = sc.taschino && D.taschino;
   const pos = sc.iniziali?.posizione;
   const posto = pos && ((pos === 'collo' && collo?.iniziali) || D.iniziali?.[pos]);
   return {
-    collo: collo?.file && collo.riquadro ? { chiave: 'collo:' + sc.collo, file: collo.file, riquadro: collo.riquadro } : null,
-    taschino: tasca?.file && tasca.riquadro ? { chiave: 'taschino', file: tasca.file, riquadro: tasca.riquadro } : null,
+    stoffa: tid ? { chiave: 'stoffa:' + tid, file: `${TINTA}${tid}|@` } : null,
+    collo: collo?.file && collo.riquadro ? { chiave: c('collo:' + sc.collo), file: f(collo.file), riquadro: collo.riquadro } : null,
+    taschino: tasca?.file && tasca.riquadro ? { chiave: c('taschino'), file: f(tasca.file), riquadro: tasca.riquadro } : null,
     // (nella chiave anche il posto: cambiando collo le iniziali sul collo si spostano)
     iniziali: posto?.centro ? { chiave: `iniziali:${pos}:${sc.iniziali.lettere}:${posto.centro}:${posto.gradi}:${posto.alta}`, lettere: sc.iniziali.lettere, centro: posto.centro, gradi: +posto.gradi || 0, alta: +posto.alta || 7 } : null,
   };
@@ -114,8 +187,8 @@ export async function lineaParte(palco, nome) {
 }
 /** Il collo scelto per ultimo (per guida.js: se cambia mentre la sua evidenza è aperta, il contorno si rifà). */
 export const colloScelto = () => ultima?.collo || 'italiano';
-const vuoto = (s) => !s.collo && !s.taschino && !s.iniziali;
-const NIENTE = { collo: null, taschino: null, iniziali: null };
+const vuoto = (s) => !s.stoffa && !s.collo && !s.taschino && !s.iniziali;
+const NIENTE = { stoffa: null, collo: null, taschino: null, iniziali: null };
 
 // ---------------------------------------------------------------------------------------------- le iniziali
 
@@ -173,8 +246,10 @@ function ricamaTela(g, ini, s, ox, oy) {
  * @param {object} o        { svg: è un SVG, box: [x, y, w, h] del fotogramma coperto dal div, scala: () => punti
  *                          fisici dello schermo per punto del fotogramma, D: opzioni.json }
  */
-function livello(radice, { svg = false, box = [0, 0, 1800, 1000], scala, D }) {
+function livello(radice, { svg = false, box = [0, 0, 1800, 1000], scala, D, opaco = true }) {
   const [bx, by, bw, bh] = box;
+  /** La camicia tinta di questo livello: opaca con la sua parete sull'immagine ferma, ritagliata sulla camicia che dondola. */
+  const laStoffa = (v) => (opaco ? { ...v, file: v.file + 'ferma', riquadro: FERMA() } : { ...v, file: v.file + 'camicia', riquadro: ((r) => [r[0], r[1], r[0] + r[2], r[1] + r[3]])(pezziLeggera.camicia) });
   const posti = {}, turni = {}, cosa = {};
   for (const nome of SLOT) {
     posti[nome] = svg ? crea('g') : Object.assign(document.createElement('div'), { className: 'vesti__posto' });
@@ -205,6 +280,7 @@ function livello(radice, { svg = false, box = [0, 0, 1800, 1000], scala, D }) {
   async function cambia(nome, voluto, subito) {
     const mio = ++turni[nome];
     let el = null, t = 0;
+    if (voluto && nome === 'stoffa') voluto = laStoffa(voluto);
     if (voluto && nome === 'iniziali') el = lettere(voluto);
     else if (voluto) {
       t = tagliaPer(D, scala());
@@ -245,7 +321,7 @@ function livello(radice, { svg = false, box = [0, 0, 1800, 1000], scala, D }) {
         c.t = t;
         immagine(indirizzo).then((im) => {
           if (!im || cosa[nome] !== c) return;
-          if (svg) c.el.setAttribute('href', indirizzo); else c.el.src = indirizzo;
+          if (svg) c.el.setAttribute('href', im.src); else c.el.src = im.src;
         });
       }
     },
@@ -280,7 +356,7 @@ export function vesti(palco, camicia) {
     new ResizeObserver(() => { ferma.ingrandisci(); addosso?.ingrandisci(); }).observe(sullaFerma);
   };
   const preparaAddosso = () => {
-    if (!addosso && veste && D) addosso = livello(veste.strato, { D, box: veste.riquadro, scala: veste.scala });
+    if (!addosso && veste && D) addosso = livello(veste.strato, { D, box: veste.riquadro, scala: veste.scala, opaco: false });
   };
 
   // --- la stoffa (onda.js): una tela composta, solo quando le scelte cambiano
@@ -291,7 +367,9 @@ export function vesti(palco, camicia) {
     const tela = document.createElement('canvas');
     tela.width = foto.naturalWidth; tela.height = foto.naturalHeight;
     const g = tela.getContext('2d', { willReadFrequently: true });
-    g.drawImage(foto, 0, 0);
+    // (prova del tessuto: sotto, al posto della camicia bianca, quella tinta)
+    const tinta = s.stoffa && pronte.get(D.indirizzo(s.stoffa.file + 'camicia', 0));
+    if (tinta) g.drawImage(tinta, 0, 0, tela.width, tela.height); else g.drawImage(foto, 0, 0);
     for (const nome of ['collo', 'taschino']) {
       const p = s[nome];
       if (!p) continue;
@@ -309,7 +387,7 @@ export function vesti(palco, camicia) {
     if (!veste?.conStoffa()) { telaOra = null; return; }
     const mio = ++giroStoffa;
     const foto = veste.foto(), k = foto.naturalWidth / veste.riquadro[2];
-    if (!vuoto(stato)) await Promise.all(['collo', 'taschino'].map((n) => stato[n] && immagine(D.indirizzo(stato[n].file, tagliaPer(D, k)))));
+    if (!vuoto(stato)) await Promise.all([stato.stoffa && immagine(D.indirizzo(stato.stoffa.file + 'camicia', 0)), ...['collo', 'taschino'].map((n) => stato[n] && immagine(D.indirizzo(stato[n].file, tagliaPer(D, k))))]);
     if (mio !== giroStoffa || !veste.conStoffa()) return;
     const da = telaOra || foto, nuova = vuoto(stato) ? null : componi(foto, stato), a = nuova || foto;
     telaOra = nuova;
@@ -330,10 +408,13 @@ export function vesti(palco, camicia) {
   /** Porta sulla camicia la scelta `sc`. */
   async function applica(sc) {
     const mio = ++giro;
-    if (sc.collo === 'italiano' && !sc.taschino && !sc.iniziali && vuoto(stato)) return;   // niente da scaricare
+    if (sc.collo === 'italiano' && !sc.taschino && !sc.iniziali && !sc.tessuto && vuoto(stato)) return;   // niente da scaricare
     D ||= await leggiOpzioni(palco);
     if (!D || mio !== giro) return;
-    const voluto = risolvi(sc, D);
+    // (prova del tessuto: `sc.tessuto` c'è solo con ?prova=tessuto)
+    const T = sc.tessuto ? await leggiTrame(palco, D) : null;
+    if (mio !== giro) return;
+    const voluto = risolvi(sc, D, T);
     if (vuoto(voluto) && vuoto(stato)) return;
     prepara();
     // i file ci sono? Se un pezzo manca, al suo posto resta quello di prima
@@ -342,17 +423,35 @@ export function vesti(palco, camicia) {
       const p = voluto[n];
       if (p && p.chiave !== stato[n]?.chiave && !(await immagine(D.indirizzo(p.file, t)))) nuovo[n] = stato[n];
     }));
+    if (voluto.stoffa && voluto.stoffa.chiave !== stato.stoffa?.chiave && !(await immagine(D.indirizzo(voluto.stoffa.file + 'ferma', 0)))) nuovo.stoffa = stato.stoffa;
     if (nuovo.iniziali) await caratterePronto();
     if (mio !== giro) return;
     stato = nuovo;
     ferma.mostra(stato);
     preparaAddosso();                    // (la camicia che dondola può essere arrivata mentre si scaricava)
     addosso?.mostra(stato);
+    sottoLaTinta();
     for (const [gruppo, l] of lenti) if (l.livello) l.livello.mostra(stato); else lente(gruppo, l);
     stoffa();
   }
+  /** (prova del tessuto) Dove la camicia che dondola è un'immagine, quella bianca resta sotto la tinta e sui bordi
+   *  le lascerebbe un filo chiaro: la si toglie quando la tinta è comparsa, e torna subito quando la tinta va via. */
+  let attesaSotto = 0;
+  function sottoLaTinta() {
+    const bianca = veste?.strato.previousElementSibling;
+    if (!bianca || bianca.tagName !== 'IMG') return;
+    clearTimeout(attesaSotto);
+    if (!stato.stoffa) bianca.style.opacity = '';
+    else attesaSotto = setTimeout(() => { if (stato.stoffa) bianca.style.opacity = '0'; }, DISSOLVE + 80);
+  }
   ascolta.add(applica);
   if (ultima) applica(ultima);
+  // (prova del tessuto) nella finestra dei tessuti, quelli che colorano la camicia vanno in cima, con un segno
+  if (PROVA) leggiOpzioni(palco).then((d) => d && leggiTrame(palco, d)).then((T) => {
+    const griglia = document.querySelector('#finestra-tessuti [data-griglia]');
+    if (!T || !griglia) return;
+    for (const el of Object.keys(T.tessuti).map((id) => griglia.querySelector(`[data-id="${id}"]`)).filter(Boolean).reverse()) { el.classList.add('campione--prova'); griglia.prepend(el); }
+  });
 
   // la camicia che dondola: arriva quando i suoi pezzi sono scaricati
   // (il suo livello si fa alla prima scelta: finché non si sceglie nulla, la camicia è quella di sempre)
@@ -364,6 +463,7 @@ export function vesti(palco, camicia) {
     if (vuoto(stato)) return;
     preparaAddosso();
     addosso.mostra(stato, true);
+    sottoLaTinta();
     stoffa();
   }, () => {});
 
