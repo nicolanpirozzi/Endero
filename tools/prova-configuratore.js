@@ -53,7 +53,11 @@ const avviso = async (page, nome) => { await page.waitForTimeout(60); return pag
 const euro = (n) => `${n.toLocaleString('it-IT')} €`;
 const valore = (page, nome) => page.evaluate((n) => document.querySelector(`form[data-configuratore] [name="${n}"]:is([type=radio]:checked, :not([type=radio]))`)?.value ?? '', nome);
 // si tocca la scritta della scelta, come una persona (il fondo con i tasti, che resta in vista, può coprire la riga: Playwright scorre finché la trova libera)
-const sceglieRadio = (page, nome, v) => page.locator(`form[data-configuratore] label:has(> input[name="${nome}"][value="${v}"])`).first().click();
+const sceglieRadio = async (page, nome, v) => {
+  const sy = await page.evaluate(() => scrollY);
+  await page.locator(`form[data-configuratore] label:has(> input[name="${nome}"][value="${v}"])`).first().click();
+  if (process.env.DEBUG) console.log('   radio', nome, v, sy, await page.evaluate(([n, v]) => [scrollY, document.querySelector(`[name="${n}"][value="${v}"]`).checked, !!document.querySelector('.misura-lente:not([hidden])')], [nome, v]));
+};
 /** Sceglie un tessuto dalla finestra (per il campo `nome`), con il clic e il tasto che conferma. */
 // (prima si esce dal campo che ha il fuoco: sul telefono la guida apre sopra la sua riga il riquadro con lo zoom, che
 // copre la riga di sopra finché non lo si tocca)
@@ -93,7 +97,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     return { contesto, page, errori };
   };
 
-  for (const [formato, opzioni] of FORMATI) {
+  for (const [formato, opzioni] of FORMATI.filter(([f]) => !process.env.FORMATO || f === process.env.FORMATO)) {
     console.log(`\n${formato}`);
     const telefono = !!opzioni.isMobile;
     const { contesto, page, errori } = await nuovo(opzioni);

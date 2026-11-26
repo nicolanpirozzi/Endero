@@ -201,6 +201,19 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     return c;
   }
 
+  // Un tocco su una scelta (sì / no, un bottone, il tasto dei tessuti) di una riga con una parte sulla camicia: il fuoco
+  // arriva dopo il clic, non quando il dito si appoggia. Con il fuoco la guida apre sopra la riga lo zoom sulla parte e
+  // sui telefoni bassi sposta la pagina per tenerli in vista insieme: se lo facesse fra l'appoggio e il clic, il clic
+  // cadrebbe altrove e la scelta andrebbe persa (provato a 375 x 548). Le caselle di testo e i menu restano come sono.
+  const tasto = (e) => e.target.closest?.('[data-parte] :is(.pillole__voce, .modo, .scegli__tasto, .scegli__togli)');
+  form.addEventListener('mousedown', (e) => { if (e.button === 0 && tasto(e)) e.preventDefault(); });
+  form.addEventListener('click', (e) => {
+    const t = tasto(e);
+    if (!t) return;
+    const el = t.matches('label') ? t.querySelector('input') : t;
+    setTimeout(() => { if (el.isConnected && !el.closest('[hidden]') && document.activeElement !== el && !document.querySelector('dialog[open]')) el.focus({ preventScroll: true }); });
+  });
+
   // ------------------------------------------------------------------ quantità
   const quantita = form.elements.quantita;
   const qMin = Number(quantita?.dataset.min || 1), qMax = Number(quantita?.dataset.max || 999);
