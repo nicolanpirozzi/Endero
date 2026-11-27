@@ -361,6 +361,15 @@ export function guida(palco, camicia) {
     if (!ridotto.matches) await finoAllaFine(ferma(), DURATA + 150);
   }
 
+  // la tinta (vesti.js) si scioglie nella camicia bianca in 450 millisecondi (vesti.css): quanto si aspetta
+  const SCIOGLIE = 470;
+  const pausa = (ms) => new Promise((fatto) => setTimeout(fatto, ms));
+  /** C'è una camicia tinta ancora in vista sull'immagine ferma? (con il movimento ridotto non c'è niente da aspettare) */
+  const tintaInVista = () => {
+    if (ridotto.matches) return false;
+    const posto = palco.querySelector('.configura__vesti .vesti__posto--stoffa');
+    return !!posto?.querySelector('canvas.vesti__tinta') && +getComputedStyle(posto).opacity > 0.05;
+  };
   async function apriPalco(m) {
     preparaPalco();
     const mio = ++turno;
@@ -370,6 +379,7 @@ export function guida(palco, camicia) {
     const [misura] = await Promise.all([lineaDi(m), controllo ? controllo.ferma() : null]);
     if (mio !== turno) return;
     palco.dataset.guidaFerma = '';             // via i pezzi che si muovono: resta l'immagine ferma, che è la stessa
+    palco.dataset.guidaBianca = '';            // la camicia di riferimento: la tinta si scioglie, sopra si stende il velo
     const verso = versoDi(m);
     // la camicia si gira senza zoom: prima si torna indietro, poi si gira, poi lo zoom sulla zona nuova. La vista si
     // chiede sempre, anche quando la camicia è già da quel lato: un giro che stava ancora scaricando il retro per la
@@ -380,6 +390,9 @@ export function guida(palco, camicia) {
       nitida.hidden = true;
       if (nitidaDietro) nitidaDietro.hidden = true;
     }
+    // prima di girarsi la camicia tinta finisce di sciogliersi nella bianca: il giro è un filmato della camicia bianca,
+    // e partendo subito la tinta spariva di colpo (revisione del 2026-11-26)
+    if (verso !== vista && tintaInVista()) { await pausa(SCIOGLIE); if (mio !== turno) return; }
     const girata = await gira(verso);
     if (mio !== turno || !girata) return;
     // una misura senza linea: la camicia resta ferma, senza zoom
@@ -402,6 +415,12 @@ export function guida(palco, camicia) {
     const mio = ++turno;
     aperta = null;
     delete palco.dataset.guidaAperta;
+    // Da davanti la tinta torna subito, mentre lo zoom se ne va. Di spalle no: la camicia deve prima rigirarsi (il
+    // filmato è della camicia bianca), quindi resta quella di riferimento, velata, finché non è di nuovo di fronte;
+    // solo allora il velo si toglie e la tinta torna, in dissolvenza. Prima restavano due secondi di camicia bianca
+    // piena fra due camicie tinte, e la tinta tornava di colpo (revisione del 2026-11-26).
+    const daDietro = vista !== 'davanti' || ruota || desiderata !== 'davanti';
+    if (!daDietro) delete palco.dataset.guidaBianca;
     if (svg) svg.replaceChildren();
     await zoomVia();
     if (mio !== turno) return;
@@ -409,6 +428,11 @@ export function guida(palco, camicia) {
     if (nitidaDietro) nitidaDietro.hidden = true;
     await gira('davanti');
     if (mio !== turno) return;
+    if (daDietro) {
+      const cera = 'guidaBianca' in palco.dataset && !!palco.querySelector('.configura__vesti canvas.vesti__tinta');
+      delete palco.dataset.guidaBianca;
+      if (cera && !ridotto.matches) { await pausa(SCIOGLIE); if (mio !== turno) return; }
+    }
     delete palco.dataset.guidaFerma;
     controllo?.riparti();
   }
@@ -420,6 +444,7 @@ export function guida(palco, camicia) {
     palco.style.removeProperty('--zoom');
     delete palco.dataset.guidaAperta;
     delete palco.dataset.guidaFerma;
+    delete palco.dataset.guidaBianca;
     if (svg) svg.replaceChildren();
     if (nitida) nitida.hidden = true;
     if (nitidaDietro) nitidaDietro.hidden = true;

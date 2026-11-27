@@ -624,6 +624,49 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     controlla('rigato rosso e bianco: sul contorno ci sono le righe, non una fascia di colore medio', rosa.fascia > 5000 && rosa.parte < 0.55, JSON.stringify(rosa));
     await a.contesto.close();
   }
+  {
+    // Dalla seconda revisione del 26: nei campi di spalle (spalla, lunghezza dietro) la camicia tinta si scioglie PRIMA
+    // del giro (il filmato è della camicia bianca: partendo subito la tinta spariva di colpo), e uscendo il velo resta
+    // finché la camicia non è di nuovo di fronte; solo allora velo e tinta si scambiano, in dissolvenza (prima: due
+    // secondi di camicia bianca piena e la tinta che tornava di colpo). In un browser senza la scheda grafica finta:
+    // con quella, dopo lo zoom, le dissolvenze non avanzano e i numeri non dicono nulla.
+    const altro = await chromium.launch();
+    const contesto = await altro.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await contesto.newPage();
+    await page.addInitScript(() => {
+      window.__log = []; let ultimo = '';
+      window.__azzera = () => { window.__log.length = 0; ultimo = ''; };       // (lo stato di adesso si riscrive subito)
+      setInterval(() => {
+        const q = document.querySelector('.configura__palco'); if (!q) return;
+        const op = (s) => { const e = q.querySelector(s); return e ? +(+getComputedStyle(e).opacity).toFixed(2) : -1; };
+        const v = { girata: 'girata' in q.dataset, ferma: 'guidaFerma' in q.dataset, tinta: op('.configura__vesti .vesti__posto--stoffa'), velo: op('.configura__velo') };
+        const s = JSON.stringify(v);
+        if (s !== ultimo) { ultimo = s; window.__log.push(v); }
+      }, 30);
+    });
+    await page.goto(PAGINA + '&rigida', { waitUntil: 'networkidle' });
+    await pronta(page);
+    await manda(page, { tessuto: SCURO });
+    const tinta_ok = await tinta(page);
+    await posata(page); await page.waitForTimeout(800);
+    await page.evaluate(() => window.__azzera());
+    await page.focus('.misura[data-guida="spalla"] input');
+    await page.waitForFunction(() => 'girata' in document.querySelector('.configura__palco').dataset, null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(3500);
+    const entrata = await page.evaluate(() => window.__log.slice());
+    const alGiro = entrata.find((v) => v.girata);
+    controlla('campo di spalle: la tinta si scioglie prima che la camicia si giri', tinta_ok && !!alGiro && entrata.filter((v) => !v.girata).some((v) => v.tinta > 0.2 && v.tinta < 0.8) && entrata.filter((v) => !v.girata).at(-1).tinta <= 0.12, JSON.stringify(entrata.filter((v) => !v.girata).slice(-3)));
+    await page.evaluate(() => window.__azzera());
+    await page.waitForTimeout(80);
+    await page.evaluate(() => document.activeElement.blur());
+    await page.waitForFunction(() => !('guidaFerma' in document.querySelector('.configura__palco').dataset), null, { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    const uscita = await page.evaluate(() => window.__log.slice());
+    const diSpalle = uscita.filter((v) => v.girata), poi = uscita.filter((v) => !v.girata && v.ferma), ripresa = uscita.find((v) => !v.girata && !v.ferma);
+    controlla('uscendo da un campo di spalle il velo resta finché la camicia non si è rigirata', diSpalle.length > 0 && diSpalle.every((v) => v.velo >= 0.4 && v.tinta <= 0.05), JSON.stringify(diSpalle.slice(-2)));
+    controlla('poi velo e tinta si scambiano in dissolvenza, e solo dopo la camicia riparte', poi.some((v) => v.tinta > 0.15 && v.tinta < 0.9) && !!ripresa && ripresa.tinta >= 0.9 && ripresa.velo <= 0.1, JSON.stringify({ poi: poi.slice(0, 3), ripresa }));
+    await altro.close();
+  }
   // le iniziali: il carattere elegante, e gli altri due da provare
   for (const [v, famiglia] of [['', 'Endero Iniziali Corsivo'], ['&iniziali=b', 'Endero Iniziali Romano'], ['&iniziali=c', 'Endero Iniziali Inglese']]) {
     const a = await nuovo(COMPUTER[0][1], '&rigida' + v), { page } = a;

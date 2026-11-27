@@ -113,12 +113,13 @@
 }
 
 /* --- durante la guida alle misure (zoom e tratteggi: guida.js) la camicia è quella bianca di riferimento: la tinta
-   si scioglie, e torna quando la guida si chiude */
+   si scioglie, e torna quando la guida si chiude (data-guida-bianca: da davanti si toglie appena si esce dal campo,
+   di spalle solo quando la camicia si è rigirata) */
 .vesti__posto--stoffa {
   transition: opacity 450ms ease-out;
 }
 
-.configura__palco[data-guida-aperta][data-guida-ferma] .vesti__posto--stoffa {
+.configura__palco[data-guida-bianca] .vesti__posto--stoffa {
   opacity: 0;
 }
 
@@ -133,7 +134,7 @@
   max-width: none;
 }
 
-.configura__palco[data-guida-aperta][data-guida-ferma] .configura__velo {
+.configura__palco[data-guida-bianca] .configura__velo {
   opacity: var(--velo, 0.45);
 }
 
