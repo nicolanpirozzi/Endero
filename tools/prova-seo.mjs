@@ -207,16 +207,37 @@ const nelRiquadro = [...(configuratore.slice(configuratore.indexOf('configura__g
   vero('/camicie-su-misura/: la scheda misure ha le stesse voci del configuratore', nelRiquadro.length >= 10 && nellaScheda.join('|') === nelRiquadro.join('|'), nellaScheda.filter((v) => !nelRiquadro.includes(v)).join(', ') || `${nellaScheda.length} voci contro ${nelRiquadro.length}`);
 }
 // la scheda della pagina iniziale (2026-11-27) dice quanto si sceglie nel configuratore: i numeri devono essere quelli
-// veri. Colli e misure contati nella pagina del configuratore, i tessuti in tessuti.json (per difetto alla decina)
+// veri. Colli e misure contati nella pagina del configuratore, i tessuti in tessuti.json («oltre» la decina sotto)
 {
   const home = htmlDi('/');
   const scheda = (home.slice(home.indexOf('class="vetro scheda-misure scheda-misure--camicia personalizza"')).split('</section>')[0] || '');
-  const numero = (classe) => Number((scheda.match(new RegExp(`personalizza__riquadro--${classe}">[\\s\\S]*?personalizza__numero">(\\d+)<`)) || [])[1] || 0);
+  // dentro il solo riquadro (un riquadro senza numero non prende quello del riquadro dopo); il punto delle migliaia via
+  const riquadro = (classe) => (scheda.split(`personalizza__riquadro--${classe}"`)[1] || '').split('</li>')[0];
+  const numero = (classe) => Number(((riquadro(classe).match(/personalizza__numero">([\d.]+)</) || [])[1] || '0').replace(/\./g, ''));
+  const conf = (() => { try { return JSON.parse(readFileSync(join(RADICE, 'contenuti/it/configuratore.json'), 'utf8')); } catch { return {}; } })();
+  const campi = conf.scheda?.camicia?.campi || [];
+  const colli = (campi.find((x) => x.nome === 'collo')?.opzioni || []).map((o) => o.nome.toLowerCase());
+  const posizioni = (campi.find((x) => x.nome === 'iniziali')?.se_si?.[0]?.opzioni || []).map((o) => o.nome.toLowerCase());
   const colliVeri = (configuratore.match(/<select[^>]*name="collo"[\s\S]*?<\/select>/) || [''])[0].match(/<option value="[^"]+"/g)?.length || 0;
-  const tessutiVeri = (() => { try { return JSON.parse(readFileSync(join(RADICE, 'contenuti/it/tessuti.json'), 'utf8')).tessuti.length; } catch { return 0; } })();
+  const elenco = (() => { try { return JSON.parse(readFileSync(join(RADICE, 'contenuti/it/tessuti.json'), 'utf8')).tessuti; } catch { return []; } })();
+  const tessutiVeri = elenco.length;
   vero('/: la scheda del su misura conta i colli del configuratore', colliVeri >= 2 && numero('colli') === colliVeri, `${numero('colli')} contro ${colliVeri}`);
   vero('/: la scheda del su misura conta le misure del configuratore', numero('misure') === nelRiquadro.length, `${numero('misure')} contro ${nelRiquadro.length}`);
-  vero('/: «oltre» un numero di tessuti che c\'è davvero', numero('tessuti') >= 10 && numero('tessuti') <= tessutiVeri && tessutiVeri - numero('tessuti') < 10, `${numero('tessuti')} su ${tessutiVeri}`);
+  vero('/: «oltre» un numero di tessuti più piccolo di quelli veri, di non più di dieci (sotto i 20 nessun numero)',
+    tessutiVeri < 20 ? numero('tessuti') === 0 : numero('tessuti') < tessutiVeri && tessutiVeri - numero('tessuti') <= 10, `${numero('tessuti')} su ${tessutiVeri}`);
+  // i campioni: tutti quelli scelti in home.json, ognuno un tessuto che nel configuratore c'è davvero
+  const scelti = (() => { try { return JSON.parse(readFileSync(join(RADICE, 'contenuti/it/home.json'), 'utf8')).porta_su_misura.scelte.campioni; } catch { return []; } })();
+  const alt = [...riquadro('tessuti').matchAll(/<img\b[^>]*\balt="([^"]*)"/g)].map((m) => m[1]);
+  vero('/: nella scheda ci sono tutti i campioni scelti, con il nome di un tessuto vero', scelti.length >= 3 && alt.length === scelti.length && alt.every((a) => elenco.some((x) => x.nome === a)), `${alt.length} su ${scelti.length}: ${alt.join(', ')}`);
+  // le righe scritte a mano citano opzioni che il configuratore ha davvero (se un collo esce, la riga va cambiata)
+  const parole = senzaTag(riquadro('colli') + riquadro('iniziali')).toLowerCase();
+  const citati = [...['francese', 'coreano'].filter((n) => parole.includes(n) && !colli.includes(n)), ...['polso', 'collo', 'cuore'].filter((n) => parole.includes(`sul ${n}`) && !posizioni.some((x) => x.includes(n)))];
+  vero('/: le righe della scheda citano colli e posizioni delle iniziali che il configuratore ha davvero', citati.length === 0, citati.join(', '));
+}
+// nessun segnaposto rimasto con le parentesi: nel testo visibile i [[ ]] diventano il giallo da confermare
+for (const p of pagine) {
+  const visibile = senzaTag(p.html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ''));
+  vero(`${p.percorso}: nessun segnaposto [[ ]] rimasto con le parentesi`, !/\[\[|\]\]/.test(visibile), (visibile.match(/.{0,40}(\[\[|\]\]).{0,40}/) || [''])[0]);
 }
 // i dati della società: piè di pagina (in tutte le pagine), informativa privacy e dati per Google dicono la stessa cosa
 const iva = (piede.match(/Partita IVA (\d{11})/) || [])[1] || '';

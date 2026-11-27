@@ -181,6 +181,7 @@ function testata() {
   const piede = document.querySelector('.piede');
   // sul telefono la pillola si fa da parte sopra i moduli e sopra le schede con un pulsante in basso ([data-pillola-via])
   const moduli = [...document.querySelectorAll('[data-modulo], [data-pillola-via]')];
+  const schede = [...document.querySelectorAll('[data-pillola-via]')];
   const stretto = matchMedia('(max-width: 809px)');
   if (!el) return;
   let ultimo = scrollY;
@@ -211,8 +212,14 @@ function testata() {
       const sulFilm = apertura && apertura.getBoundingClientRect().bottom > innerHeight * 0.5;
       const sulPiede = piede && piede.getBoundingClientRect().top < innerHeight - 8;
       const sulModulo = stretto.matches && moduli.some((m) => { const r = m.getBoundingClientRect(); return r.top < innerHeight - 40 && r.bottom > innerHeight - 140; });
+      // sugli schermi larghi la pillola si fa da parte quando sta sopra una scheda con un pulsante in basso (la scheda
+      // del su misura sui portatili bassi: copriva «Oppure prenota in sede», revisione del 2026-11-27)
+      const sullaScheda = !stretto.matches && (() => {
+        const p = pillola.getBoundingClientRect();
+        return schede.some((m) => { const r = m.getBoundingClientRect(); return r.left < p.right + 12 && r.right > p.left - 12 && r.top < p.bottom + 12 && r.bottom > p.top - 12; });
+      })();
       pillola.toggleAttribute('data-visibile', !sulFilm);
-      pillola.toggleAttribute('data-via', Boolean(sulPiede || sulModulo));
+      pillola.toggleAttribute('data-via', Boolean(sulPiede || sulModulo || sullaScheda));
     }
   }
 

@@ -183,7 +183,14 @@ const testiConfiguratore = leggi('configuratore.json');
 const tessuti = existsSync(join(RADICE, 'contenuti/it/tessuti.json')) ? leggi('tessuti.json') : { tessuti: [] };
 // i campioni piccoli della scheda del su misura in pagina iniziale (tools/campioni-scheda.py)
 // (con il nome che il tessuto ha sul sito, per la descrizione dell'immagine)
-camicia.campioni = (testiHome.porta_su_misura?.scelte?.campioni || []).map((id) => ({ src: conVersione(`tessuti/mini/${id}.webp`), nome: tessuti.tessuti.find((t) => t.id === id)?.nome || '' })).filter((x) => x.src);
+// Un campione che non c'è si dice subito: altrimenti sparirebbe dalla scheda in silenzio (revisione del 2026-11-27)
+camicia.campioni = (testiHome.porta_su_misura?.scelte?.campioni || []).map((id) => {
+  const tessuto = tessuti.tessuti.find((t) => t.id === id);
+  if (!tessuto) throw new Error(`home.json, porta_su_misura.scelte.campioni: il tessuto ${id} non è in tessuti.json`);
+  const src = conVersione(`tessuti/mini/${id}.webp`);
+  if (!src) throw new Error(`manca public/camicia/tessuti/mini/${id}.webp: si rifà con python3 tools/campioni-scheda.py`);
+  return { src, nome: tessuto.nome };
+});
 
 // 3 · pagine
 /**
@@ -229,7 +236,7 @@ genera('/', home({
     js: [risorsa.sito, risorsa.apertura],
     precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
   },
-}), ['home.json', 'collezione.json', 'chi-siamo.json', 'configuratore.json', 'tessuti.json', FOTO.collezione, FOTO.artigianato]);
+}), ['home.json', 'collezione.json', 'chi-siamo.json', 'configuratore.json', 'tessuti.json', 'su-misura.json', 'diventa-rivenditore.json', 'prodotti.json', FOTO.collezione, FOTO.artigianato]);
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }), ['su-misura.json', FOTO.sede, FOTO.suMisura]);
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, tessuti, camicia, risorse: base, anteprima }), ['configuratore.json', 'tessuti.json']);
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }), ['collezione.json', 'prodotti.json', FOTO.collezione]);

@@ -214,14 +214,17 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
 
   // ---------------------------------------------------------------- 3. il su misura in pagina iniziale
   console.log('La camicia su misura, in pagina iniziale');
+  let colliVeri = 0;
   const misureVere = await (async () => {
     const a = await nuovo();
     await a.page.goto(base + '/camicie-su-misura/configuratore/', { waitUntil: 'domcontentloaded' });
     const m = await a.page.evaluate(() => [...document.querySelectorAll('.configura__gruppo--misure .misura__nome')].map((x) => x.textContent.trim()));
+    // anche i colli, contati nella stessa pagina: se il proprietario ne aggiunge o ne toglie uno, la scheda li segue
+    colliVeri = await a.page.evaluate(() => document.querySelectorAll('select[name="collo"] option[value]:not([value=""])').length);
     await a.contesto.close();
     return m;
   })();
-  for (const [nome, opzioni, largo] of [['computer', {}, true], ['schermo stretto', { viewport: { width: 1024, height: 768 } }, true], ['telefono', TELEFONO, false]]) {
+  for (const [nome, opzioni, largo] of [['computer', {}, true], ['schermo stretto', { viewport: { width: 1024, height: 768 } }, true], ['tablet in piedi', { viewport: { width: 768, height: 1024 } }, false], ['telefono', TELEFONO, false]]) {
     const a = await nuovo(opzioni), { page } = a;
     await page.goto(base + '/', { waitUntil: 'networkidle' });
     await a.vai('#su-misura');
@@ -243,13 +246,26 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
       };
     });
     controlla(`${nome}: niente «Foto in arrivo»: c'è la camicia del configuratore`, m.attese === 0 && m.foto && /^ferma/.test(m.file) && m.alt.length > 10, JSON.stringify({ attese: m.attese, file: m.file }));
-    controlla(`${nome}: la scheda ha i quattro riquadri, con le misure che il configuratore chiede davvero`, m.riquadri === 4 && misureVere.length >= 10 && m.numeri.misure === String(misureVere.length) && m.numeri.colli === '6' && /^\d+0$/.test(m.numeri.tessuti) && m.numeri.iniziali === 'EDR', JSON.stringify(m.numeri));
+    controlla(`${nome}: la scheda ha i quattro riquadri, con le misure che il configuratore chiede davvero`, m.riquadri === 4 && misureVere.length >= 10 && m.numeri.misure === String(misureVere.length) && colliVeri >= 2 && m.numeri.colli === String(colliVeri) && /^\d{1,3}(\.\d{3})*0$/.test(m.numeri.tessuti) && m.numeri.iniziali === 'EDR', JSON.stringify(m.numeri));
     controlla(`${nome}: numeri e nomi dei riquadri vicini alla stessa altezza, niente esce dai riquadri`, m.allineati && m.traboccano.length === 0, m.traboccano.join(' '));
     controlla(`${nome}: sei campioni di tessuto caricati, con il nome, dentro il loro riquadro`, m.campioni.length === 6 && m.campioni.every(Boolean), JSON.stringify(m.campioni));
-    controlla(`${nome}: sotto i riquadri gli altri dettagli del configuratore`, m.dettagli.length >= 5 && m.dettagli.includes('Taschino') && m.dettagli.includes('Polsino'), m.dettagli.join(', '));
+    controlla(`${nome}: sotto i riquadri gli altri dettagli del configuratore`, m.dettagli.length >= 5 && m.dettagli.includes('Taschino') && m.dettagli.some((d) => /^Polsin/.test(d)), m.dettagli.join(', '));
     controlla(`${nome}: il tasto porta al configuratore, il link alla prenotazione in sede`, m.pillola === '/camicie-su-misura/configuratore/' && m.inSede === '/camicie-su-misura/#prenota', `${m.pillola} ${m.inSede}`);
     if (largo) controlla(`${nome}: la scheda sta sul lato in ombra, dentro la foto, senza coprire la camicia`, m.scheda[0] > 0.56 && m.scheda[1] < 0.995 && m.scheda[3] && m.scheda[4] && m.opaca === '1', JSON.stringify(m.scheda));
     else controlla(`${nome}: la scheda sta sotto la camicia`, m.scheda[2] > -40 && m.opaca === '1', JSON.stringify(m.scheda));
+    if (largo) {
+      // il ventaglio dei campioni al passaggio del mouse: si apre, ma i cerchi restano nel loro riquadro
+      const r = await page.locator('#su-misura .personalizza__riquadro--colli').boundingBox();
+      await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+      await page.waitForTimeout(600);
+      const v = await page.evaluate(() => {
+        const t = document.querySelector('.personalizza__riquadro--tessuti').getBoundingClientRect(), i = [...document.querySelectorAll('.personalizza__campioni img')].map((x) => x.getBoundingClientRect());
+        return { aperto: i[1].left - i[0].left > i[0].width * 0.8, fuori: Math.round(i[i.length - 1].right - (t.right - 14)) };
+      });
+      // (dove il riquadro è stretto, a 1024, non c'è posto per aprirli: restano come sono, ma non escono)
+      controlla(`${nome}: col mouse sopra i campioni ${nome === 'computer' ? 'si aprono e ' : ''}restano nel loro riquadro`, (nome !== 'computer' || v.aperto) && v.fuori <= 1, JSON.stringify(v));
+      await page.mouse.move(5, 5);
+    }
     await foto(page, `su-misura-${nome.replace(' ', '-')}`);
     controlla(`${nome}: niente esce dallo schermo`, await a.stretta());
     await a.contesto.close();
@@ -261,6 +277,30 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
     await a.vai('#su-misura');
     const q = await a.page.evaluate(() => { const g = document.querySelector('#su-misura .grande').getBoundingClientRect(), s = document.querySelector('#su-misura .scheda-misure').getBoundingClientRect(); return { alta: Math.round(g.height), larga: Math.round(g.width), centro: Math.round(g.left + g.width / 2), scheda: s.top >= g.top && s.bottom <= g.bottom }; });
     controlla('schermo molto largo: la camicia non diventa più alta dello schermo e resta al centro', q.alta <= 900 && q.larga <= 1600 && Math.abs(q.centro - 960) < 2 && q.scheda && await a.stretta(), JSON.stringify(q));
+    await a.contesto.close();
+  }
+
+  for (const [w, h] of [[1366, 625], [1280, 720]]) {
+    const a = await nuovo({ viewport: { width: w, height: h } });
+    await a.page.goto(base + '/', { waitUntil: 'networkidle' });
+    await a.vai('#su-misura .scheda-misure', -100);
+    const alta = await a.page.evaluate(() => { const s = document.querySelector('#su-misura .scheda-misure').getBoundingClientRect(), sel = document.querySelector('.selettore')?.getBoundingClientRect(); return { scheda: Math.round(s.height), libero: Math.round(innerHeight - (sel ? sel.bottom : 0)) }; });
+    controlla(`portatile basso ${w}x${h}: la scheda entra intera sotto il selettore`, alta.scheda <= alta.libero, JSON.stringify(alta));
+    // a più posizioni dello scorrimento: dove la pillola di WhatsApp starebbe sul tasto o sul link, si fa da parte
+    const coperti = [];
+    const y0 = await a.page.evaluate(() => document.querySelector('#su-misura .scheda-misure').getBoundingClientRect().bottom + scrollY);
+    for (let k = 0; k < 8; k++) {
+      await a.page.evaluate((y) => window.scrollTo(0, y), y0 - h + 10 + k * 20);
+      await a.page.waitForTimeout(450);
+      const c = await a.page.evaluate(() => {
+        const p = document.querySelector('[data-pillola-fissa]'); if (!p) return false;
+        const st = getComputedStyle(p); if (p.hasAttribute('data-via') || st.visibility === 'hidden' || Number(st.opacity) < 0.1) return false;
+        const r = p.getBoundingClientRect();
+        return [...document.querySelectorAll('#su-misura .scheda-misure a')].some((l) => { const q = l.getBoundingClientRect(); return q.left < r.right && q.right > r.left && q.top < r.bottom && q.bottom > r.top; });
+      });
+      if (c) coperti.push(k);
+    }
+    controlla(`portatile basso ${w}x${h}: la pillola di WhatsApp non copre mai il tasto né il link della scheda`, coperti.length === 0, coperti.join(' '));
     await a.contesto.close();
   }
 

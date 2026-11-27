@@ -18,7 +18,8 @@
 @font-face {
   font-family: "Endero Iniziali Inglese";
   src: url("/font/iniziali-inglese.woff2") format("woff2");
-  font-display: swap;
+  /* è un ornamento nascosto ai lettori di schermo: meglio un attimo vuoto che il corsivo di ripiego di Windows */
+  font-display: block;
 }
 
 :root {
@@ -360,6 +361,7 @@ button {
 }
 
 .vetro__titolo {
+  text-wrap: balance;
   font-size: 12px;
   font-weight: 500;
   font-stretch: 125%;
@@ -1056,6 +1058,8 @@ body[data-barra] .selettore {
 .personalizza__riquadro {
   display: grid;
   grid-row: span 4;
+  /* senza subgrid (Safari 15, Chrome prima del 117): il numero in fondo alla sua parte e il nome subito sotto */
+  grid-template-rows: auto 1fr auto auto;
   grid-template-rows: subgrid;
   row-gap: 0;
   padding: 13px 14px 14px;
@@ -1126,7 +1130,9 @@ body[data-barra] .selettore {
 
 /* le iniziali nel corsivo del ricamo, alte quanto i numeri */
 .personalizza__ricamo {
-  font-family: "Endero Iniziali Inglese", "Snell Roundhand", "Apple Chancery", cursive;
+  /* se il file non arriva: un corsivo di sistema vero (Mac, Windows), poi un graziato; mai «cursive», che su Windows
+     è il Comic Sans (revisione del 2026-11-27) */
+  font-family: "Endero Iniziali Inglese", "Snell Roundhand", "Apple Chancery", "Segoe Script", Georgia, serif;
   font-size: 32px;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -1139,27 +1145,55 @@ body[data-barra] .selettore {
   padding-left: 1px;
 }
 
-/* sei cerchi sovrapposti di un quarto: 4,65 volte il lato, che è al più il 21% del riquadro */
+/* sei cerchi sovrapposti di un quarto: 4,65 volte il lato, che è al più il 21% del riquadro. Dove le unità del
+   contenitore (cqi) non ci sono (iOS 15) il lato è fisso a 20, che sta dentro anche a 320 punti: senza, i cerchi
+   prenderebbero la grandezza del file e coprirebbero la scheda */
 .personalizza__campioni img {
-  --lato: min(26px, 21cqi);
+  --lato: 20px;
   width: var(--lato);
   height: var(--lato);
   margin-right: calc(var(--lato) * -0.27);
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 0 0 1.5px #0d2252, 0 2px 6px rgba(0, 0, 0, 0.28);
+  /* un filo chiaro dentro il cerchio: il blu royal non sparisce sul vetro */
+  outline: 1px solid rgba(255, 255, 255, 0.16);
+  outline-offset: -1px;
   transition: margin 320ms var(--morbido), transform 320ms var(--morbido);
 }
 
-/* passando sulla scheda i campioni si aprono a ventaglio */
+@supports (width: 1cqi) {
+  .personalizza__campioni img {
+    --lato: min(26px, 21cqi);
+  }
+}
+
+/* passando sulla scheda i campioni si aprono a ventaglio, ma solo fin dove c'è posto: i sei cerchi (6 * lato) e
+   cinque spazi stanno nella larghezza del riquadro (100cqi, meno il punto di margine a sinistra). Se cambiano i
+   campioni in home.json, cambia il 6 */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .personalizza:hover .personalizza__campioni img {
-    margin-right: 3px;
+  .personalizza:hover .personalizza__campioni img:not(:last-child) {
+    margin-right: min(3px, calc((100cqi - 1px - 6 * var(--lato)) / 5));
   }
 
   .personalizza:hover .personalizza__campioni img:nth-child(even) {
     transform: translateY(-2px);
   }
+}
+
+.personalizza__colletto {
+  display: block;
+  width: auto;
+  height: 28px;
+}
+
+/* il punto filza, sopra le iniziali ricamate: una cucitura a tratti larga quanto il metro accanto */
+.personalizza__punto {
+  display: block;
+  width: 100%;
+  height: 12px;
+  /* un tratto e un vuoto, ripetuti per intero («round»): niente mezzo tratto in fondo */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55) 0 7px, transparent 7px) 0 50% / 12px 1.5px round no-repeat;
 }
 
 /* il metro da sarto: tacche sottili, una più lunga ogni cinque */
@@ -1172,32 +1206,59 @@ body[data-barra] .selettore {
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 6px) 0 0 / 100% 7px no-repeat;
 }
 
+/* gli altri dettagli stanno più vicini ai riquadri (sono ancora «cosa scegli»); il tasto, che è l'azione, ha più aria */
 .personalizza__altri {
   display: grid;
   gap: 2px;
+  margin-top: -4px;
+}
+
+.personalizza .scheda-misure__azioni {
+  margin-top: 6px;
 }
 
 .personalizza__altri .vetro__sezione {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
+/* una lista con la spunta, in due colonne: si legge come «posso scegliere anche questo», e non sembrano tasti */
 .personalizza__dettagli {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 14px;
 }
 
 .personalizza__dettagli li {
-  padding: 6px 10px;
-  border-radius: var(--raggio-pillola);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-  font-size: 10px;
-  font-weight: 500;
-  font-stretch: 118%;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  position: relative;
+  padding-left: 15px;
+  font-size: 11px;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.personalizza__dettagli li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.12em;
+  width: 4px;
+  height: 8px;
+  border: solid rgba(255, 255, 255, 0.72);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+/* con i colori forzati (contrasto elevato di Windows) ombre e sfondi spariscono: i riquadri prendono un bordo vero e
+   il metro e la cucitura restano disegnati */
+@media (forced-colors: active) {
+  .personalizza__riquadro {
+    border: 1px solid CanvasText;
+  }
+
+  .personalizza__metro,
+  .personalizza__punto {
+    forced-color-adjust: none;
+  }
 }
 
 /* sul tablet in piedi la scheda è larga quanto la foto: i quattro riquadri in fila */
@@ -1205,11 +1266,16 @@ body[data-barra] .selettore {
   .personalizza__griglia {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .personalizza__dettagli {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-/* fra telefono e schermo grande la scheda sta sulla parete in uno spazio più basso: via le righe piccole sotto i nomi
-   (i numeri e i nomi bastano), così la scheda resta dentro la foto */
-@media (min-width: 810px) and (max-width: 1279px) {
+/* fra telefono e schermo grande, e sui portatili bassi (1366 x 625), la scheda sta sulla parete in uno spazio più
+   basso: via le righe piccole sotto i nomi (i numeri e i nomi bastano), così la scheda resta dentro la foto e si
+   vede intera */
+@media (min-width: 810px) and (max-width: 1279px), (min-width: 810px) and (max-height: 760px) {
   .personalizza__dettaglio {
     display: none;
   }
@@ -1227,11 +1293,40 @@ body[data-barra] .selettore {
   }
 }
 
+/* sugli schermi grandi e alti la scheda cresce un poco (la foto si ferma a 1600 punti e 889 di altezza) */
+@media (min-width: 1600px) and (min-height: 820px) {
+  .scheda-misure--camicia.personalizza {
+    width: clamp(384px, 25vw, 440px);
+  }
+
+  .personalizza__numero {
+    font-size: 46px;
+  }
+
+  .personalizza__ricamo {
+    font-size: 36px;
+  }
+
+  .personalizza__nome {
+    font-size: 11px;
+  }
+
+  .personalizza__dettaglio,
+  .personalizza__dettagli li {
+    font-size: 12px;
+  }
+}
+
 .scheda-misure__azioni {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 18px;
+}
+
+/* con la tastiera il contorno della pillola chiara si vede sul vetro blu (prima era blu su blu) */
+.vetro .pillola--chiara:focus-visible {
+  outline-color: var(--filo);
 }
 
 .scheda-misure__azioni .collegamento {

@@ -234,8 +234,13 @@ let capo = 0.66;
 let carattere = null;
 const caratterePronto = () => (carattere ||= (async () => {
   try {
-    const f = new FontFace(CARATTERE.famiglia, `url(/font/${CARATTERE.file})`, { style: CARATTERE.stile, weight: String(CARATTERE.peso) });
-    document.fonts.add(await f.load());
+    // la faccia è dichiarata in sito.css (@font-face), che c'è in tutte le pagine: si carica quella, così nella pagina
+    // ce n'è una sola. Se il foglio non la avesse (una copia vecchia rimasta nel browser) la si aggiunge come prima
+    const pronte = await document.fonts.load(FONT(100), 'EDR');
+    if (!pronte.length) {
+      const f = new FontFace(CARATTERE.famiglia, `url(/font/${CARATTERE.file})`, { style: CARATTERE.stile, weight: String(CARATTERE.peso) });
+      document.fonts.add(await f.load());
+    }
   } catch { /* resta il carattere di riserva */ }
   const g = document.createElement('canvas').getContext('2d');
   if (!g) return;

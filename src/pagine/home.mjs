@@ -93,12 +93,18 @@ export default function home({ sito, testi: h, cultura, suMisura, configuratore 
   const invito = conf.attivo ? { testo: conf.invito, href: conf.href } : porta.invito;
   // la scheda del su misura: quanto si può scegliere nel configuratore, contato dai suoi dati (così resta vero)
   const campi = configuratore.scheda?.camicia?.campi || [];
+  // le migliaia con il punto, come nel resto del sito («2.500»): toLocaleString lo mette solo da 10.000
+  const numero = new Intl.NumberFormat('it-IT', { useGrouping: 'always' });
+  const nomi = porta.scelte?.dettagli_nomi || {};
   const scelte = {
-    tessuti: Math.floor(quantiTessuti / 10) * 10,
+    // «oltre» la decina sotto: 483 → 480, ma 480 → 470 (con 480 tessuti «oltre 480» sarebbe falso)
+    tessuti: quantiTessuti >= 20 ? numero.format(Math.floor((quantiTessuti - 1) / 10) * 10) : '',
+    // un riquadro c'è solo se il configuratore ha il suo campo (colli e iniziali): la scheda non promette ciò che non c'è
     colli: campi.find((c) => c.nome === 'collo')?.opzioni?.length || 0,
+    iniziali: campi.some((c) => c.nome === 'iniziali'),
     misure: (configuratore.scheda?.misure?.campi || []).length,
     // le personalizzazioni che non hanno un riquadro loro (le iniziali ce l'hanno)
-    dettagli: campi.filter((c) => c.personalizzazione && c.nome !== 'iniziali').map((c) => c.etichetta),
+    dettagli: [...new Set(campi.filter((c) => c.personalizzazione && c.nome !== 'iniziali').map((c) => nomi[c.nome] || c.etichetta))],
     campioni,
   };
   const corpo = `${apertura(h.apertura)}
