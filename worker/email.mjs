@@ -349,7 +349,8 @@ export function scelteCamicia(o) {
   out.push([et('bottone'), opzione(campoConf('bottone')?.opzioni, o.bottone)]);
   out.push([et('filato_bottone'), o.filato_bottone ? colore(o.filato_bottone) : v.nessuna]);
   const posizioni = campoConf('iniziali')?.se_si?.[0]?.opzioni;
-  out.push([et('iniziali'), o.iniziali ? riempi(v.iniziali, { lettere: o.iniziali.lettere, posizione: opzione(posizioni, o.iniziali.posizione) }) : v.no]);
+  // (un ordine salvato prima del 27 novembre non ha il colore del filo: lì il ricamo era blu Endero)
+  out.push([et('iniziali'), o.iniziali ? riempi(v.iniziali, { lettere: o.iniziali.lettere, posizione: opzione(posizioni, o.iniziali.posizione), colore: o.iniziali.colore ? colore(o.iniziali.colore).toLowerCase() : v.filo_predefinito }) : v.no]);
   for (const nome of ['interno_collo', 'interno_polso', 'polsino']) {
     out.push([et(nome), o[nome] ? `${personalizzato} · ${tessutoSito(o[nome].tessuto)}` : (C.standard || v.standard)]);
   }

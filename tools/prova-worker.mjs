@@ -187,7 +187,7 @@ console.log('L\'ordine del configuratore');
   };
   const SPEDIRE = { spedizione: 'cinque', destinatario: 'Mario Prova', indirizzo: 'Via Inventata 1', cap: '80100', citta: 'Napoli', provincia: 'NA', note_consegna: 'Citofono Prova' };
   const TUTTE = { taschino: 'si', taschino_tessuto: T2, asola: 'si', asola_colore: 'rosso', bottone: 'contrasto', filato_bottone: 'blu',
-    iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: 'MP', interno_collo: 'personalizzato', interno_collo_tessuto: T2,
+    iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: 'MP', iniziali_colore: 'bianco', interno_collo: 'personalizzato', interno_collo_tessuto: T2,
     interno_polso: 'personalizzato', interno_polso_tessuto: T3, polsino: 'personalizzato', polsino_tessuto: T3 };
   const SITO = 'https://endero.men';
   const manda = (env, dati, { json = true, origine = SITO } = {}) => worker.default.fetch(new Request(`${SITO}/api/ordine`, {

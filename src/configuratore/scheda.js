@@ -8,7 +8,7 @@
 // - i sotto-campi che compaiono con «Sì» o «Personalizzato»; il prezzo sempre in vista, rifatto a ogni scelta;
 // - le finestre dei tessuti e dei colori del filo (una per tipo, per tutti i campi);
 // - la camicia che segue le scelte: a ogni cambio l'avviso `endero:camicia` (lo ascolta vesti.js) con il collo, il
-//   taschino, le iniziali e i tessuti (della camicia, del taschino, dei polsini);
+//   taschino, le iniziali con il colore del filo e i tessuti (della camicia, del taschino, dei polsini);
 // - ciò che si scrive resta nella scheda del browser (sessionStorage): ricaricando non si perde, chiudendola sì;
 // - l'invio a /api/ordine, che apre il pagamento di Stripe (o dice che non è ancora attivo).
 // Per i controlli automatici: ?passo=misure (o un altro passo) apre direttamente quel passo.
@@ -182,7 +182,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     const detail = {
       collo: d.collo || '',
       taschino: d.taschino === 'si',
-      iniziali: d.iniziali === 'si' && d.iniziali_posizione && l ? { posizione: d.iniziali_posizione, lettere: l } : null,
+      // (il colore del filo: finché non lo si sceglie, sulla camicia il ricamo è blu Endero)
+      iniziali: d.iniziali === 'si' && d.iniziali_posizione && l ? { posizione: d.iniziali_posizione, lettere: l, colore: tinte.get(d.iniziali_colore)?.tinta || '' } : null,
       // i tessuti che colorano la camicia (vesti.js): il suo, quello del taschino e quello dei polsini; interno collo
       // e interno polso sulla camicia non si vedono (proprietario, 2026-11-26: «così semplifichiamo»)
       tessuto: d.tessuto || '',
@@ -482,7 +483,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       [campi.asola.etichetta, d.asola === 'si' ? [S.si, tinte.get(d.asola_colore)?.nome].filter(Boolean).join(' · ') : S.no],
       [campi.bottone.etichetta, nomeOpzione('bottone', d.bottone)],
       [campi.filato_bottone.etichetta, tinte.get(d.filato_bottone)?.nome || ''],
-      [campi.iniziali.etichetta, d.iniziali === 'si' ? [maiuscole(d.iniziali_lettere || ''), nomeOpzione('iniziali_posizione', d.iniziali_posizione)].filter(Boolean).join(' · ') : S.no],
+      [campi.iniziali.etichetta, d.iniziali === 'si' ? [maiuscole(d.iniziali_lettere || ''), nomeOpzione('iniziali_posizione', d.iniziali_posizione), tinte.get(d.iniziali_colore) ? (campi.iniziali_colore.riepilogo || '{colore}').replace('{colore}', tinte.get(d.iniziali_colore).nome.toLowerCase()) : ''].filter(Boolean).join(' · ') : S.no],
       ...['interno_collo', 'interno_polso', 'polsino'].map((n) => [campi[n].etichetta, d[n] === 'personalizzato' ? conTessuto(S.personalizzato, d[`${n}_tessuto`]) : S.standard]),
     ];
     const misure = S.misure.campi.map((m) => [m.etichetta, d[m.nome] ? `${d[m.nome].trim().replace('.', ',')} ${m.unita}` : '']);

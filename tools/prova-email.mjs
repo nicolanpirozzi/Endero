@@ -109,7 +109,7 @@ console.log('Ordine del configuratore (dati inventati)');
   const { ordinePerEndero, ordinePerCliente, avvisaOrdine } = await import(pathToFileURL(uscita).href);
   const o = {
     quantita: 2, tessuto: 't0501', collo: 'francese', taschino: { tessuto: 't0502' }, asola: { colore: 'rosso' }, bottone: 'contrasto', filato_bottone: 'blu',
-    iniziali: { posizione: 'cuore', lettere: 'MP' }, interno_collo: null, interno_polso: { tessuto: 't0201' }, polsino: null,
+    iniziali: { posizione: 'cuore', lettere: 'MP', colore: 'bianco' }, interno_collo: null, interno_polso: { tessuto: 't0201' }, polsino: null,
     misure: { giro_collo: 41, spalla: 47, spallina: 16.5, torace: 56, pancia: 51, bacino: 54, lunghezza_manica: 61, braccio: 19.25, avambraccio: 15.5, polso: 24, lunghezza_davanti: 69, lunghezza_dietro: 80.5 },
     cliente: { nome: 'Mario <b>Rossi</b>', telefono: '333 1234567', email: 'mario@esempio.it' },
     spedizione: { modo: 'cinque', indirizzo: { destinatario: 'Mario Rossi', indirizzo: 'Via Inventata 1', cap: '80100', citta: 'Napoli', provincia: 'NA', note: 'Citofono <i>Prova</i>' } },
@@ -124,7 +124,7 @@ console.log('Ordine del configuratore (dati inventati)');
   controlla('a Endero: nome vero del tessuto, cartella e posizione', /Articolo Finto · F-1/.test(a.html) && /Cartella: Cartella Finta/.test(a.html) && /Posizione: 2/.test(a.html));
   controlla('a Endero: dove manca il nome vero, nome del sito, id e avviso', (a.html.match(/Nome della cartella colori non disponibile/g) || []).length === 2 && /Sul sito: [^<]+ · t0201/.test(a.html));
   controlla('a Endero: foto del campione dal sito vero', /src="https:\/\/endero\.men\/camicia\/tessuti\/t0501\.webp"/.test(a.html));
-  controlla('a Endero: misure con il giro, iniziali, consegna con note, totale', /56 \(giro 112\)/.test(a.html) && /MP · Lato cuore/.test(a.html) && /Citofono &lt;i&gt;Prova/.test(a.html) && /240\s€/.test(a.html));
+  controlla('a Endero: misure con il giro, iniziali, consegna con note, totale', /56 \(giro 112\)/.test(a.html) && /MP · Lato cuore · filo bianco/.test(a.html) && /Citofono &lt;i&gt;Prova/.test(a.html) && /240\s€/.test(a.html));
   controlla('a Endero: tasti WhatsApp, Chiama, Email', /wa\.me\/393331234567\?text=/.test(a.html) && /tel:\+393331234567/.test(a.html) && /mailto:mario@esempio\.it\?subject=/.test(a.html));
   controlla('a Endero: il testo scritto dal cliente non diventa codice', !/<b>Rossi<\/b>/.test(a.html) && !/<i>Prova<\/i>/.test(a.html));
   controlla('a Endero: la testata dell\'ordine', /testata-ordine-\d+\.jpg/.test(a.html));

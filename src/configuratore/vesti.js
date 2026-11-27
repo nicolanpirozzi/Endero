@@ -25,15 +25,16 @@
 const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
 const SVG = 'http://www.w3.org/2000/svg';
 const DISSOLVE = 200;                  // millisecondi: la comparsa di un pezzo nuovo (la stessa durata è nel CSS)
-const FILO = '#0f285e';                // il blu del logo, per il ricamo delle iniziali
+const FILO = '#0f285e';                // il blu del logo: il filo delle iniziali finché il cliente non ne sceglie uno
 const POSTI = ['polso', 'collo', 'cuore'];
 const SLOT = ['collo', 'taschino', 'stoffa', 'iniziali'];        // dal basso in alto: la camicia tinta copre i pezzi bianchi
 const ATTESA = 350;                    // millisecondi: oltre, compare la rotella «filo che cuce»
 
 // ---------------------------------------------------------------------------------------------- le scelte
 
-/** Le scelte del riquadro, pulite: un collo (un nome), il taschino sì o no, al più tre lettere maiuscole in un posto,
- *  i tessuti (della camicia, del taschino, dei polsini: il nome di un tessuto o niente). */
+/** Le scelte del riquadro, pulite: un collo (un nome), il taschino sì o no, al più tre lettere maiuscole in un posto
+ *  con il colore del filo (#rrggbb, o niente), i tessuti (della camicia, del taschino, dei polsini: il nome di un
+ *  tessuto o niente). */
 function pulisci(d) {
   const ini = d?.iniziali;
   const lettere = typeof ini?.lettere === 'string' ? ini.lettere.toLocaleUpperCase('it').replace(/[^\p{Lu}]/gu, '').slice(0, 3) : '';
@@ -41,7 +42,7 @@ function pulisci(d) {
   return {
     collo: typeof d?.collo === 'string' ? d.collo : 'italiano',
     taschino: d?.taschino === true,
-    iniziali: lettere && POSTI.includes(ini.posizione) ? { posizione: ini.posizione, lettere } : null,
+    iniziali: lettere && POSTI.includes(ini.posizione) ? { posizione: ini.posizione, lettere, colore: /^#[0-9a-f]{6}$/i.test(ini.colore || '') ? ini.colore.toLowerCase() : FILO } : null,
     tessuto: nome(d?.tessuto), taschino_tessuto: nome(d?.taschino_tessuto), polsino_tessuto: nome(d?.polsino_tessuto),
   };
 }
@@ -214,8 +215,8 @@ function risolvi(sc, D) {
     collo: collo?.file && collo.riquadro ? { chiave: 'collo:' + sc.collo, file: collo.file, riquadro: collo.riquadro } : null,
     taschino: tasca?.file && tasca.riquadro ? { chiave: 'taschino', file: tasca.file, riquadro: tasca.riquadro } : null,
     stoffa: null,                                                             // la mette `applica`, quando l'ha tinta
-    // (nella chiave anche il posto e il carattere: cambiando collo le iniziali sul collo si spostano)
-    iniziali: posto?.centro ? { chiave: `iniziali:${pos}:${sc.iniziali.lettere}:${posto.centro}:${posto.gradi}:${posto.alta}:${CARATTERE.nome}`, lettere: sc.iniziali.lettere, centro: posto.centro, gradi: +posto.gradi || 0, alta: +posto.alta || 7 } : null,
+    // (nella chiave anche il posto e il colore del filo: cambiando collo le iniziali sul collo si spostano)
+    iniziali: posto?.centro ? { chiave: `iniziali:${pos}:${sc.iniziali.lettere}:${sc.iniziali.colore}:${posto.centro}:${posto.gradi}:${posto.alta}`, lettere: sc.iniziali.lettere, colore: sc.iniziali.colore, centro: posto.centro, gradi: +posto.gradi || 0, alta: +posto.alta || 7 } : null,
   };
 }
 const vuoto = (s) => !s.stoffa && !s.collo && !s.taschino && !s.iniziali;
@@ -223,15 +224,10 @@ const NIENTE = { stoffa: null, collo: null, taschino: null, iniziali: null };
 
 // ---------------------------------------------------------------------------------------------- le iniziali
 
-// Il carattere delle iniziali (proprietario, 2026-11-26: «Le iniziali le voglio in un font più elegante»). Tre da
-// provare, ospitati sul sito con le sole maiuscole (public/font/, licenze in licenze.txt); sceglie lui: l'indirizzo
-// con ?iniziali=b o ?iniziali=c mostra gli altri due.
-const CARATTERI = {
-  a: { nome: 'a', famiglia: 'Endero Iniziali Corsivo', file: 'iniziali-corsivo.woff2', stile: 'italic', peso: 600, spazio: 0.02 },     // Cormorant Garamond, corsivo
-  b: { nome: 'b', famiglia: 'Endero Iniziali Romano', file: 'iniziali-romano.woff2', stile: 'normal', peso: 600, spazio: 0.06 },       // Cinzel, maiuscole romane
-  c: { nome: 'c', famiglia: 'Endero Iniziali Inglese', file: 'iniziali-inglese.woff2', stile: 'normal', peso: 400, spazio: 0.02 },     // Petit Formal Script, corsivo inglese
-};
-const CARATTERE = CARATTERI[new URLSearchParams(location.search).get('iniziali')] || CARATTERI.a;
+// Il carattere delle iniziali (proprietario, 2026-11-26: «Le iniziali le voglio in un font più elegante»; fra tre
+// provati il 27 ha scelto il corsivo inglese). Petit Formal Script con le sole maiuscole, ospitato sul sito
+// (public/font/, licenza in licenze.txt).
+const CARATTERE = { famiglia: 'Endero Iniziali Inglese', file: 'iniziali-inglese.woff2', stile: 'normal', peso: 400, spazio: 0.02 };
 const FONT = (corpo) => `${CARATTERE.stile} ${CARATTERE.peso} ${corpo}px "${CARATTERE.famiglia}", Georgia, serif`;
 // l'altezza delle maiuscole, in frazione del corpo: si misura appena il carattere c'è
 let capo = 0.66;
@@ -266,7 +262,7 @@ function ricamo(ini) {
     'font-style': CARATTERE.stile, 'font-weight': CARATTERE.peso, 'font-size': r2(corpo), 'letter-spacing': r2(corpo * CARATTERE.spazio), 'text-anchor': 'middle',
   });
   const riga = (dy, colore) => { const t = crea('text', { x: cx, y: r2(cy + ini.alta / 2 + dy), fill: colore }); t.textContent = ini.lettere; return t; };
-  g.append(riga(d, LUCE_SOTTO), riga(-d, OMBRA_SOPRA), riga(0, FILO));
+  g.append(riga(d, LUCE_SOTTO), riga(-d, OMBRA_SOPRA), riga(0, ini.colore || FILO));
   return g;
 }
 /** Le stesse iniziali su una tela (la stoffa): `s` punti della tela per punto del fotogramma, (ox, oy) l'origine. */
@@ -280,7 +276,7 @@ function ricamaTela(g, ini, s, ox, oy) {
   if ('letterSpacing' in g) g.letterSpacing = `${(ini.alta / capo) * CARATTERE.spazio}px`;
   g.textAlign = 'center';
   g.textBaseline = 'alphabetic';
-  for (const [dy, colore] of [[d, LUCE_SOTTO], [-d, OMBRA_SOPRA], [0, FILO]]) { g.fillStyle = colore; g.fillText(ini.lettere, 0, ini.alta / 2 + dy); }
+  for (const [dy, colore] of [[d, LUCE_SOTTO], [-d, OMBRA_SOPRA], [0, ini.colore || FILO]]) { g.fillStyle = colore; g.fillText(ini.lettere, 0, ini.alta / 2 + dy); }
   g.restore();
 }
 

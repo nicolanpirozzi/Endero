@@ -198,6 +198,14 @@
               "etichetta": "Iniziali",
               "massimo": 3,
               "aiuto": "Fino a 3 lettere."
+            },
+            {
+              "nome": "iniziali_colore",
+              "tipo": "colore",
+              "etichetta": "Colore del filo",
+              "riepilogo": "filo {colore}",
+              "scegli": "Scegli il colore",
+              "cambia": "Cambia"
             }
           ]
         },
@@ -657,6 +665,7 @@
       "bottone_minimo": "Il bottone personalizzato si ordina da 100 pezzi in su: aumenta la quantità o scegli un altro bottone.",
       "iniziali_posizione": "Scegli dove ricamare le iniziali.",
       "iniziali_lettere": "Scrivi da 1 a 3 lettere.",
+      "iniziali_colore": "Scegli il colore del filo.",
       "interno_collo_tessuto": "Scegli il tessuto dell'interno collo.",
       "interno_polso_tessuto": "Scegli il tessuto dell'interno polso.",
       "polsino_tessuto": "Scegli il tessuto del polsino.",

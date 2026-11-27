@@ -260,7 +260,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await sceglieRadio(page, 'iniziali_posizione', 'polso');
     await page.fill('#campo-iniziali_lettere', 'np');
     a = await page.evaluate(() => ({ camicia: window.__camicia.at(-1).iniziali, lente: !!document.querySelector('.misura-lente:not([hidden])'), zoom: document.querySelector('.configura__palco').style.getPropertyValue('--zoom') }));
-    controlla(`${formato}: posizione «polso» e «np»: la camicia riceve { polso, NP }, senza zoom né riquadri`, JSON.stringify(a.camicia) === JSON.stringify({ posizione: 'polso', lettere: 'NP' }) && !a.lente && !a.zoom, JSON.stringify(a));
+    controlla(`${formato}: posizione «polso» e «np»: la camicia riceve { polso, NP }, senza zoom né riquadri`, JSON.stringify(a.camicia) === JSON.stringify({ posizione: 'polso', lettere: 'NP', colore: '' }) && !a.lente && !a.zoom, JSON.stringify(a));
     await sceglieRadio(page, 'iniziali_posizione', 'cuore');
     a = await page.evaluate(() => window.__camicia.at(-1).iniziali);
     controlla(`${formato}: cambiando posizione la camicia riceve «cuore»`, a?.posizione === 'cuore', JSON.stringify(a));
@@ -272,6 +272,11 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
       controlla(`${formato}: iniziali «${scritto}» → ${giusto ? 'vanno bene' : `«${v.testo}»`}`, giusto ? !v.testo : v.testo === 'Scrivi da 1 a 3 lettere.' && v.sotto, JSON.stringify(v));
     }
     await page.fill('#campo-iniziali_lettere', 'NP');
+    // il colore del filo (proprietario, 2026-11-27: «Lo sceglie il cliente»): arriva alla camicia, e il prezzo non cambia
+    const primaDelFilo = await prezzo();
+    await colore(page, 'iniziali_colore', 0);
+    a = await page.evaluate(() => ({ camicia: window.__camicia.at(-1).iniziali, tinta: document.querySelector('#finestra-colori [data-id]').dataset.tinta }));
+    controlla(`${formato}: il colore del filo delle iniziali arriva alla camicia (${a.tinta}) e il prezzo resta ${primaDelFilo}`, !!a.tinta && a.camicia?.colore === a.tinta && (await prezzo()) === primaDelFilo, JSON.stringify(a));
     // tutte le otto personalizzazioni → 150
     await colore(page, 'filato_bottone', 3);
     for (const n of ['interno_collo', 'interno_polso', 'polsino']) await sceglieRadio(page, n, 'personalizzato');

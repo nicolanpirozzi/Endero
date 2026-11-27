@@ -124,7 +124,7 @@
 }
 
 /* … e si fa più trasparente, «così i tratteggi si vedono meglio» (proprietario, 2026-11-26): sopra la camicia e i suoi
-   pezzi si stende la parete senza camicia. Quanto: --velo, messo da guida.js (tre misure da provare) */
+   pezzi si stende la parete senza camicia. Quanto: --velo, messo da guida.js (0,6: scelta sua il 27) */
 .configura__velo {
   opacity: 0;
 }
@@ -135,7 +135,7 @@
 }
 
 .configura__palco[data-guida-bianca] .configura__velo {
-  opacity: var(--velo, 0.45);
+  opacity: var(--velo, 0.6);
 }
 
 /* --- la rotella «filo che cuce» (proprietario, 2026-11-26: «ruota caricamento come filo che cuce con scritto sotto

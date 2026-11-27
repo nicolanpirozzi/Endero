@@ -39,7 +39,7 @@ const BASE = {
 const SPEDIRE = { spedizione: 'cinque', destinatario: 'Mario Prova', indirizzo: 'Via Inventata 1', cap: '80100', citta: 'Napoli', provincia: 'NA' };
 const TUTTE = {
   taschino: 'si', taschino_tessuto: T2, asola: 'si', asola_colore: 'rosso', bottone: 'contrasto', filato_bottone: 'blu',
-  iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: 'mp', interno_collo: 'personalizzato', interno_collo_tessuto: T2,
+  iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: 'mp', iniziali_colore: 'bianco', interno_collo: 'personalizzato', interno_collo_tessuto: T2,
   interno_polso: 'personalizzato', interno_polso_tessuto: T3, polsino: 'personalizzato', polsino_tessuto: T3,
 };
 const ordineCon = (...pezzi) => Object.assign({}, BASE, ...pezzi);
@@ -54,7 +54,7 @@ console.log('Prezzo per numero di personalizzazioni (90 · 100 · 100 · 120 …
 // le personalizzazioni una alla volta, nell'ordine della pagina
 const UNA = [
   { taschino: 'si', taschino_tessuto: T2 }, { asola: 'si', asola_colore: 'rosso' }, { bottone: 'contrasto' }, { filato_bottone: 'blu' },
-  { iniziali: 'si', iniziali_posizione: 'cuore', iniziali_lettere: 'MP' }, { interno_collo: 'personalizzato', interno_collo_tessuto: T2 },
+  { iniziali: 'si', iniziali_posizione: 'cuore', iniziali_lettere: 'MP', iniziali_colore: 'bianco' }, { interno_collo: 'personalizzato', interno_collo_tessuto: T2 },
   { interno_polso: 'personalizzato', interno_polso_tessuto: T2 }, { polsino: 'personalizzato', polsino_tessuto: T2 },
 ];
 const ATTESI = { 0: 90, 1: 100, 2: 100, 3: 120, 4: 120, 5: 120, 6: 120, 7: 120, 8: 150 };
@@ -118,8 +118,10 @@ console.log('Campi che dipendono da una scelta');
 const dipende = [
   ['taschino', { taschino: 'si' }, 'taschino_tessuto'],
   ['asola', { asola: 'si' }, 'asola_colore'],
-  ['iniziali (posizione)', { iniziali: 'si', iniziali_lettere: 'MP' }, 'iniziali_posizione'],
-  ['iniziali (lettere)', { iniziali: 'si', iniziali_posizione: 'collo' }, 'iniziali_lettere'],
+  ['iniziali (posizione)', { iniziali: 'si', iniziali_lettere: 'MP', iniziali_colore: 'blu' }, 'iniziali_posizione'],
+  ['iniziali (lettere)', { iniziali: 'si', iniziali_posizione: 'collo', iniziali_colore: 'blu' }, 'iniziali_lettere'],
+  // (dal 2026-11-27 il colore del filo delle iniziali lo sceglie il cliente)
+  ['iniziali (colore del filo)', { iniziali: 'si', iniziali_posizione: 'collo', iniziali_lettere: 'MP' }, 'iniziali_colore'],
   ['interno collo', { interno_collo: 'personalizzato' }, 'interno_collo_tessuto'],
   ['interno polso', { interno_polso: 'personalizzato' }, 'interno_polso_tessuto'],
   ['polsino', { polsino: 'personalizzato' }, 'polsino_tessuto'],
@@ -130,11 +132,13 @@ for (const nome of ['interno_collo', 'interno_polso', 'polsino']) controlla(`${n
 controlla('colore dell\'asola inventato: no', !!errori(ordineCon({ asola: 'si', asola_colore: 'oro' })).asola_colore);
 controlla('filato bottone inventato: no; vuoto: sì (è facoltativo)', !!errori(ordineCon({ filato_bottone: 'oro' })).filato_bottone && !errori(ordineCon({ filato_bottone: '' })).filato_bottone);
 controlla('collo inventato: no', !!errori(ordineCon({ collo: 'alla coreana' })).collo);
+controlla('colore del filo delle iniziali inventato: no', !!errori(ordineCon({ iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: 'A', iniziali_colore: 'oro' })).iniziali_colore);
+controlla('il colore del filo delle iniziali arriva nell\'ordine pulito', ordinePulito(ordineCon({ iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: 'A', iniziali_colore: 'rosso' })).iniziali.colore === 'rosso');
 controlla('posizione delle iniziali inventata: no', !!errori(ordineCon({ iniziali: 'si', iniziali_posizione: 'schiena', iniziali_lettere: 'A' })).iniziali_posizione);
 
 console.log('Iniziali');
 for (const [l, giusto, salvate] of [['MP', true, 'MP'], ['m.p.', true, 'MP'], ['a b c', true, 'ABC'], ['Ž', true, 'Ž'], ['ABCD', false], ['', false], ['M1', false], ['<b>', false], ['😀', false]]) {
-  const d = ordineCon({ iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: l });
+  const d = ordineCon({ iniziali: 'si', iniziali_posizione: 'polso', iniziali_lettere: l, iniziali_colore: 'blu' });
   const e = errori(d);
   controlla(`iniziali «${l}» ${giusto ? `vanno, salvate «${salvate}»` : 'no'}`, giusto ? !e.iniziali_lettere && ordinePulito(d).iniziali.lettere === salvate : !!e.iniziali_lettere, JSON.stringify(e));
 }

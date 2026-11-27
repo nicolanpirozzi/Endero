@@ -17,8 +17,8 @@
 // (proprietario: «quando sono nella sezione CAMICIA, non ci sono zoom e evidenziamenti»; per un giorno c'erano stati).
 // Nel passo Misure, mentre la guida è aperta, la camicia è quella bianca di riferimento e si fa più trasparente,
 // «così i tratteggi si vedono meglio» (parole sue): sopra di lei si stende un velo, che è la parete senza la camicia
-// (lo stesso pezzo che usa leggera.js). Quanto, lo sceglie lui fra tre misure: ?velo=a (poco), b (di mezzo, quella
-// normale), c (molto). I pezzi scelti nel passo Camicia (vesti.js: collo, taschino, iniziali) restano sulla camicia
+// (lo stesso pezzo che usa leggera.js). Quanto: fra tre misure provate il 27 ha scelto la più trasparente («C · Molto
+// trasparente»). I pezzi scelti nel passo Camicia (vesti.js: collo, taschino, iniziali) restano sulla camicia
 // anche dentro lo zoom, bianchi: la guida dice a vesti.js quanto ingrandisce (`endero:zoom`), quando la camicia è
 // girata di spalle (`data-girata` sul palco: i pezzi davanti non si vedono) e dove sta il riquadro del telefono
 // (`endero:lente`).
@@ -29,7 +29,7 @@ const ridotto = matchMedia('(prefers-reduced-motion: reduce)');
 /** I campi che aprono la guida: le misure. */
 const CAMPO = '.misura[data-guida]';
 // quanto la parete vela la camicia mentre la guida è aperta (0 niente, 1 la camicia sparisce)
-const VELO = { a: 0.3, b: 0.45, c: 0.6 }[new URLSearchParams(location.search).get('velo')] ?? 0.45;
+const VELO = 0.6;
 const SVG = 'http://www.w3.org/2000/svg';
 
 // quanto si ingrandisce al più sul computer, e quanto è grande al minimo la zona inquadrata (punti del fotogramma)

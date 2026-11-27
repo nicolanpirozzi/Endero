@@ -51,7 +51,7 @@ const BASE = { quantita: '1', tessuto: 't0501', collo: 'italiano', taschino: 'no
 const ORDINI = {
   'ordine-base': { ...BASE, giro_collo: '41', nome: 'Mario Rossi', telefono: '333 123 4567', email: 'mario.rossi@esempio.it' },
   'ordine-completo': { ...BASE, quantita: '2', tessuto: 't0502', collo: 'button_down', taschino: 'si', taschino_tessuto: 't0502', asola: 'si', asola_colore: 'bordeaux',
-    bottone: 'contrasto', filato_bottone: 'blu_notte', iniziali: 'si', iniziali_posizione: 'cuore', iniziali_lettere: 'LE',
+    bottone: 'contrasto', filato_bottone: 'blu_notte', iniziali: 'si', iniziali_posizione: 'cuore', iniziali_lettere: 'LE', iniziali_colore: 'panna',
     interno_collo: 'personalizzato', interno_collo_tessuto: 't2507', interno_polso: 'personalizzato', interno_polso_tessuto: 't2507', polsino: 'personalizzato', polsino_tessuto: 't1517',
     nome: 'Luca Esposito', telefono: '+39 347 765 4321', email: 'luca.esposito@esempio.it',
     spedizione: 'cinque', destinatario: 'Luca Esposito', indirizzo: 'Via dei Mille 10, scala B', cap: '80121', citta: 'Napoli', provincia: 'NA', note_consegna: 'Citofono Esposito, terzo piano' },

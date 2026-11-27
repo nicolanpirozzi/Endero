@@ -238,7 +238,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
         return { aperta: p.dataset.guidaAperta, zoom: p.style.getPropertyValue('--zoom'), linee: document.querySelectorAll('.configura__linee .linea__tratto').length, file: document.querySelector('.configura__vesti img')?.getAttribute('src') || '', velo: velo ? +getComputedStyle(velo).opacity : -1, veloZoom: velo ? getComputedStyle(velo).transform !== 'none' : false };
       });
       controlla('entrando in una misura: zoom sulla zona e tratteggio', z.aperta === 'giro_collo' && z.zoom.includes('scale') && z.linee > 0, `${z.zoom}, ${z.linee} tratti`);
-      controlla('la camicia è velata (più trasparente), con lo stesso zoom', Math.abs(z.velo - 0.45) < 0.03 && z.veloZoom, JSON.stringify(z));
+      controlla('la camicia è velata (più trasparente), con lo stesso zoom', Math.abs(z.velo - 0.6) < 0.03 && z.veloZoom, JSON.stringify(z));
       const fz = await scartoFerma(page, { collo: 'francese', taschino: true, iniziali: TUTTO.iniziali });
       controlla('nello zoom i pezzi sono in vista e allineati sopra la camicia nitida', fz.s.visibile && fz.max <= 0.5 && fz.lettere <= 0.5, `${fz.max.toFixed(3)} punti, lettere ${fz.lettere.toFixed(2)}`);
       controlla('nello zoom il collo è nel file grande', /-4\.webp/.test(z.file), z.file.split('/').pop());
@@ -307,7 +307,7 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
       return { immagine: im ? [im.getAttribute('href').split('/').pop().split('?')[0], +im.getAttribute('x'), +im.getAttribute('y'), +im.getAttribute('width'), +im.getAttribute('height')] : null, lettere: g?.querySelector('text:last-child')?.textContent, tratti: c.querySelectorAll('.linea__tratto').length, velo: velo ? +velo.getAttribute('opacity') : -1, tinta: c.querySelectorAll('canvas').length };
     });
     const [x0, y0, x1, y1] = D.colli.francese.riquadro;
-    controlla('sul telefono il riquadro con lo zoom ha il tratteggio e il velo', !l.manca && l.tratti > 0 && Math.abs(l.velo - 0.45) < 0.01, JSON.stringify({ tratti: l.tratti, velo: l.velo }));
+    controlla('sul telefono il riquadro con lo zoom ha il tratteggio e il velo', !l.manca && l.tratti > 0 && Math.abs(l.velo - 0.6) < 0.01, JSON.stringify({ tratti: l.tratti, velo: l.velo }));
     controlla('nel riquadro ci sono il collo scelto, al suo punto, e le iniziali', !!l.immagine && l.immagine[0].startsWith('collo-francese-') && l.immagine[1] === x0 && l.immagine[2] === y0 && l.immagine[3] === x1 - x0 && l.immagine[4] === y1 - y0 && l.lettere === 'NP', JSON.stringify(l.immagine));
     await foto(page, `${sigla}-riquadro-collo`);
     await page.evaluate(() => document.activeElement?.blur());
@@ -667,16 +667,32 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     controlla('poi velo e tinta si scambiano in dissolvenza, e solo dopo la camicia riparte', poi.some((v) => v.tinta > 0.15 && v.tinta < 0.9) && !!ripresa && ripresa.tinta >= 0.9 && ripresa.velo <= 0.1, JSON.stringify({ poi: poi.slice(0, 3), ripresa }));
     await altro.close();
   }
-  // le iniziali: il carattere elegante, e gli altri due da provare
-  for (const [v, famiglia] of [['', 'Endero Iniziali Corsivo'], ['&iniziali=b', 'Endero Iniziali Romano'], ['&iniziali=c', 'Endero Iniziali Inglese']]) {
-    const a = await nuovo(COMPUTER[0][1], '&rigida' + v), { page } = a;
+  // le iniziali: il corsivo inglese (proprietario, 2026-11-27) e il filo del colore scelto dal cliente
+  {
+    const FAMIGLIA = 'Endero Iniziali Inglese';
+    const a = await nuovo(COMPUTER[0][1], '&rigida'), { page } = a;
     await pronta(page);
     await manda(page, { iniziali: { posizione: 'cuore', lettere: 'NP' } });
     await posata(page);
     await page.waitForTimeout(900);
-    const s = await page.evaluate((f) => ({ attributo: document.querySelector('.vesti__iniziali')?.getAttribute('font-family') || '', pronto: document.fonts.check(`20px "${f}"`) && [...document.fonts].some((x) => x.family.replace(/"/g, '') === f && x.status === 'loaded') }), famiglia);
-    controlla(`iniziali${v || ' (di norma)'}: scritte in «${famiglia}», carattere scaricato dal sito`, s.attributo.includes(famiglia) && s.pronto, JSON.stringify(s));
-    controlla(`iniziali${v}: nessun errore`, a.errori.length === 0, a.errori.join(' | '));
+    const filo = () => page.evaluate(() => [...document.querySelectorAll('.configura__addosso .vesti__iniziali text, .configura__vesti .vesti__iniziali text')].map((x) => x.getAttribute('fill')).filter((f) => f && f.startsWith('#')));
+    let s = await page.evaluate((f) => ({ attributo: document.querySelector('.vesti__iniziali')?.getAttribute('font-family') || '', pronto: document.fonts.check(`20px "${f}"`) && [...document.fonts].some((x) => x.family.replace(/"/g, '') === f && x.status === 'loaded') }), FAMIGLIA);
+    controlla(`iniziali: scritte in «${FAMIGLIA}», carattere scaricato dal sito`, s.attributo.includes(FAMIGLIA) && s.pronto, JSON.stringify(s));
+    const prima = await filo();
+    controlla('iniziali: finché non si sceglie il colore il filo è blu Endero', prima.length > 0 && prima.every((f) => f === '#0f285e'), JSON.stringify(prima));
+    await manda(page, { iniziali: { posizione: 'cuore', lettere: 'NP', colore: '#FFFFFF' } });
+    await posata(page);
+    await page.waitForTimeout(700);
+    const dopo = await filo();
+    controlla('iniziali: con un colore scelto il filo è di quel colore', dopo.length > 0 && dopo.every((f) => f === '#ffffff'), JSON.stringify(dopo));
+    await manda(page, { iniziali: { posizione: 'cuore', lettere: 'NP', colore: 'url(javascript:1)' } });
+    await posata(page);
+    await page.waitForTimeout(700);
+    const strano = await filo();
+    controlla('iniziali: un colore che non è un colore torna al blu Endero', strano.length > 0 && strano.every((f) => f === '#0f285e'), JSON.stringify(strano));
+    controlla('iniziali: nessun errore', a.errori.length === 0, a.errori.join(' | '));
+    const altri = a.richieste.filter((u) => /iniziali-(corsivo|romano)/.test(u));
+    controlla('iniziali: gli altri due caratteri non si scaricano più', altri.length === 0, altri.join(', '));
     await a.contesto.close();
   }
 

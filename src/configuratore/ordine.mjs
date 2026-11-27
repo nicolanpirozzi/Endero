@@ -6,7 +6,7 @@
 // I dati arrivano "piatti", come li manda un modulo: un nome di campo, un valore di testo.
 //   quantita, tessuto, collo,
 //   taschino (si|no) + taschino_tessuto, asola (si|no) + asola_colore, bottone (tinta|contrasto|personalizzato),
-//   filato_bottone (un colore, o vuoto), iniziali (si|no) + iniziali_posizione + iniziali_lettere,
+//   filato_bottone (un colore, o vuoto), iniziali (si|no) + iniziali_posizione + iniziali_lettere + iniziali_colore,
 //   interno_collo, interno_polso, polsino (standard|personalizzato) + …_tessuto,
 //   le dodici misure, nome, telefono, email,
 //   spedizione (ritiro|cinque|sette) + destinatario, indirizzo, cap, citta, provincia, note_consegna, privacy.
@@ -141,6 +141,7 @@ export function controllaOrdine(d, { passo = '', tessuti = null } = {}) {
     if (d.iniziali === 'si') {
       tra('iniziali_posizione', campo('iniziali').se_si[0].opzioni);
       if (!/^\p{L}{1,3}$/u.test(lettere(d.iniziali_lettere))) e.iniziali_lettere = E.iniziali_lettere;
+      tra('iniziali_colore', COLORI);
     } else if (d.iniziali !== 'no') e.iniziali = E.scelta;
     for (const nome of ['interno_collo', 'interno_polso', 'polsino']) {
       if (d[nome] === 'personalizzato') tessuto(`${nome}_tessuto`); else if (d[nome] !== 'standard') e[nome] = E.scelta;
@@ -194,7 +195,7 @@ export function ordinePulito(d) {
     asola: d.asola === 'si' ? { colore: d.asola_colore } : null,
     bottone: d.bottone,
     filato_bottone: pulito(d.filato_bottone) || null,
-    iniziali: d.iniziali === 'si' ? { posizione: d.iniziali_posizione, lettere: lettere(d.iniziali_lettere) } : null,
+    iniziali: d.iniziali === 'si' ? { posizione: d.iniziali_posizione, lettere: lettere(d.iniziali_lettere), colore: d.iniziali_colore } : null,
     interno_collo: d.interno_collo === 'personalizzato' ? { tessuto: pulito(d.interno_collo_tessuto) } : null,
     interno_polso: d.interno_polso === 'personalizzato' ? { tessuto: pulito(d.interno_polso_tessuto) } : null,
     polsino: d.polsino === 'personalizzato' ? { tessuto: pulito(d.polsino_tessuto) } : null,
