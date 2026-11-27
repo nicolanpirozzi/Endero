@@ -1,5 +1,5 @@
 // Pagine /privacy/, /cookie/ e /condizioni-di-vendita/: testo semplice, ben leggibile. Privacy e cookie confermate dal
-// consulente di Endero il 2026-11-20 (le parti sugli ordini, del 27, sono in giallo); le condizioni sono una bozza del 27.
+// consulente di Endero il 2026-11-20; le parti sugli ordini e le condizioni di vendita, scritte il 27, le ha approvate il 27.
 // Le parti tra {{nome|…}} compaiono solo se ciò che descrivono è attivo sul sito (vedi la nota in legale.json).
 import { t, tConLink } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';

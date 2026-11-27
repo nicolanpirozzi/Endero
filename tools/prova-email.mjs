@@ -128,6 +128,14 @@ console.log('Ordine del configuratore (dati inventati)');
   controlla('a Endero: tasti WhatsApp, Chiama, Email', /wa\.me\/393331234567\?text=/.test(a.html) && /tel:\+393331234567/.test(a.html) && /mailto:mario@esempio\.it\?subject=/.test(a.html));
   controlla('a Endero: il testo scritto dal cliente non diventa codice', !/<b>Rossi<\/b>/.test(a.html) && !/<i>Prova<\/i>/.test(a.html));
   controlla('a Endero: la testata dell\'ordine', /testata-ordine-\d+\.jpg/.test(a.html));
+  {
+    // l'ordine di prova del 2026-11-27: tante variazioni, l'oggetto finiva tagliato con un «·» in fondo
+    const riga = 'Taglia 39 · collo −9 cm · spalla +13,5 cm · spallina +13,5 cm · torace −46 cm · pancia −18 cm · bacino −1 cm · manica +4 cm · braccio +2 cm · avambraccio +1,5 cm · polsino +1 cm · davanti −3 cm · dietro −2 cm';
+    const lungo = ordinePerEndero({ ...dati, prova: true, taglia: { riga, daVerificare: true, motivi: [] } });
+    controlla('a Endero, tante variazioni: oggetto entro 160 caratteri, chiuso a una voce intera con «…»',
+      lungo.oggetto.length <= 160 && /cm…$/.test(lungo.oggetto) && lungo.oggetto.startsWith('[PROVA] Nuovo ordine E-2026-000007'), lungo.oggetto);
+    controlla('a Endero, tante variazioni: la riga intera resta nel testo', lungo.testo.includes('dietro −2 cm'));
+  }
   controlla('a Endero, taglia non calcolata: lo dice', /Taglia non calcolata/.test(ordinePerEndero({ ...dati, taglia: null }).html) && !/Taglia 41/.test(ordinePerEndero({ ...dati, taglia: null }).oggetto));
   controlla('al cliente: nomi del sito, mai quelli veri, niente note né taglia', !/Articolo Finto|F-1|Cartella Finta|Citofono|Taglia 41/.test(b.html + b.testo) && /Popeline bianco/.test(b.html));
   controlla('al cliente: numero d\'ordine, totale e WhatsApp', b.oggetto === 'Il tuo ordine Endero E-2026-000007' && /240\s€/.test(b.html) && /wa\.me\/393338548712\?text=Ciao%20Endero/.test(b.html));

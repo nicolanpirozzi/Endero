@@ -1,5 +1,5 @@
 {
-  "_nota": "Informativa privacy e cookie. Bozza nostra del 2026-11-14, confermata dal consulente di Endero il 2026-11-20 («Il consulente ha confermato le bozze, puoi pubblicarle»). Dati societari e sede legale confermati dal proprietario lo stesso giorno; conservazione: 24 mesi dall'ultima richiesta (scelta sua), e il Worker del sito cancella da sé le richieste più vecchie (worker/conservazione.mjs). Lo stesso giorno, su sua scelta («Correggi tu quelle frasi»), abbiamo corretto le righe che non corrispondevano ai moduli veri: campi obbligatori e dati dei rivenditori, e lo scopo «mandarti listino e condizioni». Resend è il nome del servizio: la società, che va nominata, è Plus Five Five, Inc. (dai suoi documenti legali, letti il 2026-11-20: ricontrollare quando si accendono le email). Le parti tra {{ }} compaiono solo quando ciò che descrivono è attivo: {{email|…}} con le email dei moduli (sito.json, email_moduli), {{antispam|…}} con la chiave di Cloudflare Turnstile (TURNSTILE_SITE_KEY nel build). Quando il configuratore invierà gli ordini (misure del corpo, pagamento con Stripe) l'informativa va aggiornata e riletta dal consulente. Il 2026-11-27 il proprietario ha chiesto di pubblicare il configuratore con un pagamento di prova e ha scelto «Aggiungi tu gli ordini» e, per le condizioni di vendita che sul sito non c'erano, «Scrivi tu una bozza»: le parti sugli ordini dell'informativa e tutta la pagina delle condizioni sono bozze nostre, con in giallo ciò che il proprietario o il consulente devono confermare. Il diritto di recesso escluso (art. 59, lett. c, Codice del Consumo), la garanzia legale e il foro del consumatore sono la legge: li rilegge comunque il consulente.",
+  "_nota": "Informativa privacy e cookie. Bozza nostra del 2026-11-14, confermata dal consulente di Endero il 2026-11-20 («Il consulente ha confermato le bozze, puoi pubblicarle»). Dati societari e sede legale confermati dal proprietario lo stesso giorno; conservazione: 24 mesi dall'ultima richiesta (scelta sua), e il Worker del sito cancella da sé le richieste più vecchie (worker/conservazione.mjs). Lo stesso giorno, su sua scelta («Correggi tu quelle frasi»), abbiamo corretto le righe che non corrispondevano ai moduli veri: campi obbligatori e dati dei rivenditori, e lo scopo «mandarti listino e condizioni». Resend è il nome del servizio: la società, che va nominata, è Plus Five Five, Inc. (dai suoi documenti legali, letti il 2026-11-20: ricontrollare quando si accendono le email). Le parti tra {{ }} compaiono solo quando ciò che descrivono è attivo: {{email|…}} con le email dei moduli (sito.json, email_moduli), {{antispam|…}} con la chiave di Cloudflare Turnstile (TURNSTILE_SITE_KEY nel build). Quando il configuratore invierà gli ordini (misure del corpo, pagamento con Stripe) l'informativa va aggiornata e riletta dal consulente. Il 2026-11-27 il proprietario ha chiesto di pubblicare il configuratore con un pagamento di prova e ha scelto «Aggiungi tu gli ordini» e, per le condizioni di vendita che sul sito non c'erano, «Scrivi tu una bozza»: le parti sugli ordini dell'informativa e tutta la pagina delle condizioni le abbiamo scritte noi. Lo stesso giorno il proprietario ha riferito che il consulente le ha approvate tutte e due («il consulente ha dato l'ok sia per le nuove condizioni di vendita che per la nuova privacy»): via il giallo. Restano così anche i fatti che erano in giallo: prezzi IVA inclusa, misure sbagliate modificate o rifatte a pagamento con il costo detto prima, giorni contati dalla conferma del sarto, spedizione solo in Italia, 10 anni per gli ordini pagati, Stripe titolare autonomo, il corriere.",
   "avviso": "",
   "aggiornamento": "Ultimo aggiornamento: 20 novembre 2026",
   "privacy": {
@@ -20,7 +20,7 @@
         "paragrafi": [
           "Quando compili un modulo del sito: nome e cognome, numero di telefono, email se la indichi, giorno e fascia oraria preferiti per la presa misure, il testo del messaggio. Con la richiesta salviamo anche data e ora, la pagina da cui l'hai inviata e il Paese da cui ti colleghi.",
           "Se chiedi di diventare rivenditore: che cosa ti interessa, la città e il Paese della tua attività e, se li indichi, nome del negozio o marchio, tipo di attività, partita IVA e sito o profilo Instagram.",
-          "[[Se ordini una camicia su misura: nome e cognome, telefono ed email, le scelte della camicia e le sue misure, come vuoi riceverla e, se la spediamo, il nome di chi la riceve, l'indirizzo e le note per il corriere. Del pagamento salviamo l'esito, l'importo e l'email con cui hai pagato: i dati della carta li tratta Stripe, Endero non li vede.]]",
+          "Se ordini una camicia su misura: nome e cognome, telefono ed email, le scelte della camicia e le sue misure, come vuoi riceverla e, se la spediamo, il nome di chi la riceve, l'indirizzo e le note per il corriere. Del pagamento salviamo l'esito, l'importo e l'email con cui hai pagato: i dati della carta li tratta Stripe, Endero non li vede.",
           "Mentre navighi: i dati tecnici che ogni sito riceve dal browser, come l'indirizzo IP, trattati dal fornitore che ospita il sito per farlo funzionare e proteggerlo."
         ]
       },
@@ -28,8 +28,8 @@
         "titolo": "Perché li usiamo",
         "elenco": [
           "Per risponderti, fissare l'appuntamento per la presa misure o, se chiedi di diventare rivenditore, mandarti listino e condizioni, su tua richiesta (articolo 6, paragrafo 1, lettera b del Regolamento UE 2016/679).",
-          "[[Per preparare, cucire e consegnare la camicia che hai ordinato, e per scriverti se le misure vanno ricontrollate: è il contratto che fai con noi (articolo 6, paragrafo 1, lettera b).]]",
-          "[[Per tenere i documenti contabili e fiscali dell'ordine, come chiede la legge (articolo 6, paragrafo 1, lettera c).]]",
+          "Per preparare, cucire e consegnare la camicia che hai ordinato, e per scriverti se le misure vanno ricontrollate: è il contratto che fai con noi (articolo 6, paragrafo 1, lettera b).",
+          "Per tenere i documenti contabili e fiscali dell'ordine, come chiede la legge (articolo 6, paragrafo 1, lettera c).",
           "Per la sicurezza del sito e per fermare lo spam nei moduli, nel nostro legittimo interesse (articolo 6, paragrafo 1, lettera f)."
         ]
       },
@@ -37,20 +37,20 @@
         "titolo": "Sono obbligatori?",
         "paragrafi": [
           "Nome e telefono servono per ricontattarti: senza non possiamo rispondere alla richiesta. Nel modulo di contatto serve anche il messaggio. Se chiedi di diventare rivenditore servono anche email, città, Paese e che cosa ti interessa: listino e condizioni te li mandiamo per email. Gli altri campi sono facoltativi.",
-          "[[Per ordinare una camicia servono nome, telefono, email e le misure e, se la camicia va spedita, l'indirizzo: senza non possiamo prepararla né consegnarla.]]"
+          "Per ordinare una camicia servono nome, telefono, email e le misure e, se la camicia va spedita, l'indirizzo: senza non possiamo prepararla né consegnarla."
         ]
       },
       {
         "titolo": "Per quanto tempo li teniamo",
         "paragrafi": [
           "Le richieste dei moduli: per 24 mesi dall'ultima richiesta, poi le cancelliamo.",
-          "[[Gli ordini pagati: per 10 anni, come chiede la legge per i documenti contabili. Gli ordini mai pagati o annullati, e quelli fatti con il pagamento di prova: 30 giorni, poi li cancelliamo.]]"
+          "Gli ordini pagati: per 10 anni, come chiede la legge per i documenti contabili. Gli ordini mai pagati o annullati, e quelli fatti con il pagamento di prova: 30 giorni, poi li cancelliamo."
         ]
       },
       {
         "titolo": "Chi li vede",
         "paragrafi": [
-          "Solo le persone di Endero che si occupano della tua richiesta o del tuo ordine e i fornitori che ci danno i servizi tecnici, nominati responsabili del trattamento: Cloudflare, Inc. per il database delle richieste e degli ordini{{antispam|, il filtro antispam}} e l'hosting del sito{{email|; Plus Five Five, Inc. (Resend) per l'invio delle email}}. [[Il pagamento lo gestisce Stripe Payments Europe, Limited, come titolare autonomo dei dati di pagamento, secondo la sua informativa. Se la camicia va spedita, nome e indirizzo li riceve il corriere che la consegna.]] I dati non vengono venduti né diffusi."
+          "Solo le persone di Endero che si occupano della tua richiesta o del tuo ordine e i fornitori che ci danno i servizi tecnici, nominati responsabili del trattamento: Cloudflare, Inc. per il database delle richieste e degli ordini{{antispam|, il filtro antispam}} e l'hosting del sito{{email|; Plus Five Five, Inc. (Resend) per l'invio delle email}}. Il pagamento lo gestisce Stripe Payments Europe, Limited, come titolare autonomo dei dati di pagamento, secondo la sua informativa. Se la camicia va spedita, nome e indirizzo li riceve il corriere che la consegna. I dati non vengono venduti né diffusi."
         ]
       },
       {
@@ -115,7 +115,7 @@
       "descrizione": "Le condizioni per ordinare una camicia su misura sul sito di Endero: prezzi, pagamento, misure, consegna, recesso e garanzia."
     },
     "titolo": "Condizioni di vendita",
-    "aggiornamento": "[[Bozza del 27 novembre 2026, da rileggere con il consulente]]",
+    "aggiornamento": "Ultimo aggiornamento: 27 novembre 2026",
     "sezioni": [
       {
         "titolo": "Chi vende",
@@ -132,7 +132,7 @@
       {
         "titolo": "Prezzi",
         "paragrafi": [
-          "Il prezzo di una camicia dipende dalle personalizzazioni che scegli: 90 € senza personalizzazioni, 100 € con una o due, 120 € da tre a sette, 150 € con tutte e otto. I prezzi sono in euro[[ e comprendono l'IVA]]. Prima di pagare vedi il totale, consegna compresa.",
+          "Il prezzo di una camicia dipende dalle personalizzazioni che scegli: 90 € senza personalizzazioni, 100 € con una o due, 120 € da tre a sette, 150 € con tutte e otto. I prezzi sono in euro e comprendono l'IVA. Prima di pagare vedi il totale, consegna compresa.",
           "Il bottone personalizzato si ordina da 100 pezzi in su."
         ]
       },
@@ -152,14 +152,14 @@
         "titolo": "Le misure",
         "paragrafi": [
           "Le misure le scrivi tu, prendendole dalla camicia che ti sta meglio, come spiega il configuratore. Prima del taglio il sarto le ricontrolla: se qualcosa non torna ti scrive su WhatsApp.",
-          "[[Se le misure scritte nell'ordine sono sbagliate, la camicia si può modificare o rifare a pagamento: il costo te lo diciamo prima.]]"
+          "Se le misure scritte nell'ordine sono sbagliate, la camicia si può modificare o rifare a pagamento: il costo te lo diciamo prima."
         ]
       },
       {
         "titolo": "Consegna",
         "paragrafi": [
           "Puoi ritirare la camicia in laboratorio, in Viale del Toro 22 a Giugliano in Campania, senza costi. Oppure la spediamo: in 7 giorni lavorativi a 15 €, in 5 giorni lavorativi a 30 €. Da 200 € di spesa la spedizione è gratuita.",
-          "[[I giorni si contano da quando il sarto ha confermato le misure. Per ora spediamo solo in Italia.]]"
+          "I giorni si contano da quando il sarto ha confermato le misure. Per ora spediamo solo in Italia."
         ]
       },
       {

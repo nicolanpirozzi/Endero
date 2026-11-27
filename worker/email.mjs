@@ -30,8 +30,17 @@ const TIPI = ['contatto', 'presa-misure', 'rivenditore'];
 
 const pulisci = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const riempi = (modello, valori) => modello.replace(/\{(\w+)\}/g, (_, k) => valori[k] ?? '');
-// nelle intestazioni (oggetto, nomi) niente a capo né caratteri di controllo
-const inRiga = (v) => String(v ?? '').replace(/[\u0000-\u001F\u007F]+/g, ' ').trim().slice(0, 160);
+// nelle intestazioni (oggetto, nomi) niente a capo né caratteri di controllo, e al più 160 caratteri. Se è più lunga
+// (l'oggetto dell'ordine con tante variazioni di taglia) si taglia a una voce intera e si chiude con «…», non a metà
+// di una misura con un «·» rimasto in fondo (l'ordine di prova del 2026-11-27); la riga intera è nel testo
+const inRiga = (v) => {
+  const s = String(v ?? '').replace(/[\u0000-\u001F\u007F]+/g, ' ').trim();
+  if (s.length <= 160) return s;
+  const taglio = s.slice(0, 159);
+  const voce = taglio.lastIndexOf(' · ');
+  const fine = voce > 60 ? voce : taglio.lastIndexOf(' ') > 60 ? taglio.lastIndexOf(' ') : 159;
+  return `${taglio.slice(0, fine).replace(/[\s·]+$/, '')}…`;
+};
 const tipoDi = (r) => (TIPI.includes(r.tipo) ? r.tipo : 'contatto');
 const dominio = () => String(sito.dominio || 'https://endero.men').replace(/\/$/, '');
 const immagine = (nome) => `${dominio()}/email/${nome.replace(/(\.\w+)$/, `-${VERSIONE_IMMAGINI}$1`)}`;

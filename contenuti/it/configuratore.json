@@ -568,7 +568,7 @@
       "gratis": "Gratis",
       "indirizzo": {
         "titolo": "Dove la spediamo",
-        "nota": "[[Spediamo in Italia.]]",
+        "nota": "Spediamo in Italia.",
         "campi": [
           {
             "nome": "destinatario",

@@ -46,7 +46,7 @@ export async function dimentica(db) {
 
 // Gli ordini del configuratore (worker/ordine.mjs). Quelli pagati sono documenti contabili e restano (quanto, lo dice
 // l'informativa). Quelli mai pagati o annullati, e quelli del pagamento di prova, si cancellano dopo 30 giorni
-// (informativa privacy, «Per quanto tempo li teniamo»; bozza del 2026-11-27 da far rileggere al consulente).
+// (informativa privacy, «Per quanto tempo li teniamo», approvata dal consulente il 2026-11-27).
 export const ORDINI_GIORNI = 30;
 export const PULISCI_ORDINI = `DELETE FROM ordini
   WHERE creato < strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-${ORDINI_GIORNI} days')
