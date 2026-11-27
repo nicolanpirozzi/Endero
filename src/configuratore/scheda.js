@@ -72,6 +72,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
 
   let attivo = PASSI[0];
+  let inviando = false;          // l'ordine sta partendo: i passi restano fermi (revisione del 2026-11-27)
+  let partito = false;           // la pagina del pagamento si sta aprendo
   let fino = 0;                  // il passo più avanti raggiunto: fin lì i nomi in cima si riaprono
   let misureViste = false;       // la finestra «Come prendere le misure» si apre la prima volta che si entra nel passo
   let forseVisto = false;        // «Forse intendevi…» ferma «Continua» una volta sola
@@ -175,12 +177,10 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
 
   let vestita = '';
   let avviata = false;           // il primo avviso parte una volta sola, dopo l'avvio (vesti.js ascolta da allora)
-  function camicia(sempre = false) {
-    if (!avviata && !sempre) return;
-    avviata = true;
-    const d = dati();
+  /** Ciò che si vede sulla camicia, dai dati del modulo: l'avviso `endero:camicia`, e la scelta della miniatura. */
+  function dettaglioCamicia(d) {
     const l = maiuscole(d.iniziali_lettere || '').replace(/[^\p{L}]/gu, '').slice(0, 3);
-    const detail = {
+    return {
       collo: d.collo || '',
       taschino: d.taschino === 'si',
       // (il colore del filo: finché non lo si sceglie, sulla camicia il ricamo è blu Endero)
@@ -191,6 +191,11 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       taschino_tessuto: d.taschino === 'si' ? d.taschino_tessuto || '' : '',
       polsino_tessuto: d.polsino === 'personalizzato' ? d.polsino_tessuto || '' : '',
     };
+  }
+  function camicia(sempre = false) {
+    if (!avviata && !sempre) return;
+    avviata = true;
+    const detail = dettaglioCamicia(dati());
     const ora = JSON.stringify(detail);
     if (!sempre && ora === vestita) return;
     vestita = ora;
@@ -374,7 +379,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   /** Apre un passo. `porta`: la pagina scorre fino al riquadro e il fuoco va al titolo del passo. `storia`: il passo
    *  entra nella cronologia del browser, così il tasto Indietro torna al passo di prima e non alla pagina di prima. */
   function vai(id, { porta = true, storia = true } = {}) {
-    if (!sezioni[id]) return;
+    if (!sezioni[id] || inviando) return;
     const prima = attivo;
     attivo = id;
     fino = Math.max(fino, indice(id));
@@ -392,7 +397,7 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
     if (esito) esito.textContent = '';
     mostraTappe();
     if (id === 'spedizione') destinatario();
-    if (id === 'pagamento') { riepilogo(); antispam(); }
+    if (id === 'pagamento') { riepilogo(); antispam(); preparaMiniatura(dettaglioCamicia(dati())); }
     aggiorna();
     salva();
     scoperti = [];
@@ -409,6 +414,8 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
   }
   addEventListener('popstate', (e) => {
     if (form.dataset.fatto) return;
+    // mentre l'ordine parte si resta al pagamento (il tasto Indietro rimette la voce del passo)
+    if (inviando) { voce({ passo: attivo }); return; }
     const p = e.state?.passo;
     if (!PASSI.includes(p) || p === attivo) return;
     // con Avanti del browser, come dai nomi in cima: ci si ferma al primo passo che non va
@@ -540,8 +547,20 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       if (r.bottom > giu) scorri(r.bottom - giu); else if (r.top < su) scorri(r.top - su);
     });
   }
-  let inviando = false;
-  let partito = false;           // la pagina del pagamento si sta aprendo
+  // (inviando e partito stanno in cima: li guardano anche i passi)
+  // La miniatura della camicia per le email (miniatura.js) si prepara entrando nel passo Pagamento, mentre si leggono il
+  // riepilogo e il consenso: al clic su «Paga» c'è già (sul telefono lento faceva aspettare secondi: revisione del
+  // 2026-11-27). Vale per quella scelta: se la camicia cambia, si rifà.
+  let pronta = null;
+  function preparaMiniatura(scelta) {
+    const chiave = JSON.stringify(scelta);
+    if (pronta?.chiave === chiave) return pronta.promessa;
+    const promessa = miniatura(scelta).catch(() => null);
+    pronta = { chiave, promessa };
+    // (se non è riuscita, la prossima volta si riprova)
+    promessa.then((foto) => { if (!foto && pronta?.promessa === promessa) pronta = null; });
+    return promessa;
+  }
   // tornando dal pagamento con il tasto Indietro del browser (la pagina riappare com'era), il tasto si riaccende
   addEventListener('pageshow', (e) => {
     if (!e.persisted || !partito) return;
@@ -568,10 +587,10 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
         for (let i = 0; i < 40 && !form.elements['cf-turnstile-response']?.value; i++) await new Promise((fatto) => setTimeout(fatto, 200));
         if (!form.elements['cf-turnstile-response']?.value) { mostraEsito(avvisi.antispam); return; }
       }
-      // la miniatura della camicia com'è adesso, per le email dell'ordine (miniatura.js): se non arriva in pochi secondi
-      // l'ordine parte senza, e l'email mette la sua foto di sempre
+      // la miniatura della camicia dell'ordine, per le sue email (miniatura.js): quella preparata, se la scelta è la
+      // stessa; se non arriva in pochi secondi l'ordine parte senza, e l'email mette la sua foto di sempre
       const corpo = dati();
-      const foto = await Promise.race([miniatura().catch(() => null), new Promise((fatto) => setTimeout(() => fatto(null), 6000))]);
+      const foto = await Promise.race([preparaMiniatura(dettaglioCamicia(corpo)), new Promise((fatto) => setTimeout(() => fatto(null), 6000))]);
       if (foto) corpo.immagine = foto;
       const r = await fetch(form.getAttribute('action') || '/api/ordine', { method: 'POST', body: JSON.stringify(corpo), headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
       const risposta = await r.json().catch(() => ({}));
@@ -579,7 +598,9 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
       if (r.ok && risposta.ok && typeof risposta.vai === 'string' && /^(https:\/\/checkout\.stripe\.com\/|\/(?!\/))/.test(risposta.vai)) { partito = true; location.assign(risposta.vai); return; }
       if ((r.ok && risposta.ok && risposta.pagamento === 'non_attivo') || r.status === 503) { mostraEsito(S.pagamento.non_attivo); return; }
       if (risposta.errori && typeof risposta.errori === 'object' && Object.keys(risposta.errori).length) {
-        // il Worker dice quali campi non vanno: si torna al passo del primo, con l'avviso sotto
+        // il Worker dice quali campi non vanno: si torna al passo del primo, con l'avviso sotto (l'invio è finito: i
+        // passi si riaprono)
+        inviando = false;
         const nomi = Object.keys(risposta.errori).filter((n) => campoDi(n));
         const primo = nomi.sort((a, b) => indice(passoDi(campoDi(a))) - indice(passoDi(campoDi(b))))[0];
         if (primo) {

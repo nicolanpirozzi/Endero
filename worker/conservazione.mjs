@@ -52,9 +52,19 @@ export const PULISCI_ORDINI = `DELETE FROM ordini
   WHERE creato < strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-${ORDINI_GIORNI} days')
     AND (stato <> 'pagato' OR pagamento = 'prova')`;
 
-/** Cancella gli ordini non pagati, annullati o di prova più vecchi di 30 giorni. Restituisce quanti. */
+// La miniatura della camicia (src/configuratore/miniatura.js) serve solo alle email del pagamento: un ordine che dopo un
+// giorno non è ancora pagato la perde (la pagina di Stripe scade in un giorno), così il database non si riempie di
+// immagini di ordini mai pagati (revisione del 2026-11-27). Se poi lo si paga, l'email mette la foto di sempre.
+export const MINIATURE_ORE = 24;
+export const PULISCI_MINIATURE = `UPDATE ordini SET immagine = ''
+  WHERE immagine <> '' AND stato <> 'pagato' AND creato < strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-${MINIATURE_ORE} hours')`;
+
+/** Cancella gli ordini non pagati, annullati o di prova più vecchi di 30 giorni, e toglie la miniatura a quelli non
+ *  pagati più vecchi di un giorno. Restituisce quanti ordini ha cancellato. */
 export async function pulisciOrdini(db) {
   try {
+    // (un database di prima, senza la colonna della miniatura: la sua pulizia si salta, quella degli ordini no)
+    await db.prepare(PULISCI_MINIATURE).run().catch((errore) => { if (!/no such column/i.test(String(errore?.message || errore))) throw errore; });
     const esito = await db.prepare(PULISCI_ORDINI).run();
     const quanti = esito.meta?.changes ?? 0;
     console.log('ordini non pagati o di prova cancellati perché più vecchi di', ORDINI_GIORNI, 'giorni:', quanti);

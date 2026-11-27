@@ -106,9 +106,10 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     const { contesto, page, errori } = await nuovo(opzioni);
     let risposta = { status: 200, body: { ok: true, pagamento: 'non_attivo' } };
     let inviato = null;
-    await page.route('**/api/ordine', (r) => {
+    await page.route('**/api/ordine', async (r) => {
       inviato = JSON.parse(r.request().postData() || '{}');
       if (risposta === 'giu') return r.abort();
+      if (risposta.ritardo) await new Promise((fatto) => setTimeout(fatto, risposta.ritardo));
       return r.fulfill({ status: risposta.status, contentType: 'application/json', body: JSON.stringify(risposta.body) });
     });
     await page.route('**/stripe-finto**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Stripe</title>' }));
@@ -483,6 +484,26 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     await page.waitForTimeout(250);
     a = await page.evaluate(() => document.querySelector('[data-esito]').textContent);
     controlla(`${formato}: rete giù → «${a.slice(0, 40)}…»`, /Riprova tra poco/.test(a), a);
+    // mentre l'ordine parte (risposta lenta) non si cambia passo: chi tornava indietro a cambiare la camicia si trovava a
+    // pagare quella di prima (revisione del 2026-11-27)
+    risposta = { status: 200, body: { ok: true, pagamento: 'non_attivo' }, ritardo: 1800 };
+    await avanti(page);
+    await page.waitForTimeout(350);
+    await page.evaluate(() => history.back());
+    await page.waitForTimeout(250);
+    await page.evaluate(() => document.querySelector('[data-vai="spedizione"]')?.click());
+    await page.waitForTimeout(250);
+    s = await stato(page);
+    const durante = s.passi.join();
+    await page.waitForTimeout(1800);
+    s = await stato(page);
+    controlla(`${formato}: mentre l'ordine parte, il tasto Indietro e i nomi dei passi non cambiano passo; finito, si riaprono`, durante === 'pagamento' && s.passi.join() === 'pagamento', `${durante} → ${s.passi.join()}`);
+    await page.click('[data-vai="spedizione"]');
+    await page.waitForTimeout(250);
+    s = await stato(page);
+    controlla(`${formato}: finito l'invio, i nomi dei passi funzionano di nuovo`, s.passi.join() === 'spedizione', s.passi.join());
+    await page.click('[data-vai="pagamento"]');
+    await page.waitForTimeout(250);
     // pagamento aperto: si va a Stripe
     risposta = { status: 200, body: { ok: true, vai: '/stripe-finto/sessione' } };
     await Promise.all([page.waitForURL('**/stripe-finto/**', { timeout: 5000 }).catch(() => {}), avanti(page)]);

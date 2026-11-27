@@ -198,7 +198,7 @@ function pagina({ titolo, anteprima, tipo, corpo, nota, avviso = '', testata = n
   <!--[if mso]><table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
   <table role="presentation" class="scatola" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;">
     <tr><td bgcolor="${BLU}" style="background:${BLU};line-height:0;">
-      <a href="${pulisci(dominio())}/" target="_blank"><img src="${pulisci(testata?.src || immagine(`testata-${tipo}.jpg`))}" width="600" alt="${pulisci(testata?.alt || testi.comune.alt_testata)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;background:${BLU};color:${FILO};font-family:${CARATTERE};font-size:22px;font-weight:600;letter-spacing:0.1em;line-height:60px;text-align:center;"></a>
+      <a href="${pulisci(dominio())}/" target="_blank" style="text-decoration:none;"><img src="${pulisci(testata?.src || immagine(`testata-${tipo}.jpg`))}" width="600" alt="${pulisci(testata?.alt || testi.comune.alt_testata)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;background:${BLU};color:${FILO};font-family:${CARATTERE};font-size:${testata ? 18 : 22}px;font-weight:600;letter-spacing:0.1em;line-height:${testata ? 30 : 60}px;text-align:center;text-decoration:none;"></a>
     </td></tr>
     ${avviso ? `<tr><td class="dentro" bgcolor="#fff3c4" style="padding:16px 44px;background:#fff3c4;font-family:${CARATTERE};font-size:15px;line-height:22px;font-weight:600;color:${BLU};">${pulisci(avviso)}</td></tr>` : ''}
     ${corpo}
@@ -273,7 +273,7 @@ export function perCliente(r) {
 }
 
 /** Manda un'email con Resend. Restituisce vero se Resend l'ha presa in carico. */
-async function manda(env, { a, oggetto, testo, html, rispondiA }) {
+async function manda(env, { a, oggetto, testo, html, rispondiA, allegati = [] }) {
   const risposta = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -284,6 +284,8 @@ async function manda(env, { a, oggetto, testo, html, rispondiA }) {
       text: testo,
       html,
       ...(rispondiA ? { reply_to: rispondiA } : {}),
+      // le immagini allegate in linea (la camicia dell'ordine): nell'HTML si chiamano «cid:…»
+      ...(allegati.length ? { attachments: allegati } : {}),
     }),
   });
   if (!risposta.ok) console.error('email non partita', risposta.status, (await risposta.text()).slice(0, 300));
@@ -475,10 +477,13 @@ export function tessutiOrdine(o, veri = {}) {
     .map(([parte, id]) => [parte, id, veri && Object.hasOwn(veri, id) ? veri[id] : null]);
 }
 
-/** L'indirizzo della miniatura della camicia di un ordine (worker/ordine.mjs, camiciaOrdine), o '' se non c'è. */
-export function indirizzoMiniatura(m) {
-  return m && /^[0-9a-f]{32}$/.test(m.o || '') && /^[0-9a-f]{32}$/.test(m.k || '') ? `${dominio()}/api/camicia-ordine?o=${m.o}&k=${m.k}` : '';
-}
+// La miniatura della camicia (src/configuratore/miniatura.js) va allegata all'email e mostrata in linea («cid:»): niente
+// indirizzo sul sito da difendere, niente traccia di chi apre l'email, e si vede anche dove le immagini esterne sono
+// bloccate (revisione del 2026-11-27). `dati.miniatura` è il JPEG in base64.
+const CID = 'camicia-endero';
+const miniaturaBuona = (m) => typeof m === 'string' && m.length > 100 && /^[A-Za-z0-9+/]+={0,2}$/.test(m);
+/** L'allegato della miniatura per Resend, o nessuno. */
+export const allegatoMiniatura = (m) => (miniaturaBuona(m) ? [{ filename: 'camicia.jpg', content: m, content_id: CID, content_type: 'image/jpeg' }] : []);
 /** La descrizione della miniatura: il tessuto (nome del sito) e il collo. */
 const descriviCamicia = (modello, o, valori = {}) => riempi(modello, { ...valori, tessuto: tessutoSito(o.tessuto), collo: opzione(campoConf('collo')?.opzioni, o.collo).toLowerCase() });
 
@@ -523,11 +528,14 @@ export function ordinePerEndero(dati) {
   const nota = '';
   const conti = importi(o, { totaleCentesimi: totale }).concat([[v.pagamento, v.pagato_stripe]]);
   const blocco = (html, sotto = 14) => `<tr><td class="dentro" style="padding:0 44px ${sotto}px;">${html}</td></tr>`;
-  const foto = indirizzoMiniatura(dati.miniatura);
-  const miniatura = foto ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARTA}" style="border-collapse:separate;background:${CARTA};border-radius:14px;">
-      <tr><td style="padding:22px 24px 24px;">
+  // la camicia come l'ha creata il cliente: larga quanto il riquadro, al centro anche in Outlook (align, non margin)
+  const allegati = allegatoMiniatura(dati.miniatura);
+  const miniatura = allegati.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARTA}" style="border-collapse:separate;background:${CARTA};border-radius:14px;">
+      <tr><td style="padding:22px 24px 0;">
         <div style="padding-bottom:12px;margin-bottom:18px;border-bottom:1px solid ${PANNELLO};font-family:${CARATTERE};font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BLU};">${pulisci(a.miniatura)}</div>
-        <img src="${pulisci(foto)}" width="300" alt="${pulisci(descriviCamicia(a.alt_camicia, o, { numero: dati.numero }))}" style="display:block;width:100%;max-width:300px;height:auto;margin:0 auto;border:0;border-radius:14px;background:${BLU};color:${FILO};font-family:${CARATTERE};font-size:14px;">
+      </td></tr>
+      <tr><td align="center" style="padding:0 24px 24px;">
+        <img src="cid:${CID}" width="464" alt="${pulisci(descriviCamicia(a.alt_camicia, o, { numero: dati.numero }))}" style="display:block;width:100%;max-width:464px;height:auto;border:0;border-radius:14px;background:${BLU};color:${FILO};font-family:${CARATTERE};font-size:14px;line-height:22px;">
       </td></tr></table>` : '';
   const corpo = `${apertura(a.etichetta, dati.numero, `${nome} · ${pagato}`)}
     ${blocco(riquadroTaglia(t), 14)}
@@ -558,7 +566,6 @@ export function ordinePerEndero(dati) {
     ...sezione(a.camicia, scelteCamicia(o)),
     a.tessuti.toUpperCase(), ...tessuti.map(rigaVera), '',
     `${a.misure.toUpperCase()} · ${a.misure_nota}`, ...misureOrdine(o).map(([e, x]) => `${e}: ${x}`), '',
-    ...(foto ? [`${a.miniatura}: ${foto}`, ''] : []),
     ...sezione(a.cliente, clienti.filter(([, x]) => x)), wa ? `WhatsApp: https://wa.me/${wa}` : '', '',
     ...sezione(a.consegna, consegna(o)),
     ...sezione(a.importi, conti), nota,
@@ -567,7 +574,7 @@ export function ordinePerEndero(dati) {
   const P = dati.prova ? testi.ordine.prova : null;
   const oggetto = inRiga(`${P ? `${P.oggetto} ` : ''}${t?.riga ? riempi(a.oggetto, { numero: dati.numero, nome, taglia: t.riga }) : riempi(a.oggetto_senza_taglia, { numero: dati.numero, nome })}`);
   const anteprima = [P?.a_endero, t?.riga, `${o.quantita || 1} × ${tessutoSito(o.tessuto)}`, euro(totale / 100)].filter(Boolean).join(' · ');
-  return { oggetto, testo: P ? `${P.a_endero}\n\n${testo}` : testo, html: pagina({ titolo: oggetto, anteprima, tipo: 'ordine', corpo, nota: a.piede, avviso: P?.a_endero }) };
+  return { oggetto, testo: P ? `${P.a_endero}\n\n${testo}` : testo, html: pagina({ titolo: oggetto, anteprima, tipo: 'ordine', corpo, nota: a.piede, avviso: P?.a_endero }), allegati };
 }
 
 /** La conferma dell'ordine per il cliente: nomi dei tessuti del sito (mai quelli veri), consegna, totale, WhatsApp. */
@@ -582,9 +589,9 @@ export function ordinePerCliente(dati) {
   const dove = consegna(o, { note: false });
   const conti = importi(o, { dettagli: false, totaleCentesimi: Number.isInteger(dati.totaleCentesimi) ? dati.totaleCentesimi : null });
   const misure = misureCliente(o);
-  // in cima, al posto della foto di sempre, la sua camicia com'è l'ha creata (proprietario, 2026-11-27)
-  const foto = indirizzoMiniatura(dati.miniatura);
-  const testata = foto ? { src: foto, alt: descriviCamicia(t.alt_camicia, o) } : null;
+  // in cima, al posto della foto di sempre, la sua camicia com'è l'ha creata (proprietario, 2026-11-27): allegata
+  const allegati = allegatoMiniatura(dati.miniatura);
+  const testata = allegati.length ? { src: `cid:${CID}`, alt: t.alt_camicia } : null;
   const corpo = `${apertura(etichetta, saluto, t.testo)}
     <tr><td class="dentro" style="padding:0 44px 14px;">${colonne(t.riepilogo, scelte)}</td></tr>
     ${misure.length ? `<tr><td class="dentro" style="padding:0 44px 14px;">${colonne(t.misure, misure)}</td></tr>` : ''}
@@ -599,7 +606,7 @@ export function ordinePerCliente(dati) {
     `${t.whatsapp}: ${whatsapp}`, '', t.firma, 'Endero', '', `${sito.contatti.via}, ${sito.contatti.citta} · ${sito.contatti.email}`].join('\n').replace(/\n{3,}/g, '\n\n');
   const P = dati.prova ? testi.ordine.prova : null;
   const oggetto = inRiga(`${P ? `${P.oggetto} ` : ''}${riempi(t.oggetto, { numero: dati.numero })}`);
-  return { oggetto, testo: P ? `${P.al_cliente}\n\n${testo}` : testo, html: pagina({ titolo: oggetto, anteprima: `${P ? `${P.al_cliente} ` : ''}${saluto} ${t.testo}`, tipo: 'ordine', corpo, nota: t.piede, avviso: P?.al_cliente, testata }) };
+  return { oggetto, testo: P ? `${P.al_cliente}\n\n${testo}` : testo, html: pagina({ titolo: oggetto, anteprima: `${P ? `${P.al_cliente} ` : ''}${saluto} ${t.testo}`, tipo: 'ordine', corpo, nota: t.piede, avviso: P?.al_cliente, testata }), allegati };
 }
 
 /** A pagamento fatto: l'ordine a Endero e a Ennio, la conferma al cliente. Restituisce { endero, cliente }. */

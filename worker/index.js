@@ -18,8 +18,6 @@ export default {
       return url.pathname === '/api/ordine' ? ordine(request, env, ctx) : stripe(request, env, ctx);
     }
     if (url.pathname === '/api/pagamento-prova') return pagamentoProva(request, env);
-    // la miniatura della camicia di un ordine, per le sue email (worker/ordine.mjs)
-    if (url.pathname === '/api/camicia-ordine') return camiciaOrdine(request, env);
     return env.ASSETS.fetch(request);
   },
   // una volta al giorno (wrangler.toml, triggers): via le richieste vecchie, come dice l'informativa privacy
@@ -34,7 +32,7 @@ const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
 import { dimentica, pulisciOrdini, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
 import { avvisa } from './email.mjs';
-import { ordine, stripe, pagamentoProva, camiciaOrdine } from './ordine.mjs';
+import { ordine, stripe, pagamentoProva } from './ordine.mjs';
 import { controlla, senzaInvisibili, testi as avvisi } from '../src/controlli.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];

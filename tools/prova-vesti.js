@@ -696,6 +696,55 @@ function proietta({ telefono, ferma: [L, T, W, H] }) {
     await a.contesto.close();
   }
 
+  // ---------------------------------------------------------------- 9. la miniatura per le email dell'ordine (2026-11-27)
+  // Una foto della camicia com'è: tinta davvero (con un tessuto colorato si vede), e mai una camicia diversa dalla
+  // scelta dell'ordine: collo o taschino che non arrivano, tela della tinta svuotata, scelta cambiata → nessuna foto
+  console.log('La miniatura per le email dell\'ordine');
+  {
+    const ROSSO = { ...SENZA, tessuto: 't1504', collo: 'francese', taschino: true, taschino_tessuto: 't1504', iniziali: { posizione: 'cuore', lettere: 'NP', colore: '#ffffff' } };
+    const leggi = (page, d) => page.evaluate(async (x) => {
+      const u = await window.__miniatura(x);
+      if (!u) return null;
+      const im = new Image();
+      im.src = u;
+      await im.decode();
+      const c = document.createElement('canvas');
+      c.width = im.naturalWidth; c.height = im.naturalHeight;
+      const g = c.getContext('2d');
+      g.drawImage(im, 0, 0);
+      const media = (x0, y0, w, h) => { const d = g.getImageData(x0, y0, w, h).data; const s = [0, 0, 0]; for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) s[k] += d[i + k]; return s.map((v) => Math.round(v / (d.length / 4))); };
+      return { lato: [im.naturalWidth, im.naturalHeight], kb: Math.round(((u.length - 23) * 0.75) / 1024), petto: media(430, 600, 60, 100), angolo: media(4, 4, 20, 20) };
+    }, d);
+    {
+      const a = await nuovo(COMPUTER[0][1]), { page } = a;
+      await pronta(page);
+      await manda(page, ROSSO);
+      await posata(page);
+      await page.waitForTimeout(800);
+      let m = await leggi(page, ROSSO);
+      controlla('miniatura: 1200 × 1200, al più 245 KB, con il tessuto scelto (vichy rosso sul petto, non la camicia bianca)', m && m.lato.join() === '1200,1200' && m.kb <= 245 && m.petto[0] > m.petto[2] + 25 && m.petto[0] > m.petto[1] + 15, JSON.stringify(m));
+      m = await leggi(page, { ...ROSSO, tessuto: 't0505', taschino_tessuto: 't0505' });
+      controlla('miniatura: una scelta diversa da quella che è sulla camicia → nessuna foto', m === null, JSON.stringify(m));
+      // la tela della camicia tinta svuotata (il telefono che si riprende la memoria): nessuna foto bianca
+      await page.evaluate(() => { const t = window.__vesti.stato.stoffa.ferma; t.getContext('2d').clearRect(0, 0, t.width, t.height); });
+      m = await leggi(page, ROSSO);
+      controlla('miniatura: con la tela della tinta svuotata → nessuna foto (mai la camicia bianca)', m === null, JSON.stringify(m));
+      controlla('miniatura: nessun errore', a.errori.length === 0, a.errori.join(' | '));
+      await a.contesto.close();
+    }
+    for (const [nome, file, d] of [['il collo', /collo-diplomatico-\d\.webp/, { ...ROSSO, collo: 'diplomatico' }], ['il taschino', /taschino-\d\.webp/, ROSSO]]) {
+      const a = await nuovo(COMPUTER[0][1]), { page } = a;
+      await pronta(page);
+      await page.route(file, (r) => r.fulfill({ status: 404, body: '' }));
+      await manda(page, d);
+      await posata(page);
+      await page.waitForTimeout(800);
+      const m = await leggi(page, d);
+      controlla(`miniatura: se il file del${nome.slice(2)} non arriva → nessuna foto (sulla camicia c'è quello di prima)`, m === null, JSON.stringify(m));
+      await a.contesto.close();
+    }
+  }
+
   await browser.close();
   console.log(`\n${passati} controlli passati, ${falliti.length} falliti`);
   if (falliti.length) { console.log(falliti.map((f) => ' - ' + f).join('\n')); process.exitCode = 1; }

@@ -42,10 +42,11 @@ const S = configuratore.scheda;
 export const TESSUTI = new Set(catalogo.tessuti.map((t) => t.id));
 const PESO_MASSIMO = 32768;            // byte: un ordine compilato ne pesa pochi, il resto è abuso
 // La miniatura della camicia per le email (src/configuratore/miniatura.js, proprietario 2026-11-27): un quadrato JPEG
-// di 1200 punti, che con il vetro blu pesa fra 50 e 100 KB. Si accetta fino a 300 KB, e solo di quella misura: ciò che
-// arriva qui finisce in un'email, quindi deve essere almeno una foto JPEG vera della grandezza giusta
-export const MINIATURA = { lato: 1200, peso: 300 * 1024 };
-const PESO_CON_MINIATURA = PESO_MASSIMO + Math.ceil(MINIATURA.peso / 3) * 4 + 64;
+// di 1200 punti, che con il vetro blu pesa fra 70 e 160 KB. Si accetta fino a 250 KB, solo di quella misura e solo se
+// è fatto come un JPEG vero e niente altro (vedi jpegPulito): ciò che arriva qui finisce, allegato, in un'email
+export const MINIATURA = { lato: 1200, peso: 250 * 1024 };
+// (la richiesta può essere più grande della miniatura buona: una miniatura troppo pesante si scarta, l'ordine no)
+const PESO_CON_MINIATURA = PESO_MASSIMO + Math.ceil((400 * 1024) / 3) * 4 + 64;
 const PESO_WEBHOOK = 262144;           // un evento di Stripe è grande qualche kilobyte
 const TOLLERANZA = 300;                // secondi: una firma di Stripe più vecchia di cinque minuti non vale (anche ripetuta)
 const PAGINA = '/camicie-su-misura/configuratore/';
@@ -102,17 +103,60 @@ export function datiPuliti(fonte) {
 
 // ---------------------------------------------------------------- la miniatura della camicia
 
-/** Larghezza e altezza di un JPEG, dalla sua cornice SOF; null se il file non si legge. */
-export function misuraJpeg(b) {
-  let i = 2;
-  while (i + 9 < b.length) {
+/** Il base64 in byte, con un ciclo semplice (Uint8Array.from con una funzione costa venti volte tanto: revisione del
+ *  2026-11-27, 15 ms di CPU per una miniatura). null se non è base64. */
+export function daBase64(s) {
+  let t;
+  try { t = atob(s); } catch { return null; }
+  const b = new Uint8Array(t.length);
+  for (let i = 0; i < t.length; i++) b[i] = t.charCodeAt(i);
+  return b;
+}
+
+/**
+ * Un JPEG fatto come lo fanno i browser (canvas.toDataURL) e niente altro: i segmenti di un'immagine (APPn, DQT, SOF0-2,
+ * DHT, DRI, COM, pochi kilobyte in tutto fuori dai dati), i dati compressi dopo ogni SOS (dove FF è seguito solo da 00,
+ * da D0-D7 o dal segmento che segue), e FFD9 come ultimi due byte, senza niente dopo. Così non passano una pagina con
+ * una misura finta in testa, un archivio accodato, un file troncato (revisione del 2026-11-27).
+ * @returns {number[]|null} [larghezza, altezza], o null se il file non va
+ */
+export function jpegPulito(b) {
+  const n = b.length;
+  if (n < 1024 || b[0] !== 0xff || b[1] !== 0xd8 || b[n - 2] !== 0xff || b[n - 1] !== 0xd9) return null;
+  let i = 2, misura = null, extra = 0, scansioni = 0;
+  while (i < n) {
     if (b[i] !== 0xff) return null;
-    const m = b[i + 1];
-    if (m === 0xff) { i++; continue; }                                    // riempimento
-    if (m === 0xd8 || (m >= 0xd0 && m <= 0xd7) || m === 0x01) { i += 2; continue; }
-    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return [(b[i + 7] << 8) | b[i + 8], (b[i + 5] << 8) | b[i + 6]];
-    if (m === 0xda || m === 0xd9) return null;                            // i dati dell'immagine prima della misura: no
-    i += 2 + ((b[i + 2] << 8) | b[i + 3]);
+    let m = b[i + 1];
+    while (m === 0xff && i + 2 < n) { i++; m = b[i + 1]; }          // riempimento fra i segmenti
+    if (m === 0xd9) return i + 2 === n && misura && scansioni ? misura : null;
+    if (i + 4 > n) return null;
+    const lungo = (b[i + 2] << 8) | b[i + 3];
+    if (lungo < 2 || i + 2 + lungo > n) return null;
+    const dati = i + 4;
+    if (m >= 0xe0 && m <= 0xef || m === 0xfe) {                       // APP0-15 e COM: profili, dati della foto
+      extra += lungo;
+      if (extra > 16384) return null;
+    } else if (m === 0xc0 || m === 0xc1 || m === 0xc2) {              // la cornice: base, estesa, progressiva
+      if (misura || lungo < 8) return null;
+      misura = [(b[dati + 3] << 8) | b[dati + 4], (b[dati + 1] << 8) | b[dati + 2]];
+    } else if (m === 0xda) {                                          // una scansione: i dati compressi fino al segmento dopo
+      if (!misura) return null;
+      scansioni++;
+      let k = i + 2 + lungo;
+      for (;;) {
+        if (k + 1 >= n) return null;
+        if (b[k] !== 0xff) { k++; continue; }
+        const d = b[k + 1];
+        if (d === 0x00 || (d >= 0xd0 && d <= 0xd7)) { k += 2; continue; }
+        if (d === 0xff) { k++; continue; }
+        break;
+      }
+      i = k;
+      continue;
+    } else if (m !== 0xdb && m !== 0xc4 && m !== 0xdd) {              // DQT, DHT, DRI; tutto il resto no
+      return null;
+    }
+    i += 2 + lungo;
   }
   return null;
 }
@@ -126,41 +170,9 @@ export function miniaturaValida(v) {
   if (typeof v !== 'string' || !v.startsWith(testa)) return '';
   const b64 = v.slice(testa.length);
   if (!b64 || b64.length > Math.ceil(MINIATURA.peso / 3) * 4 || b64.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return '';
-  let b;
-  try { b = Uint8Array.from(atob(b64), (x) => x.charCodeAt(0)); } catch { return ''; }
-  // un JPEG comincia con FFD8 e finisce con FFD9, e dice da sé quanto è grande
-  if (b.length < 1024 || b[0] !== 0xff || b[1] !== 0xd8 || b[b.length - 2] !== 0xff || b[b.length - 1] !== 0xd9) return '';
-  const m = misuraJpeg(b);
+  const b = daBase64(b64);
+  const m = b && jpegPulito(b);
   return m && m[0] === MINIATURA.lato && m[1] === MINIATURA.lato ? b64 : '';
-}
-
-/** GET /api/camicia-ordine?o=<ordine>&k=<chiave>: la miniatura di un ordine, per le sue email. La chiave è casuale e
- *  sta solo nelle email: senza, non si vede niente. */
-export async function camiciaOrdine(request, env) {
-  const no = () => new Response('Non trovata', { status: 404, headers: BASE });
-  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Metodo non consentito', { status: 405, headers: { ...BASE, Allow: 'GET, HEAD' } });
-  const u = new URL(request.url);
-  const o = u.searchParams.get('o') || '', k = u.searchParams.get('k') || '';
-  if (!env.DB || !/^[0-9a-f]{32}$/.test(o) || !/^[0-9a-f]{32}$/.test(k)) return no();
-  let riga;
-  try {
-    riga = await env.DB.prepare("SELECT immagine FROM ordini WHERE id = ? AND immagine_chiave = ? AND immagine <> ''").bind(o, k).first();
-  } catch {
-    return no();
-  }
-  if (!riga?.immagine) return no();
-  let b;
-  try { b = Uint8Array.from(atob(riga.immagine), (x) => x.charCodeAt(0)); } catch { return no(); }
-  return new Response(request.method === 'HEAD' ? null : b, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/jpeg', 'Content-Length': String(b.length),
-      // non cambia mai: i programmi di posta (e i loro intermediari, come quello di Gmail) la tengono quanto vogliono
-      'Cache-Control': 'public, max-age=31536000, immutable',
-      'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex, nofollow',
-      'Content-Security-Policy': "default-src 'none'", 'Cross-Origin-Resource-Policy': 'cross-origin',
-    },
-  });
 }
 
 // ---------------------------------------------------------------- la risposta
@@ -291,7 +303,10 @@ export async function ordine(request, env, ctx) {
       // il peso in più vale solo per la miniatura: il resto dell'ordine sta nel limite di sempre
       if (grezzo.length - (typeof fonte.immagine === 'string' ? fonte.immagine.length : 0) > PESO_MASSIMO) return sbaglio(413, 'Richiesta troppo grande.');
     } else {
-      fonte = await request.formData();
+      // il modulo senza script: letto con lo stesso limite anche quando la richiesta non dice quanto pesa
+      const corpo = await request.arrayBuffer();
+      if (corpo.byteLength > PESO_MASSIMO) return sbaglio(413, 'Richiesta troppo grande.');
+      fonte = await new Response(corpo, { headers: { 'Content-Type': request.headers.get('Content-Type') || '' } }).formData();
     }
   } catch {
     return sbaglio(400, 'Richiesta non valida.');
@@ -350,11 +365,13 @@ export async function ordine(request, env, ctx) {
     console.error('ordine non salvato', errore);
     return sbaglio(500, senzaSegnaposto(T.errore));
   }
-  // la miniatura, a parte: se non c'è o non si salva, l'ordine va avanti lo stesso (e l'email mette la foto di sempre)
+  // la miniatura, a parte: se non c'è o non si salva, l'ordine va avanti lo stesso (e l'email mette la foto di sempre).
+  // Resta nella riga solo finché servono le email: partite quelle, si toglie (miniaturaUsata); un ordine mai pagato la
+  // perde nella pulizia della notte dopo un giorno (worker/conservazione.mjs)
   const foto = inJson ? miniaturaValida(fonte.immagine) : '';
   if (foto) {
     try {
-      await env.DB.prepare('UPDATE ordini SET immagine = ?, immagine_chiave = ? WHERE id = ?').bind(foto, casuale(), id).run();
+      await env.DB.prepare('UPDATE ordini SET immagine = ? WHERE id = ?').bind(foto, id).run();
     } catch (errore) {
       console.error('miniatura non salvata', numero, String(errore));
     }
@@ -472,7 +489,16 @@ export async function stripe(request, env) {
     await env.DB.prepare('UPDATE ordini SET email_inviate = 0 WHERE id = ?').bind(id).run().catch(() => {});
     return no(500, 'Email non partita');
   }
+  await miniaturaUsata(env, id);
   return json({ ricevuto: true });
+}
+
+/** Partite le email, la miniatura non serve più: la riga dell'ordine torna leggera, e la foto della camicia non resta
+ *  nel database per gli anni in cui si tiene l'ordine pagato (revisione del 2026-11-27). */
+async function miniaturaUsata(env, id) {
+  try {
+    await env.DB.prepare("UPDATE ordini SET immagine = '' WHERE id = ? AND immagine <> ''").bind(id).run();
+  } catch { /* un database senza la colonna: niente da togliere */ }
 }
 
 // ---------------------------------------------------------------- /api/pagamento-prova
@@ -552,6 +578,7 @@ export async function pagamentoProva(request, env) {
         return { endero: false };
       });
       if (!esito.endero) await env.DB.prepare('UPDATE ordini SET email_inviate = 0 WHERE id = ?').bind(o).run().catch(() => {});
+      else await miniaturaUsata(env, o);
     }
   }
   return new Response(null, { status: 303, headers: { ...BASE, Location: `${PAGINA}?ordine=fatto` } });
@@ -575,7 +602,7 @@ export async function comeEmail(env, riga) {
     tessutiVeri: veri && typeof veri === 'object' ? veri : {},
     // pagato con il pagamento di prova: le email lo dicono in oggetto e in cima
     prova: riga.pagamento === 'prova',
-    // la miniatura della camicia (src/configuratore/miniatura.js), se c'è: l'ordine e la sua chiave
-    miniatura: riga.immagine_chiave && riga.immagine ? { o: riga.id, k: riga.immagine_chiave } : null,
+    // la miniatura della camicia (src/configuratore/miniatura.js), se c'è: il JPEG in base64, che va allegato alle email
+    miniatura: typeof riga.immagine === 'string' && riga.immagine ? riga.immagine : null,
   };
 }

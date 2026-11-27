@@ -4,10 +4,12 @@
 //
 // Il file del Worker importa i testi JSON come fa Cloudflare: qui lo si impacchetta con esbuild prima di provarlo.
 import { build } from 'esbuild';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+
+const RADICE = fileURLToPath(new URL('..', import.meta.url));
 
 const cartella = mkdtempSync(join(tmpdir(), 'prova-email-'));
 const uscita = join(cartella, 'email.mjs');
@@ -141,16 +143,18 @@ console.log('Ordine del configuratore (dati inventati)');
   controlla('al cliente: numero d\'ordine, totale e WhatsApp', b.oggetto === 'Il tuo ordine Endero E-2026-000007' && /240\s€/.test(b.html) && /wa\.me\/393338548712\?text=Ciao%20Endero/.test(b.html));
   controlla('niente script nelle email dell\'ordine', ![a.html, b.html].some((x) => /<script/i.test(x)));
   {
-    // la miniatura della camicia (2026-11-27): in cima all'email del cliente al posto della foto, e nell'email a Endero
-    const M = { o: 'a'.repeat(32), k: 'b'.repeat(32) };
+    // la miniatura della camicia (2026-11-27): allegata in linea, in cima all'email del cliente al posto della foto, e
+    // nell'email a Endero; nessun indirizzo sul sito
+    const M = readFileSync(join(RADICE, 'tools/dati-prova/miniatura-1200.jpg')).toString('base64');
     const conM = { ...dati, miniatura: M };
     const ac = ordinePerCliente(conM), ae = ordinePerEndero(conM);
-    const src = `src="https://endero.men/api/camicia-ordine?o=${M.o}&amp;k=${M.k}"`;
-    controlla('al cliente con la miniatura: in cima la sua camicia, non la foto di sempre', ac.html.includes(src) && !/testata-ordine/.test(ac.html) && ac.html.indexOf(src) < ac.html.indexOf('<h1'));
-    controlla('al cliente: la descrizione della miniatura dice tessuto e collo (nomi del sito)', /alt="La tua camicia Endero: [^"]+, collo francese"/.test(ac.html) && !/Articolo Finto/.test(ac.html));
-    controlla('a Endero con la miniatura: il riquadro «Come l\'ha creata il cliente» dopo la taglia', ae.html.includes(src) && ae.html.indexOf(src) > ae.html.indexOf('Taglia 41') && /Come l(&#39;|')ha creata il cliente/.test(ae.html));
-    controlla('una miniatura con un indirizzo strano non entra', !/camicia-ordine/.test(ordinePerCliente({ ...dati, miniatura: { o: 'x"><script>', k: M.k } }).html));
-    controlla('senza miniatura: la foto di sempre', /testata-ordine-\d+\.jpg/.test(b.html) && !/camicia-ordine/.test(b.html + a.html));
+    const cid = ac.allegati?.[0]?.content_id;
+    controlla('al cliente con la miniatura: allegata in linea (JPEG), in cima al posto della foto di sempre', cid && ac.allegati[0].content === M && ac.allegati[0].content_type === 'image/jpeg' && ac.html.includes(`src="cid:${cid}"`) && !/testata-ordine/.test(ac.html) && ac.html.indexOf(`cid:${cid}`) < ac.html.indexOf('<h1'));
+    controlla('al cliente: testo alternativo corto, senza sottolineature', /alt="La tua camicia Endero"/.test(ac.html) && /text-decoration:none;"><img src="cid:/.test(ac.html));
+    controlla('a Endero con la miniatura: allegata, larga quanto il riquadro e al centro, dopo la taglia', ae.allegati?.[0]?.content === M && ae.html.includes(`src="cid:${ae.allegati[0].content_id}"`) && /<td align="center"[^>]*>\s*<img src="cid:/.test(ae.html) && ae.html.indexOf('cid:') > ae.html.indexOf('Taglia 41') && /Come l(&#39;|')ha creata il cliente/.test(ae.html));
+    controlla('nessun indirizzo della miniatura sul sito, in nessuna delle due', ![ac.html, ac.testo, ae.html, ae.testo].some((x) => /camicia-ordine/.test(x)));
+    controlla('una miniatura che non è base64 non entra', !ordinePerCliente({ ...dati, miniatura: 'x"><script>' }).allegati.length && !/cid:/.test(ordinePerCliente({ ...dati, miniatura: 'x"><script>' }).html));
+    controlla('senza miniatura: la foto di sempre, nessun allegato', /testata-ordine-\d+\.jpg/.test(b.html) && !/cid:/.test(b.html + a.html) && !b.allegati.length && !a.allegati.length);
     controlla('al cliente: «Le tue misure» con le misure scritte, in centimetri, senza giro né taglia', /Le tue misure/.test(b.html) && /56 cm/.test(b.html) && /80,5 cm/.test(b.html) && !/giro 112/.test(b.html) && /Le tue misure\n(.+\n){1,}/.test(b.testo));
   }
 

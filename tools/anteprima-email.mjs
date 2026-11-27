@@ -4,12 +4,14 @@
 //   node tools/anteprima-email.mjs <cartella>
 //
 // L'ordine completo ha la miniatura della camicia (src/configuratore/miniatura.js), quello base no (in cima la foto di
-// sempre). La miniatura è un'immagine d'esempio, o quella data con MINIATURA=<file .jpg> (fatta dal configuratore).
+// sempre). La miniatura la fa il configuratore del sito locale (SITO=<indirizzo>, di serie http://127.0.0.1:8766, con
+// il sito costruito) con le stesse scelte dell'ordine d'esempio; MINIATURA=<file .jpg> ne usa una già fatta. Se il sito
+// non risponde, c'è un'immagine di prova (e lo si scrive).
 //
 // Le immagini nelle email puntano al sito vero (endero.men/email/…): qui si leggono da public/email/, così si vedono
 // anche prima di pubblicarle.
 import { build } from 'esbuild';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -64,16 +66,41 @@ const VERI = {
   t0502: { articolo: 'Articolo d\'esempio', codice: '1001-07', cartella: 'Cartella d\'esempio A', posizione: 'riga 2, colonna 3', composizione: '100% cotone' },
   t2507: { articolo: 'Altro articolo', codice: '2040-12', cartella: 'Cartella d\'esempio B' },
 };
-const MINI = { o: 'a'.repeat(32), k: 'b'.repeat(32) };
 const datiOrdine = (d, n, miniatura = null) => {
   const o = ordinePulito(d);
   return { numero: `E-2026-00012${n}`, ordine: o, taglia: perIlReparto(o.misure, tabella), pagato: new Date('2026-11-25T19:49:00Z'),
     pagatoCentesimi: Math.round(o.conti.totale * 100), totaleCentesimi: Math.round(o.conti.totale * 100), emailCliente: o.cliente.email, tessutiVeri: VERI, miniatura };
 };
-const fileMiniatura = process.env.MINIATURA || join(RADICE, 'tools/dati-prova/miniatura-1200.jpg');
+
+// la miniatura dell'ordine completo, fatta dal configuratore con le sue scelte
+const C = JSON.parse(readFileSync(join(RADICE, 'contenuti/it/configuratore.json'), 'utf8'));
+const tinta = (id) => (C.scheda.colori_filo || []).find((x) => x.id === id)?.tinta || '';
+async function faiMiniatura(d) {
+  const sito = (process.env.SITO || 'http://127.0.0.1:8766').replace(/\/$/, '');
+  const scelta = {
+    collo: d.collo, taschino: d.taschino === 'si',
+    iniziali: d.iniziali === 'si' ? { posizione: d.iniziali_posizione, lettere: d.iniziali_lettere, colore: tinta(d.iniziali_colore) } : null,
+    tessuto: d.tessuto, taschino_tessuto: d.taschino === 'si' ? d.taschino_tessuto : '', polsino_tessuto: d.polsino === 'personalizzato' ? d.polsino_tessuto : '',
+  };
+  const browser = await pw.chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${sito}/camicie-su-misura/configuratore/?senza-passi&manuale`, { waitUntil: 'networkidle', timeout: 20000 });
+    await page.evaluate((x) => document.dispatchEvent(new CustomEvent('endero:camicia', { detail: x })), scelta);
+    const u = await page.evaluate((x) => window.__miniatura(x), scelta);
+    return u ? Buffer.from(u.split(',')[1], 'base64') : null;
+  } catch { return null; } finally { await browser.close(); }
+}
+let jpeg = process.env.MINIATURA ? readFileSync(process.env.MINIATURA) : await faiMiniatura(ORDINI['ordine-completo']);
+if (!jpeg) {
+  console.log('Il configuratore locale non ha fatto la miniatura: nelle anteprime c\'è l\'immagine di prova (tools/dati-prova).');
+  jpeg = readFileSync(join(RADICE, 'tools/dati-prova/miniatura-1200.jpg'));
+}
+const fileMiniatura = join(uscita, 'miniatura.jpg');
+writeFileSync(fileMiniatura, jpeg);
 
 const locale = (html) => html
-  .replaceAll(`https://endero.men/api/camicia-ordine?o=${MINI.o}&amp;k=${MINI.k}`, pathToFileURL(fileMiniatura).href)
+  .replaceAll('cid:camicia-endero', pathToFileURL(fileMiniatura).href)
   .replaceAll('https://endero.men/email/', pathToFileURL(join(RADICE, 'public/email')).href + '/')
   .replaceAll('https://endero.men/camicia/', pathToFileURL(join(RADICE, 'public/camicia')).href + '/')
   .replaceAll('https://endero.men/font/', pathToFileURL(join(RADICE, 'public/font')).href + '/');
@@ -88,7 +115,7 @@ for (const [tipo, r] of Object.entries(ESEMPI)) {
   scrivi(`${tipo}-endero`, perEndero(r, { arrivo: new Date('2026-11-25T19:49:00Z') }));
 }
 for (const [i, [tipo, d]] of Object.entries(ORDINI).entries()) {
-  const dati = datiOrdine(d, i + 3, tipo === 'ordine-completo' ? MINI : null);
+  const dati = datiOrdine(d, i + 3, tipo === 'ordine-completo' ? jpeg.toString('base64') : null);
   scrivi(`${tipo}-cliente`, ordinePerCliente(dati));
   scrivi(`${tipo}-endero`, ordinePerEndero(dati));
 }
