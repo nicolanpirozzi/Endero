@@ -140,6 +140,19 @@ console.log('Ordine del configuratore (dati inventati)');
   controlla('al cliente: nomi del sito, mai quelli veri, niente note né taglia', !/Articolo Finto|F-1|Cartella Finta|Citofono|Taglia 41/.test(b.html + b.testo) && /Popeline bianco/.test(b.html));
   controlla('al cliente: numero d\'ordine, totale e WhatsApp', b.oggetto === 'Il tuo ordine Endero E-2026-000007' && /240\s€/.test(b.html) && /wa\.me\/393338548712\?text=Ciao%20Endero/.test(b.html));
   controlla('niente script nelle email dell\'ordine', ![a.html, b.html].some((x) => /<script/i.test(x)));
+  {
+    // la miniatura della camicia (2026-11-27): in cima all'email del cliente al posto della foto, e nell'email a Endero
+    const M = { o: 'a'.repeat(32), k: 'b'.repeat(32) };
+    const conM = { ...dati, miniatura: M };
+    const ac = ordinePerCliente(conM), ae = ordinePerEndero(conM);
+    const src = `src="https://endero.men/api/camicia-ordine?o=${M.o}&amp;k=${M.k}"`;
+    controlla('al cliente con la miniatura: in cima la sua camicia, non la foto di sempre', ac.html.includes(src) && !/testata-ordine/.test(ac.html) && ac.html.indexOf(src) < ac.html.indexOf('<h1'));
+    controlla('al cliente: la descrizione della miniatura dice tessuto e collo (nomi del sito)', /alt="La tua camicia Endero: [^"]+, collo francese"/.test(ac.html) && !/Articolo Finto/.test(ac.html));
+    controlla('a Endero con la miniatura: il riquadro «Come l\'ha creata il cliente» dopo la taglia', ae.html.includes(src) && ae.html.indexOf(src) > ae.html.indexOf('Taglia 41') && /Come l(&#39;|')ha creata il cliente/.test(ae.html));
+    controlla('una miniatura con un indirizzo strano non entra', !/camicia-ordine/.test(ordinePerCliente({ ...dati, miniatura: { o: 'x"><script>', k: M.k } }).html));
+    controlla('senza miniatura: la foto di sempre', /testata-ordine-\d+\.jpg/.test(b.html) && !/camicia-ordine/.test(b.html + a.html));
+    controlla('al cliente: «Le tue misure» con le misure scritte, in centimetri, senza giro né taglia', /Le tue misure/.test(b.html) && /56 cm/.test(b.html) && /80,5 cm/.test(b.html) && !/giro 112/.test(b.html) && /Le tue misure\n(.+\n){1,}/.test(b.testo));
+  }
 
   const spedite2 = [];
   globalThis.fetch = async (url, opzioni) => { spedite2.push(JSON.parse(opzioni.body)); return new Response('{}', { status: 200 }); };

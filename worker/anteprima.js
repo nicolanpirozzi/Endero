@@ -5,7 +5,7 @@
 import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { contatto } from './index.js';
-import { ordine, stripe, pagamentoProva } from './ordine.mjs';
+import { ordine, stripe, pagamentoProva, camiciaOrdine } from './ordine.mjs';
 import { dimentica, pulisciOrdini } from './conservazione.mjs';
 import { INTESTAZIONI } from './intestazioni.mjs';
 import { destinazione } from './reindirizzamenti.mjs';
@@ -95,6 +95,8 @@ export default {
       r.headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
       return r;
     }
+    // la miniatura della camicia di un ordine, per le sue email (worker/ordine.mjs): ha le sue intestazioni
+    if (url.pathname === '/api/camicia-ordine') return camiciaOrdine(request, env);
     // _redirects qui non viene caricato (vedi wrangler.anteprima.toml): gli stessi reindirizzamenti li fa il Worker
     const altrove = destinazione(request.url);
     if (altrove) return new Response(null, { status: 301, headers: { Location: altrove, 'X-Robots-Tag': 'noindex, nofollow' } });

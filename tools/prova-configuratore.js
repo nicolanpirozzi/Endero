@@ -440,6 +440,26 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     a = await page.evaluate(() => document.querySelector('[data-esito]').textContent);
     controlla(`${formato}: invia i dati in JSON (tessuto, misure, spedizione, consenso)`, inviato && inviato.tessuto && inviato.giro_collo === '41' && inviato.spedizione === 'cinque' && inviato.privacy === 'si', JSON.stringify(inviato).slice(0, 200));
     controlla(`${formato}: { pagamento: 'non_attivo' } → «${a}»`, /non è ancora attivo/.test(a), a);
+    // la miniatura della camicia per le email (src/configuratore/miniatura.js): un JPEG quadrato di 1200 punti, con la
+    // scheda di vetro (blu agli angoli) e la camicia tinta al centro (non il blu della parete)
+    {
+      const foto = inviato?.immagine || '';
+      const m = foto.startsWith('data:image/jpeg;base64,') ? await page.evaluate(async (src) => {
+        const im = new Image();
+        im.src = src;
+        await im.decode();
+        const c = document.createElement('canvas');
+        c.width = im.naturalWidth; c.height = im.naturalHeight;
+        const g = c.getContext('2d');
+        g.drawImage(im, 0, 0);
+        const px = (x, y) => [...g.getImageData(x, y, 1, 1).data].slice(0, 3);
+        return { lato: [im.naturalWidth, im.naturalHeight], angolo: px(20, 20), centro: px(600, 640) };
+      }, foto) : null;
+      const blu = (p) => p && p[2] > p[0] + 30 && p[2] > p[1];
+      controlla(`${formato}: con l'ordine parte la miniatura della camicia (JPEG 1200 × 1200, vetro blu, camicia al centro)`,
+        m && m.lato.join() === '1200,1200' && blu(m.angolo) && m.centro.some((v, i) => Math.abs(v - m.angolo[i]) > 40) && foto.length < 410000,
+        JSON.stringify(m) + ' ' + foto.length);
+    }
     // 503 del server locale
     risposta = { status: 503, body: { ok: false, errore: 'x' } };
     await avanti(page);

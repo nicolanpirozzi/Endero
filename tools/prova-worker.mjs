@@ -382,6 +382,70 @@ console.log('L\'ordine del configuratore');
     const restano = dbP.prepare('SELECT id FROM ordini ORDER BY id').all().map((x) => x.id).join(',');
     controlla('pulizia: dopo 30 giorni via gli ordini di prova, mai pagati e annullati; restano i pagati e i recenti', via === 3 && restano === 'a2,a4', `${via} cancellati, restano ${restano}`);
   }
+  // la miniatura della camicia (proprietario, 2026-11-27): arriva con l'ordine, si controlla, si salva con una chiave
+  // casuale, si vede solo con quella, e va in cima all'email del cliente e nell'email a Endero; con lei le misure
+  {
+    const { db: dbM, d1: d1M } = nuovoDb();
+    const envM = { DB: d1M, RISERVATO, PAGAMENTO_PROVA: '1', RESEND_API_KEY: 'finta', EMAIL_DESTINATARIO: 'reparto@esempio.it', EMAIL_MITTENTE: 'Endero <noreply@endero.men>' };
+    const jpeg = (nome) => 'data:image/jpeg;base64,' + readFileSync(join(RADICE, 'tools/dati-prova', nome)).toString('base64');
+    const buona = jpeg('miniatura-1200.jpg');
+    const vai = (indirizzo, opzioni = {}) => worker.default.fetch(new Request(indirizzo, opzioni), envM, { waitUntil: () => {} });
+    const ultima = () => dbM.prepare('SELECT id, numero, sessione, immagine, immagine_chiave FROM ordini ORDER BY n DESC').get();
+    let rm = await manda(envM, { ...ORDINE, immagine: buona });
+    let rg = ultima();
+    controlla('miniatura buona: l\'ordine parte e la miniatura si salva, con una chiave casuale', rm.status === 200 && rg.immagine === buona.split(',')[1] && /^[0-9a-f]{32}$/.test(rg.immagine_chiave), `${rm.status} ${rg?.immagine?.length} ${rg?.immagine_chiave}`);
+    const conFoto = rg;
+    for (const [nome, v] of [['di un\'altra misura', jpeg('miniatura-1000.jpg')], ['PNG', buona.replace('image/jpeg', 'image/png')], ['non JPEG', 'data:image/jpeg;base64,' + Buffer.from('<svg onload=alert(1)>'.repeat(80)).toString('base64')],
+      ['base64 rotto', 'data:image/jpeg;base64,@@@@'], ['un indirizzo', 'https://altro.example/x.jpg'], ['un numero', 12], ['troppo pesante', 'data:image/jpeg;base64,' + 'A'.repeat(412000)]]) {
+      rm = await manda(envM, { ...ORDINE, immagine: v });
+      rg = ultima();
+      controlla(`miniatura ${nome}: l'ordine parte lo stesso, senza miniatura`, rm.status === 200 && rg.id !== conFoto.id && rg.immagine === '' && rg.immagine_chiave === '', `${rm.status} ${rg?.immagine?.length}`);
+    }
+    rm = await manda(envM, { ...ORDINE, immagine: 'data:image/jpeg;base64,' + 'A'.repeat(450000) });
+    controlla('miniatura oltre il limite della richiesta: rifiutato', rm.status === 413);
+    rm = await manda(envM, { ...ORDINE, immagine: buona, note_consegna: 'x'.repeat(40000) });
+    controlla('con la miniatura il resto dell\'ordine resta nel limite di sempre', rm.status === 413);
+    // l'indirizzo della miniatura: solo con la chiave giusta
+    const indirizzo = `${SITO}/api/camicia-ordine?o=${conFoto.id}&k=${conFoto.immagine_chiave}`;
+    let ri = await vai(indirizzo);
+    const byte = Buffer.from(await ri.arrayBuffer());
+    controlla('la miniatura si vede con la sua chiave: JPEG, uguale a quella mandata, si tiene in memoria', ri.status === 200 && ri.headers.get('Content-Type') === 'image/jpeg' && byte.equals(Buffer.from(buona.split(',')[1], 'base64')) && /immutable/.test(ri.headers.get('Cache-Control') || '') && ri.headers.get('X-Content-Type-Options') === 'nosniff', `${ri.status} ${ri.headers.get('Content-Type')}`);
+    ri = await vai(`${SITO}/api/camicia-ordine?o=${conFoto.id}&k=${'0'.repeat(32)}`);
+    controlla('con una chiave sbagliata: non trovata', ri.status === 404);
+    ri = await vai(`${SITO}/api/camicia-ordine?o=${conFoto.id}&k=x' OR '1'='1`);
+    controlla('con una chiave scritta male: non trovata', ri.status === 404);
+    const senza = dbM.prepare("SELECT id FROM ordini WHERE immagine = '' ORDER BY n DESC").get();
+    ri = await vai(`${SITO}/api/camicia-ordine?o=${senza.id}&k=`);
+    controlla('un ordine senza miniatura: non trovata', ri.status === 404);
+    ri = await vai(indirizzo, { method: 'POST' });
+    controlla('la miniatura: solo GET e HEAD', ri.status === 405);
+    // pagato (con il pagamento di prova): le due email
+    const primaE = email.length;
+    const paga = async (riga) => vai(`${SITO}/api/pagamento-prova`, { method: 'POST', body: new URLSearchParams({ o: riga.id, t: riga.sessione.slice(6) }), headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: SITO } });
+    await paga(conFoto);
+    const [aEndero, alCliente] = email.slice(primaE);
+    const src = `src="${indirizzo.replace(/&/g, '&amp;')}"`;
+    controlla('al cliente: la sua camicia in cima, al posto della foto, con la descrizione', alCliente && alCliente.html.includes(src) && !/testata-ordine/.test(alCliente.html) && /alt="La tua camicia Endero: [^"]+, collo francese"/.test(alCliente.html), alCliente?.html.match(/<img[^>]+>/)?.[0]);
+    controlla('al cliente: il box «Le tue misure» con le misure scritte (e niente taglia)', alCliente && /Le tue misure/.test(alCliente.html) && /41 cm/.test(alCliente.html) && /80,5 cm/.test(alCliente.html) && /Le tue misure\n[\s\S]*Giro collo: 41 cm/.test(alCliente.text) && !/Taglia \d/.test(alCliente.html + alCliente.text));
+    controlla('a Endero: anche la miniatura, sotto la taglia', aEndero && aEndero.html.includes(src) && /Come l(&#39;|')ha creata il cliente/.test(aEndero.html) && aEndero.html.indexOf(src) > aEndero.html.indexOf('Taglia') && aEndero.text.includes(indirizzo));
+    // un ordine senza miniatura: l'email del cliente ha la foto di sempre
+    const primaS = email.length;
+    await paga(dbM.prepare("SELECT id, sessione FROM ordini WHERE immagine = '' ORDER BY n").get());
+    const [, clienteSenza] = email.slice(primaS);
+    controlla('senza miniatura: in cima all\'email del cliente la foto di sempre, e le misure ci sono lo stesso', clienteSenza && /testata-ordine-\d+\.jpg/.test(clienteSenza.html) && !/camicia-ordine/.test(clienteSenza.html) && /Le tue misure/.test(clienteSenza.html));
+    // la pulizia della notte porta via anche le miniature (stanno nella riga dell'ordine)
+    dbM.prepare("UPDATE ordini SET creato = '2020-01-01T00:00:00Z'").run();
+    await conservazione.pulisciOrdini(d1M);
+    controlla('la pulizia degli ordini di prova porta via anche le miniature', dbM.prepare("SELECT COUNT(*) AS n FROM ordini WHERE immagine <> ''").get().n === 0);
+  }
+  // un database di prima, senza le colonne della miniatura: l'ordine parte lo stesso (si salva senza)
+  {
+    const { db: dbV, d1: d1V } = nuovoDb();
+    dbV.exec('ALTER TABLE ordini DROP COLUMN immagine; ALTER TABLE ordini DROP COLUMN immagine_chiave;');
+    const envV = { DB: d1V, RISERVATO, PAGAMENTO_PROVA: '1', RESEND_API_KEY: 'finta', EMAIL_DESTINATARIO: 'reparto@esempio.it', EMAIL_MITTENTE: 'Endero <noreply@endero.men>' };
+    const rv = await manda(envV, { ...ORDINE, immagine: 'data:image/jpeg;base64,' + readFileSync(join(RADICE, 'tools/dati-prova/miniatura-1200.jpg')).toString('base64') });
+    controlla('database senza le colonne nuove: l\'ordine parte lo stesso', rv.status === 200 && (await rv.json()).ok && dbV.prepare('SELECT COUNT(*) AS n FROM ordini').get().n === 1);
+  }
   // un pagamento con le chiavi di prova di Stripe (livemode false) arriva a Endero segnato PROVA
   {
     const quarto = db.prepare("SELECT * FROM ordini WHERE stato = 'da_pagare' ORDER BY n DESC").get();

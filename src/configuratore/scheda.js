@@ -16,6 +16,7 @@ import testi from '../../contenuti/it/configuratore.json';
 import { controllaOrdine, conti, lettere as maiuscole, SPEDIZIONI, provincia } from './ordine.mjs';
 import { voce, finestraAperta, finestraChiusa, voceFinestraTolta } from './cronologia.mjs';
 import { suggerisciEmail, testi as avvisi } from '../controlli.mjs';
+import { miniatura } from './miniatura.js';
 
 const S = testi.scheda;
 const PASSI = S.passi.map((p) => p.id);
@@ -567,7 +568,12 @@ export function scheda(form, { passi: apriPassi = () => Promise.resolve() } = {}
         for (let i = 0; i < 40 && !form.elements['cf-turnstile-response']?.value; i++) await new Promise((fatto) => setTimeout(fatto, 200));
         if (!form.elements['cf-turnstile-response']?.value) { mostraEsito(avvisi.antispam); return; }
       }
-      const r = await fetch(form.getAttribute('action') || '/api/ordine', { method: 'POST', body: JSON.stringify(dati()), headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
+      // la miniatura della camicia com'è adesso, per le email dell'ordine (miniatura.js): se non arriva in pochi secondi
+      // l'ordine parte senza, e l'email mette la sua foto di sempre
+      const corpo = dati();
+      const foto = await Promise.race([miniatura().catch(() => null), new Promise((fatto) => setTimeout(() => fatto(null), 6000))]);
+      if (foto) corpo.immagine = foto;
+      const r = await fetch(form.getAttribute('action') || '/api/ordine', { method: 'POST', body: JSON.stringify(corpo), headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
       const risposta = await r.json().catch(() => ({}));
       // (solo la pagina di pagamento di Stripe, o un indirizzo di questo sito)
       if (r.ok && risposta.ok && typeof risposta.vai === 'string' && /^(https:\/\/checkout\.stripe\.com\/|\/(?!\/))/.test(risposta.vai)) { partito = true; location.assign(risposta.vai); return; }

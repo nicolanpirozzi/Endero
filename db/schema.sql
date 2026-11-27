@@ -50,7 +50,11 @@ CREATE TABLE IF NOT EXISTS ordini (
   pagato_centesimi INTEGER,                          -- quanto ha detto Stripe
   email_pagamento  TEXT NOT NULL DEFAULT '',         -- l'email scritta nella pagina di Stripe
   email_inviate    INTEGER NOT NULL DEFAULT 0,       -- 1 quando l'ordine è partito per email (una volta sola)
-  paese      TEXT    NOT NULL DEFAULT ''
+  paese      TEXT    NOT NULL DEFAULT '',
+  -- la miniatura della camicia per le email (src/configuratore/miniatura.js): JPEG in base64 e la chiave casuale del
+  -- suo indirizzo (/api/camicia-ordine). Sul database già esistente si aggiungono con db/ordini-miniatura.sql
+  immagine         TEXT NOT NULL DEFAULT '',
+  immagine_chiave  TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS ordini_per_data ON ordini (creato DESC);

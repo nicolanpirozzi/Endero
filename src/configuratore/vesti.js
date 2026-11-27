@@ -48,6 +48,18 @@ function pulisci(d) {
 }
 // L'ultima scelta si ricorda da subito, anche se arriva prima che la camicia sia pronta
 let ultima = null;
+// chi fotografa la camicia com'è adesso (lo mette vesti()): serve alla miniatura dell'email dell'ordine (miniatura.js)
+let fotografo = null;
+/**
+ * La camicia come si vede ora sull'immagine ferma, con il tessuto, il collo, il taschino e le iniziali scelti, in un
+ * ritaglio del fotogramma (proprietario, 2026-11-27: la miniatura nell'email dell'ordine). Aspetta che l'ultima scelta
+ * sia sulla camicia. null se non si può: con un tessuto scelto e la camicia rimasta bianca (scheda grafica, file che
+ * non arriva) una foto con un altro colore direbbe il falso, e l'email mette la sua foto di sempre.
+ * @param {{ riquadro: number[], scala: number }} o  il ritaglio [x, y, larghezza, altezza] in punti del fotogramma
+ *                                                    (1800 x 1000) e quanti punti della tela per punto del fotogramma
+ * @returns {Promise<HTMLCanvasElement|null>}
+ */
+export const fotografaCamicia = (o) => (fotografo ? fotografo(o).catch(() => null) : Promise.resolve(null));
 const ascolta = new Set();
 document.addEventListener('endero:camicia', (e) => { ultima = pulisci(e.detail); for (const f of ascolta) f(ultima); });
 
@@ -503,6 +515,10 @@ export function vesti(palco, camicia) {
   }
 
   let riprova = 0;
+  // l'ultima scelta portata sulla camicia, e se la camicia la mostra per intero (`esatta`: con un tessuto scelto, la
+  // camicia tinta proprio con quei tessuti e quel collo); e il lavoro in corso, che la fotografia aspetta
+  let applicata = null, inCorso = null;
+  const parti = (sc, prova) => { const p = applica(sc, prova); inCorso = p; p.finally(() => { if (inCorso === p) inCorso = null; }); return p; };
   /** Porta sulla camicia la scelta `sc` (`prova`: quante volte si è già riprovato a tingere, dopo un file non arrivato). */
   async function applica(sc, prova = 0) {
     const mio = ++giro;
@@ -510,14 +526,14 @@ export function vesti(palco, camicia) {
     const conTessuto = !!(sc.tessuto || sc.polsino_tessuto || (sc.taschino && sc.taschino_tessuto));
     cucendo(true);
     try {
-      if (sc.collo === 'italiano' && !sc.taschino && !sc.iniziali && !conTessuto && vuoto(stato)) return;   // niente da scaricare
+      if (sc.collo === 'italiano' && !sc.taschino && !sc.iniziali && !conTessuto && vuoto(stato)) { applicata = { sc, esatta: true }; return; }   // niente da scaricare
       D ||= await leggiOpzioni(palco);
       if (!D || mio !== giro) return;
       const voluto = risolvi(sc, D);
       const T = conTessuto ? await leggiTrame(palco) : null;
       if (mio !== giro) return;
       const st = T ? stoffe(sc, T) : null;
-      if (vuoto(voluto) && !st && vuoto(stato)) return;
+      if (vuoto(voluto) && !st && vuoto(stato)) { applicata = { sc, esatta: !conTessuto }; return; }
       prepara();
       // i file ci sono? Se un pezzo manca, al suo posto resta quello di prima
       const nuovo = { ...voluto }, t = tagliaPer(D, scalaFerma() * zoom);
@@ -525,6 +541,7 @@ export function vesti(palco, camicia) {
         const p = voluto[n];
         if (p && p.chiave !== stato[n]?.chiave && !(await immagine(D.indirizzo(p.file, t)))) nuovo[n] = stato[n];
       }));
+      let esatta = !conTessuto;
       if (st) {
         // La camicia tinta: si rifà se cambiano il collo, il taschino o un tessuto. Se non riesce (un file non arriva,
         // la scheda grafica si è persa): con gli stessi tessuti resta quella di prima; con un tessuto nuovo la camicia
@@ -536,13 +553,15 @@ export function vesti(palco, camicia) {
           const fatta = await tingiCamicia(sc, st, nuovo, T, D).catch(() => null);
           if (mio !== giro) { if (fatta) butta(fatta.tela, fatta.ferma); return; }
           nuovo.stoffa = fatta ? { chiave, ...fatta } : stato.stoffa?.chiave.endsWith('|' + tessuti) ? stato.stoffa : null;
-          if (!fatta && prova < 2) riprova = setTimeout(() => { if (mio === giro) applica(sc, prova + 1); }, 2500 * (prova + 1));
+          if (!fatta && prova < 2) riprova = setTimeout(() => { if (mio === giro) parti(sc, prova + 1); }, 2500 * (prova + 1));
         }
+        esatta = nuovo.stoffa?.chiave === chiave;
       }
       if (nuovo.iniziali) await caratterePronto();
       if (mio !== giro) { if (nuovo.stoffa && nuovo.stoffa !== stato.stoffa) butta(nuovo.stoffa.tela, nuovo.stoffa.ferma); return; }
       const prima = stato.stoffa;
       stato = nuovo;
+      applicata = { sc, esatta };
       ferma.mostra(stato);
       preparaAddosso();                    // (la camicia che dondola può essere arrivata mentre si scaricava)
       addosso?.mostra(stato);
@@ -555,8 +574,42 @@ export function vesti(palco, camicia) {
       if (mio === giro) cucendo(false);
     }
   }
-  ascolta.add((sc) => applica(sc));
-  if (ultima) applica(ultima);
+  ascolta.add((sc) => parti(sc));
+  if (ultima) parti(ultima);
+
+  // la fotografia della camicia com'è adesso (vedi fotografaCamicia in cima): l'immagine ferma più grande, sopra la
+  // camicia tinta (o i pezzi bianchi) e le iniziali, come sulla pagina
+  fotografo = async ({ riquadro: [x, y, w, h], scala: s }) => {
+    // si aspetta il lavoro in corso, che può averne avviato un altro (una scelta arrivata intanto)
+    for (let i = 0; i < 8 && inCorso; i++) await inCorso.catch(() => {});
+    if (!ultima || applicata?.sc !== ultima || !applicata.esatta) return null;
+    const img = palco.querySelector('img.configura__ferma');
+    const voci = (img?.getAttribute('srcset') || '').split(',').map((v) => v.trim().split(/\s+/)).filter((v) => v[0]);
+    const grande = voci.sort((a, b) => (parseInt(b[1], 10) || 0) - (parseInt(a[1], 10) || 0))[0]?.[0] || img?.getAttribute('src');
+    const fondo = grande ? await immagine(new URL(grande, location.href).href) : null;
+    if (!fondo) return null;
+    const qui = stato, k = fondo.naturalWidth / 1800;
+    const tela = document.createElement('canvas');
+    tela.width = Math.round(w * s); tela.height = Math.round(h * s);
+    const g = tela.getContext('2d');
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(fondo, x * k, y * k, w * k, h * k, 0, 0, tela.width, tela.height);
+    const metti = (im, [a, b, c, d]) => g.drawImage(im, (a - x) * s, (b - y) * s, (c - a) * s, (d - b) * s);
+    if (qui.stoffa) metti(qui.stoffa.ferma, qui.stoffa.riquadroFermo);
+    else {
+      for (const nome of ['collo', 'taschino']) {
+        const p = qui[nome];
+        if (!p) continue;
+        const im = await immagine(D.indirizzo(p.file, D.taglie[D.taglie.length - 1]));
+        if (!im) return null;
+        metti(im, p.riquadro);
+      }
+    }
+    if (qui.iniziali) { await caratterePronto(); ricamaTela(g, qui.iniziali, s, x, y); }
+    // (se intanto la scelta è cambiata, questa foto è già vecchia)
+    if (stato !== qui) { tela.width = tela.height = 0; return null; }
+    return tela;
+  };
 
   // la camicia che dondola: arriva quando i suoi pezzi sono scaricati
   // (il suo livello si fa alla prima scelta: finché non si sceglie nulla, la camicia è quella di sempre)

@@ -3,6 +3,9 @@
 //
 //   node tools/anteprima-email.mjs <cartella>
 //
+// L'ordine completo ha la miniatura della camicia (src/configuratore/miniatura.js), quello base no (in cima la foto di
+// sempre). La miniatura è un'immagine d'esempio, o quella data con MINIATURA=<file .jpg> (fatta dal configuratore).
+//
 // Le immagini nelle email puntano al sito vero (endero.men/email/…): qui si leggono da public/email/, così si vedono
 // anche prima di pubblicarle.
 import { build } from 'esbuild';
@@ -61,13 +64,16 @@ const VERI = {
   t0502: { articolo: 'Articolo d\'esempio', codice: '1001-07', cartella: 'Cartella d\'esempio A', posizione: 'riga 2, colonna 3', composizione: '100% cotone' },
   t2507: { articolo: 'Altro articolo', codice: '2040-12', cartella: 'Cartella d\'esempio B' },
 };
-const datiOrdine = (d, n) => {
+const MINI = { o: 'a'.repeat(32), k: 'b'.repeat(32) };
+const datiOrdine = (d, n, miniatura = null) => {
   const o = ordinePulito(d);
   return { numero: `E-2026-00012${n}`, ordine: o, taglia: perIlReparto(o.misure, tabella), pagato: new Date('2026-11-25T19:49:00Z'),
-    pagatoCentesimi: Math.round(o.conti.totale * 100), totaleCentesimi: Math.round(o.conti.totale * 100), emailCliente: o.cliente.email, tessutiVeri: VERI };
+    pagatoCentesimi: Math.round(o.conti.totale * 100), totaleCentesimi: Math.round(o.conti.totale * 100), emailCliente: o.cliente.email, tessutiVeri: VERI, miniatura };
 };
+const fileMiniatura = process.env.MINIATURA || join(RADICE, 'tools/dati-prova/miniatura-1200.jpg');
 
 const locale = (html) => html
+  .replaceAll(`https://endero.men/api/camicia-ordine?o=${MINI.o}&amp;k=${MINI.k}`, pathToFileURL(fileMiniatura).href)
   .replaceAll('https://endero.men/email/', pathToFileURL(join(RADICE, 'public/email')).href + '/')
   .replaceAll('https://endero.men/camicia/', pathToFileURL(join(RADICE, 'public/camicia')).href + '/')
   .replaceAll('https://endero.men/font/', pathToFileURL(join(RADICE, 'public/font')).href + '/');
@@ -82,7 +88,7 @@ for (const [tipo, r] of Object.entries(ESEMPI)) {
   scrivi(`${tipo}-endero`, perEndero(r, { arrivo: new Date('2026-11-25T19:49:00Z') }));
 }
 for (const [i, [tipo, d]] of Object.entries(ORDINI).entries()) {
-  const dati = datiOrdine(d, i + 3);
+  const dati = datiOrdine(d, i + 3, tipo === 'ordine-completo' ? MINI : null);
   scrivi(`${tipo}-cliente`, ordinePerCliente(dati));
   scrivi(`${tipo}-endero`, ordinePerEndero(dati));
 }
