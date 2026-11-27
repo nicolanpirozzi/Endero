@@ -13,6 +13,14 @@
   font-display: swap;
 }
 
+/* il corsivo inglese del ricamo delle iniziali (solo le maiuscole): nella scheda del su misura in pagina iniziale.
+   Il configuratore lo carica da sé (src/configuratore/vesti.js) */
+@font-face {
+  font-family: "Endero Iniziali Inglese";
+  src: url("/font/iniziali-inglese.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
   --blu: #0f285e;
   --blu-notte: #0a1b45;
@@ -1031,18 +1039,192 @@ body[data-barra] .selettore {
   bottom: 0;
   height: fit-content;
   margin: auto 0;
-  width: min(340px, 36%);
+  width: min(384px, 38%);
   gap: 16px;
 }
 
-/* una misura per riga, come su un foglio delle misure */
-.scheda-misure--camicia .scheda-misure__gruppi {
-  grid-template-columns: 1fr;
-  gap: 0;
+/* --- la scheda di ciò che si personalizza (2026-11-27): quattro riquadri e gli altri dettagli. Raggi concentrici: 24 della scheda
+   meno i 12 di distanza dal bordo dei riquadri non torna (la scheda ha 22-24 di margine), quindi 14, vicino a metà */
+.personalizza__griglia {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.scheda-misure--camicia dd {
+/* quattro righe (ornamento, numero, nome, riga) condivise con il riquadro accanto: i numeri e i nomi stanno alla
+   stessa altezza anche se una riga va a capo e l'altra no */
+.personalizza__riquadro {
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  padding: 13px 14px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
+}
+
+.personalizza__ornamento {
+  /* i campioni si misurano sulla larghezza del riquadro: sei cerchi stanno sempre dentro, anche a 320 punti */
+  container-type: inline-size;
+  display: flex;
+  align-items: flex-start;
+  min-height: 0;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.personalizza__ornamento:empty {
+  margin-bottom: 0;
+}
+
+/* in fondo alla sua riga: se «oltre» va a capo sopra il 480, il 6 accanto resta alla stessa altezza del 480 */
+.personalizza__grande {
+  align-self: end;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 5px;
+  margin-bottom: 8px;
+}
+
+.personalizza__numero {
+  font-size: 40px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* «oltre» piccolo, sulla riga del numero; se non ci sta va sopra, non sotto i campioni */
+.personalizza__prima {
+  font-size: 10px;
+  font-weight: 500;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.personalizza__nome {
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.personalizza__dettaglio {
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0.7;
+  text-wrap: pretty;
+}
+
+/* le iniziali nel corsivo del ricamo, alte quanto i numeri */
+.personalizza__ricamo {
+  font-family: "Endero Iniziali Inglese", "Snell Roundhand", "Apple Chancery", cursive;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+/* i campioni dei tessuti, in cerchio e sovrapposti */
+.personalizza__campioni {
+  display: flex;
+  padding-left: 1px;
+}
+
+/* sei cerchi sovrapposti di un quarto: 4,65 volte il lato, che è al più il 21% del riquadro */
+.personalizza__campioni img {
+  --lato: min(26px, 21cqi);
+  width: var(--lato);
+  height: var(--lato);
+  margin-right: calc(var(--lato) * -0.27);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 1.5px #0d2252, 0 2px 6px rgba(0, 0, 0, 0.28);
+  transition: margin 320ms var(--morbido), transform 320ms var(--morbido);
+}
+
+/* passando sulla scheda i campioni si aprono a ventaglio */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .personalizza:hover .personalizza__campioni img {
+    margin-right: 3px;
+  }
+
+  .personalizza:hover .personalizza__campioni img:nth-child(even) {
+    transform: translateY(-2px);
+  }
+}
+
+/* il metro da sarto: tacche sottili, una più lunga ogni cinque */
+.personalizza__metro {
+  display: block;
+  width: 100%;
+  height: 12px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 30px) 0 0 / 100% 12px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 6px) 0 0 / 100% 7px no-repeat;
+}
+
+.personalizza__altri {
+  display: grid;
+  gap: 2px;
+}
+
+.personalizza__altri .vetro__sezione {
+  margin-bottom: 6px;
+}
+
+.personalizza__dettagli {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.personalizza__dettagli li {
+  padding: 6px 10px;
+  border-radius: var(--raggio-pillola);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  font-weight: 500;
+  font-stretch: 118%;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* sul tablet in piedi la scheda è larga quanto la foto: i quattro riquadri in fila */
+@media (min-width: 600px) and (max-width: 809px) {
+  .personalizza__griglia {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* fra telefono e schermo grande la scheda sta sulla parete in uno spazio più basso: via le righe piccole sotto i nomi
+   (i numeri e i nomi bastano), così la scheda resta dentro la foto */
+@media (min-width: 810px) and (max-width: 1279px) {
+  .personalizza__dettaglio {
+    display: none;
+  }
+
+  .personalizza__nome {
+    margin-bottom: 0;
+  }
+
+  .personalizza__numero {
+    font-size: 34px;
+  }
+
+  .personalizza__ricamo {
+    font-size: 28px;
+  }
 }
 
 .scheda-misure__azioni {

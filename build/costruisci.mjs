@@ -181,6 +181,9 @@ if (!camicia.leggera) console.warn('  attenzione: manca public/camicia/leggera/,
 const testiConfiguratore = leggi('configuratore.json');
 // i tessuti tra cui si sceglie (tools/tessuti.py): nomi inventati, i nomi veri delle cartelle colori non stanno qui
 const tessuti = existsSync(join(RADICE, 'contenuti/it/tessuti.json')) ? leggi('tessuti.json') : { tessuti: [] };
+// i campioni piccoli della scheda del su misura in pagina iniziale (tools/campioni-scheda.py)
+// (con il nome che il tessuto ha sul sito, per la descrizione dell'immagine)
+camicia.campioni = (testiHome.porta_su_misura?.scelte?.campioni || []).map((id) => ({ src: conVersione(`tessuti/mini/${id}.webp`), nome: tessuti.tessuti.find((t) => t.id === id)?.nome || '' })).filter((x) => x.src);
 
 // 3 · pagine
 /**
@@ -215,6 +218,8 @@ genera('/', home({
   suMisura: testi.suMisura,
   configuratore: testiConfiguratore,
   camicia: camicia.ferma,
+  campioni: camicia.campioni,
+  quantiTessuti: tessuti.tessuti.length,
   rivenditori: testi.rivenditori,
   prodotti,
   collezione: testi.collezione,
@@ -224,7 +229,7 @@ genera('/', home({
     js: [risorsa.sito, risorsa.apertura],
     precarica: ['<link rel="preload" href="/film/film.json" as="fetch" crossorigin>'],
   },
-}), ['home.json', 'collezione.json', 'chi-siamo.json', FOTO.collezione, FOTO.artigianato]);
+}), ['home.json', 'collezione.json', 'chi-siamo.json', 'configuratore.json', 'tessuti.json', FOTO.collezione, FOTO.artigianato]);
 genera('/camicie-su-misura/', paginaSuMisura({ sito, testi: testi.suMisura, risorse: base, anteprima }), ['su-misura.json', FOTO.sede, FOTO.suMisura]);
 genera('/camicie-su-misura/configuratore/', paginaConfiguratore({ sito, testi: testiConfiguratore, tessuti, camicia, risorse: base, anteprima }), ['configuratore.json', 'tessuti.json']);
 genera('/collezione/', paginaCollezione({ sito, testi: testi.collezione, prodotti, risorse: base, anteprima }), ['collezione.json', 'prodotti.json', FOTO.collezione]);

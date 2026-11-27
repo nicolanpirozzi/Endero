@@ -160,9 +160,17 @@
     }
   },
   "porta_su_misura": {
-    "_nota": "Porta verso il su misura. Dal 2026-11-19 è definitiva (proprietario: 'ha un'anteprima ancora bozza, rendila definitiva', scelta: 'Camicia del configuratore'): la camicia appesa del configuratore, ferma, e accanto la scheda con le misure che il configuratore chiede davvero (i nomi vengono da configuratore.json). Quando il configuratore è acceso (su-misura.json, configuratore.attivo) la pillola è la sua; 'in_sede' è la seconda strada.",
-    "scheda_titolo": "La tua scheda misure",
-    "unita": "— cm",
+    "_nota": "Porta verso il su misura. Dal 2026-11-19 è definitiva (proprietario: 'ha un'anteprima ancora bozza, rendila definitiva', scelta: 'Camicia del configuratore'): la camicia appesa del configuratore, ferma, e accanto la scheda in vetro. Dal 2026-11-27 la scheda non elenca più le misure: riassume tutto ciò che il configuratore fa scegliere (vedi 'scelte'). Quando il configuratore è acceso (su-misura.json, configuratore.attivo) la pillola è la sua; 'in_sede' è la seconda strada.",
+    "scelte": {
+      "_nota": "La scheda sulla parete (proprietario, 2026-11-27: «voglio che la modale faccia vedere un riassunto di quello che il configuratore può far scegliere (tessuto, tipologia collo, etc... misure). Qualcosa di pulito e bello ma che fa pensare \"che bello, posso personalizzare così tanto la mia camicia!!!\"»; tra due disegni ha scelto «B · Riquadri», e per i tessuti «Oltre 480 tessuti»). I numeri non si scrivono qui: li conta il build da configuratore.json e tessuti.json (i tessuti per difetto alla decina, così il testo resta vero se Endero ne toglie qualcuno), e i dettagli sono le personalizzazioni del configuratore. Testi e campioni scelti da noi, da fargli vedere; i campioni piccoli li fa tools/campioni-scheda.py.",
+      "titolo": "La tua camicia, come la vuoi",
+      "tessuti": { "prima": "oltre", "nome": "tessuti", "dettaglio": "Tinte unite, righe, quadretti e fantasie" },
+      "colli": { "nome": "colli", "dettaglio": "Dal francese al coreano" },
+      "iniziali": { "esempio": "EDR", "nome": "iniziali", "dettaglio": "Ricamate sul polso, sul collo o sul cuore" },
+      "misure": { "nome": "misure", "dettaglio": "Dalla camicia che ti sta meglio" },
+      "dettagli": "E ogni dettaglio",
+      "campioni": ["t1815", "t2707", "t2908", "t0209", "t1504", "t0505"]
+    },
     "in_sede": { "testo": "Oppure prenota in sede", "href": "/camicie-su-misura/#prenota" },
     "titolo": "La camicia su misura",
     "testo": "Cucita sulle tue misure, con il tessuto e i dettagli che scegli. Presa misure su appuntamento a Giugliano in Campania.",

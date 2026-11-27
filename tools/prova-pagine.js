@@ -230,14 +230,23 @@ const TELEFONO = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, 
       const s = document.getElementById('su-misura'), i = s.querySelector('.grande__foto img'), scheda = s.querySelector('.scheda-misure'), q = s.querySelector('.grande').getBoundingClientRect(), r = scheda.getBoundingClientRect(), f = i.getBoundingClientRect();
       return {
         attese: s.querySelectorAll('.attesa').length, foto: i.complete && i.naturalWidth > 0, file: i.currentSrc.split('/').pop().split('?')[0], alt: i.alt,
-        misure: [...scheda.querySelectorAll('dt')].map((x) => x.textContent.trim()), righe: [...scheda.querySelectorAll('dl div')].map((x) => Math.round(x.getBoundingClientRect().height)),
+        // la scheda di ciò che si personalizza (2026-11-27): quattro riquadri, i numeri, i campioni, gli altri dettagli
+        riquadri: scheda.querySelectorAll('.personalizza__riquadro').length,
+        numeri: Object.fromEntries([...scheda.querySelectorAll('.personalizza__riquadro')].map((r) => [r.className.match(/--(\w+)/)[1], r.querySelector('.personalizza__numero')?.textContent.trim() || r.querySelector('.personalizza__ricamo')?.textContent.trim()])),
+        // a due a due i riquadri stanno sulla stessa riga: numeri e nomi alla stessa altezza
+        allineati: (() => { const g = [...scheda.querySelectorAll('.personalizza__grande, .personalizza__nome')].map((x) => Math.round(x.getBoundingClientRect().bottom)); const righe = {}; scheda.querySelectorAll('.personalizza__riquadro').forEach((r) => { const t = Math.round(r.getBoundingClientRect().top); (righe[t] = righe[t] || []).push([r.querySelector('.personalizza__grande').getBoundingClientRect().bottom, r.querySelector('.personalizza__nome').getBoundingClientRect().bottom].map(Math.round).join('/')); }); return Object.values(righe).every((v) => new Set(v).size === 1) && g.length === 8; })(),
+        campioni: [...scheda.querySelectorAll('.personalizza__campioni img')].map((i) => { const t = i.closest('.personalizza__riquadro').getBoundingClientRect(), b = i.getBoundingClientRect(); return i.complete && i.naturalWidth > 0 && i.alt.length > 3 && b.left >= t.left && b.right <= t.right - 4; }),
+        dettagli: [...scheda.querySelectorAll('.personalizza__dettagli li')].map((x) => x.textContent.trim()),
+        traboccano: [...scheda.querySelectorAll('.personalizza__riquadro *')].filter((x) => x.getBoundingClientRect().right > x.closest('.personalizza__riquadro').getBoundingClientRect().right + 1).map((x) => x.className || x.tagName),
         pillola: scheda.querySelector('.pillola')?.getAttribute('href'), inSede: scheda.querySelector('.collegamento')?.getAttribute('href'),
         scheda: [(r.left - q.left) / q.width, (r.right - q.left) / q.width, r.top - f.bottom, r.bottom <= q.bottom + 1, r.top >= q.top - 1], opaca: getComputedStyle(scheda).opacity,
       };
     });
     controlla(`${nome}: niente «Foto in arrivo»: c'è la camicia del configuratore`, m.attese === 0 && m.foto && /^ferma/.test(m.file) && m.alt.length > 10, JSON.stringify({ attese: m.attese, file: m.file }));
-    controlla(`${nome}: la scheda elenca le misure che il configuratore chiede davvero`, misureVere.length >= 10 && JSON.stringify(m.misure) === JSON.stringify(misureVere), `${m.misure.join(', ')} | ${misureVere.join(', ')}`);
-    controlla(`${nome}: ogni misura sta su una riga sola`, m.righe.every((x) => x <= 40) && Math.max(...m.righe) - Math.min(...m.righe) <= 2, m.righe.join(' '));
+    controlla(`${nome}: la scheda ha i quattro riquadri, con le misure che il configuratore chiede davvero`, m.riquadri === 4 && misureVere.length >= 10 && m.numeri.misure === String(misureVere.length) && m.numeri.colli === '6' && /^\d+0$/.test(m.numeri.tessuti) && m.numeri.iniziali === 'EDR', JSON.stringify(m.numeri));
+    controlla(`${nome}: numeri e nomi dei riquadri vicini alla stessa altezza, niente esce dai riquadri`, m.allineati && m.traboccano.length === 0, m.traboccano.join(' '));
+    controlla(`${nome}: sei campioni di tessuto caricati, con il nome, dentro il loro riquadro`, m.campioni.length === 6 && m.campioni.every(Boolean), JSON.stringify(m.campioni));
+    controlla(`${nome}: sotto i riquadri gli altri dettagli del configuratore`, m.dettagli.length >= 5 && m.dettagli.includes('Taschino') && m.dettagli.includes('Polsino'), m.dettagli.join(', '));
     controlla(`${nome}: il tasto porta al configuratore, il link alla prenotazione in sede`, m.pillola === '/camicie-su-misura/configuratore/' && m.inSede === '/camicie-su-misura/#prenota', `${m.pillola} ${m.inSede}`);
     if (largo) controlla(`${nome}: la scheda sta sul lato in ombra, dentro la foto, senza coprire la camicia`, m.scheda[0] > 0.56 && m.scheda[1] < 0.995 && m.scheda[3] && m.scheda[4] && m.opaca === '1', JSON.stringify(m.scheda));
     else controlla(`${nome}: la scheda sta sotto la camicia`, m.scheda[2] > -40 && m.opaca === '1', JSON.stringify(m.scheda));

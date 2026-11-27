@@ -80,16 +80,27 @@ function selettore(s) {
  * @param {object} o.suMisura     su-misura.json (interruttore del configuratore)
  * @param {object} o.configuratore configuratore.json (i nomi delle misure e la descrizione della camicia)
  * @param {object} o.camicia      gli indirizzi dell'immagine ferma della camicia del configuratore
+ * @param {object[]} o.campioni   i campioni piccoli dei tessuti per la scheda del su misura: { src, nome }
+ * @param {number} o.quantiTessuti quanti tessuti si scelgono nel configuratore (tessuti.json)
  * @param {object} o.rivenditori  diventa-rivenditore.json (le due strade, e il loro titolo in richiami.home)
  * @param {object[]} o.prodotti   i capi di prodotti.json
  * @param {object} o.collezione   collezione.json (i look della vetrina, finché i capi non hanno nome e prezzo)
  */
-export default function home({ sito, testi: h, cultura, suMisura, configuratore = {}, camicia, rivenditori, prodotti, collezione: collezioneTesti = {}, risorse, anteprima }) {
+export default function home({ sito, testi: h, cultura, suMisura, configuratore = {}, camicia, campioni = [], quantiTessuti = 0, rivenditori, prodotti, collezione: collezioneTesti = {}, risorse, anteprima }) {
   const conf = suMisura.configuratore || {};
   const porta = h.porta_su_misura;
   // finché il configuratore non è acceso la pillola porta alla pagina del su misura
   const invito = conf.attivo ? { testo: conf.invito, href: conf.href } : porta.invito;
-  const misure = (configuratore.scheda?.misure?.campi || []).map((c) => c.etichetta);
+  // la scheda del su misura: quanto si può scegliere nel configuratore, contato dai suoi dati (così resta vero)
+  const campi = configuratore.scheda?.camicia?.campi || [];
+  const scelte = {
+    tessuti: Math.floor(quantiTessuti / 10) * 10,
+    colli: campi.find((c) => c.nome === 'collo')?.opzioni?.length || 0,
+    misure: (configuratore.scheda?.misure?.campi || []).length,
+    // le personalizzazioni che non hanno un riquadro loro (le iniziali ce l'hanno)
+    dettagli: campi.filter((c) => c.personalizzazione && c.nome !== 'iniziali').map((c) => c.etichetta),
+    campioni,
+  };
   const corpo = `${apertura(h.apertura)}
 <main>
   ${eroe(h.eroe, sito)}
@@ -99,7 +110,7 @@ export default function home({ sito, testi: h, cultura, suMisura, configuratore 
     ${vetrina(h.vetrina, prodotti, sito, { look: collezioneTesti.look, tipi: collezioneTesti.lookbook?.tipi, categorie: collezioneTesti.categorie, visore: collezioneTesti.lookbook?.visore })}
     ${collezione(h.categorie, sito, { id: '', gruppo: 'collezione' })}
     ${mestiere(h.chi_siamo, cultura.capitoli, sito)}
-    ${portaSuMisura(porta, sito, { camicia, misure, alt: configuratore.palco?.alt, invito })}
+    ${portaSuMisura(porta, sito, { camicia, scelte, alt: configuratore.palco?.alt, invito })}
     ${strade(rivenditori.richiami.home, rivenditori.strade, sito, { id: 'rivenditori', gruppo: 'rivenditori', pagina: rivenditori.richiami.home.link.href })}
   </div>
 </main>`;

@@ -196,15 +196,27 @@ vero('la mappa del sito porta le foto, e le foto esistono', fotoMappa.length >= 
 const tutteLePagine = pagine.map((p) => p.html).join('\n');
 const soloInMappa = fotoMappa.map((u) => u.slice(dominio.length)).filter((u) => !tutteLePagine.includes(`src="${u}"`));
 vero('nella mappa ogni foto ha lo stesso indirizzo che ha nella sua pagina', soloInMappa.length === 0, soloInMappa.slice(0, 3).join(' '));
-// le misure si chiamano allo stesso modo ovunque: nel riquadro del configuratore, nella scheda del su misura e in
-// quella della pagina iniziale (se un nome cambia, per esempio «Taglia» in «Giro collo», cambia in tutti e tre)
+// le misure si chiamano allo stesso modo ovunque: nel riquadro del configuratore e nella scheda del su misura (se un
+// nome cambia, per esempio «Taglia» in «Giro collo», cambia in tutti e due)
 const htmlDi = (percorso) => pagine.find((p) => p.percorso === percorso)?.html || '';
 const configuratore = htmlDi('/camicie-su-misura/configuratore/');
 const nelRiquadro = [...(configuratore.slice(configuratore.indexOf('configura__gruppo--misure')).split('</fieldset>')[0] || '').matchAll(/<label class="misura__nome"[^>]*>([^<]+)<\/label>/g)].map((m) => senzaTag(m[1]));
-for (const percorso of ['/', '/camicie-su-misura/']) {
-  const html = htmlDi(percorso);
+{
+  const html = htmlDi('/camicie-su-misura/');
   const nellaScheda = [...(html.slice(html.indexOf('class="vetro scheda-misure')).split('</section>')[0] || '').matchAll(/<dt>([^<]+)<\/dt>/g)].map((m) => senzaTag(m[1]));
-  vero(`${percorso}: la scheda misure ha le stesse voci del configuratore`, nelRiquadro.length >= 10 && nellaScheda.join('|') === nelRiquadro.join('|'), nellaScheda.filter((v) => !nelRiquadro.includes(v)).join(', ') || `${nellaScheda.length} voci contro ${nelRiquadro.length}`);
+  vero('/camicie-su-misura/: la scheda misure ha le stesse voci del configuratore', nelRiquadro.length >= 10 && nellaScheda.join('|') === nelRiquadro.join('|'), nellaScheda.filter((v) => !nelRiquadro.includes(v)).join(', ') || `${nellaScheda.length} voci contro ${nelRiquadro.length}`);
+}
+// la scheda della pagina iniziale (2026-11-27) dice quanto si sceglie nel configuratore: i numeri devono essere quelli
+// veri. Colli e misure contati nella pagina del configuratore, i tessuti in tessuti.json (per difetto alla decina)
+{
+  const home = htmlDi('/');
+  const scheda = (home.slice(home.indexOf('class="vetro scheda-misure scheda-misure--camicia personalizza"')).split('</section>')[0] || '');
+  const numero = (classe) => Number((scheda.match(new RegExp(`personalizza__riquadro--${classe}">[\\s\\S]*?personalizza__numero">(\\d+)<`)) || [])[1] || 0);
+  const colliVeri = (configuratore.match(/<select[^>]*name="collo"[\s\S]*?<\/select>/) || [''])[0].match(/<option value="[^"]+"/g)?.length || 0;
+  const tessutiVeri = (() => { try { return JSON.parse(readFileSync(join(RADICE, 'contenuti/it/tessuti.json'), 'utf8')).tessuti.length; } catch { return 0; } })();
+  vero('/: la scheda del su misura conta i colli del configuratore', colliVeri >= 2 && numero('colli') === colliVeri, `${numero('colli')} contro ${colliVeri}`);
+  vero('/: la scheda del su misura conta le misure del configuratore', numero('misure') === nelRiquadro.length, `${numero('misure')} contro ${nelRiquadro.length}`);
+  vero('/: «oltre» un numero di tessuti che c\'è davvero', numero('tessuti') >= 10 && numero('tessuti') <= tessutiVeri && tessutiVeri - numero('tessuti') < 10, `${numero('tessuti')} su ${tessutiVeri}`);
 }
 // i dati della società: piè di pagina (in tutte le pagine), informativa privacy e dati per Google dicono la stessa cosa
 const iva = (piede.match(/Partita IVA (\d{11})/) || [])[1] || '';

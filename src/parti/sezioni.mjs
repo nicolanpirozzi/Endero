@@ -95,15 +95,27 @@ export function presaMisure(p, sito, { id = '', gruppo = 'su-misura', invito } =
 
 /**
  * La porta sul su misura in pagina iniziale: la camicia appesa del configuratore, ferma, e sul lato in ombra della
- * parete la scheda in vetro con le misure che il configuratore chiede, una riga per misura. Porta al configuratore
+ * parete la scheda in vetro con tutto ciò che il configuratore fa scegliere (proprietario, 2026-11-27: «che bello,
+ * posso personalizzare così tanto la mia camicia!»; scelto «B · Riquadri»): quattro riquadri, tessuti con i
+ * campioni veri, colli, iniziali nel corsivo del ricamo e misure, e sotto gli altri dettagli. Porta al configuratore
  * e, con un link più piccolo, alla prenotazione in sede.
- * @param {object} o.camicia  gli indirizzi dell'immagine ferma: { computer, computer2x, telefono, telefono2x }
- * @param {string[]} o.misure i nomi delle misure, presi da configuratore.json
+ * @param {object} o.camicia gli indirizzi dell'immagine ferma: { computer, computer2x, telefono, telefono2x }
+ * @param {object} o.scelte  i numeri contati dal build: { tessuti, colli, misure, dettagli: [etichette], campioni: [{ src, nome }] }
  */
-export function portaSuMisura(p, sito, { id = 'su-misura', gruppo = 'su-misura', camicia, misure = [], alt = '', invito } = {}) {
+export function portaSuMisura(p, sito, { id = 'su-misura', gruppo = 'su-misura', camicia, scelte = {}, alt = '', invito } = {}) {
   const serie = (file, largo, doppio) => `${file} ${largo}w` + (doppio ? `, ${doppio} ${largo * 2}w` : '');
-  const meta = Math.ceil(misure.length / 2);
-  const colonna = (voci) => `<dl>${voci.map((v) => `<div><dt>${esc(v)}</dt><dd>${esc(p.unita)}</dd></div>`).join('')}</dl>`;
+  const s = p.scelte;
+  // un riquadro, in quattro righe allineate con quelle del riquadro accanto (subgrid): l'ornamento, in grande il
+  // numero (o il ricamo), il nome, una riga. Senza numero restano il nome e la riga
+  const riquadro = (classe, { numero = '', prima = '', ornamento = '', grande = '', nome, dettaglio }) => `<li class="personalizza__riquadro personalizza__riquadro--${classe}">
+            <span class="personalizza__ornamento" aria-hidden="true">${ornamento}</span>
+            <span class="personalizza__grande">${grande}${numero ? `${prima ? `<span class="personalizza__prima">${esc(prima)}</span> ` : ''}<span class="personalizza__numero">${numero}</span>` : ''}</span>
+            <span class="personalizza__nome">${esc(nome)}</span>
+            <span class="personalizza__dettaglio">${esc(dettaglio)}</span>
+          </li>`;
+  // il colletto disegnato a filo, per il riquadro dei colli
+  const colletto = '<svg viewBox="0 0 40 28" width="40" height="28" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5c2-2.2 12-2.2 14 0"/><path d="M13 5c1 3.4 3.6 6.4 7 8"/><path d="M27 5c-1 3.4-3.6 6.4-7 8"/><path d="M13 5 8 21l12-8"/><path d="M27 5l5 16-12-8"/><path d="M20 13v14"/><circle cx="20" cy="18" r=".9" fill="currentColor" stroke="none"/><circle cx="20" cy="24" r=".9" fill="currentColor" stroke="none"/></svg>';
+  const campioni = (scelte.campioni || []).map(({ src, nome }) => `<img src="${esc(src)}" alt="${esc(nome)}" width="26" height="26" loading="lazy" decoding="async">`).join('');
   return `<section class="sezione"${aid(id)}${agr(gruppo)}>
     ${intesta(p)}
     <div class="grande grande--camicia">
@@ -111,15 +123,19 @@ export function portaSuMisura(p, sito, { id = 'su-misura', gruppo = 'su-misura',
         <source media="(max-width: 809px)" srcset="${esc(serie(camicia.telefono, 750, camicia.telefono2x))}" sizes="100vw" width="750" height="1000">
         <img src="${esc(camicia.computer)}" srcset="${esc(serie(camicia.computer, 1800, camicia.computer2x))}" sizes="(max-width: 809px) 100vw, calc(100vw - 72px)" width="1800" height="1000" alt="${esc(alt)}" loading="lazy" decoding="async">
       </picture>
-      <div class="vetro scheda-misure scheda-misure--camicia" data-pillola-via>
-        <div class="vetro__testa">
-          <h3 class="vetro__titolo">${esc(p.scheda_titolo)}</h3>
-          <span class="chip chip--vetro">cm</span>
-        </div>
-        <div class="scheda-misure__gruppi">
-          ${colonna(misure.slice(0, meta))}
-          ${colonna(misure.slice(meta))}
-        </div>
+      <div class="vetro scheda-misure scheda-misure--camicia personalizza" data-pillola-via>
+        <h3 class="vetro__titolo">${esc(s.titolo)}</h3>
+        <ul class="personalizza__griglia">
+          ${riquadro('tessuti', { numero: scelte.tessuti >= 20 ? scelte.tessuti : '', prima: s.tessuti.prima, nome: s.tessuti.nome, dettaglio: s.tessuti.dettaglio,
+            ornamento: campioni ? `<span class="personalizza__campioni">${campioni}</span>` : '' })}
+          ${riquadro('colli', { numero: scelte.colli || '', nome: s.colli.nome, dettaglio: s.colli.dettaglio, ornamento: colletto })}
+          ${riquadro('iniziali', { grande: `<span class="personalizza__ricamo" aria-hidden="true">${esc(s.iniziali.esempio)}</span>`, nome: s.iniziali.nome, dettaglio: s.iniziali.dettaglio })}
+          ${riquadro('misure', { numero: scelte.misure || '', nome: s.misure.nome, dettaglio: s.misure.dettaglio, ornamento: '<span class="personalizza__metro"></span>' })}
+        </ul>
+        ${scelte.dettagli?.length ? `<div class="personalizza__altri">
+          <p class="vetro__sezione">${esc(s.dettagli)}</p>
+          <ul class="personalizza__dettagli">${scelte.dettagli.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>
+        </div>` : ''}
         <div class="scheda-misure__azioni">
           <a class="pillola pillola--chiara" href="${esc(invito.href)}">${esc(invito.testo)}</a>
           ${p.in_sede ? `<a class="collegamento" href="${esc(p.in_sede.href)}">${esc(p.in_sede.testo)}${icona.freccia}</a>` : ''}
