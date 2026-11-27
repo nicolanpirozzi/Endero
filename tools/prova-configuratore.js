@@ -430,7 +430,7 @@ const avanti = async (page) => { await page.click('[data-avanti]'); await page.w
     // senza consenso
     await avanti(page);
     v = await avviso(page, 'privacy');
-    controlla(`${formato}: senza consenso → «${v.testo}», niente invio`, /consenso/.test(v.testo) && inviato === null, JSON.stringify(v));
+    controlla(`${formato}: senza consenso → «${v.testo}», niente invio`, /condizioni di vendita/.test(v.testo) && inviato === null, JSON.stringify(v));
     await page.locator('.configura__consenso label').click({ position: { x: 10, y: 10 } });
     // pagamento non attivo
     await avanti(page);

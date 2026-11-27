@@ -43,3 +43,25 @@ export async function dimentica(db) {
   console.log('richieste cancellate perché più vecchie di', CONSERVAZIONE_MESI, 'mesi dall\'ultima:', quante);
   return quante;
 }
+
+// Gli ordini del configuratore (worker/ordine.mjs). Quelli pagati sono documenti contabili e restano (quanto, lo dice
+// l'informativa). Quelli mai pagati o annullati, e quelli del pagamento di prova, si cancellano dopo 30 giorni
+// (informativa privacy, «Per quanto tempo li teniamo»; bozza del 2026-11-27 da far rileggere al consulente).
+export const ORDINI_GIORNI = 30;
+export const PULISCI_ORDINI = `DELETE FROM ordini
+  WHERE creato < strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-${ORDINI_GIORNI} days')
+    AND (stato <> 'pagato' OR pagamento = 'prova')`;
+
+/** Cancella gli ordini non pagati, annullati o di prova più vecchi di 30 giorni. Restituisce quanti. */
+export async function pulisciOrdini(db) {
+  try {
+    const esito = await db.prepare(PULISCI_ORDINI).run();
+    const quanti = esito.meta?.changes ?? 0;
+    console.log('ordini non pagati o di prova cancellati perché più vecchi di', ORDINI_GIORNI, 'giorni:', quanti);
+    return quanti;
+  } catch (errore) {
+    // (un database senza la tabella degli ordini: niente da cancellare)
+    if (/no such table/i.test(String(errore?.message || errore))) return 0;
+    throw errore;
+  }
+}

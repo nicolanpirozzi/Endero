@@ -5,8 +5,8 @@
 import { getAssetFromKV, mapRequestToAsset, NotFoundError, MethodNotAllowedError } from '@cloudflare/kv-asset-handler';
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { contatto } from './index.js';
-import { ordine, stripe } from './ordine.mjs';
-import { dimentica } from './conservazione.mjs';
+import { ordine, stripe, pagamentoProva } from './ordine.mjs';
+import { dimentica, pulisciOrdini } from './conservazione.mjs';
 import { INTESTAZIONI } from './intestazioni.mjs';
 import { destinazione } from './reindirizzamenti.mjs';
 
@@ -86,6 +86,15 @@ export default {
       r.headers.set('X-Content-Type-Options', 'nosniff');
       return r;
     }
+    // il pagamento di prova (worker/ordine.mjs): la sua pagina e il suo tasto
+    if (url.pathname === '/api/pagamento-prova') {
+      const risposta = await pagamentoProva(request, env);
+      const r = new Response(risposta.body, risposta);
+      r.headers.set('X-Robots-Tag', 'noindex, nofollow');
+      r.headers.set('X-Content-Type-Options', 'nosniff');
+      r.headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
+      return r;
+    }
     // _redirects qui non viene caricato (vedi wrangler.anteprima.toml): gli stessi reindirizzamenti li fa il Worker
     const altrove = destinazione(request.url);
     if (altrove) return new Response(null, { status: 301, headers: { Location: altrove, 'X-Robots-Tag': 'noindex, nofollow' } });
@@ -110,6 +119,6 @@ export default {
   // dove c'è il database (endero.men), ogni notte via le richieste più vecchie di 24 mesi dall'ultima, come dice
   // l'informativa privacy (worker/conservazione.mjs)
   async scheduled(evento, env, ctx) {
-    if (env.DB) ctx.waitUntil(dimentica(env.DB));
+    if (env.DB) ctx.waitUntil(Promise.all([dimentica(env.DB), pulisciOrdini(env.DB)]));
   },
 };

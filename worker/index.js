@@ -17,21 +17,22 @@ export default {
       if (request.method !== 'POST') return new Response('Metodo non consentito', { status: 405, headers: { Allow: 'POST' } });
       return url.pathname === '/api/ordine' ? ordine(request, env, ctx) : stripe(request, env, ctx);
     }
+    if (url.pathname === '/api/pagamento-prova') return pagamentoProva(request, env);
     return env.ASSETS.fetch(request);
   },
   // una volta al giorno (wrangler.toml, triggers): via le richieste vecchie, come dice l'informativa privacy
   // (worker/conservazione.mjs)
   async scheduled(evento, env, ctx) {
-    if (env.DB) ctx.waitUntil(dimentica(env.DB));
+    if (env.DB) ctx.waitUntil(Promise.all([dimentica(env.DB), pulisciOrdini(env.DB)]));
   },
 };
 
 const GIORNO = /^\d{4}-\d{2}-\d{2}$/;
 
 import rivenditori from '../contenuti/it/diventa-rivenditore.json';
-import { dimentica, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
+import { dimentica, pulisciOrdini, chiaveTelefono, chiaveEmail } from './conservazione.mjs';
 import { avvisa } from './email.mjs';
-import { ordine, stripe } from './ordine.mjs';
+import { ordine, stripe, pagamentoProva } from './ordine.mjs';
 import { controlla, senzaInvisibili, testi as avvisi } from '../src/controlli.mjs';
 
 const TIPI = ['presa-misure', 'contatto', 'rivenditore'];

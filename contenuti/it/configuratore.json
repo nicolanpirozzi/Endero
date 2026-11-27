@@ -624,9 +624,22 @@
         "spedizione": "Ritiro o spedizione"
       },
       "nessuna": "Nessuna personalizzazione",
-      "consenso": "Ho letto l'<a href=\"/privacy/\">informativa privacy</a> e acconsento al trattamento dei dati per l'ordine.",
+      "consenso": "Accetto le <a href=\"/condizioni-di-vendita/\">condizioni di vendita</a> e ho letto l'<a href=\"/privacy/\">informativa privacy</a>.",
       "paga": "Vai al pagamento",
       "nota": "Paghi con carta sulla pagina sicura di Stripe.",
+      "prova": {
+        "nota": "Pagamento di prova: non ti addebitiamo nulla e la camicia non viene cucita. Per ordinare ora, scrivici su WhatsApp.",
+        "etichetta": "Ordine {numero}",
+        "titolo": "Pagamento di prova",
+        "avviso": "Questa è una prova del sito: non ti addebitiamo nulla e la camicia non viene cucita. L'ordine arriva a Endero segnato come prova.",
+        "ordine": "Ordine",
+        "totale": "Totale",
+        "paga": "Completa il pagamento di prova",
+        "annulla": "Annulla",
+        "non_trovato": "Questo pagamento non c'è più. Torna al configuratore e riprova.",
+        "spento": "Il pagamento di prova non è attivo.",
+        "grazie": "Era un pagamento di prova: non ti abbiamo addebitato nulla. L'ordine è arrivato a Endero segnato come prova."
+      },
       "non_attivo": "[[Il pagamento online non è ancora attivo: per ora l'ordine non parte.]]",
       "attesa": "Un momento…",
       "errore": "Non siamo riusciti a preparare il pagamento. Riprova tra poco, oppure scrivici su WhatsApp.",
@@ -675,7 +688,7 @@
       "indirizzo": "Scrivi via e numero civico.",
       "cap": "Il CAP ha 5 cifre.",
       "provincia": "Scrivi la sigla della provincia, per esempio NA.",
-      "privacy": "Per ordinare serve il consenso all'informativa privacy.",
+      "privacy": "Per ordinare devi accettare le condizioni di vendita.",
       "riepilogo": "Controlla i campi segnati in rosso.",
       "note_consegna": "Nelle note non mettere indirizzi di siti."
     },

@@ -150,7 +150,7 @@ function piede(nota) {
 }
 
 /** La pagina intera: testata con la foto, il contenuto, il piè di pagina. */
-function pagina({ titolo, anteprima, tipo, corpo, nota }) {
+function pagina({ titolo, anteprima, tipo, corpo, nota, avviso = '' }) {
   return `<!doctype html>
 <html lang="it" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -190,6 +190,7 @@ function pagina({ titolo, anteprima, tipo, corpo, nota }) {
     <tr><td bgcolor="${BLU}" style="background:${BLU};line-height:0;">
       <a href="${pulisci(dominio())}/" target="_blank"><img src="${immagine(`testata-${tipo}.jpg`)}" width="600" alt="${pulisci(testi.comune.alt_testata)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;background:${BLU};color:${FILO};font-family:${CARATTERE};font-size:22px;font-weight:600;letter-spacing:0.1em;line-height:60px;text-align:center;"></a>
     </td></tr>
+    ${avviso ? `<tr><td class="dentro" bgcolor="#fff3c4" style="padding:16px 44px;background:#fff3c4;font-family:${CARATTERE};font-size:15px;line-height:22px;font-weight:600;color:${BLU};">${pulisci(avviso)}</td></tr>` : ''}
     ${corpo}
     ${piede(nota)}
   </table>
@@ -532,9 +533,11 @@ export function ordinePerEndero(dati) {
     ...sezione(a.consegna, consegna(o)),
     ...sezione(a.importi, conti), nota,
   ].filter((x, i, arr) => x !== '' || (i > 0 && arr[i - 1] !== '')).join('\n');
-  const oggetto = inRiga(t?.riga ? riempi(a.oggetto, { numero: dati.numero, nome, taglia: t.riga }) : riempi(a.oggetto_senza_taglia, { numero: dati.numero, nome }));
-  const anteprima = [t?.riga, `${o.quantita || 1} × ${tessutoSito(o.tessuto)}`, euro(totale / 100)].filter(Boolean).join(' · ');
-  return { oggetto, testo, html: pagina({ titolo: oggetto, anteprima, tipo: 'ordine', corpo, nota: a.piede }) };
+  // un ordine pagato con il pagamento di prova (o con le chiavi di prova di Stripe): PROVA in oggetto e in cima
+  const P = dati.prova ? testi.ordine.prova : null;
+  const oggetto = inRiga(`${P ? `${P.oggetto} ` : ''}${t?.riga ? riempi(a.oggetto, { numero: dati.numero, nome, taglia: t.riga }) : riempi(a.oggetto_senza_taglia, { numero: dati.numero, nome })}`);
+  const anteprima = [P?.a_endero, t?.riga, `${o.quantita || 1} × ${tessutoSito(o.tessuto)}`, euro(totale / 100)].filter(Boolean).join(' · ');
+  return { oggetto, testo: P ? `${P.a_endero}\n\n${testo}` : testo, html: pagina({ titolo: oggetto, anteprima, tipo: 'ordine', corpo, nota: a.piede, avviso: P?.a_endero }) };
 }
 
 /** La conferma dell'ordine per il cliente: nomi dei tessuti del sito (mai quelli veri), consegna, totale, WhatsApp. */
@@ -558,8 +561,9 @@ export function ordinePerCliente(dati) {
     ...dove.map(([e, v]) => `${e}: ${v.replace(/\n/g, ', ')}`), '',
     ...conti.map(([e, v]) => `${e}: ${v}`), '',
     `${t.whatsapp}: ${whatsapp}`, '', t.firma, 'Endero', '', `${sito.contatti.via}, ${sito.contatti.citta} · ${sito.contatti.email}`].join('\n').replace(/\n{3,}/g, '\n\n');
-  const oggetto = inRiga(riempi(t.oggetto, { numero: dati.numero }));
-  return { oggetto, testo, html: pagina({ titolo: oggetto, anteprima: `${saluto} ${t.testo}`, tipo: 'ordine', corpo, nota: t.piede }) };
+  const P = dati.prova ? testi.ordine.prova : null;
+  const oggetto = inRiga(`${P ? `${P.oggetto} ` : ''}${riempi(t.oggetto, { numero: dati.numero })}`);
+  return { oggetto, testo: P ? `${P.al_cliente}\n\n${testo}` : testo, html: pagina({ titolo: oggetto, anteprima: `${P ? `${P.al_cliente} ` : ''}${saluto} ${t.testo}`, tipo: 'ordine', corpo, nota: t.piede, avviso: P?.al_cliente }) };
 }
 
 /** A pagamento fatto: l'ordine a Endero e a Ennio, la conferma al cliente. Restituisce { endero, cliente }. */

@@ -156,7 +156,7 @@ function campoTesto(c, { obbligatorio = true } = {}) {
 }
 
 /** I cinque passi, in ordine. Senza script si leggono uno sotto l'altro. */
-function passi(S, tessuti, turnstile) {
+function passi(S, tessuti, turnstile, prova = false) {
   const P = Object.fromEntries(S.passi.map((p) => [p.id, p]));
   const testa = (p) => `<h2 class="passo__titolo" id="passo-${p.id}-titolo" tabindex="-1">${t(p.titolo)}</h2>${p.testo ? `<p class="passo__testo">${t(p.testo)}</p>` : ''}`;
   const sezione = (p, dentro) => `<section class="passo" id="passo-${p.id}" data-passo="${p.id}" aria-labelledby="passo-${p.id}-titolo">
@@ -220,7 +220,7 @@ function passi(S, tessuti, turnstile) {
     <div class="passo__invia">
       <button class="pillola pillola--chiara pillola--grande" type="submit">${esc(pg.paga)}</button>
     </div>
-    <p class="configura__nota-paga">${t(pg.nota)}</p>
+    <p class="configura__nota-paga${prova ? ' configura__nota-paga--prova' : ''}">${t(prova ? pg.prova.nota : pg.nota)}</p>
     <p class="configura__esito" role="status" aria-live="polite" data-esito></p>`),
   ].join('\n  ');
 }
@@ -348,12 +348,12 @@ export default function paginaConfiguratore({ sito, testi: c, tessuti = { tessut
     </nav>
     <div class="modulo__esca" aria-hidden="true"><label>Non compilare<input type="text" name="sito_web" tabindex="-1" autocomplete="off"></label></div>
     <div class="configura__passi" data-passi>
-  ${passi(S, tessuti, risorse.turnstile)}
+  ${passi(S, tessuti, risorse.turnstile, risorse.pagamentoProva)}
     </div>
     <div class="configura__grazie" data-grazie hidden>
       <span class="configura__grazie-segno" aria-hidden="true">${ICONA.spunta}</span>
       <h2 class="passo__titolo" tabindex="-1">${t(g.titolo)}</h2>
-      <p class="passo__testo">${t(g.testo)}</p>
+      <p class="passo__testo${risorse.pagamentoProva ? ' configura__grazie-prova' : ''}">${t(risorse.pagamentoProva ? S.pagamento.prova.grazie : g.testo)}</p>
       <a class="pillola pillola--chiara pillola--grande" href="${esc(g.link.href)}">${esc(g.link.testo)}</a>
     </div>
     <div class="configura__fondo" data-fondo>

@@ -345,6 +345,54 @@ console.log('L\'ordine del configuratore');
   r = await avvisa(sconosciuto);
   controlla('pagamento per un ordine che non esiste: 200, nessuna email', r.status === 200 && email.length === prima + 4);
 
+  // il pagamento di prova (proprietario, 2026-11-27: «crea solo una demo… ora mi va bene fare un test fake»): senza
+  // la chiave di Stripe e con PAGAMENTO_PROVA = "1" l'ordine si salva e si «paga» su una pagina nostra, segnata PROVA
+  {
+    const { db: dbP, d1: d1P } = nuovoDb();
+    const envP = { DB: d1P, RISERVATO, PAGAMENTO_PROVA: '1', RESEND_API_KEY: 'finta', EMAIL_DESTINATARIO: 'reparto@esempio.it', EMAIL_MITTENTE: 'Endero <noreply@endero.men>' };
+    const primaS = aStripe.length, primaE = email.length;
+    let rp = await manda(envP, ORDINE);
+    const jp = await rp.json();
+    controlla('pagamento di prova: l\'ordine si salva e la pagina va alla pagina di prova, non a Stripe', rp.status === 200 && jp.ok && /^\/api\/pagamento-prova\?o=[0-9a-f]{32}&t=[0-9a-f]{32}$/.test(jp.vai || '') && aStripe.length === primaS, JSON.stringify(jp));
+    const rigaP = dbP.prepare('SELECT * FROM ordini').get();
+    controlla('… salvato «da pagare», con il gettone della prova al posto della sessione di Stripe', rigaP?.stato === 'da_pagare' && /^prova:[0-9a-f]{32}$/.test(rigaP.sessione), JSON.stringify({ stato: rigaP?.stato, sessione: rigaP?.sessione }));
+    const u = new URL(jp.vai, SITO);
+    const vai = (indirizzo, opzioni = {}, e = envP) => worker.default.fetch(new Request(indirizzo, opzioni), e, { waitUntil: () => {} });
+    const paga = (dati, origine = SITO) => vai(`${SITO}/api/pagamento-prova`, { method: 'POST', body: new URLSearchParams(dati), headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: origine } });
+    rp = await vai(u.toString());
+    const html = await rp.text();
+    controlla('la pagina di prova dice chiaro che non si addebita nulla, con numero e totale', rp.status === 200 && /Pagamento di prova/.test(html) && /non ti addebitiamo nulla/.test(html) && html.includes(rigaP.numero) && /90,00\s€/.test(html), html.slice(0, 160));
+    rp = await vai(`${SITO}/api/pagamento-prova?o=${rigaP.id}&t=${'0'.repeat(32)}`);
+    controlla('con un gettone sbagliato: «non trovato», e l\'ordine resta da pagare', rp.status === 404 && dbP.prepare('SELECT stato FROM ordini').get().stato === 'da_pagare');
+    rp = await paga({ o: u.searchParams.get('o'), t: u.searchParams.get('t') }, 'https://altro.example');
+    controlla('da un altro sito: rifiutato', rp.status === 403 && dbP.prepare('SELECT stato FROM ordini').get().stato === 'da_pagare');
+    rp = await paga({ o: u.searchParams.get('o'), t: u.searchParams.get('t') });
+    const dopoP = dbP.prepare('SELECT stato, pagamento, pagato_centesimi, email_inviate FROM ordini').get();
+    controlla('«Completa il pagamento di prova»: pagato (pagamento «prova»), e si torna al grazie', rp.status === 303 && rp.headers.get('Location') === '/camicie-su-misura/configuratore/?ordine=fatto' && dopoP.stato === 'pagato' && dopoP.pagamento === 'prova' && dopoP.pagato_centesimi === 9000 && dopoP.email_inviate === 1, JSON.stringify(dopoP));
+    const nuove = email.slice(primaE);
+    controlla('… due email (a Endero e al cliente), PROVA in oggetto e la fascia in cima', nuove.length === 2 && nuove.every((x) => x.subject.startsWith('[PROVA] ') && /fff3c4/.test(x.html) && /di prova|DI PROVA/.test(x.text)) && JSON.stringify(nuove[0].to) === '["reparto@esempio.it"]', JSON.stringify(nuove.map((x) => [x.to, x.subject])));
+    rp = await paga({ o: u.searchParams.get('o'), t: u.searchParams.get('t') });
+    controlla('premuto di nuovo: di nuovo al grazie, nessuna email in più', rp.status === 303 && email.length === primaE + 2);
+    rp = await vai(u.toString(), {}, { ...envP, STRIPE_SECRET_KEY: 'sk_live_finta' });
+    controlla('appena c\'è la chiave di Stripe la pagina di prova si spegne', rp.status === 404);
+    // la pulizia di ogni notte: via gli ordini di prova e quelli mai pagati dopo 30 giorni; quelli pagati davvero restano
+    dbP.prepare("INSERT INTO ordini (id, ordine, quantita, camicia_centesimi, totale_centesimi, stato) VALUES ('a1', '{}', 1, 9000, 9000, 'da_pagare'), ('a2', '{}', 1, 9000, 9000, 'pagato'), ('a3', '{}', 1, 9000, 9000, 'annullato'), ('a4', '{}', 1, 9000, 9000, 'da_pagare')").run();
+    dbP.prepare("UPDATE ordini SET creato = '2020-01-01T00:00:00Z' WHERE id <> 'a4'").run();
+    const via = await conservazione.pulisciOrdini(d1P);
+    const restano = dbP.prepare('SELECT id FROM ordini ORDER BY id').all().map((x) => x.id).join(',');
+    controlla('pulizia: dopo 30 giorni via gli ordini di prova, mai pagati e annullati; restano i pagati e i recenti', via === 3 && restano === 'a2,a4', `${via} cancellati, restano ${restano}`);
+  }
+  // un pagamento con le chiavi di prova di Stripe (livemode false) arriva a Endero segnato PROVA
+  {
+    const quarto = db.prepare("SELECT * FROM ordini WHERE stato = 'da_pagare' ORDER BY n DESC").get();
+    const primaE = email.length;
+    const ev = JSON.parse(evento(quarto, {}));
+    ev.livemode = false;
+    const c = JSON.stringify(ev);
+    r = await avvisa(c, firma(c));
+    controlla('pagamento con le chiavi di prova di Stripe: email segnate PROVA', r.status === 200 && email.length > primaE && email.slice(primaE).every((x) => x.subject.startsWith('[PROVA] ')), JSON.stringify(email.slice(primaE).map((x) => x.subject)));
+  }
+
   // anteprima e sito chiuso a Google (worker/anteprima.js): senza database né chiavi, «non_attivo»
   const lavoro = join(cartella, 'anteprima.mjs');
   await build({ entryPoints: [join(RADICE, 'worker/anteprima.js')], bundle: true, format: 'esm', platform: 'neutral', outfile: lavoro, logLevel: 'silent', mainFields: ['module', 'main'],
@@ -361,11 +409,14 @@ console.log('L\'ordine del configuratore');
   controlla('anteprima: un ordine sbagliato riceve gli errori', r.status === 422 && !!(await r.json()).errori.collo);
   r = await anteprima.default.fetch(new Request(`${SITO}/api/stripe`, { method: 'POST', body: '{}' }), {}, { waitUntil: () => {} });
   controlla('anteprima: il webhook non fa nulla', r.status === 503);
+  r = await anteprima.default.fetch(new Request(`${SITO}/api/pagamento-prova?o=${'a'.repeat(32)}&t=${'b'.repeat(32)}`), {}, { waitUntil: () => {} });
+  controlla('anteprima: la pagina di prova non c\'è, e porta le sue regole di sicurezza', r.status === 404 && /default-src 'none'/.test(r.headers.get('Content-Security-Policy') || '') && r.headers.get('X-Robots-Tag') === 'noindex, nofollow');
 
   // lo schema: db/ordini.sql (per il database che esiste già) fa la stessa tabella di db/schema.sql
   const colonne = (sql) => { const x = new DatabaseSync(':memory:'); x.exec(sql); return JSON.stringify(x.prepare("SELECT name, type, \"notnull\", dflt_value, pk FROM pragma_table_info('ordini')").all()); };
   controlla('db/ordini.sql e db/schema.sql fanno la stessa tabella ordini', colonne(readFileSync(join(RADICE, 'db/ordini.sql'), 'utf8')) === colonne(readFileSync(join(RADICE, 'db/schema.sql'), 'utf8')));
   controlla('la pulizia dei 24 mesi non tocca gli ordini', !/ordini/.test(conservazione.DIMENTICA));
+  controlla('la pulizia degli ordini non tocca quelli pagati davvero', /stato <> 'pagato' OR pagamento = 'prova'/.test(conservazione.PULISCI_ORDINI));
 
   globalThis.fetch = veraFetch;
   server.close();

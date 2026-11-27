@@ -1,9 +1,10 @@
-// Pagine /privacy/ e /cookie/: testo semplice, ben leggibile. Confermate dal consulente di Endero il 2026-11-20.
+// Pagine /privacy/, /cookie/ e /condizioni-di-vendita/: testo semplice, ben leggibile. Privacy e cookie confermate dal
+// consulente di Endero il 2026-11-20 (le parti sugli ordini, del 27, sono in giallo); le condizioni sono una bozza del 27.
 // Le parti tra {{nome|…}} compaiono solo se ciò che descrivono è attivo sul sito (vedi la nota in legale.json).
 import { t, tConLink } from '../parti/base.mjs';
 import { pagina } from '../parti/telaio.mjs';
 
-export default function paginaLegale({ sito, testi: l, quale, risorse, anteprima }) {
+export default function paginaLegale({ sito, testi: l, quale, percorso = `/${quale}/`, risorse, anteprima }) {
   const p = l[quale];
   // l'informativa dice solo ciò che il sito fa davvero: l'antispam c'è se il build ha la sua chiave, le email
   // dei moduli quando sono attive
@@ -24,8 +25,8 @@ export default function paginaLegale({ sito, testi: l, quale, risorse, anteprima
   </header>
   <div class="legale__testo">
     ${sezioni}
-    <p class="legale__data">${t(l.aggiornamento)}</p>
+    <p class="legale__data">${t(p.aggiornamento || l.aggiornamento)}</p>
   </div>
 </main>`;
-  return pagina({ sito, meta: p.meta, percorso: `/${quale}/`, corpo, risorse, anteprima, classe: 'pagina-chiara pagina-legale' });
+  return pagina({ sito, meta: p.meta, percorso, corpo, risorse, anteprima, classe: 'pagina-chiara pagina-legale' });
 }

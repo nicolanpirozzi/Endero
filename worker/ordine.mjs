@@ -11,6 +11,15 @@
 // Finché il Worker non ha la chiave di Stripe (o il database, come nell'anteprima) il pagamento è spento: l'ordine si
 // controlla lo stesso, ma la risposta è { ok: true, pagamento: 'non_attivo' } e non si salva né si manda nulla.
 //
+// Il pagamento di prova (proprietario, 2026-11-27: «per stripe crea solo una demo poi lo collegheremo, ora mi va bene
+// fare un test fake»; «Per tutti, scritto chiaro»). Con la variabile PAGAMENTO_PROVA = "1" e senza la chiave di Stripe,
+// l'ordine si salva come quello vero e, al posto della pagina di Stripe, si apre una pagina nostra che dice chiaro che è
+// una prova e non addebita nulla:
+//   GET  /api/pagamento-prova   la pagina, con l'ordine e il totale (o, t: l'ordine e il suo gettone, una volta sola)
+//   POST /api/pagamento-prova   «Completa il pagamento di prova»: l'ordine diventa «pagato» (pagamento = 'prova') e
+//                               partono le email, segnate PROVA in oggetto e in cima (worker/email.mjs)
+// Appena c'è la chiave di Stripe, il pagamento vero prende il suo posto da sé.
+//
 // Segreti del Worker, mai nel repository: STRIPE_SECRET_KEY (la chiave segreta di Stripe, sk_…), STRIPE_WEBHOOK_SECRET
 // (la chiave del webhook, whsec_…), EMAIL_ORDINI (chi riceve gli ordini, uno o più indirizzi separati da virgola; se
 // manca, EMAIL_DESTINATARIO), più quelli che ci sono già (TURNSTILE_SECRET, RESEND_API_KEY). Variabile facoltativa:
@@ -35,6 +44,7 @@ const PESO_MASSIMO = 32768;            // byte: un ordine compilato ne pesa poch
 const PESO_WEBHOOK = 262144;           // un evento di Stripe è grande qualche kilobyte
 const TOLLERANZA = 300;                // secondi: una firma di Stripe più vecchia di cinque minuti non vale (anche ripetuta)
 const PAGINA = '/camicie-su-misura/configuratore/';
+const PROVA = '/api/pagamento-prova';
 
 // ---------------------------------------------------------------- i campi che si accettano
 
@@ -268,6 +278,21 @@ export async function ordine(request, env, ctx) {
     return sbaglio(500, senzaSegnaposto(T.errore));
   }
 
+  // il pagamento di prova: una pagina nostra al posto di quella di Stripe, con un gettone che vale per quest'ordine
+  if (pagamentoDiProva(env)) {
+    const gettone = casuale();
+    try {
+      await env.DB.prepare("UPDATE ordini SET sessione = ?, aggiornato = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?").bind(`prova:${gettone}`, id).run();
+    } catch (errore) {
+      console.error('pagamento di prova non preparato', numero, errore);
+      return sbaglio(500, senzaSegnaposto(T.errore));
+    }
+    // (un indirizzo di questo sito, senza dominio: la pagina accetta solo Stripe o il sito stesso)
+    const vai = `${PROVA}?o=${id}&t=${gettone}`;
+    if (vuoleJson) return json({ ok: true, vai });
+    return new Response(null, { status: 303, headers: { ...BASE, Location: vai } });
+  }
+
   let sessione;
   try {
     sessione = await apriPagamento(env, sessioneStripe(o, { id, numero, origine: origineSito }), id);
@@ -304,9 +329,14 @@ export async function firmaValida(corpo, intestazione, segreto, adesso = Date.no
   return false;
 }
 
-/** Il pagamento è acceso: ci sono le chiavi di Stripe (anche quella del webhook), il database, le email e chi le riceve. */
+/** Il pagamento di prova: chiesto con PAGAMENTO_PROVA = "1", e solo finché non c'è la chiave di Stripe. */
+export const pagamentoDiProva = (env) => !env.STRIPE_SECRET_KEY && String(env.PAGAMENTO_PROVA || '') === '1';
+
+/** Il pagamento è acceso: ci sono il database, le email e chi le riceve, e le chiavi di Stripe (anche quella del
+ *  webhook) o il pagamento di prova. */
 function pagamentoAcceso(env) {
-  return !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET && env.DB && env.RESEND_API_KEY && (env.EMAIL_ORDINI || env.EMAIL_DESTINATARIO));
+  const resto = !!(env.DB && env.RESEND_API_KEY && (env.EMAIL_ORDINI || env.EMAIL_DESTINATARIO));
+  return resto && (pagamentoDiProva(env) || !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET));
 }
 
 export async function stripe(request, env) {
@@ -354,12 +384,95 @@ export async function stripe(request, env) {
   if (!env.RESEND_API_KEY) return no(500, 'Email non configurata');
   const presa = await env.DB.prepare('UPDATE ordini SET email_inviate = 1 WHERE id = ? AND email_inviate = 0').bind(id).run();
   if (!(presa.meta?.changes > 0)) return json({ ricevuto: true });
-  const esito = await avvisaOrdine(env, await comeEmail(env, riga));
+  // (un pagamento fatto con le chiavi di prova di Stripe arriva al reparto segnato PROVA, non come un ordine vero)
+  const esito = await avvisaOrdine(env, { ...(await comeEmail(env, riga)), ...(evento.livemode === false ? { prova: true } : {}) });
   if (!esito.endero) {
     await env.DB.prepare('UPDATE ordini SET email_inviate = 0 WHERE id = ?').bind(id).run().catch(() => {});
     return no(500, 'Email non partita');
   }
   return json({ ricevuto: true });
+}
+
+// ---------------------------------------------------------------- /api/pagamento-prova
+
+const centesimiInEuro = (c) => `${(Number(c || 0) / 100).toFixed(2).replace('.', ',')} €`;
+
+/** La pagina del pagamento di prova, nei colori del sito. Dice chiaro che non addebita nulla. */
+function paginaProva({ numero, totale, o, t }) {
+  const P = S.pagamento.prova;
+  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${pulisci(P.titolo)} · Endero</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font:300 16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f285e;background:#f5f3ef}
+main{width:100%;max-width:480px;background:#fff;border-radius:20px;padding:36px 28px;box-shadow:0 1px 2px rgba(15,40,94,.06),0 12px 32px rgba(15,40,94,.08)}
+.etichetta{margin:0;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5b6b8c}
+h1{margin:10px 0 0;font-size:26px;line-height:1.2;font-weight:600;text-transform:uppercase;letter-spacing:.01em}
+.avviso{margin:18px 0 0;padding:14px 16px;border-radius:12px;background:#fff3c4;font-weight:500}
+dl{margin:22px 0 0;display:grid;grid-template-columns:1fr auto;gap:8px 16px}dt{color:#5b6b8c}dd{margin:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.totale{font-size:22px}
+form{margin:26px 0 0}button{width:100%;min-height:52px;border:0;border-radius:999px;background:#0f285e;color:#fff;font-family:inherit;font-weight:600;font-size:15px;line-height:1;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid #2a63f5;outline-offset:3px}
+.annulla{display:block;margin:16px 0 0;text-align:center;color:inherit}
+</style></head>
+<body><main>
+<p class="etichetta">${pulisci(riempiProva(P.etichetta, { numero }))}</p>
+<h1>${pulisci(P.titolo)}</h1>
+<p class="avviso">${pulisci(P.avviso)}</p>
+<dl><dt>${pulisci(P.ordine)}</dt><dd>${pulisci(numero)}</dd><dt>${pulisci(P.totale)}</dt><dd class="totale">${pulisci(totale)}</dd></dl>
+<form method="post" action="${PROVA}"><input type="hidden" name="o" value="${pulisci(o)}"><input type="hidden" name="t" value="${pulisci(t)}"><button type="submit">${pulisci(P.paga)}</button></form>
+<a class="annulla" href="${PAGINA}?ordine=annullato">${pulisci(P.annulla)}</a>
+</main></body></html>`;
+  return new Response(html, { status: 200, headers: { ...BASE, 'Content-Type': 'text/html; charset=utf-8' } });
+}
+const riempiProva = (modello, valori) => String(modello).replace(/\{(\w+)\}/g, (_, k) => valori[k] ?? '');
+
+/** GET e POST /api/pagamento-prova (vedi in cima al file). */
+export async function pagamentoProva(request, env) {
+  const P = S.pagamento.prova;
+  const fuori = (frase, stato = 404) => paginaSemplice(P.titolo, [frase], stato);
+  if (!pagamentoDiProva(env) || !env.DB) return fuori(P.spento, 404);
+  let o = '', t = '';
+  if (request.method === 'GET') {
+    const u = new URL(request.url);
+    o = u.searchParams.get('o') || ''; t = u.searchParams.get('t') || '';
+  } else if (request.method === 'POST') {
+    const origine = request.headers.get('Origin');
+    if (origine && origine !== new URL(request.url).origin) return fuori('Richiesta non valida.', 403);
+    if (Number(request.headers.get('Content-Length') || 0) > 2048) return fuori('Richiesta non valida.', 413);
+    try {
+      const f = await request.formData();
+      o = String(f.get('o') || ''); t = String(f.get('t') || '');
+    } catch {
+      return fuori('Richiesta non valida.', 400);
+    }
+  } else {
+    return new Response('Metodo non consentito', { status: 405, headers: { ...BASE, Allow: 'GET, POST' } });
+  }
+  if (!/^[0-9a-f]{32}$/.test(o) || !/^[0-9a-f]{32}$/.test(t)) return fuori(P.non_trovato, 404);
+  const riga = await env.DB.prepare('SELECT * FROM ordini WHERE id = ? AND sessione = ?').bind(o, `prova:${t}`).first();
+  if (!riga) return fuori(P.non_trovato, 404);
+  // già pagato (il tasto premuto due volte, la pagina ricaricata): si va al grazie, senza rifare nulla
+  if (riga.stato === 'pagato') return new Response(null, { status: 303, headers: { ...BASE, Location: `${PAGINA}?ordine=fatto` } });
+  if (riga.stato !== 'da_pagare') return fuori(P.non_trovato, 404);
+  if (request.method === 'GET') return paginaProva({ numero: riga.numero, totale: centesimiInEuro(riga.totale_centesimi), o, t });
+
+  // da pagare → pagato, una volta sola
+  const fatto = await env.DB.prepare(
+    `UPDATE ordini SET stato = 'pagato', pagato = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), aggiornato = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+       pagamento = 'prova', pagato_centesimi = totale_centesimi
+     WHERE id = ? AND sessione = ? AND stato = 'da_pagare'`
+  ).bind(o, `prova:${t}`).run();
+  if (fatto.meta?.changes > 0) {
+    const presa = await env.DB.prepare('UPDATE ordini SET email_inviate = 1 WHERE id = ? AND email_inviate = 0').bind(o).run();
+    if (presa.meta?.changes > 0) {
+      const aggiornata = await env.DB.prepare('SELECT * FROM ordini WHERE id = ?').bind(o).first();
+      const esito = await avvisaOrdine(env, { ...(await comeEmail(env, aggiornata)), prova: true }).catch((errore) => {
+        console.error('email del pagamento di prova non partite', riga.numero, errore);
+        return { endero: false };
+      });
+      if (!esito.endero) await env.DB.prepare('UPDATE ordini SET email_inviate = 0 WHERE id = ?').bind(o).run().catch(() => {});
+    }
+  }
+  return new Response(null, { status: 303, headers: { ...BASE, Location: `${PAGINA}?ordine=fatto` } });
 }
 
 /** Dalla riga salvata a ciò che serve alle email: l'ordine, il numero, la taglia, gli importi, i nomi veri dei tessuti. */
@@ -378,5 +491,7 @@ export async function comeEmail(env, riga) {
     // l'indirizzo che il cliente ha scritto nella pagina di Stripe, se c'è: è quello con cui ha pagato
     emailCliente: riga.email_pagamento || o.cliente?.email || '',
     tessutiVeri: veri && typeof veri === 'object' ? veri : {},
+    // pagato con il pagamento di prova: le email lo dicono in oggetto e in cima
+    prova: riga.pagamento === 'prova',
   };
 }

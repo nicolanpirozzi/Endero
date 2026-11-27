@@ -1678,6 +1678,21 @@ html:not(.js) .conti {
   color: var(--tenue);
 }
 
+/* il pagamento di prova (2026-11-27): detto chiaro, non in piccolo */
+.configura__nota-paga--prova {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 233, 150, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 233, 150, 0.45);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: inherit;
+}
+
+.configura__grazie-prova {
+  font-weight: 500;
+}
+
 .configura__esito {
   margin: 12px 0 0;
   padding: 12px 14px;

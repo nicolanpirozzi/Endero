@@ -104,7 +104,7 @@ for (const p of pagine) {
   vero(`${chi}: icone del sito (quadrata per Google, .ico, PNG, iPhone)`, ['<link rel="icon" href="/favicon.ico"', '<link rel="icon" href="/favicon.svg"', '<link rel="icon" href="/icona-192.png"', '<link rel="apple-touch-icon" href="/icona-180.png"'].every((x) => testa.includes(x)));
   if (pubblico) vero(`${chi}: Google può mostrare le foto grandi`, /<meta name="robots" content="[^"]*max-image-preview:large/.test(testa));
   const og = (nome) => attr(testa.match(new RegExp(`<meta property="og:${nome}"[^>]*>`))?.[0] || '', 'content');
-  const legale = ['/privacy/', '/cookie/'].includes(percorso);
+  const legale = ['/privacy/', '/cookie/', '/condizioni-di-vendita/'].includes(percorso);
   vero(`${chi}: titolo e descrizione per i social`, og('title') === titolo && og('description') === descrizione);
   const pezzi = [titolo, descrizione, ...[...corpo.matchAll(/<(p|h[1-6]|li|dd|summary|figcaption)\b[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => senzaTag(m[2]))];
   vero(`${chi}: mai «dal 1996» e «fatto in Italia» nella stessa frase`, pezzi.every((x) => insieme(x).length === 0), pezzi.flatMap(insieme).join(' | '));

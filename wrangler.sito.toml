@@ -2,7 +2,7 @@
 # tutto su quel dominio»). Per ora chiuso a Google («Prima chiuso»): stesse pagine dell'anteprima, ma il modulo salva
 # le richieste nel database e le manda per email a Endero (worker/email.mjs).
 #
-#   URL_ANTEPRIMA=https://endero.men TURNSTILE_SITE_KEY=<chiave pubblica> node build/costruisci.mjs
+#   URL_ANTEPRIMA=https://endero.men TURNSTILE_SITE_KEY=<chiave pubblica> PAGAMENTO_PROVA=1 node build/costruisci.mjs
 #   npx wrangler deploy --config wrangler.sito.toml
 #
 # Come l'anteprima, i file stanno nell'archivio KV (Workers Sites): nell'ambiente di lavoro il caricamento degli
@@ -40,6 +40,11 @@ id = "a44b8c9d71cf4ed8852df3bbf3f73c76"
 [vars]
 EMAIL_MITTENTE = "Endero <noreply@endero.men>"
 EMAIL_RISPOSTE = "info@endero.men"
+# Il pagamento di prova (proprietario, 2026-11-27: «per stripe crea solo una demo poi lo collegheremo»): finché non c'è
+# STRIPE_SECRET_KEY, l'ordine si «paga» su una pagina nostra che dice chiaro che è una prova, e arriva a Endero segnato
+# PROVA (worker/ordine.mjs). Il build della pagina va fatto con PAGAMENTO_PROVA=1 (gli avvisi al passo Pagamento e nel
+# grazie). Quando arriva Stripe: si tolgono questa riga e la variabile del build, e si mettono le due chiavi.
+PAGAMENTO_PROVA = "1"
 
 [observability]
 enabled = true

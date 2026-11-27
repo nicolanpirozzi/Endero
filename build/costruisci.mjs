@@ -95,6 +95,9 @@ for (const [file, info] of Object.entries(esito.metafile.outputs)) {
 }
 
 const turnstile = process.env.TURNSTILE_SITE_KEY || '';
+// il pagamento di prova (worker/ordine.mjs): la pagina lo dice al passo Pagamento e nel grazie. Va con PAGAMENTO_PROVA = "1"
+// nelle variabili del Worker (wrangler.sito.toml); quando arriva Stripe si toglie da tutti e due
+const pagamentoProva = process.env.PAGAMENTO_PROVA === '1';
 // URL_ANTEPRIMA: l'indirizzo provvisorio su cui va l'anteprima (per l'immagine nella scheda del link)
 const origineAnteprima = (process.env.URL_ANTEPRIMA || '').replace(/\/$/, '');
 /** Larghezza e altezza di un JPEG di public/, lette dal file: servono ai social per mostrare grande l'anteprima del link. */
@@ -115,7 +118,7 @@ function misure(indirizzo) {
   misureLette.set(indirizzo, esito);
   return esito;
 }
-const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima, misure };
+const base = { css: [risorsa.stile], js: [risorsa.sito], turnstile, origineAnteprima, misure, pagamentoProva };
 
 // le foto vere di Endero (tools/comprimi-foto.py): per ogni cartella, le grandezze di ogni foto e, per ogni foto,
 // un'impronta di tutte le sue grandezze, che va in fondo al suo indirizzo: se una foto si rifà chi torna non vede
@@ -244,6 +247,7 @@ genera(PERCORSO_RIVENDITORI, paginaRivenditori({ sito, testi: testi.rivenditori,
 genera('/dove-siamo/', paginaDoveSiamo({ sito, testi: testi.doveSiamo, risorse: base, anteprima }), ['dove-siamo.json', FOTO.sede]);
 genera('/privacy/', paginaLegale({ sito, testi: testi.legale, quale: 'privacy', risorse: base, anteprima }), ['legale.json']);
 genera('/cookie/', paginaLegale({ sito, testi: testi.legale, quale: 'cookie', risorse: base, anteprima }), ['legale.json']);
+genera('/condizioni-di-vendita/', paginaLegale({ sito, testi: testi.legale, quale: 'condizioni', percorso: '/condizioni-di-vendita/', risorse: base, anteprima }), ['legale.json']);
 scrivi('grazie/index.html', semplice({ sito, testi: servizio.grazie, percorso: '/grazie/', risorse: base }));
 scrivi('404.html', semplice({ sito, testi: servizio.non_trovata, percorso: '/404', risorse: base }));
 

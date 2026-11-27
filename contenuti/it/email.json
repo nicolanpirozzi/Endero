@@ -124,6 +124,11 @@
         "pagato_stripe": "Pagato con Stripe"
       }
     },
+    "prova": {
+      "oggetto": "[PROVA]",
+      "a_endero": "ORDINE DI PROVA · pagamento simulato, nessun addebito: non va cucito.",
+      "al_cliente": "Questo è un ordine di prova: non ti abbiamo addebitato nulla e la camicia non viene cucita."
+    },
     "al_cliente": {
       "oggetto": "Il tuo ordine Endero {numero}",
       "etichetta": "Ordine ricevuto · {numero}",
